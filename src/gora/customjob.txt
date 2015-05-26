@@ -1,0 +1,21 @@
+{"name": "CustomJob",
+ "type": "record",
+ "namespace": "org.apache.nutch.storage",
+
+key : jobid
+fields : 
+    # content meta info
+    id
+    user
+    password
+
+    # seed pages
+    seedGenerator
+    seedPageParser
+
+    # target pages
+    targetUrlRegex
+    targetPageRules
+
+    extractRules
+}

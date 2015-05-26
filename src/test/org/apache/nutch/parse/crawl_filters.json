@@ -1,0 +1,20 @@
+{
+    "crawlFilters": [
+        {
+            "pageType": "INDEX",
+            "urlRegexRule": "+^http:\/\/lancome.jumei.com\/search.html\\?filter=0-11-(\\d+)(.+)$",
+            "startKey": "http:\/\/lancome.jumei.com\/search.html",
+            "endKey": "http:\/\/lancome.jumei.com\/search.html\\uFFFF",
+            "textFilter": null,
+            "blockFilter": null
+        },
+        {
+            "pageType": "DETAIL",
+            "urlRegexRule": "+^http:\/\/mall.jumei.com\/lancome\/product_(.+)$",
+            "startKey": "http:\/\/mall.jumei.com",
+            "endKey": "http:\/\/mall.jumei.com\/\\uFFFF",
+            "textFilter": null,
+            "blockFilter": null
+        }
+    ]
+}
