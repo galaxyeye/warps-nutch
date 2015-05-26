@@ -1,10 +1,14 @@
-Based on Apache Nutch 2.3.0, with awesome features : 
+Qiwur Nutch is based on Apache Nutch 2.3.0, with awesome features : 
 
 
 1. Crowdsourcing crawl support
+
 2. Ajax support
+
 3. Humanoid bot
+
 4. Better system counters
+
 5. Better web UI
 
 
@@ -18,6 +22,26 @@ the target web site just like real human being.
 
 Project qiwur-nutch-ui is a PHP based WEB UI for nutch.
 
+
+To run crawler using crowdsourcing mode : 
+
+1. make sure you are familiar with Apache Nutch
+
+2. modify nutch-site.xml, set "fetcher.fetch.mode" to be "crowdsourcing", 
+   set "nutch.master.domain" to be the machine you run nutch server
+
+3. start satellite on any machine follow satellite's README. Satellite is desinged to
+   run on any cheap PC, it acts as a "normal browser" just as you visit a website
+   using chrome
+
+4. you can run crawl locally following the Apache Nutch's official guide, using command line.
+   when the fetch job runs, it also starts nutch server if necessary. Once nutch server
+   is running, the satellite will ask nutch server for tasks.
+
+   you can also run nutch server using ./bin/nutch nutchserver, if so, you need 
+   nutch ui project to start a crawl, note : currently, nutch ui project is not only
+   used just for nutch, but also used for other propurse, just ignore the 
+   functionalties has no relativity with nutch.
 
 
 
