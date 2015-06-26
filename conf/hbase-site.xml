@@ -22,4 +22,27 @@
 -->
 <configuration>
 
+    <property>
+      <name>hbase.zookeeper.quorum</name>
+      <value>galaxyeye</value>
+    </property>
+    <property>
+      <name>hbase.tmp.dir</name>
+      <value>/mnt/data/tmp/hbase-0.98.8-hduser</value>
+    </property>
+
+    <property>
+        <name>hbase.master</name> 
+        <value>galaxyeye:60000</value> 
+    </property>
+
+    <property>
+      <name>hbase.rootdir</name>
+      <value>hdfs://galaxyeye:9000/hbase-0.98.8</value>
+    </property>
+    <property>
+      <name>hbase.cluster.distributed</name>
+      <value>true</value>
+    </property>
+
 </configuration>

@@ -23,6 +23,7 @@ import org.apache.nutch.metadata.Nutch;
 public class DbFilter {
   public static Long DefaultDbLimit = 100L;
 
+  private String crawlId = null;
   private String batchId = Nutch.ALL_BATCH_ID_STR;
   private String startKey;
   private String endKey;
@@ -32,6 +33,12 @@ public class DbFilter {
   private boolean isKeysReversed = false;
   private Set<String> fields;
 
+  public String getCrawlId() {
+    return crawlId;
+  }
+  public void setCrawlId(String crawlId) {
+    this.crawlId = crawlId;
+  }
   public String getBatchId() {
     return batchId;
   }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.filters.CrawlFilter.PageType;
@@ -37,6 +38,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
+/**
+ * TODO : need full unit test
+ * */
 public class CrawlFilters extends Configured {
 
   public static final Logger LOG = LoggerFactory.getLogger(CrawlFilters.class);
@@ -47,26 +51,25 @@ public class CrawlFilters extends Configured {
   private List<CrawlFilter> crawlFilters = Lists.newArrayList();
 
   public static CrawlFilters create(Configuration conf) {
-    String json = conf.get(CRAWL_FILTER_RULES);
-    // BUG : \uFFFF is used for "the last character", but the client encoded it to be \\uFFFF
-    // TODO : This migth be done at the client side
-    json.replaceAll("\\uFFFF", "\uFFFF");
+    String filterRules = conf.get(CRAWL_FILTER_RULES);
+//    Validate.isTrue(!filterRules.contains("\\uFFFF"));
 
     if (LOG.isDebugEnabled()) {
       // LOG.debug("Create CrawlFilters from Json : " + json);
     }
 
     ObjectCache objectCache = ObjectCache.get(conf);
-    String cacheId = CrawlFilters.class.getName() + json;
+    String cacheId = CrawlFilters.class.getName() + filterRules;
 
     if (objectCache.getObject(cacheId) != null) {
       return (CrawlFilters) objectCache.getObject(cacheId);
     } else {
       CrawlFilters filters = new CrawlFilters(conf);
 
-      if (json != null) {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        filters = gson.fromJson(json, CrawlFilters.class);
+      if (filterRules != null) {
+        Gson gson = new GsonBuilder()
+          .excludeFieldsWithoutExposeAnnotation().create();
+        filters = gson.fromJson(filterRules, CrawlFilters.class);
         filters.setConf(conf);
       }
 
@@ -259,7 +262,9 @@ public class CrawlFilters extends Configured {
 
   @Override
   public String toString() {
-    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+    Gson gson = new GsonBuilder()
+//        .disableHtmlEscaping()
+        .excludeFieldsWithoutExposeAnnotation().create();
     return gson.toJson(this);
 
 //    StringBuilder sb = new StringBuilder();

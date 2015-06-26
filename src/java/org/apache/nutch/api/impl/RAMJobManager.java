@@ -19,6 +19,7 @@ package org.apache.nutch.api.impl;
 import java.util.Collection;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.api.ConfManager;
 import org.apache.nutch.api.JobManager;
@@ -26,6 +27,7 @@ import org.apache.nutch.api.NutchServer;
 import org.apache.nutch.api.model.request.JobConfig;
 import org.apache.nutch.api.model.response.JobInfo;
 import org.apache.nutch.api.model.response.JobInfo.State;
+import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.slf4j.Logger;
 
@@ -62,6 +64,7 @@ public class RAMJobManager implements JobManager {
     }
 
     Configuration conf = cloneConfiguration(configId);
+    conf = fixCrawlFilterRules(conf);
 
     NutchJob nutchJob = createNutchJob(jobConfig, conf);
     worker = new JobWorker(jobConfig, conf, nutchJob);
@@ -144,5 +147,29 @@ public class RAMJobManager implements JobManager {
     LOG.info("No such Job " + jobId);
 
     return false;
+  }
+
+  /**
+   * BUG : \uFFFF is used for "the biggest character", but the client encoded it to be \\uFFFF
+   * The representation in java string is \\\\uFFFF, we change it into \\uFFFF before XML parser
+   * TODO : This should be done at the client side
+   * */
+  private Configuration fixCrawlFilterRules(Configuration conf) {
+    String filterRules = conf.get(CrawlFilters.CRAWL_FILTER_RULES);
+    if (filterRules != null) {
+      // LOG.debug(filterRules);
+
+      // DO NOT do this : 
+      // raw string "\\\\uFFFF" => \<U+FFFF> throws error "An invalid XML character (Unicode: 0xffff)"
+      // filterRules = filterRules.replaceAll("\\\\uFFFF", "\uFFFF");
+
+      // JUST DO this : 
+      // raw string "\\uFFFF" => "\uFFFF"
+      filterRules = filterRules.replaceAll("\\uFFFF", "\uFFFF");
+      // LOG.debug(filterRules);
+    }
+    conf.set(CrawlFilters.CRAWL_FILTER_RULES, filterRules);
+
+    return conf;
   }
 }

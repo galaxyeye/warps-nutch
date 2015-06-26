@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.net.RegexURLFilter;
@@ -103,6 +104,8 @@ public class CrawlFilter extends Configured {
       }
 
       if (endKey != null) {
+        endKey = endKey.replaceAll("\\uFFFF", "\uFFFF");
+        endKey = endKey.replaceAll("\\\\uFFFF", "\uFFFF");
         reversedEndKey = TableUtil.reverseUrl(endKey);
       }
     }
@@ -142,7 +145,7 @@ public class CrawlFilter extends Configured {
       url = urlFilter.filter(url);
       passed = url != null;
     }
-    
+
     return passed;
   }
 
@@ -264,7 +267,9 @@ public class CrawlFilter extends Configured {
 
   @Override
   public String toString() {
-    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+    Gson gson = new GsonBuilder()
+//        .disableHtmlEscaping()
+        .excludeFieldsWithoutExposeAnnotation().create();
     return gson.toJson(this);
 
 //    StringBuilder sb = new StringBuilder();
@@ -286,16 +291,20 @@ public class CrawlFilter extends Configured {
   }
 
   public static void main(String[] args) throws Exception {
-    Configuration conf = NutchConfiguration.create();
-    conf.setBoolean(CRAWL_FILTER_FILTER, false);
-    conf.setBoolean(CRAWL_FILTER_NORMALISE, false);
+//    Configuration conf = NutchConfiguration.create();
+//    conf.setBoolean(CRAWL_FILTER_FILTER, false);
+//    conf.setBoolean(CRAWL_FILTER_NORMALISE, false);
+//
+//    String json = FileUtils.readFileToString(new File("/tmp/crawl-filters-test.json"));
+//    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+////    Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.FINAL).create();
+//    CrawlFilter crawlFilter = gson.fromJson(json, CrawlFilter.class);
+//    crawlFilter.setConf(conf);
+//
+//    System.out.println(crawlFilter);
 
-    String json = FileUtils.readFileToString(new File("/tmp/crawl-filters-test.json"));
-    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-//    Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.FINAL).create();
-    CrawlFilter crawlFilter = gson.fromJson(json, CrawlFilter.class);
-    crawlFilter.setConf(conf);
-
-    System.out.println(crawlFilter);
+    String test =  "com.github:https/about";
+    String bound = "com.github:https/\uFFFF";
+    System.out.println(test.compareTo(bound));
   }
 }

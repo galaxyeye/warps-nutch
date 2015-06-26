@@ -8,7 +8,7 @@
   <!-- storage -->
   <property>
     <name>storage.crawl.id</name>
-    <value>beta_test_3</value>
+    <value></value>
     <description>crawl pages for beta_test</description>
   </property>
 
@@ -44,13 +44,17 @@
 
   <property>
     <name>nutch.master.domain</name>
-    <value>localhost</value>
-    <description></description>
+    <value>qiwur.com</value>
+    <description>galaxyeye, all slave nutch update proxy server list and other
+      resource if any from the master nutch server.
+      it must be the host name since we need to check whether it's the host
+      itself.
+    </description>
   </property>
 
   <property>
     <name>nutch.master.hostname</name>
-    <value>localhost</value>
+    <value>galaxyeye</value>
     <description>galaxyeye, all slave nutch update proxy server list and other
       resource if any from the master nutch server.
       it must be the host name since we need to check whether it's the host
@@ -139,6 +143,7 @@
     <name>db.max.anchor.length</name>
     <value>200</value>
     <description>The maximum number of characters permitted in an anchor.
+    taobao has a very long url
     </description>
   </property>
 
@@ -151,7 +156,7 @@
 
   <property>
     <name>solr.server.url</name>
-    <value>http://localhost:8983</value>
+    <value>http://master:8983</value>
   </property>
 
   <!-- Scoring -->
@@ -165,14 +170,14 @@
   <!-- Generate -->
   <property>
     <name>generator.map.threads.per.task</name>
-    <value>50</value>
+    <value>2</value>
     <description></description>
   </property>
 
   <!-- Hadoop Turning -->
   <property>
     <name>mapred.map.tasks</name>
-    <value>1</value>
+    <value>20</value>
     <description></description>
   </property>
 

@@ -175,7 +175,8 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
 
     // key after end key, finish the mapper
     if (!CrawlFilter.keyLessEqual(reversedUrl, keyRange[1])) {
-      stop("meet end key " + reversedUrl + ", complete");
+      stop("Complete mapper, reason : hit end key " + reversedUrl + ", upper bound : " + keyRange[1] + 
+          ", diff : " + reversedUrl.compareTo(keyRange[1]));
       return false;
     }
 

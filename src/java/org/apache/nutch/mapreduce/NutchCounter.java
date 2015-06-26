@@ -138,11 +138,11 @@ public class NutchCounter {
   public void updateAffectedRows(String url) throws IOException {
     // Counters
     PageType pageType = crawlFilters.getPageType(url);
-    if (pageType.equals(PageType.INDEX)) {
-      increase(getIndex(Counter.indexPages));
-    }
-    else if (pageType.equals(PageType.DETAIL)) {
+    if (pageType.equals(PageType.DETAIL)) {
       increase(getIndex(Counter.detailPages));
+    }
+    else if (pageType.equals(PageType.INDEX)) {
+      increase(getIndex(Counter.indexPages));
     }
 
     increase(getIndex(Counter.totalPages));

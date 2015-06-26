@@ -39,7 +39,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.UnmodifiableIterator;
 
 public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
-  public static final Logger LOG = LoggerFactory.getLogger(DbIterator.class);
+
+  public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);
 
   public static long DefaultDbLimit = 100000L;
 

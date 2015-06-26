@@ -31,14 +31,19 @@ import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DbReader {
+
+  public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);
 
   private DataStore<String, WebPage> store;
 
   public DbReader(Configuration conf, String crawlId) {
     conf = new Configuration(conf);
     if (crawlId != null) {
+      LOG.debug("Crawl Id : " + crawlId);
       conf.set(Nutch.CRAWL_ID_KEY, crawlId);
     }
 

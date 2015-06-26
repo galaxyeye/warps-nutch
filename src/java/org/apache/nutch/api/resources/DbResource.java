@@ -43,7 +43,7 @@ public class DbResource extends AbstractResource {
     }
 
     DbQueryResult result = new DbQueryResult();
-    DbIterator iterator = getReader().runQuery(filter);
+    DbIterator iterator = getReader(ConfManager.DEFAULT, filter.getCrawlId()).runQuery(filter);
 
     long ignoreCount = 0L;
     while (++ignoreCount < filter.getStart() && iterator.hasNext()) {
@@ -53,16 +53,17 @@ public class DbResource extends AbstractResource {
     while (iterator.hasNext()) {
       result.addValue(iterator.next());
     }
+
     return result;
   }
 
-  private DbReader getReader() {
-    String confId = ConfManager.DEFAULT;
+  private DbReader getReader(String configId, String crawlId) {
     synchronized (readers) {
-      if (!readers.containsKey(confId)) {
-        readers.put(confId, new DbReader(configManager.get(confId), null));
+      if (!readers.containsKey(configId)) {
+        readers.put(configId, new DbReader(configManager.get(configId), crawlId));
       }
-      return readers.get(confId);
+
+      return readers.get(configId);
     }
   }
 }

@@ -8,7 +8,7 @@
   <!-- storage -->
   <property>
     <name>storage.crawl.id</name>
-    <value>beta_test_3</value>
+    <value></value>
     <description>crawl pages for beta_test</description>
   </property>
 
