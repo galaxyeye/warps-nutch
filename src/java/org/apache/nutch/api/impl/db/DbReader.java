@@ -58,6 +58,13 @@ public class DbReader {
     String startKey = filter.getStartKey();
     String endKey = filter.getEndKey();
 
+    if (endKey != null) {
+      // LOG.debug(endKey);
+      endKey = endKey.replaceAll("\\uFFFF", "\uFFFF");
+      endKey = endKey.replaceAll("\\\\uFFFF", "\uFFFF");
+      // LOG.debug(endKey);
+    }
+
     if (!filter.isKeysReversed()) {
       startKey = reverseKey(filter.getStartKey());
       endKey = reverseKey(filter.getEndKey());
@@ -69,9 +76,13 @@ public class DbReader {
     if (startKey != null) {
       query.setStartKey(startKey);
       if (endKey != null) {
+        endKey = endKey.replaceAll("\\uFFFF", "\uFFFF");
+        endKey = endKey.replaceAll("\\\\uFFFF", "\uFFFF");
         query.setEndKey(endKey);
       }
     }
+
+    LOG.info("Start key : " + startKey + ", end key : " + endKey);
 
     String urlFilter = filter.getUrlFilter();
     if (StringUtils.isEmpty(urlFilter)) {

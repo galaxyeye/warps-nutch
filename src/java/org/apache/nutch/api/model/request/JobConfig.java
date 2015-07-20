@@ -22,6 +22,8 @@ import java.util.Map.Entry;
 import org.apache.nutch.api.JobManager.JobType;
 
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class JobConfig {
   private String crawlId;
@@ -80,23 +82,14 @@ public class JobConfig {
   public void setJobClassName(String jobClass) {
     this.jobClassName = jobClass;
   }
-  
+
+  public String toJson() {
+    Gson gson = new GsonBuilder().create();
+    return gson.toJson(this);
+  }
+
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("{");
-    sb.append("crawlId:" + crawlId + ", ");
-    sb.append("type:" + type + ", ");
-    sb.append("confId:" + confId + ", ");
-    sb.append("jobClassName:" + jobClassName + ", ");
-    sb.append("args:[");
-    for (Entry<String, Object> arg : args.entrySet()) {
-      sb.append(arg.getKey() + ":" + arg.getValue() + ", ");
-    }
-    sb.append("]");
-    sb.append("}");
-
-    return sb.toString();
+    return toJson();
   }
 }

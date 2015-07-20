@@ -19,6 +19,9 @@ package org.apache.nutch.api.model.request;
 import java.util.Collections;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class NutchConfig {
   private String configId;
   private boolean force = false;
@@ -56,6 +59,14 @@ public class NutchConfig {
   public void setPriority(String priority) {
     this.priority = priority;
   }
-  
-  
+
+  public String toJson() {
+    Gson gson = new GsonBuilder().create();
+    return gson.toJson(this);
+  }
+
+  @Override
+  public String toString() {
+    return toJson();
+  }
 }

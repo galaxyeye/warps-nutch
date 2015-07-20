@@ -16,15 +16,12 @@
  ******************************************************************************/
 package org.apache.nutch.crawl.filters;
 
-import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.net.RegexURLFilter;
-import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;

@@ -260,13 +260,13 @@ public class CrawlFilters extends Configured {
     this.crawlFilters = crawlFilters;
   }
 
+  public String toJson() {
+    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+    return gson.toJson(this);
+  }
+
   @Override
   public String toString() {
-    Gson gson = new GsonBuilder()
-//        .disableHtmlEscaping()
-        .excludeFieldsWithoutExposeAnnotation().create();
-    return gson.toJson(this);
-
 //    StringBuilder sb = new StringBuilder();
 //    sb.append("{\n[");
 //
@@ -278,6 +278,8 @@ public class CrawlFilters extends Configured {
 //    sb.append("\n]\n}");
 //
 //    return sb.toString();
+
+    return toJson();
   }
 
   public static void main(String[] args) throws Exception {

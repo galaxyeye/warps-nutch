@@ -163,9 +163,9 @@ public class FetcherJob extends NutchJob implements Tool {
    * @throws Exception
    */
   public int fetch(String batchId, int threads, boolean resume, int numTasks) throws Exception {
-    run(NutchUtil.toArgMap(Nutch.ARG_BATCH, batchId, 
+    run(NutchUtil.toArgMap(Nutch.ARG_BATCH, batchId,
         Nutch.ARG_THREADS, threads,
-        Nutch.ARG_RESUME, resume, 
+        Nutch.ARG_RESUME, resume,
         Nutch.ARG_NUMTASKS, numTasks));
 
     return 0;

@@ -8,8 +8,8 @@
   <!-- storage -->
   <property>
     <name>storage.crawl.id</name>
-    <value></value>
-    <description>crawl pages for beta_test</description>
+    <value>beta_5</value>
+    <description>crawl pages for beta_5</description>
   </property>
 
   <property>
@@ -138,7 +138,7 @@
     <value>false</value>
   </property>
 
-  <!-- Parsing -->
+	<!-- Parsing -->
   <property>
     <name>db.max.anchor.length</name>
     <value>200</value>
@@ -148,11 +148,11 @@
   </property>
 
   <!-- 
-  <property>
-    <name>plugin.includes</name>
-   <value>protocol-(http|crowd)|urlfilter-regex|parse-(html)|index-(basic|anchor)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
-  </property>
-   -->
+	<property>
+	  <name>plugin.includes</name>
+	 <value>protocol-(http|crowd)|urlfilter-regex|parse-(html)|index-(basic|anchor)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+	</property>
+	 -->
 
   <property>
     <name>solr.server.url</name>
@@ -161,6 +161,7 @@
 
   <!-- Scoring -->
   <!-- This is a temporary solution to indicate important links -->
+  <!-- Deprecated -->
   <property>
     <name>db.score.important.links</name>
     <value>product,item,detail,view,show,good,store,activity</value>

@@ -53,6 +53,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   private Utf8 batchId;
   private Set<String> fields;
   private RegexURLFilter urlFilter;
+  private int urlRegexNotMatch = 0;
 
   DbIterator(Result<String, WebPage> res, DbFilter filter, Configuration conf) {
     this.result = res;
@@ -68,6 +69,8 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
         LOG.error(e.toString());
       }
     }
+
+    LOG.info("regex : " + urlRegexRule + ", batchId : " + batchId);
 
     try {
       skipNonRelevant();
@@ -94,6 +97,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
 
   private boolean isRelevant(String url) throws URLFilterException {
     if (urlFilter != null && urlFilter.filter(url) == null) {
+      ++urlRegexNotMatch;
       return false;
     }
 

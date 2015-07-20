@@ -56,6 +56,8 @@ public class RAMJobManager implements JobManager {
       throw new IllegalArgumentException("Arguments cannot be null!");
     }
 
+    // LOG.debug("Try to create job, job config : " + jobConfig.toString());
+
     // Do not create if there is already a running worker
     String configId = jobConfig.getConfId();
     JobWorker worker = executor.findRunningWorkerByConfig(configId);
@@ -150,7 +152,7 @@ public class RAMJobManager implements JobManager {
   }
 
   /**
-   * BUG : \uFFFF is used for "the biggest character", but the client encoded it to be \\uFFFF
+   * \uFFFF is used for "the biggest character", but the client encoded it to be \\uFFFF
    * The representation in java string is \\\\uFFFF, we change it into \\uFFFF before XML parser
    * TODO : This should be done at the client side
    * */

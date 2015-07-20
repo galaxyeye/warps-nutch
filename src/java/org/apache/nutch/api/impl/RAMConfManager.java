@@ -61,6 +61,8 @@ public class RAMConfManager implements ConfManager {
       nutchConfig.setConfigId(generateId(nutchConfig));
     }
 
+    // LOG.info("Try to create nutch config : " + nutchConfig.toString());
+
     if (!canCreate(nutchConfig)) {
       return null;
     }
