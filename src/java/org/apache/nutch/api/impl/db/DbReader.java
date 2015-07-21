@@ -34,6 +34,9 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @deprecated use org.qiwur.scent.hbase instead
+ * */
 public class DbReader {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);

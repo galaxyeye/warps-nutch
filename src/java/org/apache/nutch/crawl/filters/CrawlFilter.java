@@ -96,13 +96,18 @@ public class CrawlFilter extends Configured {
         urlFilter = new RegexURLFilter(urlRegexRule);
       }
 
+      // TODO : move to Table utils just like scent project does
       if (startKey != null) {
+        startKey = startKey.replaceAll("\\u0001", "\u0001");
+        startKey = startKey.replaceAll("\\\\u0001", "\u0001");
+
         reversedStartKey = TableUtil.reverseUrl(startKey);
       }
 
       if (endKey != null) {
         endKey = endKey.replaceAll("\\uFFFF", "\uFFFF");
         endKey = endKey.replaceAll("\\\\uFFFF", "\uFFFF");
+
         reversedEndKey = TableUtil.reverseUrl(endKey);
       }
     }
