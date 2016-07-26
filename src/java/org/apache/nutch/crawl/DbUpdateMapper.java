@@ -16,16 +16,9 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchMapper;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilters;
@@ -34,9 +27,16 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, NutchWritable> {
 
@@ -69,6 +69,10 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
 
     getCounter().register(Counter.class);
 
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+
     scoringFilters = new ScoringFilters(conf);
     pageWritable = new WebPageWritable(conf, null);
     batchId = new Utf8(conf.get(Nutch.BATCH_NAME_KEY, Nutch.ALL_BATCH_ID_STR));
@@ -85,7 +89,11 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
     }
     crawlFilters = CrawlFilters.create(conf);
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
+        "fetchMode", fetchMode,
         "batchId", batchId, 
         "filter", filter, 
         "pageRankEnabled", pageRankEnabled
@@ -151,8 +159,7 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
       scoringFilters.distributeScoreToOutlinks(url, page, scoreData, (outlinks == null ? 0 : outlinks.size()));
     } catch (ScoringFilterException e) {
       getCounter().increase(Counter.errors);
-      LOG.warn("Distributing score failed for URL: " + url + " exception:" + 
-          org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.warn("Distributing score failed for URL: " + url + " exception:" + StringUtil.stringifyException(e));
     }
 
     /**

@@ -1,0 +1,173 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# The default url filter.
+# Better for whole-internet crawling.
+
+# Each non-comment, non-blank line contains a regular expression
+# prefixed by '+' or '-'.  The first matching pattern in the file
+# determines whether a URL is included or ignored.  If no pattern
+# matches, the URL is ignored.
+
+# skip file: ftp: and mailto: urls
+-^(file|ftp|mailto):
+
+# skip image and other suffixes we can't yet parse
+# for a more extensive coverage use the urlfilter-suffix plugin
+-\.(gif|GIF|jpg|JPG|png|PNG|ico|ICO|css|CSS|sit|SIT|eps|EPS|wmf|WMF|zip|ZIP|ppt|PPT|mpg|MPG|xls|XLS|gz|GZ|rpm|RPM|tgz|TGZ|mov|MOV|exe|EXE|jpeg|JPEG|bmp|BMP|js|JS)$
+
+# vincent : do not disable queries
+# skip URLs containing certain characters as probable queries, etc.
+# -[?*!@=]
+
+# skip URLs with slash-delimited segment that repeats 3+ times, to break loops
+-.*(/[^/]+)/[^/]+\1/[^/]+\1/
+
+# vincent : do not accept anything else
+###### accept anything else
+# +.
+
+# we are interested in websites listed below, the following urls are collected
+# from navigation websites
++^http://([a-z0-9]*\.)*tmall.com/
++^http://([a-z0-9]*\.)*jd.com/
++^http://([a-z0-9]*\.)*vipshop.com/
++^http://([a-z0-9]*\.)*taobao.com/
++^http://([a-z0-9]*\.)*dangdang.com/
++^http://([a-z0-9]*\.)*yhd.com/
++^http://([a-z0-9]*\.)*suning.com/
++^http://([a-z0-9]*\.)*gome.com.cn/
++^http://([a-z0-9]*\.)*yixun.com/
++^http://([a-z0-9]*\.)*okbuy.com/
++^http://([a-z0-9]*\.)*amazon.cn/
++^http://([a-z0-9]*\.)*lefeng.com/
++^http://([a-z0-9]*\.)*vancl.com/
++^http://([a-z0-9]*\.)*yintai.com/
++^http://([a-z0-9]*\.)*moonbasa.com/
++^http://([a-z0-9]*\.)*masamaso.com/
++^http://([a-z0-9]*\.)*tuan.tiantian.com/
++^http://([a-z0-9]*\.)*xiu.com/
++^http://([a-z0-9]*\.)*redbaby.suning.com/
++^http://([a-z0-9]*\.)*yohobuy.com/
++^http://([a-z0-9]*\.)*ihush.com/
++^http://([a-z0-9]*\.)*china.alibaba.com/
++^http://([a-z0-9]*\.)*paipai.com/
++^http://([a-z0-9]*\.)*vipshop.com/
++^http://([a-z0-9]*\.)*fclub.cn/
++^http://([a-z0-9]*\.)*vipstore.com/
++^http://([a-z0-9]*\.)*vjia.com/
++^http://([a-z0-9]*\.)*pb89.com/
++^http://([a-z0-9]*\.)*banggo.com/
++^http://([a-z0-9]*\.)*shopin.net/
++^http://([a-z0-9]*\.)*lamiu.com/
++^http://([a-z0-9]*\.)*shishangqiyi.com/
++^http://([a-z0-9]*\.)*m18.com/
++^http://([a-z0-9]*\.)*51buy.com/
++^http://([a-z0-9]*\.)*coo8.com/
++^http://([a-z0-9]*\.)*139shop.com/
++^http://([a-z0-9]*\.)*newegg.com.cn/
++^http://([a-z0-9]*\.)*store.apple.com/cn/
++^http://([a-z0-9]*\.)*xiaomi.com/
++^http://([a-z0-9]*\.)*lusen.com/
++^http://([a-z0-9]*\.)*efeihu.com/
++^http://([a-z0-9]*\.)*letao.com/
++^http://([a-z0-9]*\.)*yougou.com/
++^http://([a-z0-9]*\.)*paixie.net/
++^http://([a-z0-9]*\.)*mbaobao.com/
++^http://([a-z0-9]*\.)*s.cn/
++^http://([a-z0-9]*\.)*lafaso.com/
++^http://([a-z0-9]*\.)*tiantian.com/
++^http://([a-z0-9]*\.)*sephora.cn/
++^http://([a-z0-9]*\.)*dhc.net.cn/
++^http://([a-z0-9]*\.)*jxdyf.com/
++^http://([a-z0-9]*\.)*cn.strawberrynet.com/
++^http://([a-z0-9]*\.)*hitao.com/
++^http://([a-z0-9]*\.)*guopi.com/
++^http://([a-z0-9]*\.)*buy.caomeipai.com/
++^http://([a-z0-9]*\.)*muyingzhijia.com/
++^http://([a-z0-9]*\.)*leyou.com/
++^http://([a-z0-9]*\.)*aiyingshi.com/
++^http://([a-z0-9]*\.)*lijiababy.com.cn/
++^http://([a-z0-9]*\.)*yihaodian.com/
++^http://([a-z0-9]*\.)*womai.com/
++^http://([a-z0-9]*\.)*ocj.com.cn/
++^http://([a-z0-9]*\.)*cnrmall.com/
++^http://([a-z0-9]*\.)*quwan.com/
++^http://([a-z0-9]*\.)*happigo.com/
++^http://([a-z0-9]*\.)*zbird.com/
++^http://([a-z0-9]*\.)*yesmywine.com/
++^http://([a-z0-9]*\.)*keede.com/
++^http://([a-z0-9]*\.)*wbiao.cn/
++^http://([a-z0-9]*\.)*kongfz.com/
++^http://([a-z0-9]*\.)*jiuxian.com/
++^http://([a-z0-9]*\.)*mogujie.com/
++^http://([a-z0-9]*\.)*meilishuo.com/
++^http://([a-z0-9]*\.)*51fanli.com/
++^http://([a-z0-9]*\.)*shop.qq.com/
++^http://([a-z0-9]*\.)*youhui.pizzahut.com.cn/
++^http://([a-z0-9]*\.)*eachnet.com/
++^http://([a-z0-9]*\.)*egou.com/
++^http://([a-z0-9]*\.)*fanli.qq.com/
++^http://([a-z0-9]*\.)*mizhe.com/
++^http://([a-z0-9]*\.)*vapee.com/
++^http://([a-z0-9]*\.)*etao.com/
++^http://([a-z0-9]*\.)*fanhuan.com/
++^http://([a-z0-9]*\.)*meituan.com/
++^http://([a-z0-9]*\.)*ju.taobao.com/
++^http://([a-z0-9]*\.)*lashou.com/
++^http://([a-z0-9]*\.)*nuomi.com/
++^http://([a-z0-9]*\.)*manzuo.com/
++^http://([a-z0-9]*\.)*55tuan.com/
++^http://([a-z0-9]*\.)*t.58.com/
++^http://([a-z0-9]*\.)*t.dianping.com/
++^http://([a-z0-9]*\.)*alipay.com/
++^http://([a-z0-9]*\.)*tenpay.com/
++^http://([a-z0-9]*\.)*99bill.com/
++^http://([a-z0-9]*\.)*baifubao.com/
++^http://([a-z0-9]*\.)*vip.com/
++^http://([a-z0-9]*\.)*handuyishe.com/
++^http://([a-z0-9]*\.)*tianpin.com/
++^http://([a-z0-9]*\.)*liebo.com/
++^http://([a-z0-9]*\.)*saite.com/
++^http://([a-z0-9]*\.)*aimer.com.cn/
++^http://([a-z0-9]*\.)*monteamor.com/
++^http://([a-z0-9]*\.)*e-lining.com/
++^http://([a-z0-9]*\.)*justyle.com/
++^http://([a-z0-9]*\.)*mfplaza.com/
++^http://([a-z0-9]*\.)*sportica.cn/
++^http://([a-z0-9]*\.)*ehaier.com/
++^http://([a-z0-9]*\.)*blemall.com/
++^http://([a-z0-9]*\.)*new7.com/
++^http://([a-z0-9]*\.)*1mall.com/
++^http://([a-z0-9]*\.)*camel.com.cn/
++^http://([a-z0-9]*\.)*taoxie.com/
++^http://([a-z0-9]*\.)*bagtree.com/
++^http://([a-z0-9]*\.)*uiyi.cn/
++^http://([a-z0-9]*\.)*51hqt.com/
++^http://([a-z0-9]*\.)*jumei.com/
++^http://([a-z0-9]*\.)*no5.com.cn/
++^http://([a-z0-9]*\.)*nala.com.cn/
++^http://([a-z0-9]*\.)*xifuquan.com/
++^http://([a-z0-9]*\.)*xiangshe.com/
++^http://([a-z0-9]*\.)*zhiwo.com/
++^http://([a-z0-9]*\.)*xzhuang.com/
++^http://([a-z0-9]*\.)*hecha.cn/
++^http://([a-z0-9]*\.)*m6go.com/
++^http://([a-z0-9]*\.)*sfbest.com/
++^http://([a-z0-9]*\.)*anngo.net/
++^http://([a-z0-9]*\.)*zuipin.cn/
++^http://([a-z0-9]*\.)*wangjiu.com/
++^http://([a-z0-9]*\.)*miibeian.gov.cn/

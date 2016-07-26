@@ -167,7 +167,7 @@ public class PrefixURLFilter implements URLFilter {
         if (LOG.isErrorEnabled()) {
           LOG.error(e.getMessage());
         }
-        // TODO mb@media-style.com: throw Exception? Because broken api.
+        // TODO mb@media-style.com: throw Exception? Because broken service.
         throw new RuntimeException(e.getMessage(), e);
       }
     }

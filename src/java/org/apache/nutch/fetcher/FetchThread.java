@@ -1,12 +1,5 @@
 package org.apache.nutch.fetcher;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.Validate;
@@ -20,10 +13,16 @@ import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * This class picks items from queues and fetches the pages.
- * 
- */
+ * */
 public class FetchThread extends Thread {
 
   public static final Logger LOG = FetcherJob.LOG;
@@ -33,12 +32,17 @@ public class FetchThread extends Thread {
   private final Configuration conf;
   private final ProtocolFactory protocolFactory;
   private String reprUrl;
+  /**
+   * Native, Crowdsourcing, Proxy
+   * */
   private final FetchMode fetchMode;
   private boolean debugContent = false;
 
   private QueueFeederThread queueFeederThread;
   private final FetchManager fetchManager;
 
+  private boolean halted = false;
+  
   public FetchThread(QueueFeederThread queueFeederThread, FetchManager fetchManager, Context context) {
     this.conf = context.getConfiguration();
 
@@ -54,17 +58,31 @@ public class FetchThread extends Thread {
   }
 
   public String reprUrl() {
-    return reprUrl();
+    return reprUrl;
+  }
+
+  public synchronized void setHalted(boolean halted) {
+    this.halted = halted;
+  }
+
+  public synchronized boolean isHalted() {
+    return halted;
   }
 
   @Override
   public void run() {
-    fetchManager.activeFetcherThreads.incrementAndGet(); // count threads
+    fetchManager.activeFetchThreadCount.incrementAndGet(); // count threads
 
     FetchItem item = null;
 
     try {
       while (true) {
+        // check whether must be stopped
+        if (isHalted()) {
+          LOG.debug(getName() + " set to halted, exiting...");
+          return;
+        }
+        
         FetchResult result = null;
         item = null;
 
@@ -86,13 +104,13 @@ public class FetchThread extends Thread {
         if (item == null) {
           if (!isMissionComplete()) {
 
-            fetchManager.waitingFetcherThreads.incrementAndGet();
+            fetchManager.waitingFetchThreadCount.incrementAndGet();
 
             try {
               Thread.sleep(1000);
             } catch (final Exception e) {}
 
-            fetchManager.waitingFetcherThreads.decrementAndGet();
+            fetchManager.waitingFetchThreadCount.decrementAndGet();
 
             continue;
           } else {
@@ -132,8 +150,8 @@ public class FetchThread extends Thread {
       LOG.error("fetcher throwable caught", e);
     } finally {
       if (item != null) fetchManager.finishFetchItem(item);
-      fetchManager.activeFetcherThreads.decrementAndGet(); // count threads
-      LOG.info("-finishing thread " + getName() + ", activeFetcherThreads=" + fetchManager.activeFetcherThreads);
+      fetchManager.activeFetchThreadCount.decrementAndGet(); // count threads
+      LOG.info("-finishing thread " + getName() + ", activeFetcherThreads=" + fetchManager.activeFetchThreadCount);
     }
   } // run
 

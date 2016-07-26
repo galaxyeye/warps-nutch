@@ -17,13 +17,7 @@
 
 package org.apache.nutch.parse;
 
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.google.common.collect.Sets;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,12 +31,7 @@ import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.net.URLNormalizers;
-import org.apache.nutch.protocol.Content;
-import org.apache.nutch.protocol.Protocol;
-import org.apache.nutch.protocol.ProtocolFactory;
-import org.apache.nutch.protocol.ProtocolNotFound;
-import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.protocol.ProtocolStatusUtils;
+import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.StringUtil;
@@ -51,7 +40,12 @@ import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Parser checker, useful for testing parser. It also accurately reports
@@ -65,8 +59,8 @@ import com.google.common.collect.Sets;
  * is used to remove duplicates during the dedup procedure. It is calculated
  * using {@link org.apache.nutch.crawl.MD5Signature} or
  * {@link org.apache.nutch.crawl.TextProfileSignature}.</li>
- * <li><tt>Version</tt>: From {@link org.apache.nutch.parse.ParseData}.</li>
- * <li><tt>Status</tt>: From {@link org.apache.nutch.parse.ParseData}.</li>
+ * <li><tt>Version</tt>: From {@link org.apache.nutch.parse}.</li>
+ * <li><tt>Status</tt>: From {@link org.apache.nutch.parse}.</li>
  * <li><tt>Title</tt>: of the URL</li>
  * <li><tt>Outlinks</tt>: associated with the URL</li>
  * <li><tt>Content Metadata</tt>: such as <i>X-AspNet-Version</i>, <i>Date</i>,
@@ -103,13 +97,19 @@ public class ParserChecker extends NutchJob implements Tool {
     force = NutchUtil.getBoolean(args, "force", false);
     url = NutchUtil.get(args, "url");
 
-    if (url == null) results.put("error", "Url must be specified");
+    if (url == null) {
+      results.put("error", "Url must be specified");
+    }
 
     crawlFilters = CrawlFilters.create(getConf());
     filters = new URLFilters(getConf());
     normalizers = new URLNormalizers(getConf(), URLNormalizers.SCOPE_OUTLINK);
 
-    recordAndLogParams("url", url, "dumpText", dumpText, "force", force);
+    LOG.info(StringUtil.formatParams(
+        "url", url,
+        "dumpText", dumpText,
+        "force", force
+    ));
   }
 
   @Override
@@ -272,7 +272,7 @@ public class ParserChecker extends NutchJob implements Tool {
       }
     }
 
-    run(NutchUtil.toArgMap("dumpText", dumpText, "force", force, "contentType", contentType, "url", url));
+    run(StringUtil.toArgMap("dumpText", dumpText, "force", force, "contentType", contentType, "url", url));
 
     return 0;
   }

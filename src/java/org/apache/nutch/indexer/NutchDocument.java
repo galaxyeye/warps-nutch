@@ -16,22 +16,18 @@
  */
 package org.apache.nutch.indexer;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.VersionMismatchException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.util.TableUtil;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /** A {@link NutchDocument} is the unit of indexing. */
 public class NutchDocument implements Writable,
@@ -39,17 +35,24 @@ public class NutchDocument implements Writable,
 
   public static final byte VERSION = 1;
 
-  private Map<String, List<String>> fields;
+  private String key;
 
-  private Metadata documentMeta;
+  private String url;
 
-  private float score;
+  private Map<String, List<String>> fields = new HashMap<>();
 
-  public NutchDocument() {
-    fields = new HashMap<String, List<String>>();
-    documentMeta = new Metadata();
-    score = 0.0f;
+  private Metadata documentMeta = new Metadata();
+
+  private float score = 0.0f;
+
+  public NutchDocument(String key) {
+    this.key = key;
+    this.url = TableUtil.unreverseUrl(key);
   }
+
+  public String getKey() { return key; }
+
+  public String getUrl() { return url; }
 
   public void add(String name, String value) {
     List<String> fieldValues = fields.get(name);

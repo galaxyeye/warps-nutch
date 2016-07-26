@@ -16,16 +16,10 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,15 +33,18 @@ import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class NutchCounter {
 
   public Logger LOG;
 
   // Default Counters
-  public static enum Counter { totalPages, indexPages, detailPages }
+  public enum Counter { totalPages, indexPages, detailPages }
 
   private static AtomicInteger counterSequence = new AtomicInteger(0);
 

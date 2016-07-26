@@ -16,23 +16,23 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
 import org.apache.nutch.fetcher.FetcherMapper;
 import org.apache.nutch.mapreduce.NutchReducer;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Reduce class for generate
@@ -45,7 +45,7 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
 
   public static final Logger LOG = LoggerFactory.getLogger(GeneratorReducer.class);
 
-  private static enum Counter { rows, hostCountTooLarge, malformedUrl };
+  private enum Counter { rows, hostCountTooLarge, malformedUrl };
 
   protected static long count = 0;
   private long limit;
@@ -59,6 +59,10 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
     super.setup(context);
     getCounter().register(Counter.class);
 
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+
     limit = conf.getLong(Nutch.GENERATOR_TOP_N, Long.MAX_VALUE);
     limit /= context.getNumReduceTasks();
 
@@ -70,7 +74,11 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
       byDomain = true;
     }
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
+        "fetchMode", fetchMode,
         "batchId", batchId, 
         "limit", limit, 
         "maxCount", maxCount, 
@@ -81,12 +89,12 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
   @Override
   protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context) throws IOException, InterruptedException {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("genereate reduce " + key.url);      
+      LOG.trace("generate reduce " + key.url);
     }
 
     for (WebPage page : values) {
       if (count >= limit) {
-        stop("generated enoght pages");
+        stop("generated enought pages");
         return;
       }
 

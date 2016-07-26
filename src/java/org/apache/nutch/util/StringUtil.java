@@ -17,10 +17,12 @@
 
 package org.apache.nutch.util;
 
-import java.nio.ByteBuffer;
-
 import org.apache.commons.lang.Validate;
-import org.apache.commons.lang3.StringUtils;
+
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * A collection of String processing utility methods.
@@ -250,13 +252,64 @@ public class StringUtil {
     return true;
   }
 
-  public static void main(String[] args) {
-    String counterName = "[beta_test_5]FetcherJob";
-    counterName = StringUtils.substringBeforeLast(counterName, "-");
-    System.out.println(counterName);
+  public static String stringifyException(Throwable e) {
+    return org.apache.hadoop.util.StringUtils.stringifyException(e);
+  }
 
-    counterName = counterName.replaceAll("(\\[.+\\])", "");
-    counterName = "counter." + counterName;
-    System.out.println(counterName);
+  /**
+   * Convert K/V pairs array into a map.
+   *
+   * @param params A K/V pairs array, the length of the array must be a even number
+   *                null key or null value pair is ignored
+   * @return A map contains all non-null key/values
+   * */
+  public static final Map<String, Object> toArgMap(Object... params) {
+    HashMap<String, Object> results = new LinkedHashMap<>();
+
+    if (params == null || params.length < 2) {
+      return results;
+    }
+
+    if (params.length % 2 != 0) {
+      throw new RuntimeException("expected name/value pairs");
+    }
+
+    for (int i = 0; i < params.length; i += 2) {
+      if (params[i] != null && params[i + 1] != null) {
+        results.put(String.valueOf(params[i]), params[i + 1]);
+      }
+    }
+
+    return results;
+  }
+
+  public static String formatParams(Object... args) {
+    return formatParamsMap(toArgMap(args));
+  }
+
+  public static String formatParamsMap(Map<String, Object> params) {
+    if (params.isEmpty()) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+
+    sb.append('\n');
+    sb.append(String.format("%10sParams Table%-15s\n", "----------", "----------"));
+    sb.append(String.format("%15s   %-15s\n", "Name", "Value"));
+    int i = 0;
+    for (Map.Entry<String, Object> arg : params.entrySet()) {
+      if (i++ > 0) {
+        sb.append("\n");
+      }
+
+      sb.append(String.format("%15s", arg.getKey()));
+      sb.append(" : ");
+      sb.append(arg.getValue());
+    }
+
+    sb.append('\n');
+
+    return sb.toString();
   }
 }

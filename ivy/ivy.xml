@@ -14,10 +14,10 @@
 <ivy-module version="1.0">
   <info organisation="org.apache.nutch" module="nutch">
     <license name="Apache 2.0"
-      url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
+             url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
     <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
     <description homepage="http://nutch.apache.org">Nutch is an open source web-search
-      software. It builds on Hadoop, Tika and Solr, adding web-specifics, such as a crawler, 
+      software. It builds on Hadoop, Tika and Solr, adding web-specifics, such as a crawler,
       a link-graph database etc.
     </description>
   </info>
@@ -62,9 +62,9 @@
     <dependency org="org.restlet.jse" name="org.restlet.ext.jackson" rev="2.2.3" conf="*->default" />
     <dependency org="org.restlet.jse" name="org.restlet.ext.jaxrs" rev="2.2.3" conf="*->default" />
 
-    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.26" conf="test->default" />
-    <dependency org="org.mortbay.jetty" name="jetty-util" rev="6.1.26" conf="test->default" />
-    <dependency org="org.mortbay.jetty" name="jetty-client" rev="6.1.26" />
+    <dependency org="org.mortbay.jetty" name="jetty" rev="7.0.0.pre5" conf="*->default" />
+    <dependency org="org.mortbay.jetty" name="jetty-util" rev="7.0.0.pre5" conf="*->default" />
+    <dependency org="org.mortbay.jetty" name="jetty-client" rev="7.0.0.pre5" conf="*->default" />
 
     <!-- Required by : jersey client -->
     <dependency org="com.sun.jersey" name="jersey-client" rev="1.8" conf="*->default" />
@@ -80,14 +80,14 @@
     <dependency org="log4j" name="log4j" rev="1.2.15" conf="*->master" />
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->master" />
 
-    <dependency org="org.jdom" name="jdom" rev="1.1" conf="test->default"/>
+    <dependency org="org.jdom" name="jdom" rev="1.1.2" conf="test->default"/>
     <dependency org="org.mockito" name="mockito-all" rev="1.9.5" conf="test->default"/>
 
     <!-- Content process -->
-    <!-- 
+    <!--
     <dependency org="org.jdom" name="jdom" rev="1.1" conf="*->default" />
      -->
-    <dependency org="dom4j" name="dom4j" rev="1.6" conf="*->default" />    
+    <dependency org="dom4j" name="dom4j" rev="1.6" conf="*->default" />
     <dependency org="net.sourceforge.nekohtml" name="nekohtml" rev="1.9.19" conf="*->master"/>
     <dependency org="org.apache.solr" name="solr-solrj" rev="4.6.0" conf="*->default" />
     <dependency org="org.apache.tika" name="tika-core" rev="1.6" />
@@ -101,7 +101,7 @@
 
     <!-- Distributed storage -->
     <!-- runtime required -->
-    <!-- 
+    <!--
     <dependency org="org.apache.hadoop" name="hadoop-core" rev="1.2.1" conf="*->default">
       <exclude org="net.sf.kosmosfs" name="kfs" />
       <exclude org="net.java.dev.jets3t" name="jets3t" />
@@ -109,7 +109,7 @@
       <exclude org="org.mortbay.jetty" name="jsp-*" />
     </dependency>
      -->
-    <!-- 
+    <!--
     <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.5.2" conf="default" />
     <dependency org="org.apache.hadoop" name="hadoop-common" rev="2.5.2" conf="default" />
      -->
@@ -124,13 +124,23 @@
     <!-- Uncomment this to use SQL as Gora backend. It should be noted that the
     gora-sql 0.1.1-incubating artifact is NOT compatable with gora-core 0.3. Users should
     downgrade to gora-core 0.2.1 in order to use SQL as a backend. -->
+
     <!--
-    <dependency org="org.apache.gora" name="gora-sql" rev="0.1.1-incubating" conf="*->default" />
-    -->
+    <dependency org="org.apache.gora" name="gora-sql" rev="0.3">
+        <exclude org="org.apache.hadoop" name="avro"/>
+        <exclude org="org.apache.hadoop" name="hadoop-core" rev="1.0.1"/>
+        <exclude org="org.apache.hadoop" name="hadoop-test"/>
+        <exclude org="org.jdom" name="jdom" rev="1.0"/>
+        <exclude org="org.jdom" name="jdom" rev="1.1"/>
+    </dependency>
+     -->
+
     <!-- Uncomment this to use MySQL as database with SQL as Gora store. -->
+    <!-- TODO : it seems to be a bug to use mysql connector -->
     <!--
     <dependency org="mysql" name="mysql-connector-java" rev="5.1.18" conf="*->default"/>
     -->
+
     <!-- Uncomment this to use HBase as Gora backend. -->
     <dependency org="org.apache.gora" name="gora-hbase" rev="0.6" conf="*->default" />
 
@@ -160,12 +170,12 @@
     <exclude module="ant" />
     <exclude module="slf4j-jdk14" />
     <exclude module="slf4j-simple" />
-    <exclude org="hsqldb"/>
-    <exclude org="maven-plugins"/>
     <exclude module="jmxtools" />
     <exclude module="jms" />
     <exclude module="jmxri" />
     <exclude module="thrift" />
+    <exclude org="hsqldb"/>
+    <exclude org="maven-plugins"/>
   </dependencies>
 
 </ivy-module>

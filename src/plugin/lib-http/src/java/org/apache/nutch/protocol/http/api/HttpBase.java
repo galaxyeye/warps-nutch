@@ -27,13 +27,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetcher.FetchMode;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
@@ -49,7 +49,6 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.GZIPUtils;
 import org.apache.nutch.util.DeflateUtils;
-import org.apache.nutch.util.GZIPUtils;
 import org.apache.nutch.util.MimeUtil;
 
 
@@ -215,7 +214,7 @@ public abstract class HttpBase implements Protocol {
     tlsPreferredProtocols = new HashSet<String>(Arrays.asList(protocols));
     tlsPreferredCipherSuites = new HashSet<String>(Arrays.asList(ciphers));
 
-    logger.info(NutchUtil.printArgMap(
+    logger.info(StringUtil.formatParams(
         "fetcher.fetch.mode", fetchMode,
         "http.proxy.host", proxyHost,
         "http.proxy.port", proxyPort,

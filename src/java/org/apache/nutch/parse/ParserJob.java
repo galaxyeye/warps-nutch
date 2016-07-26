@@ -16,13 +16,9 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-
 import org.apache.avro.util.Utf8;
-import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
+import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
@@ -31,13 +27,17 @@ import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.IdentityPageReducer;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 
 public class ParserJob extends NutchJob implements Tool {
 
@@ -101,6 +101,12 @@ public class ParserJob extends NutchJob implements Tool {
   protected void setup(Map<String, Object> args) throws Exception {
     super.setup(args);
 
+    Configuration conf = getConf();
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+
     batchId = NutchUtil.get(args, Nutch.ARG_BATCH, Nutch.ALL_BATCH_ID_STR);
     Boolean resume = NutchUtil.getBoolean(args, Nutch.ARG_RESUME, false);
     Boolean force = NutchUtil.getBoolean(args, Nutch.ARG_FORCE, false);
@@ -109,10 +115,15 @@ public class ParserJob extends NutchJob implements Tool {
     getConf().setBoolean(RESUME_KEY, resume);
     getConf().setBoolean(FORCE_KEY, force);
 
-    recordAndLogParams(
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
         "batchId", batchId,
+        "fetchMode", fetchMode,
         "force", force,
-        "resume", resume);
+        "resume", resume
+    ));
   }
 
   @Override
@@ -123,77 +134,76 @@ public class ParserJob extends NutchJob implements Tool {
     StorageUtils.initMapperJob(currentJob, fields, String.class, WebPage.class, ParserMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, IdentityPageReducer.class);
 
+    // there is no reduce phase, so set reduce tasks to be 0
     currentJob.setNumReduceTasks(0);
+
+    // used to get schema name
+    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "workingDir", currentJob.getWorkingDirectory(),
+        "jobName", currentJob.getJobName(),
+        "realSchema", store.getSchemaName(),
+        "batchId", batchId
+    ));
 
     currentJob.waitForCompletion(true);
   }
 
-  private MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
-    if (batchId.equals(REPARSE.toString()) || batchId.equals(Nutch.ALL_BATCH_ID_STR)) {
-      return null;
-    }
-
-    MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<String, WebPage>();
-    filter.setFieldName(WebPage.Field.MARKERS.toString());
-    filter.setFilterOp(FilterOp.EQUALS);
-    filter.setFilterIfMissing(true);
-    filter.setMapKey(Mark.FETCH_MARK.getName());
-    filter.getOperands().add(new Utf8(batchId));
-    return filter;
+  private void printUsage() {
+    System.err
+        .println("Usage: ParserJob (<batchId> | -all) [-crawlId <id>] [-resume] [-force]");
+    System.err
+        .println("    <batchId>     - symbolic batch ID created by Generator");
+    System.err
+        .println("    -all          - consider pages from all crawl jobs");
+    System.err
+        .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
+    System.err
+        .println("    -resume       - resume a previous incomplete job");
+    System.err
+        .println("    -force        - force re-parsing even if a page is already parsed");
   }
 
   public int run(String[] args) throws Exception {
-    boolean resume = false;
-    boolean force = false;
-    String batchId = null;
 
     if (args.length < 1) {
-      System.err
-          .println("Usage: ParserJob (<batchId> | -all) [-crawlId <id>] [-resume] [-force]");
-      System.err
-          .println("    <batchId>     - symbolic batch ID created by Generator");
-      System.err
-          .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
-      System.err
-          .println("    -all          - consider pages from all crawl jobs");
-      System.err
-          .println("    -resume       - resume a previous incomplete job");
-      System.err
-          .println("    -force        - force re-parsing even if a page is already parsed");
+      printUsage();
       return -1;
     }
 
+    Configuration conf = getConf();
+
+    String batchId = args[0];
+    if (!batchId.equals("-all") && batchId.startsWith("-")) {
+      printUsage();
+      return -1;
+    }
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "");
+
+    boolean resume = false;
+    boolean force = false;
+
     for (int i = 0; i < args.length; i++) {
-      if ("-resume".equals(args[i])) {
+      if ("-crawlId".equals(args[i])) {
+        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+      }
+      else if ("-resume".equals(args[i])) {
         resume = true;
       } else if ("-force".equals(args[i])) {
         force = true;
-      } else if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
-      } else if ("-all".equals(args[i])) {
-        batchId = args[i];
-      } else {
-        if (batchId != null) {
-          System.err.println("BatchId already set to '" + batchId + "'!");
-          return -1;
-        }
-
-        batchId = args[i];
       }
     }
 
-    if (batchId == null) {
-      System.err.println("BatchId not set (or -all/-reparse not specified)!");
-      return -1;
-    }
-
-    run(NutchUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_RESUME, resume, Nutch.ARG_FORCE, force));
+    parse(batchId, resume, force);
 
     return 0;
   }
 
   public void parse(String batchId, boolean resume, boolean force) {
-    run(NutchUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_RESUME, resume, Nutch.ARG_FORCE, force));    
+    run(StringUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_RESUME, resume, Nutch.ARG_FORCE, force));
   }
 
   public static void main(String[] args) throws Exception {

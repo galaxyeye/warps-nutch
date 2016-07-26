@@ -41,7 +41,6 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 @EnableAsync
 public class SpringConfiguration implements AsyncConfigurer {
 
-  @Override
   public Executor getAsyncExecutor() {
     // TODO move magic numbers to properties file
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

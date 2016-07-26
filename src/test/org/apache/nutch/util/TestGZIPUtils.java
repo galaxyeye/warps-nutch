@@ -65,7 +65,7 @@ public class TestGZIPUtils {
       + " href=\"http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/nutch/nutch/\">CVS</a><br>\n"
       + "      </td>\n"
       + "      <td style=\"vertical-align: top; text-align: center;\"><a\n"
-      + " href=\"api/index.html\">Javadoc</a><br>\n"
+      + " href=\"service/index.html\">Javadoc</a><br>\n"
       + "      </td>\n"
       + "      <td style=\"vertical-align: top; text-align: center;\"><a\n"
       + " href=\"http://sourceforge.net/tracker/?atid=491356&amp;group_id=59548&amp;func=browse\">Bugs</a><br>\n"

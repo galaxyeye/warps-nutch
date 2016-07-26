@@ -259,7 +259,7 @@ public class FileResponse {
       String name = f.getName();
       String time = HttpDateFormat.toString(f.lastModified());
       if (f.isDirectory()) {
-        // java 1.4.2 api says dir itself and parent dir are not listed
+        // java 1.4.2 service says dir itself and parent dir are not listed
         // so the following is not needed.
         // if (name.equals(".") || name.equals(".."))
         // continue;

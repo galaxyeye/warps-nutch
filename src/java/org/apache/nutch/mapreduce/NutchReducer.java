@@ -17,12 +17,11 @@
 package org.apache.nutch.mapreduce;
 
 import java.io.IOException;
-import java.util.Date;
 
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
     counter = new NutchCounter(context);
     reporter = new NutchReporter(counter);
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
         "startTime", TimingUtil.format(startTime),
         "reducerTasks", context.getNumReduceTasks(),
         "hostname", counter.getHostname()
@@ -79,7 +78,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
 
     reporter.stopReporter();
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
         "finishTime", TimingUtil.format(System.currentTimeMillis()),
         "timeElapsed", TimingUtil.elapsedTime(startTime)
     ));

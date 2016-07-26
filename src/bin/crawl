@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -20,6 +20,11 @@
 # 
 # UNLIKE THE NUTCH ALL-IN-ONE-CRAWL COMMAND THIS SCRIPT DOES THE LINK INVERSION AND 
 # INDEXING FOR EACH BATCH
+
+bin="`dirname "$0"`"
+bin="`cd "$bin"; pwd`"
+
+ . "$bin"/nutch-config.sh
 
 SEEDDIR="$1"
 CRAWL_ID="$2"
@@ -59,6 +64,9 @@ fi
 
 # set the number of slaves nodes
 numSlaves=1
+if [ -n "$NUMBER_SLAVES" ]; then
+ numSlaves=$NUMBER_SLAVES
+fi
 
 # and the total number of available tasks
 # sets Hadoop parameter "mapred.reduce.tasks"
@@ -77,9 +85,6 @@ timeLimitFetch=180
 addDays=0
 #############################################
 
-bin="`dirname "$0"`"
-bin="`cd "$bin"; pwd`"
-
 # determines whether mode based on presence of job file
 mode=local
 if [ -f "${bin}"/../*nutch*.job ]; then
@@ -97,7 +102,6 @@ if [ $mode = "distributed" ]; then
     exit -1;
  fi
 fi
-
 
 function __bin_nutch {
     # run $bin/nutch, exit if exit value indicates error

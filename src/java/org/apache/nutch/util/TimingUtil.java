@@ -30,9 +30,29 @@ public class TimingUtil {
     return DateFormat.format(time);
   }
 
+  public static String format(String format, long time) {
+    return new SimpleDateFormat(format).format(time);
+  }
+
+  public static String now() {
+    return DateFormat.format(System.currentTimeMillis());
+  }
+
+  public static String now(String format) {
+    return format(format, System.currentTimeMillis());
+  }
+
+  public static String elapsedTime(long start) {
+    return elapsedTime(start, System.currentTimeMillis());
+  }
+
+  public static double elapsedSeconds(long start) {
+    return (System.currentTimeMillis() - start) / 1000.0;
+  }
+
   /**
    * Calculate the elapsed time between two times specified in milliseconds.
-   * 
+   *
    * @param start
    *          The start of the time period
    * @param end
@@ -40,10 +60,6 @@ public class TimingUtil {
    * @return a string of the form "XhYmZs" when the elapsed time is X hours, Y
    *         minutes and Z seconds or null if start > end.
    */
-  public static String elapsedTime(long start) {
-    return elapsedTime(start, System.currentTimeMillis());
-  }
-
   public static String elapsedTime(long start, long end) {
     if (start > end) {
       return null;
@@ -65,6 +81,7 @@ public class TimingUtil {
       }
       buf.append(nf.format(elapsedTime[i]));
     }
+
     return buf.toString();
   }
 }

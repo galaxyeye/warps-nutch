@@ -23,15 +23,13 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 
 /**
  * Utility to create an indexed document from a webpage.
  * 
  */
 public class IndexUtil {
-  private static final Log LOG = LogFactory.getLog(new Object() {
-  }.getClass().getEnclosingClass());
+  private static final Log LOG = LogFactory.getLog(IndexUtil.class);
 
   private IndexingFilters filters;
   private ScoringFilters scoringFilters;
@@ -42,7 +40,7 @@ public class IndexUtil {
   }
 
   /**
-   * Index a {@link Webpage}, here we add the following fields:
+   * Index a {@link WebPage}, here we add the following fields:
    * <ol>
    * <li><tt>id</tt>: default uniqueKey for the {@link NutchDocument}.</li>
    * <li><tt>digest</tt>: Digest is used to identify pages (like unique ID) and
@@ -60,48 +58,37 @@ public class IndexUtil {
    * @param key
    *          The key of the page (reversed url).
    * @param page
-   *          The {@link Webpage}.
+   *          The {@link WebPage}.
    * @return The indexed document, or null if skipped by index filters.
    */
   public NutchDocument index(String key, WebPage page) {
-    NutchDocument doc = new NutchDocument();
+    NutchDocument doc = new NutchDocument(key);
     doc.add("id", key);
     doc.add("digest", StringUtil.toHexString(page.getSignature()));
+
     if (page.getBatchId() != null) {
       doc.add("batchId", page.getBatchId().toString());
     }
 
-    String url = TableUtil.unreverseUrl(key);
+    String url = doc.getUrl();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Indexing URL: " + url);
     }
 
+    float boost = 1.0f;
+
     try {
       doc = filters.filter(doc, url, page);
-    } catch (IndexingException e) {
-      LOG.warn("Error indexing " + key + ": " + e);
-      return null;
-    }
-
-    // skip documents discarded by indexing filters
-    if (doc == null)
-      return null;
-
-    float boost = 1.0f;
-    // run scoring filters
-    try {
       boost = scoringFilters.indexerScore(url, doc, page, boost);
-    } catch (final ScoringFilterException e) {
-      LOG.warn("Error calculating score " + key + ": " + e);
-      return null;
-    }
 
-    doc.setScore(boost);
-    // store boost for use by explain and dedup
-    doc.add("boost", Float.toString(boost));
+      doc.setScore(boost);
+      // store boost for use by explain and dedup
+      doc.add("boost", Float.toString(boost));
+    } catch (IndexingException | ScoringFilterException e) {
+      LOG.warn("Failed to indexing " + key + ": " + StringUtil.stringifyException(e));
+    }
 
     return doc;
   }
-
 }

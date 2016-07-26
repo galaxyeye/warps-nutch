@@ -1,11 +1,5 @@
 package org.apache.nutch.fetcher.data;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetcher.FetchMode;
 import org.apache.nutch.fetcher.FetcherJob;
@@ -13,6 +7,12 @@ import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.Host;
 import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Convenience class - a collection of queues that keeps track of the total
@@ -177,7 +177,7 @@ public class FetchItemQueues {
       if (queue.getFetchQueueSize() == 0) {
         continue;
       }
-      
+
       LOG.info("* queue: " + id);
       queue.dump();
 

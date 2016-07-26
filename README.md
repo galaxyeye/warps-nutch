@@ -15,7 +15,7 @@ Qiwur Nutch is based on Apache Nutch 2.3.0, with awesome features :
 This project works together with the other two relative projects : 
 satellite : https://github.com/galaxyeye/satellite
 
-qiwur-nutch-ui : https://github.com/galaxyeye/qiwur-nutch-ui
+qiwur-ui : https://github.com/galaxyeye/qiwur-ui
 
 Project satellite is a fetcher client based on phantomjs, which visits
 the target web site just like real human being.

@@ -16,20 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.fetcher.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.io.FileUtils;
+import com.google.common.collect.Lists;
 import org.apache.nutch.fetcher.FetchManager;
 import org.apache.nutch.fetcher.FetchManagerPool;
 import org.apache.nutch.fetcher.FetcherJob;
@@ -39,7 +26,10 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
+import javax.ws.rs.*;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Path(value = "/fetch")
 @Produces({ MediaType.APPLICATION_JSON })
@@ -70,6 +60,21 @@ public class FetcherResource {
 
     return fetchManagerPool.randomFetchItems(count);
   }
+
+//  @PUT
+//  @Path("/inject/{url}")
+//  public List<FetchItem.Key> addFetchItem(@PathParam("url") String item) {
+//    List<FetchItem.Key> keys = Lists.newArrayList();
+//
+//    if (count < 0) {
+//      LOG.debug("Invalid count " + count);
+//      return keys;
+//    }
+//
+//    fetchManagerPool.get();
+//
+//    return keys;
+//  }
 
   /**
    * Accept page content from satellite(crowdsourcing web fetcher),
@@ -109,25 +114,5 @@ public class FetcherResource {
     fetchManager.produceFetchResut(fetchResult);
 
     return "success";
-  }
-
-  // TODO : we may use a general cache system
-  private void debugContent(String fileName, String pageContent) {
-    try {
-      File dir = new File("/tmp/fetcher/");
-      if (!dir.exists()) {
-        FileUtils.forceMkdir(dir);
-      }
-
-      File file = new File("/tmp/fetcher/" + fileName);
-      if (!file.exists()) {
-        file.createNewFile();
-      }
-
-      FileUtils.write(file, pageContent, "utf-8");
-    }
-    catch (IOException e) {
-      LOG.error(e.toString());
-    }
   }
 }

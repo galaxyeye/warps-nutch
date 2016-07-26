@@ -16,11 +16,6 @@
  */
 package org.apache.nutch.indexer;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.mapreduce.StringComparator;
 import org.apache.hadoop.conf.Configuration;
@@ -38,8 +33,14 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 
 public class CleaningJob extends NutchJob implements Tool {
 
@@ -151,7 +152,7 @@ public class CleaningJob extends NutchJob implements Tool {
 
   public int delete(boolean commit) throws Exception {
     LOG.info("CleaningJob: starting");
-    run(NutchUtil.toArgMap(ARG_COMMIT, commit));
+    run(StringUtil.toArgMap(ARG_COMMIT, commit));
     LOG.info("CleaningJob: done");
     return 0;
   }

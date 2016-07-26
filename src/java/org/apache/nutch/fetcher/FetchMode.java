@@ -4,7 +4,7 @@ package org.apache.nutch.fetcher;
  * TODO : use just enum FetchMode {NATIVE, PROXY, CROWDSOURCING};
  * */
 public enum FetchMode {
-  NATIVE("native"), PROXY("proxy"), CROWDSOURCING("crowdsourcing");
+  UNKNOWN("unknown"), NATIVE("native"), PROXY("proxy"), CROWDSOURCING("crowdsourcing");
 
   private final String value;
 
@@ -17,11 +17,11 @@ public enum FetchMode {
   }
 
   public boolean equals(String mode) {
-    return value.equals(mode);
+    return value.equalsIgnoreCase(mode);
   }
 
-  public boolean equalsIgnoreCase(String mode) {
-    return value.equals(mode.toLowerCase());
+  public boolean equals(FetchMode mode) {
+    return value.equals(mode.value);
   }
 
   public static FetchMode fromString(String mode) {
@@ -29,6 +29,14 @@ public enum FetchMode {
     if (mode.equalsIgnoreCase("proxy")) return PROXY;
     if (mode.equalsIgnoreCase("crowdsourcing")) return CROWDSOURCING;
 
-    return NATIVE;
+    return UNKNOWN;
+  }
+
+  public static boolean validate(String str) {
+    if (str.equalsIgnoreCase("native")) return true;
+    if (str.equalsIgnoreCase("proxy")) return true;
+    if (str.equalsIgnoreCase("crowdsourcing")) return true;
+
+    return false;
   }
 }

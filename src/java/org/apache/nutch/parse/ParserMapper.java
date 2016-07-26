@@ -1,12 +1,8 @@
 package org.apache.nutch.parse;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.NutchMapper;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
@@ -16,11 +12,14 @@ import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> {
 
   public static final Logger LOG = ParserJob.LOG;
 
-  public static enum Counter { notFetchedPages, alreadyParsedPages, truncatedPages, notParsed, parseSuccess, parseFailed };
+  public enum Counter { notFetchedPages, alreadyParsedPages, truncatedPages, notParsed, parseSuccess, parseFailed };
 
   private ParseUtil parseUtil;
   private boolean resume;
@@ -43,7 +42,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
     force = conf.getBoolean(ParserJob.FORCE_KEY, false);
     skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
         "batchId", batchId,
         "resume", resume,
         "reparse", reparse,

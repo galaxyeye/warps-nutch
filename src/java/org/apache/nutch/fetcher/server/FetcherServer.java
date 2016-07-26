@@ -16,13 +16,9 @@
  ******************************************************************************/
 package org.apache.nutch.fetcher.server;
 
-import java.util.Set;
-import java.util.logging.Level;
-
-import javax.ws.rs.core.Application;
-
+import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.api.misc.ErrorStatusService;
+import org.apache.nutch.service.misc.ErrorStatusService;
 import org.apache.nutch.client.NutchClient;
 import org.apache.nutch.storage.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
@@ -33,8 +29,13 @@ import org.restlet.ext.jaxrs.JaxRsApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
+import javax.ws.rs.core.Application;
+import java.util.Set;
+import java.util.logging.Level;
 
+/**
+ * FetcherServer is responsible to schedule fetch tasks
+ * */
 public class FetcherServer extends Application {
 
   public static final String FETCHER_SERVER = "FETCHER_SERVER";
@@ -58,11 +59,7 @@ public class FetcherServer extends Application {
   private Configuration conf;
 
   /**
-   * Public constructor which accepts the port we wish to run the server on as
-   * well as the logging granularity. If the latter option is not provided via
-   * {@link org.apache.nutch.api.ServerInstance#main(String[])} then it defaults to
-   * 'INFO' however best attempts should always be made to specify a logging
-   * level.
+   * Public constructor which accepts the port we wish to run the server on
    */
   public FetcherServer(Configuration conf, int port) {
     this.conf = conf;
@@ -174,18 +171,17 @@ public class FetcherServer extends Application {
     LOG.info("Started FetcherServer on port {}", port);
     startTime = System.currentTimeMillis();
 
-    // We need an Internet ip rather than an Intranet ip
-    NutchClient client = new NutchClient(conf,
-        conf.get("nutch.master.domain", "localhost"),
-        conf.getInt("nutch.server.port", 8182));
+    // We use an Internet ip rather than an Intranet ip
+    // TODO : (later issue) but why? it seems Intranet host is OK
+    NutchClient client = new NutchClient(conf);
     client.register(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
   }
 
   /**
    * Safety and convenience method to determine whether or not it is safe to
    * shut down the server. We make this assertion by consulting the
-   * {@link org.apache.nutch.api.NutchApp#jobManager} for a list of jobs with
-   * {@link org.apache.nutch.api.model.response.JobInfo#state} equal to
+   * {@link org.apache.nutch.service} for a list of jobs with
+   * {@link org.apache.nutch.service.model.response.JobInfo#state} equal to
    * 'RUNNING'.
    * 
    * @param force
@@ -226,21 +222,19 @@ public class FetcherServer extends Application {
       throw new IllegalStateException("Cannot stop nutch server", e);
     }
 
-    NutchClient client = new NutchClient(conf,
-        conf.get("nutch.master.domain", "localhost"),
-        conf.getInt("nutch.server.port", 8182));
+    NutchClient client = new NutchClient(conf);
     client.unregister(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
     client.recyclePort(ServerInstance.Type.FetcherServer, port);
 
     return true;
   }
 
-  public static Integer acquirePort(Configuration conf) {
+  public static int acquirePort(Configuration conf) {
     NutchClient client = new NutchClient(conf);
     if (client.available()) {
       return client.acquirePort(ServerInstance.Type.FetcherServer);
     }
 
-    return DEFAULT_PORT;
+    return -1;
   }
 }

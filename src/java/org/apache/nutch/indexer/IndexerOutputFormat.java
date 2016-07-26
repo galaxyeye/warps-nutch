@@ -16,13 +16,9 @@
  */
 package org.apache.nutch.indexer;
 
-import java.io.IOException;
+import org.apache.hadoop.mapreduce.*;
 
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import java.io.IOException;
 
 public class IndexerOutputFormat extends OutputFormat<String, NutchDocument> {
 
@@ -41,7 +37,6 @@ public class IndexerOutputFormat extends OutputFormat<String, NutchDocument> {
     writers.open(job.getConfiguration());
 
     return new RecordWriter<String, NutchDocument>() {
-
       @Override
       public void write(String key, NutchDocument doc) throws IOException {
         // TODO: Check Write Status for delete or write.
@@ -49,21 +44,18 @@ public class IndexerOutputFormat extends OutputFormat<String, NutchDocument> {
       }
 
       @Override
-      public void close(TaskAttemptContext context) throws IOException,
-          InterruptedException {
+      public void close(TaskAttemptContext context) throws IOException, InterruptedException {
         writers.close();
       }
     };
   }
 
   @Override
-  public void checkOutputSpecs(JobContext jobContext) throws IOException,
-      InterruptedException {
+  public void checkOutputSpecs(JobContext jobContext) throws IOException, InterruptedException {
   }
 
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext arg0)
-      throws IOException, InterruptedException {
+  public OutputCommitter getOutputCommitter(TaskAttemptContext arg0) throws IOException, InterruptedException {
     // return an empty outputcommitter
     return new OutputCommitter() {
       @Override
@@ -75,8 +67,7 @@ public class IndexerOutputFormat extends OutputFormat<String, NutchDocument> {
       }
 
       @Override
-      public boolean needsTaskCommit(TaskAttemptContext arg0)
-          throws IOException {
+      public boolean needsTaskCommit(TaskAttemptContext arg0) throws IOException {
         return false;
       }
 

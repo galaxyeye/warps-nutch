@@ -16,33 +16,31 @@
  */
 package org.apache.nutch.indexwriter.solr;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.indexer.CleaningJob;
+import org.apache.nutch.indexer.IndexWriter;
+import org.apache.nutch.indexer.NutchDocument;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.common.SolrInputDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.CleaningJob;
-import org.apache.nutch.indexer.NutchDocument;
-import org.apache.nutch.indexer.IndexWriter;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.common.SolrInputDocument;
-
 public class SolrIndexWriter implements IndexWriter {
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(SolrIndexWriter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(SolrIndexWriter.class);
 
   private HttpSolrServer solr;
   private SolrMappingReader solrMapping;
 
   private Configuration config;
 
-  private final List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
+  private final List<SolrInputDocument> inputDocs = new ArrayList<>();
 
   private int batchSize;
   private int numDeletes = 0;
@@ -60,9 +58,9 @@ public class SolrIndexWriter implements IndexWriter {
   @Override
   public void write(NutchDocument doc) throws IOException {
     final SolrInputDocument inputDoc = new SolrInputDocument();
+
     for (final Entry<String, List<String>> e : doc) {
       for (final String val : e.getValue()) {
-
         Object val2 = val;
         if (e.getKey().equals("content") || e.getKey().equals("title")) {
           val2 = SolrUtils.stripNonCharCodepoints(val);
@@ -75,9 +73,11 @@ public class SolrIndexWriter implements IndexWriter {
         }
       }
     }
+
     inputDoc.setDocumentBoost(doc.getScore());
     inputDocs.add(inputDoc);
     documentCount++;
+
     if (inputDocs.size() >= batchSize) {
       try {
         LOG.info("Adding " + Integer.toString(inputDocs.size()) + " documents");

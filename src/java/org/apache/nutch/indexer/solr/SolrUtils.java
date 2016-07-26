@@ -1,14 +1,12 @@
 package org.apache.nutch.indexer.solr;
 
-import java.net.MalformedURLException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.http.auth.AuthScope;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
 
 public class SolrUtils {
 
@@ -16,7 +14,7 @@ public class SolrUtils {
 
   public static HttpSolrServer getHttpSolrServer(Configuration job)
       throws MalformedURLException {
-    CloseableHttpClient client = HttpClientBuilder.create().build();
+//    CloseableHttpClient client = HttpClientBuilder.create().build();
 
     // Check for username/password
     boolean useAuth = job.getBoolean(SolrConstants.USE_AUTH, false);
@@ -27,7 +25,7 @@ public class SolrUtils {
 
       AuthScope scope = new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT,
           AuthScope.ANY_REALM, AuthScope.ANY_SCHEME);
-      
+
 //      client.getCredentialsProvider().setCredentials(
 //          scope,
 //          new UsernamePasswordCredentials(username, job
@@ -39,7 +37,8 @@ public class SolrUtils {
 //      client.setParams(params);
     }
 
-    return new HttpSolrServer(job.get(SolrConstants.SERVER_URL), client);
+    // return new HttpSolrServer(job.get(SolrConstants.SERVER_URL), client);
+    return new HttpSolrServer(job.get(SolrConstants.SERVER_URL), null);
   }
 
   public static String stripNonCharCodepoints(String input) {

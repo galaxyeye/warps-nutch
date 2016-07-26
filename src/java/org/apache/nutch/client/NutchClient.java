@@ -1,18 +1,18 @@
 package org.apache.nutch.client;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.local.model.ServerInstance;
-import org.apache.nutch.util.NetUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.storage.local.model.ServerInstance;
+import org.apache.nutch.util.NetUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class NutchClient {
 
@@ -26,8 +26,8 @@ public class NutchClient {
 
   public NutchClient(Configuration conf) {
     this(conf,
-        conf.get("nutch.master.hostname", "localhost"),
-        conf.getInt("nutch.server.port", 8182));
+        conf.get("nutch.master.hostname", Nutch.DEFAULT_MASTER_HOSTNAME),
+        conf.getInt("nutch.server.port", Nutch.DEFAULT_MASTER_PORT));
   }
 
   public NutchClient(Configuration conf, String host, int port) {
@@ -52,24 +52,40 @@ public class NutchClient {
     return port;
   }
 
+  /**
+   * Check if the server is available
+   * TODO : it seems this is useless
+   * */
   public boolean available() {
     return NetUtil.testNetwork(host, port);
   }
 
+  /**
+   * Register this fetch server instance
+   * */
   public void register(ServerInstance instance) {
     nutchResource.path("service/register").type(APPLICATION_JSON).post(instance);
   }
 
+  /**
+   * Unregister this fetch server instance
+   * */
   public void unregister(ServerInstance instance) {
     nutchResource.path("service/unregister").type(APPLICATION_JSON).delete(instance);
   }
 
+  /**
+   * Acquire a available fetch server port
+   * */
   public int acquirePort(ServerInstance.Type type) {
     return nutchResource.path("port/acquire")
         .queryParam("type", type.name())
         .get(Integer.class);
   }
 
+  /**
+   * Resycle a available fetch server port
+   * */
   public void recyclePort(ServerInstance.Type type, int port) {
     nutchResource.path("port/recycle")
         .queryParam("type", type.name())

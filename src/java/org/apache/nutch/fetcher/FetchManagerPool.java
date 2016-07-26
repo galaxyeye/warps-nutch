@@ -1,16 +1,16 @@
 package org.apache.nutch.fetcher;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nutch.fetcher.data.FetchItem;
+import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 /**
  * FetchManagerPool is shared by all Nutch Fetch Jobs
@@ -21,8 +21,15 @@ public class FetchManagerPool {
 
   private static FetchManagerPool instance;
 
+  private String name;
   private Map<Integer, FetchManager> fetchManagers = Maps.newTreeMap();
   private Queue<Integer> jobIDs = Lists.newLinkedList();
+
+  private FetchManagerPool() {
+    this.name = this.getClass().getName() + "." + TimingUtil.now("d.Hms");
+
+    LOG.info("Initialize fetch manager pool " + name);
+  }
 
   public static FetchManagerPool getInstance() {
     if(instance == null) {
@@ -30,6 +37,10 @@ public class FetchManagerPool {
     }
 
     return instance;
+  }
+
+  public String name() {
+    return this.name;
   }
 
   public synchronized void put(FetchManager fetchManager) {

@@ -16,10 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.storage;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-
 import org.apache.gora.filter.Filter;
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.mapreduce.GoraOutputFormat;
@@ -33,6 +29,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.nutch.metadata.Nutch;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Entry point to Gora store/mapreduce functionality. Translates the concept of
@@ -74,15 +74,14 @@ public class StorageUtils {
           "Unable to create store for class " + persistentClass);
     }
 
-    Class<? extends DataStore<K, V>> dataStoreClass = (Class<? extends DataStore<K, V>>) getDataStoreClass(conf);
-    return DataStoreFactory.createDataStore(dataStoreClass, keyClass,
-        persistentClass, conf, schema);
+    Class<? extends DataStore<K, V>> dataStoreClass = getDataStoreClass(conf);
+    return DataStoreFactory.createDataStore(dataStoreClass, keyClass, persistentClass, conf, schema);
   }
 
   /**
    * Return the Persistent Gora class used to persist Nutch Web data.
    * 
-   * @param the
+   * @param conf
    *          Nutch configuration
    * @return the Gora DataStore persistent class
    * @throws ClassNotFoundException
@@ -130,17 +129,18 @@ public class StorageUtils {
       Class<? extends Partitioner<K, V>> partitionerClass,
       Filter<String, WebPage> filter, boolean reuseObjects)
       throws ClassNotFoundException, IOException {
-    DataStore<String, WebPage> store = createWebStore(job.getConfiguration(),
-        String.class, WebPage.class);
-    if (store == null)
+    DataStore<String, WebPage> store = createWebStore(job.getConfiguration(), String.class, WebPage.class);
+    if (store == null) {
       throw new RuntimeException("Could not create datastore");
+    }
+
     Query<String, WebPage> query = store.newQuery();
     query.setFields(toStringArray(fields));
     if (filter != null) {
       query.setFilter(filter);
     }
-    GoraMapper.initMapperJob(job, query, store, outKeyClass, outValueClass,
-        mapperClass, partitionerClass, reuseObjects);
+
+    GoraMapper.initMapperJob(job, query, store, outKeyClass, outValueClass, mapperClass, partitionerClass, reuseObjects);
     GoraOutputFormat.setOutput(job, store, true);
   }
 

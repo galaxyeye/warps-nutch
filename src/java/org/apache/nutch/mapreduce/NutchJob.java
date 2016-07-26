@@ -16,19 +16,24 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-
+import com.google.common.collect.Maps;
+import org.apache.avro.util.Utf8;
+import org.apache.gora.filter.FilterOp;
+import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Map;
 
 public abstract class NutchJob extends Configured {
 
@@ -45,8 +50,8 @@ public abstract class NutchJob extends Configured {
   protected long startTime = System.currentTimeMillis();
 
   protected void setup(Map<String, Object> args) throws Exception {
-    LOG.info("\n\n\n------------------------- " + getJobName() + " -------------------------");
-    LOG.info("Job starting at " + TimingUtil.format(startTime));
+    LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");
+    LOG.info("Job started at " + TimingUtil.format(startTime));
 
     synchronized (status) {
       status.put("startTime", TimingUtil.format(startTime));
@@ -59,7 +64,7 @@ public abstract class NutchJob extends Configured {
       updateStatus();
       updateResults();
 
-      LOG.info(NutchUtil.printArgMap(results));
+      LOG.info(StringUtil.formatParams(results));
       LOG.info("Affected rows : " + affectedRows);
     }
     catch (Throwable e) {
@@ -92,13 +97,28 @@ public abstract class NutchJob extends Configured {
       doRun(args);
     }
     catch(Throwable e) {
-      LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error(StringUtil.stringifyException(e));
     }
     finally {
       cleanup(args);
     }
 
     return results;
+  }
+
+  protected MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
+    if (batchId.equals(Nutch.ALL_CRAWL_ID.toString())) {
+      return null;
+    }
+
+    MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<>();
+    filter.setFieldName(WebPage.Field.MARKERS.toString());
+    filter.setFilterOp(FilterOp.EQUALS);
+    filter.setFilterIfMissing(true);
+    filter.setMapKey(Mark.GENERATE_MARK.getName());
+    filter.getOperands().add(new Utf8(batchId));
+
+    return filter;
   }
 
   public long getAffectedRows() {
@@ -174,7 +194,7 @@ public abstract class NutchJob extends Configured {
     String finishTime = TimingUtil.format(System.currentTimeMillis());
     String timeElapsed = TimingUtil.elapsedTime(startTime);
 
-    results.putAll(NutchUtil.toArgMap(
+    results.putAll(StringUtil.toArgMap(
         "startTime", TimingUtil.format(startTime),
         "finishTime", finishTime,
         "timeElapsed", timeElapsed
@@ -213,15 +233,6 @@ public abstract class NutchJob extends Configured {
       }
     }
     return false;
-  }
-
-  protected void recordParams(Object... args) {
-    this.params.putAll(NutchUtil.toArgMap(args));
-  }
-
-  protected void recordAndLogParams(Object... args) {
-    recordParams(args);
-    LOG.info(NutchUtil.printArgMap(params));
   }
 
   protected long getCounterValue(String group, String name) throws IOException, InterruptedException {

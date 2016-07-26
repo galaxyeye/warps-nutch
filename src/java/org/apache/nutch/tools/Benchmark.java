@@ -16,12 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.tools;
 
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,12 +27,19 @@ import org.apache.nutch.crawl.DbUpdaterJob;
 import org.apache.nutch.crawl.GeneratorJob;
 import org.apache.nutch.crawl.InjectorJob;
 import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.mapreduce.WebTableReader;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParserJob;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Benchmark extends Configured implements Tool {
   private static final Logger LOG = LoggerFactory.getLogger(Benchmark.class);
@@ -228,14 +229,13 @@ public class Benchmark extends Configured implements Tool {
 
     long start = System.currentTimeMillis();
     // initialize crawlDb
-    injector.inject(rootUrlDir);
+    injector.inject(rootUrlDir.toString());
     long delta = System.currentTimeMillis() - start;
     res.addTiming("inject", "0", delta);
     int i;
     for (i = 0; i < depth; i++) { // generate new batch
       start = System.currentTimeMillis();
-      String batchId = generator.generate(topN, System.currentTimeMillis(),
-          false, false);
+      String batchId = generator.generate(topN, NutchUtil.generateBatchId(), System.currentTimeMillis(), false, false);
       delta = System.currentTimeMillis() - start;
       res.addTiming("generate", i + "", delta);
       if (batchId == null) {

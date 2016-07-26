@@ -17,11 +17,10 @@
 
 package org.apache.nutch.crawl;
 
-import java.util.Collection;
-
 import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.io.Text;
 import org.apache.nutch.storage.WebPage;
+
+import java.util.Collection;
 
 /**
  * This interface defines the contract for implementations that manipulate fetch
@@ -67,14 +66,10 @@ public interface FetchSchedule extends Configurable {
    * @param fetchTime
    *          the latest time, when the page was recently re-fetched. Most
    *          FetchSchedule implementations should update the value in
-   * @param datum
-   *          to something greater than this value.
    * @param modifiedTime
    *          last time the content was modified. This information comes from
    *          the protocol implementations, or is set to < 0 if not available.
    *          Most FetchSchedule implementations should update the value in
-   * @param datum
-   *          to this value.
    * @param state
    *          if {@link #STATUS_MODIFIED}, then the content is considered to be
    *          "changed" before the <code>fetchTime</code>, if
@@ -92,7 +87,7 @@ public interface FetchSchedule extends Configurable {
    * This method specifies how to schedule refetching of pages marked as GONE.
    * Default implementation increases fetchInterval by 50%, and if it exceeds
    * the <code>maxInterval</code> it calls
-   * {@link #forceRefetch(Text, CrawlDatum, boolean)}.
+   * {@link #forceRefetch(String, WebPage, boolean)}.
    * 
    * @param url
    *          URL of the page
@@ -147,7 +142,7 @@ public interface FetchSchedule extends Configurable {
    * @return true, if the page should be considered for inclusion in the current
    *         fetchlist, otherwise false.
    */
-  public boolean shouldFetch(String url, WebPage page, long curTime);
+  public boolean shouldFetch(String url, WebPage row, long curTime);
 
   /**
    * This method resets fetchTime, fetchInterval, modifiedTime and page
@@ -155,7 +150,7 @@ public interface FetchSchedule extends Configurable {
    * 
    * @param url
    *          URL of the page
-   * @param page
+   * @param row
    * @param asap
    *          if true, force refetch as soon as possible - this sets the
    *          fetchTime to now. If false, force refetch whenever the next fetch

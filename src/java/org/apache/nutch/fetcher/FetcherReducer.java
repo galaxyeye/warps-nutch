@@ -16,86 +16,124 @@
  ******************************************************************************/
 package org.apache.nutch.fetcher;
 
-import java.io.IOException;
-import java.util.List;
-
 import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.nutch.api.NutchServer;
 import org.apache.nutch.fetcher.data.FetchEntry;
 import org.apache.nutch.fetcher.data.FetchItemQueues;
 import org.apache.nutch.fetcher.server.FetcherServer;
 import org.apache.nutch.mapreduce.NutchReducer;
-import org.apache.nutch.mapreduce.NutchUtil;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NetUtil;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String, WebPage> {
 
   public static final Logger LOG = FetcherJob.LOG;
 
+  public static final int remainderLimit = 5;
+
+  private String jobName;
+
   private QueueFeederThread queueFeederThread;   // feeder thread who feeds fetch queues
   private Integer fetchServerPort;
   private FetcherServer fetcherServer;
-  private final List<FetchThread> fetchThreads = Lists.newArrayList();
   private int fetchThreadCount = 5;
   private int maxFeedPerThread = 100;
 
   private FetchManager fetchManager;
   private FetchMode fetchMode = FetchMode.NATIVE;
 
-  private long fetchJobTimeout;
+  private long fetchJobTimeout = Long.MAX_VALUE;
+  private long fetchTaskTimeout;
   private long pendingQueueCheckInterval;
   private long pendingQueueLastCheckTime;
   private long pendingTimeout;
-  private int reportIntervalSec;
+
+  /** final */
+  private int minPageThroughputRate;
+  /** final */
+  private long throughputCheckTimeLimit;
+  /** final */
+  private int maxLowThroughputCount;
+
+  private int lowThroughputCount = 0;
+
+  /** Report interval in seconds */
+  private int reportInterval;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
 
-    fetchMode = FetchMode.fromString(conf.get("fetcher.fetch.mode", "native"));
+    jobName = context.getJobName();
 
-    fetchServerPort = FetcherServer.acquirePort(conf);
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+
+    fetchMode = FetchMode.fromString(conf.get("fetcher.fetch.mode", FetchMode.NATIVE.value()));
+
+    if (fetchMode.equals(FetchMode.CROWDSOURCING)) {
+      fetchServerPort = tryAcquireFetchServerPort();
+    }
     fetchManager = new FetchManager(context.getJobID().getId(), getCounter(), context);
     FetchManagerPool.getInstance().put(fetchManager);
 
     getCounter().register(FetchManager.Counter.class);
     getReporter().silence();
 
-    fetchJobTimeout = 60 * 1000 * conf.getInt("mapred.task.timeout.mins", 10);
+    fetchJobTimeout = 60 * 1000 * conf.getLong("fetcher.timelimit.mins", Long.MAX_VALUE / (60 * 1000));
+    fetchTaskTimeout = 60 * 1000 * conf.getInt("mapred.task.timeout.mins", 16);
+    pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
     pendingQueueCheckInterval = 60 * 1000 * conf.getLong("fetcher.pending.queue.check.time.mins", 8);
-    pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", 3);
-    reportIntervalSec = conf.getInt("fetcher.pending.timeout.secs", 20);
     pendingQueueLastCheckTime = startTime;
     fetchThreadCount = conf.getInt("fetcher.threads.fetch", 5);
     maxFeedPerThread = conf.getInt("fetcher.queue.depth.multiplier", 100);
 
-    LOG.info(NutchUtil.printArgMap(
+    reportInterval = conf.getInt("fetcher.pending.timeout.secs", 20);
+
+    /**
+     * Used for threshold check, holds pages and bytes processed in the last sec
+     * We should keep a minimal fetch speed
+     * */
+    minPageThroughputRate = conf.getInt("fetcher.throughput.threshold.pages", -1);
+    maxLowThroughputCount = conf.getInt("fetcher.throughput.threshold.sequence", 5);
+    throughputCheckTimeLimit = startTime + conf.getLong("fetcher.throughput.threshold.check.after", -1);
+
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
         "fetchMode", fetchMode,
-        "fetchJobTimeout", fetchJobTimeout,
-        "pendingQueueCheckInterval", pendingQueueCheckInterval,
+        "fetchManagerPool", FetchManagerPool.getInstance().name(),
+        "fetchManager", fetchManager.name(),
+        "fetchJobTimeout(m)", fetchJobTimeout / 60 / 1000,
+        "fetchTaskTimeout(m)", fetchTaskTimeout / 60 / 1000,
+        "pendingQueueCheckInterval(m)", pendingQueueCheckInterval / 60 / 1000,
         "pendingTimeout", pendingTimeout,
-        "reportIntervalSec", reportIntervalSec,
         "pendingQueueLastCheckTime", pendingQueueLastCheckTime,
         "fetchThreadCount", fetchThreadCount,
         "maxFeedPerThread", maxFeedPerThread,
-        "fetchServerPort", fetchServerPort
+        "fetchServerPort", fetchServerPort,
+        "minPageThroughputRate", minPageThroughputRate,
+        "maxLowThroughputCount", maxLowThroughputCount,
+        "throughputCheckTimeLimit", throughputCheckTimeLimit,
+        "reportInterval(s)", reportInterval
     ));
+
+    LOG.info("use the following command to finishi the task : \necho finish " + jobName + " >> /tmp/.NUTCH_LOCAL_FILE_COMMAND");
   }
 
   @Override
   protected void doRun(Context context) throws IOException, InterruptedException {
-    if (fetchServerPort == null) {
-      LOG.error("Failed to acquire fetch server port");
-      stop();
-    }
-
     // Queue feeder thread
     startQueueFeederThread(context);
 
@@ -114,7 +152,7 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
       startNativeFetcherThreads(context);
     }
 
-    checkAndReportFetcherStatus(context);
+    startCheckAndReportLoop(context);
   }
 
   @Override
@@ -131,13 +169,161 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
    * Start queue feeder thread. The thread fetches webpages from the reduce result
    * and add it into the fetch queue
    * Non-Blocking
-   * @throws InterruptedException 
-   * @throws IOException 
+   * @throws InterruptedException
+   * @throws IOException
    * */
   public void startQueueFeederThread(Context context) throws IOException, InterruptedException {
     FetchItemQueues queues = fetchManager.getFetchItemQueues();
     queueFeederThread = new QueueFeederThread(context, queues, fetchThreadCount * maxFeedPerThread);
     queueFeederThread.start();
+  }
+
+  private Integer tryAcquireFetchServerPort() {
+    int port = FetcherServer.acquirePort(conf);
+    if (port < 0) {
+      LOG.error("Failed to acquire fetch server port");
+      stop();
+    }
+    return port;
+  }
+
+  private void startFetchServer(final Configuration conf, final int port) {
+    fetcherServer = FetcherServer.startInDaemonThread(conf, port);
+  }
+
+  /**
+   * Start crowd sourcing threads
+   * Blocking
+   * */
+  private void startCrowdsourcingThreads(Context context) {
+    fetchManager.startFetchThreads(queueFeederThread, fetchThreadCount, context);
+  }
+
+  /**
+   * Start native fetcher threads
+   * Blocking
+   * */
+  private void startNativeFetcherThreads(Context context) {
+    fetchManager.startFetchThreads(queueFeederThread, fetchThreadCount, context);
+  }
+
+  private void startCheckAndReportLoop(Context context) throws IOException {
+    do {
+      fetchManager.adjustFetchResourceByTargetBandwidth(queueFeederThread);
+
+      fetchManager.waitAndReport(reportInterval, context);
+
+      long now = System.currentTimeMillis();
+      long jobTime = now - startTime;
+      long idleTime = now - fetchManager.getLastTaskFinishTime();
+      boolean isCrowdsourcing = fetchMode.equals(FetchMode.CROWDSOURCING);
+
+      /**
+       * In crowd sourcing mode, check if any fetch tasks are hung
+       * */
+      if (isCrowdsourcing) {
+        checkPendingQueue(now, idleTime);
+      }
+
+      /**
+       * Dump the remainder fetch items if feeder thread is no available and fetch item is few
+       * */
+      if (fetchManager.getQueueCount() <= remainderLimit) {
+        handleFewFetchItems();
+      }
+
+      /**
+       * All fetch tasks are finished
+       * */
+      if (isMissionComplete()) {
+        LOG.info("All done, exit the job...");
+        break;
+      }
+
+      if (jobTime > fetchJobTimeout) {
+        handleJobTimeout();
+        LOG.info("Hit fetch job timeout " + jobTime / 1000 + "s, exit the job...");
+        break;
+      }
+
+      /**
+       * No new tasks for too long, some requests seem to hang. We exits the job.
+       * */
+      if (idleTime > fetchTaskTimeout) {
+        handleFetchTaskTimeout();
+        LOG.info("Hit fetch task timeout " + idleTime / 1000 + "s, exit the job...");
+        break;
+      }
+
+      /**
+       * Check throughput(fetch speed)
+       * */
+      float fetchSpeed = fetchManager.getPagesThroughputRate();
+      if (now > throughputCheckTimeLimit && fetchSpeed < minPageThroughputRate) {
+        checkFetchEfficiency(context);
+        if (lowThroughputCount > maxLowThroughputCount) {
+          break;
+        }
+      }
+
+      /**
+       * Read local filesystem for control commands
+       * */
+      if (checkLocalFileCommandExists("finish " + jobName)) {
+        break;
+      }
+
+    } while (fetchManager.getActiveFetchThreadCount() > 0);
+  }
+
+  /**
+   * TODO : check the real meaning of timeLimitMillis
+   *
+   * It seems to be "fetch deadline"
+   * */
+  public int handleJobTimeout() {
+    return fetchManager.clearFetchItemQueues();
+  }
+
+  /**
+   * Check if some threads are hung. If so, we should stop the main fetch loop
+   * should we stop the main fetch loop
+   * */
+  private void handleFetchTaskTimeout() {
+    int activeFetchThreads = fetchManager.getActiveFetchThreadCount();
+    if (activeFetchThreads <= 0) {
+      return;
+    }
+
+    LOG.warn("Aborting with " + activeFetchThreads + " hung threads.");
+
+    fetchManager.dumpFetchThreads();
+  }
+
+  private void handleFewFetchItems() {
+    if (!isFeederAlive()) {
+      fetchManager.dumpFetchItems(remainderLimit);
+    }
+  }
+
+  /**
+   * Check local command file.
+   * */
+  private boolean checkLocalFileCommandExists(String command) {
+    boolean exist = false;
+
+    Path path = Paths.get("/tmp/.NUTCH_LOCAL_FILE_COMMAND");
+    if (Files.exists(path)) {
+      try {
+        List<String> lines = Files.readAllLines(path);
+        exist = lines.stream().anyMatch(line -> line.equals(command));
+        lines.remove(command);
+        Files.write(path, lines);
+      } catch (IOException e) {
+      }
+    }
+
+    return exist;
   }
 
   private boolean isFeederAlive() {
@@ -147,161 +333,55 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
   }
 
   private boolean isMissionComplete() {
-    return !isFeederAlive() 
-        && fetchManager.getReadyItemCount() == 0 
+    return !isFeederAlive()
+        && fetchManager.getReadyItemCount() == 0
         && fetchManager.getPendingItemCount() == 0;
-  }
-
-  private void startFetchServer(final Configuration conf, final int port) {
-    fetcherServer = FetcherServer.startInDaemonThread(conf, port);
-  }
-
-  /**
-   * Blocking
-   * */
-  private void startCrowdsourcingThreads(Context context) {
-    // Start native fetch threads to handle fetch result from fetch clients
-    for (int i = 0; i < fetchThreadCount; i++) {
-      FetchThread fetchThread = new FetchThread(queueFeederThread, fetchManager, context);
-      fetchThreads.add(fetchThread);
-      fetchThread.start();
-    }
-  }
-
-  private void checkAndReportCrowdsourcingFetcherStatus(Context context) throws IOException {
-    boolean shouldStop = false;
-    do {
-      fetchManager.waitAndReport(context, reportIntervalSec, isFeederAlive());
-
-      long now = System.currentTimeMillis();
-      long idleTime = now - fetchManager.getLastTaskFinishTime();
-
-      checkPendingQueue(now, idleTime);
-
-      if (!shouldStop && idleTime > fetchJobTimeout) {
-        LOG.info("Hit fetch job timeout " + idleTime / 1000 + "s, exit the job...");
-        shouldStop = true;
-      }
-
-      // All fetch tasks are finished
-      if (!shouldStop && isMissionComplete()) {
-        LOG.info("All done, exit the job...");
-        shouldStop = true;
-      }
-
-    } while (!shouldStop);
-  }
-
-  private void startNativeFetcherThreads(Context context) {
-    for (int i = 0; i < fetchThreadCount; i++) {
-      FetchThread fetchThread = new FetchThread(queueFeederThread, fetchManager, context);
-      fetchThreads.add(fetchThread);
-      fetchThread.start();
-    }
-  }
-
-  // Blocking
-  private void checkAndReportFetcherStatus(Context context) throws IOException {
-    if (FetchMode.CROWDSOURCING.equals(fetchMode)) {
-      checkAndReportCrowdsourcingFetcherStatus(context);
-    }
-    else {
-      checkAndReportNativeFetcherStatus(context);      
-    }
-  }
-
-  private void checkAndReportNativeFetcherStatus(Context context) throws IOException {
-    // Used for threshold check, holds pages and bytes processed in the last sec
-    int throughputThresholdCurrentSequence = 0;
-
-    int throughputThresholdPages = conf.getInt("fetcher.throughput.threshold.pages", -1);
-    if (LOG.isInfoEnabled()) { LOG.info("Fetcher: throughput threshold: " + throughputThresholdPages); }
-    int throughputThresholdSequence = conf.getInt("fetcher.throughput.threshold.sequence", 5);
-    if (LOG.isInfoEnabled()) {
-      LOG.info("Fetcher: throughput threshold sequence: " + throughputThresholdSequence);
-    }
-    long throughputThresholdTimeLimit = conf.getLong("fetcher.throughput.threshold.check.after", -1);
-
-    do {
-      float pagesLastSec = fetchManager.waitAndReport(context, reportIntervalSec, isFeederAlive());
-
-      // if throughput threshold is enabled
-      if (throughputThresholdTimeLimit < System.currentTimeMillis() && throughputThresholdPages != -1) {
-        // Check if we're dropping below the threshold
-        if (pagesLastSec < throughputThresholdPages) {
-          throughputThresholdCurrentSequence++;
-
-          LOG.warn(Integer.toString(throughputThresholdCurrentSequence) 
-              + ": dropping below configured threshold of " + Integer.toString(throughputThresholdPages) 
-              + " pages per second");
-
-          // Quit if we dropped below threshold too many times
-          if (throughputThresholdCurrentSequence > throughputThresholdSequence) {
-            LOG.warn("Dropped below threshold too many times in a row, killing!");
-
-            // Disable the threshold checker
-            throughputThresholdPages = -1;
-
-            // Empty the queues cleanly and get number of items that were dropped
-            int hitByThrougputThreshold = fetchManager.clearFetchItemQueues();
-
-            if (hitByThrougputThreshold != 0) {
-              context.getCounter("FetcherStatus", "hitByThrougputThreshold").increment(hitByThrougputThreshold);
-            }
-          }
-        } else {
-          throughputThresholdCurrentSequence = 0;
-        }
-      }
-
-      // some requests seem to hang, despite all intentions
-      if ((System.currentTimeMillis() - fetchManager.getLastTaskStartTime()) > fetchJobTimeout) {
-        if (fetchManager.activeFetcherThreads.get() > 0) {
-          LOG.warn("Aborting with " + fetchManager.activeFetcherThreads.get() + " hung threads.");
-
-          for (int i = 0; i < fetchThreads.size(); i++) {
-            FetchThread thread = fetchThreads.get(i);
-            if (thread.isAlive()) {
-              LOG.warn("Thread #" + i + " hung while processing " + thread.reprUrl());
-
-              if (LOG.isDebugEnabled()) {
-                StackTraceElement[] stack = thread.getStackTrace();
-                StringBuilder sb = new StringBuilder();
-                sb.append("Stack of thread #").append(i).append(":\n");
-                for (StackTraceElement s : stack) {
-                  sb.append(s.toString()).append('\n');
-                }
-
-                LOG.debug(sb.toString());
-              }
-            }
-          } // for
-        } // if
-
-        return;
-      } // if
-    } while (fetchManager.activeFetcherThreads.get() > 0);
   }
 
   /**
    * Check pending queue to see if some item is expired,
    * which often means the fetch client running into wrong
-   * TODO : may move this method into FetchManager
    * */
   private void checkPendingQueue(long now, long idleTime) {
     if (fetchManager.getReadyItemCount() + fetchManager.getPendingItemCount() < 10) {
       pendingTimeout = 2 * 60 * 1000;
     }
 
-    boolean shouldCheck = now > pendingQueueLastCheckTime + 2 * reportIntervalSec * 1000;
+    boolean shouldCheck = now > pendingQueueLastCheckTime + 2 * reportInterval * 1000;
     if (shouldCheck) {
       shouldCheck = idleTime > pendingTimeout || now - pendingQueueLastCheckTime > pendingQueueCheckInterval;
     }
 
     if (shouldCheck) {
-      LOG.info("Check pending items");
+      LOG.info("Checking pending items ...");
       fetchManager.reviewPendingFetchItems(false);
       pendingQueueLastCheckTime = now;
     }
+  }
+
+  /**
+   * Check if we're dropping below the threshold (we are too slow)
+   * */
+  private int checkFetchEfficiency(Context context) throws IOException {
+    lowThroughputCount++;
+
+    LOG.warn(lowThroughputCount + ": Fetch speed to slow, minimum speed should be " + minPageThroughputRate + " pages per second");
+
+    // Quit if we dropped below threshold too many times
+    if (lowThroughputCount > maxLowThroughputCount) {
+      LOG.warn("Dropped below threshold too many times in a row, killing!");
+
+      // Disable the threshold checker
+      minPageThroughputRate = -1;
+
+      // Empty the queues cleanly and get number of items that were dropped
+      int hitByThrougputThreshold = fetchManager.clearFetchItemQueues();
+
+      if (hitByThrougputThreshold != 0) {
+        context.getCounter("FetcherStatus", "unacceptableFetchEfficiency").increment(hitByThrougputThreshold);
+      }
+    }
+
+    return lowThroughputCount;
   }
 }

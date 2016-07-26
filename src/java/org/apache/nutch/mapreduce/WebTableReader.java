@@ -16,16 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
-
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
@@ -33,6 +23,7 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
@@ -50,17 +41,25 @@ import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
+
 /**
  * Displays information about the entries of the webtable
  **/
-
 public class WebTableReader extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(WebTableReader.class);
@@ -208,7 +207,7 @@ public class WebTableReader extends NutchJob implements Tool {
       LOG.info("WebTable statistics start");
     }
 
-    run(NutchUtil.toArgMap(Nutch.ARG_SORT, sort));
+    run(StringUtil.toArgMap(Nutch.ARG_SORT, sort));
 
     LOG.info("Statistics for WebTable: ");
     for (Entry<String, Object> e : results.entrySet()) {

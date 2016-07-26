@@ -1,18 +1,14 @@
 package org.apache.nutch.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Socket;
-import java.net.URL;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.*;
 
 public class NetUtil {
 
@@ -83,7 +79,7 @@ public class NetUtil {
       domain = baseUri.substring(pos);
     }
 
-    // 如：http://dangdang.com
+    // for example : http://dangdang.com
     if (domain != null && !domain.contains(".")) {
       domain = baseUri.replaceAll("(http://|https://)", "");
     }

@@ -16,14 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.mapreduce.GoraOutputFormat;
 import org.apache.gora.store.DataStore;
@@ -36,6 +28,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.fetcher.FetchMode;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.NutchUtil;
@@ -46,9 +39,16 @@ import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * This class takes a flat file of URLs and adds them to the of pages to be
@@ -90,10 +90,26 @@ public class InjectorJob extends NutchJob implements Tool {
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
+      Configuration conf = context.getConfiguration();
+
+      String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+      String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+      int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+
       interval = context.getConfiguration().getInt("db.fetch.interval.default", 2592000);
       scfilters = new ScoringFilters(context.getConfiguration());
       scoreInjected = context.getConfiguration().getFloat("db.score.injected", Float.MAX_VALUE);
       curTime = context.getConfiguration().getLong("injector.current.time", System.currentTimeMillis());
+
+      LOG.info(StringUtil.formatParams(
+          "className", this.getClass().getSimpleName(),
+          "crawlId", crawlId,
+          "UICrawlId", UICrawlId,
+          "fetchMode", fetchMode,
+          "fetchInterval", interval,
+          "scoreInjected", scoreInjected,
+          "injectTime", TimingUtil.format(curTime)
+      ));
     }
 
     protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
@@ -110,40 +126,22 @@ public class InjectorJob extends NutchJob implements Tool {
       // must be name=value and separated by \t
       float customScore = -1f;
       int customInterval = interval;
-      Map<String, String> metadata = new TreeMap<String, String>();
-      if (url.indexOf("\t") != -1) {
-        String[] splits = url.split("\t");
-        url = splits[0];
-        for (int s = 1; s < splits.length; s++) {
-          // find separation between name and value
-          int indexEquals = splits[s].indexOf("=");
-          if (indexEquals == -1) {
-            // skip anything without a =
-            continue;
-          }
+      Map<String, String> metadata = getMetadata(url, customScore, customInterval);
 
-          String metaname = splits[s].substring(0, indexEquals);
-          String metavalue = splits[s].substring(indexEquals + 1);
-          if (metaname.equals(nutchScoreMDName)) {
-            try {
-              customScore = Float.parseFloat(metavalue);
-            } catch (NumberFormatException nfe) {
-            }
-          } else if (metaname.equals(nutchFetchIntervalMDName)) {
-            try {
-              customInterval = Integer.parseInt(metavalue);
-            } catch (NumberFormatException nfe) {
-            }
-          } else {
-            metadata.put(metaname, metavalue);
-          }
-        }
-      } // if
-
-      String reversedUrl = TableUtil.reverseUrl(url); // collect it
+      String reversedUrl = null;
       WebPage row = WebPage.newBuilder().build();
-      row.setFetchTime(curTime);
-      row.setFetchInterval(customInterval);
+      try {
+        reversedUrl = TableUtil.reverseUrl(url); // collect it
+        row.setFetchTime(curTime);
+        row.setFetchInterval(customInterval);
+      }
+      catch (MalformedURLException e) {
+        LOG.warn("Ignore illegal formatted url : " + url);
+      }
+
+      if (reversedUrl == null) {
+        return;
+      }
 
       // now add the metadata
       Iterator<String> keysIter = metadata.keySet().iterator();
@@ -173,7 +171,42 @@ public class InjectorJob extends NutchJob implements Tool {
 
       context.getCounter(Nutch.COUNTER_GROUP_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
 
-      LOG.debug("Injected : " + url);
+      // LOG.debug("Injected : " + url);
+    }
+
+    private Map<String, String> getMetadata(String url, float customScore, int customInterval) {
+      Map<String, String> metadata = new TreeMap<>();
+
+      if (url.indexOf("\t") != -1) {
+        String[] splits = url.split("\t");
+        url = splits[0];
+        for (int s = 1; s < splits.length; s++) {
+          // find separation between name and value
+          int indexEquals = splits[s].indexOf("=");
+          if (indexEquals == -1) {
+            // skip anything without a =
+            continue;
+          }
+
+          String metaname = splits[s].substring(0, indexEquals);
+          String metavalue = splits[s].substring(indexEquals + 1);
+          if (metaname.equals(nutchScoreMDName)) {
+            try {
+              customScore = Float.parseFloat(metavalue);
+            } catch (NumberFormatException nfe) {
+            }
+          } else if (metaname.equals(nutchFetchIntervalMDName)) {
+            try {
+              customInterval = Integer.parseInt(metavalue);
+            } catch (NumberFormatException nfe) {
+            }
+          } else {
+            metadata.put(metaname, metavalue);
+          }
+        }
+      } // if
+
+      return metadata;
     }
   }
 
@@ -188,20 +221,29 @@ public class InjectorJob extends NutchJob implements Tool {
   protected void setup(Map<String, Object> args) throws Exception {
     super.setup(args);
 
-    getConf().setLong("injector.current.time", startTime);    
+    Configuration conf = getConf();
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+    String seedDir = NutchUtil.get(args, Nutch.ARG_SEEDDIR);
+
+    conf.setLong("injector.current.time", startTime);
+
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
+        "fetchMode", fetchMode,
+        "seedDir", seedDir,
+        "jobStartTime", TimingUtil.format(startTime)
+    ));
   }
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    Path input;
-    Object path = args.get(Nutch.ARG_SEEDDIR);
-    if (path instanceof Path) {
-      input = (Path) path;
-    } else {
-      input = new Path(path.toString());
-    }
-
-    LOG.info("Seed dir : " + input.toString());
+    String seedDir = NutchUtil.get(args, Nutch.ARG_SEEDDIR);
+    Path input = new Path(seedDir);
 
     FileInputFormat.addInputPath(currentJob, input);
     currentJob.setMapperClass(UrlMapper.class);
@@ -216,42 +258,60 @@ public class InjectorJob extends NutchJob implements Tool {
     currentJob.setReducerClass(Reducer.class);
     currentJob.setNumReduceTasks(0);
 
-    // NUTCH-1471 Make explicit which datastore class we use
-//    Object dataStoreClass = StorageUtils.getDataStoreClass(getConf());
-//    Object dataStoreClass2 = StorageUtils.getDataStoreClass(currentJob.getConfiguration());
-//    LOG.debug("dataStoreClass : " + dataStoreClass + ", " + dataStoreClass2);
-    LOG.info("schemaName : " + store.getSchemaName());
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "workingDir", currentJob.getWorkingDirectory(),
+        "jobName", currentJob.getJobName(),
+        "realSchema", store.getSchemaName()
+    ));
 
     currentJob.waitForCompletion(true);
   }
 
-  public void inject(Path urlDir) throws Exception {
-    LOG.info("InjectorJob: Injecting urlDir: " + urlDir);
-    run(NutchUtil.toArgMap(Nutch.ARG_SEEDDIR, urlDir));
+  public void inject(String urlDir) throws Exception {
+    LOG.info("Injecting urlDir: " + urlDir);
+    run(StringUtil.toArgMap(Nutch.ARG_SEEDDIR, urlDir));
+  }
+
+  private void printUsage() {
+    System.err.println("Usage: InjectorJob <url_dir> [-crawlId <id>] [-fetchMode <native|crowdsourcing|proxy>]");
   }
 
   @Override
   public int run(String[] args) throws Exception {
     if (args.length < 1) {
-      System.err.println("Usage: InjectorJob <url_dir> [-crawlId <id>]");
+      printUsage();
+      return -1;
+    }
+
+    Configuration conf = getConf();
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "");
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY, FetchMode.NATIVE.value());
+    if (!FetchMode.validate(fetchMode)) {
+      System.out.println("-fetchMode accepts one of [native|proxy|crowdsourcing]");
       return -1;
     }
 
     for (int i = 1; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[i + 1]);
-        i++;
+        crawlId = args[++i];
+      } else if ("-fetchMode".equals(args[i])) {
+        fetchMode = args[++i];
       } else {
         System.err.println("Unrecognized arg " + args[i]);
         return -1;
       }
     }
 
+    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
+    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
+
     try {
-      inject(new Path(args[0]));
+      inject(args[0]);
       return 0;
     } catch (Exception e) {
-      LOG.error("InjectorJob: " + org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error("InjectorJob: " + StringUtil.stringifyException(e));
       return -1;
     }
   }

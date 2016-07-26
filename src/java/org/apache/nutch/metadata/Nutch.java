@@ -21,9 +21,6 @@ import org.apache.hadoop.io.Text;
 
 /**
  * A collection of Nutch internal metadata constants.
- * 
- * @author Chris Mattmann
- * @author J&eacute;r&ocirc;me Charron
  */
 public interface Nutch {
 
@@ -75,6 +72,8 @@ public interface Nutch {
   public static final Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
 
   public static final String CRAWL_ID_KEY = "storage.crawl.id";
+
+  public static final String FETCH_MODE_KEY = "fetcher.fetch.mode";
 
   public static final Utf8 DISTANCE = new Utf8("dist");
 
@@ -144,6 +143,7 @@ public interface Nutch {
   public static final String GENERATOR_NORMALISE = "generate.normalise";
   // The maximum number of urls in a single fetchlist
   public static final String GENERATOR_MAX_COUNT = "generate.max.count";
+  public static final String GENERATOR_MAX_DISTANCE = "generate.max.distance";
   public static final String GENERATOR_COUNT_MODE = "generate.count.mode";
   public static final String GENERATOR_COUNT_VALUE_DOMAIN = "domain";
   public static final String GENERATOR_COUNT_VALUE_HOST = "host";
@@ -152,6 +152,13 @@ public interface Nutch {
   public static final String GENERATOR_CUR_TIME = "generate.curr.time";
   public static final String GENERATOR_DELAY = "crawl.gen.delay";
   public static final String GENERATOR_RANDOM_SEED = "generate.partition.seed";
-
   public static final String GENERATOR_BATCH_ID = "generate.batch.id";
+  public static final String GENERATOR_IGNORE_GENERATED = "generator.ignore.generated";
+
+  /**
+   * Master service
+   * */
+  public static final String DEFAULT_MASTER_HOSTNAME = "master";
+  public static final int DEFAULT_MASTER_PORT = 8182;
+  
 }

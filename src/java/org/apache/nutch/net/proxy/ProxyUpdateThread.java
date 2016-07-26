@@ -1,13 +1,13 @@
 package org.apache.nutch.net.proxy;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 public class ProxyUpdateThread extends Thread {
 
@@ -76,7 +76,7 @@ public class ProxyUpdateThread extends Thread {
 
       // update only if this is not the master
       if (!hostname.equals(host)) {
-        String cmd = "wget " + url + " -O " + ProxyPool.ProxyListFile + " > /dev/null";
+        String cmd = "wget " + url + " -O " + ProxyPool.ProxyListFile + " > /dev/null 2>&1";
         Process p = Runtime.getRuntime().exec(cmd);
       }
     } catch (IOException e) {

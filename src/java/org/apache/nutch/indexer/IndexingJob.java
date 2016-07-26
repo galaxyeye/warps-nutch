@@ -16,15 +16,9 @@
  */
 package org.apache.nutch.indexer;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
-import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.mapreduce.StringComparator;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -35,25 +29,32 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.indexer.solr.SolrConstants;
 import org.apache.nutch.mapreduce.NutchJob;
+import org.apache.nutch.mapreduce.NutchMapper;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseStatusUtils;
+import org.apache.nutch.parse.ParserMapper;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 
 public class IndexingJob extends NutchJob implements Tool {
 
   public static Logger LOG = LoggerFactory.getLogger(IndexingJob.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
 
   private static final Utf8 REINDEX = new Utf8("-reindex");
 
@@ -66,15 +67,21 @@ public class IndexingJob extends NutchJob implements Tool {
     FIELDS.add(WebPage.Field.MARKERS);
   }
 
-  public static class IndexerMapper extends GoraMapper<String, WebPage, String, NutchDocument> {
+  public static class IndexerMapper extends NutchMapper<String, WebPage, String, NutchDocument> {
+
+    public enum Counter { notUpdated, indexFailed };
+
     public IndexUtil indexUtil;
     public DataStore<String, WebPage> store;
-
     protected Utf8 batchId;
 
     @Override
-    public void setup(Context context) throws IOException {
+    public void setup(Context context) throws IOException, InterruptedException {
+      super.setup(context);
+
       Configuration conf = context.getConfiguration();
+      getCounter().register(ParserMapper.Counter.class);
+
       batchId = new Utf8(conf.get(Nutch.GENERATOR_BATCH_ID, Nutch.ALL_BATCH_ID_STR));
       indexUtil = new IndexUtil(conf);
       try {
@@ -82,16 +89,25 @@ public class IndexingJob extends NutchJob implements Tool {
       } catch (ClassNotFoundException e) {
         throw new IOException(e);
       }
+
+      String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+
+      LOG.info(StringUtil.formatParams(
+          "className", this.getClass().getSimpleName(),
+          "crawlId", crawlId,
+          "batchId", batchId
+      ));
     }
 
     @Override
-    protected void cleanup(Context context) throws IOException, InterruptedException {
+    protected void cleanup(Context context) {
+      super.cleanup(context);
+
       store.close();
     };
 
     @Override
-    public void map(String key, WebPage page, Context context)
-        throws IOException, InterruptedException {
+    public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
       ParseStatus pstatus = page.getParseStatus();
       if (pstatus == null || !ParseStatusUtils.isSuccess(pstatus)
           || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
@@ -100,23 +116,24 @@ public class IndexingJob extends NutchJob implements Tool {
 
       Utf8 mark = Mark.UPDATEDB_MARK.checkMark(page);
       if (mark == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipping " + TableUtil.unreverseUrl(key)
-              + "; not updated on db yet");
-        }
+        getCounter().increase(Counter.notUpdated);
         return;
       }
 
       NutchDocument doc = indexUtil.index(key, page);
       if (doc == null) {
+        getCounter().increase(Counter.indexFailed);
         return;
       }
-      if (mark != null) {
-        Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
-        store.put(key, page);
-      }
+
+      Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
+      store.put(key, page);
+
       context.write(key, doc);
+
       context.getCounter("IndexerJob", "DocumentCount").increment(1);
+
+      getCounter().updateAffectedRows(doc.getUrl());
     }
   }
 
@@ -144,15 +161,19 @@ public class IndexingJob extends NutchJob implements Tool {
 
     Collection<WebPage.Field> fields = getFields(currentJob);
     MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
-    StorageUtils.initMapperJob(currentJob, fields, String.class, NutchDocument.class,
-        IndexerMapper.class, batchIdFilter);
-    currentJob.setNumReduceTasks(0);
+    StorageUtils.initMapperJob(currentJob, fields, String.class, NutchDocument.class, IndexerMapper.class, batchIdFilter);
+
+    // The data is write to a network sink using IndexerOutputFormat.write
     currentJob.setOutputFormatClass(IndexerOutputFormat.class);
+
+    // there is no reduce phase, everythine has been done in mapper, so set reduce tasks to be 0
+    currentJob.setNumReduceTasks(0);
 
     currentJob.waitForCompletion(true);
   }
 
-  private MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
+  @Override
+  protected MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
     if (batchId.equals(REINDEX.toString()) || batchId.equals(Nutch.ALL_CRAWL_ID.toString())) {
       return null;
     }
@@ -163,24 +184,28 @@ public class IndexingJob extends NutchJob implements Tool {
     filter.setFilterIfMissing(true);
     filter.setMapKey(Mark.UPDATEDB_MARK.getName());
     filter.getOperands().add(new Utf8(batchId));
+
     return filter;
   }
 
   public void index(String batchId) throws Exception {
-    LOG.info("IndexingJob: starting");
+    LOG.info("IndexingJob : starting");
 
-    run(NutchUtil.toArgMap(Nutch.ARG_BATCH, batchId));
+    run(StringUtil.toArgMap(Nutch.ARG_BATCH, batchId));
     // NOW PASSED ON THE COMMAND LINE AS A HADOOP PARAM
     // do the commits once and for all the reducers in one go
     // getConf().set(SolrConstants.SERVER_URL,solrUrl);
 
-    IndexWriters writers = new IndexWriters(getConf());
+    Configuration conf = getConf();
+
+    IndexWriters writers = new IndexWriters(conf);
     LOG.info(writers.describe());
 
-    writers.open(getConf());
-    if (getConf().getBoolean(SolrConstants.COMMIT_INDEX, true)) {
+    writers.open(conf);
+    if (conf.getBoolean(SolrConstants.COMMIT_INDEX, true)) {
       writers.commit();
     }
+
     LOG.info("IndexingJob: done.");
   }
 
@@ -205,8 +230,7 @@ public class IndexingJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    final int res = ToolRunner.run(NutchConfiguration.create(),
-        new IndexingJob(), args);
+    final int res = ToolRunner.run(NutchConfiguration.create(), new IndexingJob(), args);
     System.exit(res);
   }
 }

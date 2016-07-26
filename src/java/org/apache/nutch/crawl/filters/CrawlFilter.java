@@ -16,19 +16,18 @@
  ******************************************************************************/
 package org.apache.nutch.crawl.filters;
 
-import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.net.RegexURLFilter;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
+import java.io.IOException;
 
 public class CrawlFilter extends Configured {
 
@@ -112,7 +111,7 @@ public class CrawlFilter extends Configured {
       }
     }
     catch(RuntimeException | IOException e) {
-      LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error(StringUtil.stringifyException(e));
     }
   }
 

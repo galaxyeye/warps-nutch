@@ -16,14 +16,10 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-
 import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchMapper;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
@@ -32,17 +28,21 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+
 public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(GeneratorMapper.class);
 
-  private static enum Counter {
-    rows, rowsAfterFinished, rowsInjected, rowsBeforeStart, rowsNotInRange, pagesAlreadyGenerated, 
+  private enum Counter {
+    rows, rowsAfterFinished, rowsInjected, rowsBeforeStart, rowsNotInRange, pagesAlreadyGenerated,
     pagesTooFarAway, rowsNormalisedToNull, rowsFiltered, pagesFetchLater
   };
 
@@ -58,12 +58,17 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
   private long topN;
   private int maxDistance;
   private String[] keyRange;
+  private boolean ignoreAlreadyGenerated = true;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
 
     getCounter().register(Counter.class);
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
 
     filter = conf.getBoolean(Nutch.GENERATOR_FILTER, true);
     if (filter) {
@@ -75,7 +80,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
       normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_GENERATE_HOST_COUNT);
     }
 
-    maxDistance = conf.getInt("generate.max.distance", -1);
+    maxDistance = conf.getInt(Nutch.GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = conf.getLong(Nutch.GENERATOR_CUR_TIME, startTime);
     topN = conf.getLong(Nutch.GENERATOR_TOP_N, Long.MAX_VALUE);
     // topN /= job.numReducerTasks();
@@ -83,8 +88,13 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
     scoringFilters = new ScoringFilters(conf);
     crawlFilters = CrawlFilters.create(conf);
     keyRange = crawlFilters.getMaxReversedKeyRange();
+    ignoreAlreadyGenerated = conf.getBoolean(Nutch.GENERATOR_IGNORE_GENERATED, false);
 
-    LOG.info(NutchUtil.printArgMap(
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "crawlId", crawlId,
+        "UICrawlId", UICrawlId,
+        "fetchMode", fetchMode,
         "filter", filter,
         "topN", topN,
         "normalise", normalise,
@@ -93,7 +103,8 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
         "schedule", schedule.getClass().getName(),
         "scoringFilters", scoringFilters.getClass().getName(),
         "crawlFilters", crawlFilters,
-        "keyRange", keyRange[0] + " - " + keyRange[1]
+        "keyRange", keyRange[0] + " - " + keyRange[1],
+        "ignoreAlreadyGenerated", ignoreAlreadyGenerated
     ));
   }
 
@@ -113,9 +124,23 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
     }
 
     if (Mark.GENERATE_MARK.hasMark(page)) {
-      // LOG.debug("Skipping {}; already generated", url);
       getCounter().increase(Counter.pagesAlreadyGenerated);
-      return;
+
+      /**
+       * Fetch entries are generated, empty webpage entries are created in the database(HBase)
+       * case 1. another fetcher job is fetching the generated batch, and is in progress. In this case, we should not
+       *  generate it.
+       * case 2. another fetcher job handled the generated batch, but failed, which means the pages are not fetched
+       *
+       * There are three ways to fetch pages that are generated but not fetched nor fetching.
+       * 1. Restart a crawl with ignoreAlreadyGenerated set to be false
+       * 2. Resume a FetcherJob with resume set to be true
+       * 3.
+       * */
+      if (ignoreAlreadyGenerated) {
+        // LOG.debug("Skipping {}; already generated", url);
+        return;
+      }
     }
 
     // filter on distance

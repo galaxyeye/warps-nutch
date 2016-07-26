@@ -16,14 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import org.apache.commons.io.FileUtils;
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
 import org.apache.gora.store.DataStore;
@@ -36,14 +29,25 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
+import org.apache.nutch.fetcher.FetchMode;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class GeneratorJob extends NutchJob implements Tool {
 
@@ -80,6 +84,8 @@ public class GeneratorJob extends NutchJob implements Tool {
 
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+
     String batchId = NutchUtil.get(args, Nutch.ARG_BATCH, NutchUtil.generateBatchId());
     long topN = NutchUtil.getLong(args, Nutch.ARG_TOPN, Long.MAX_VALUE);
     boolean filter = NutchUtil.getBoolean(args, Nutch.ARG_FILTER, true);
@@ -104,15 +110,31 @@ public class GeneratorJob extends NutchJob implements Tool {
       conf.set(URLPartitioner.PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST);
     }
 
-    recordAndLogParams(
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "UICrawlId", UICrawlId,
+        "fetchMode", fetchMode,
         "batchId", batchId,
         "filter", filter,
         "norm", norm,
         "pseudoCurrTime", pseudoCurrTime,
         "topN", topN,
-        "domainMode", domainMode);
+        "domainMode", domainMode,
+        Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST,
+        URLPartitioner.PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST
+    ));
+
+    try {
+      // TODO : what if in distributed mode?
+      // Path path = new Path("/tmp/" + crawlId + "/last.batch.id");
+      // File.mkdir(path.parent());
+      //
+      FileUtils.writeStringToFile(new File("logs/last-batch-id"), batchId);
+    }
+    catch (IOException e) {
+      LOG.error(e.toString());
+    }
   }
 
   @Override
@@ -124,6 +146,13 @@ public class GeneratorJob extends NutchJob implements Tool {
     GoraMapper.initMapperJob(currentJob, query, store, SelectorEntry.class,
         WebPage.class, GeneratorMapper.class, SelectorEntryPartitioner.class, true);
     StorageUtils.initReducerJob(currentJob, GeneratorReducer.class);
+
+    LOG.info(StringUtil.formatParams(
+        "className", this.getClass().getSimpleName(),
+        "workingDir", currentJob.getWorkingDirectory(),
+        "jobName", currentJob.getJobName(),
+        "realSchema", store.getSchemaName()
+    ));
 
     currentJob.waitForCompletion(true);
   }
@@ -214,35 +243,42 @@ public class GeneratorJob extends NutchJob implements Tool {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    * */
-  public String generate(long topN, long pseudoCurrTime, boolean filter, boolean norm) throws Exception {
-    run(NutchUtil.toArgMap(Nutch.ARG_TOPN, topN,
+  public String generate(long topN, String batchId, long pseudoCurrTime, boolean filter, boolean norm) throws Exception {
+    run(StringUtil.toArgMap(Nutch.ARG_TOPN, topN,
+        Nutch.ARG_BATCH, batchId,
         Nutch.ARG_CURTIME, pseudoCurrTime, Nutch.ARG_FILTER, filter,
         Nutch.ARG_NORMALIZE, norm));
 
-    String batchId = getConf().get(Nutch.GENERATOR_BATCH_ID);
+    return getConf().get(Nutch.GENERATOR_BATCH_ID);
+  }
 
-    return batchId;
+  private void printUsage() {
+    System.out.println("Usage: GeneratorJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
+        "[-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
+    System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
+    System.out.println("    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");");
+    System.out.println("    -batchId <id>     - the batch id ");
+    System.out.println("    -topN <N>         - number of top URLs to be selected, default is Long.MAX_VALUE ");
+    System.out.println("    -noFilter         - do not activate the filter plugin to filter the url, default is true ");
+    System.out.println("    -noNorm           - do not activate the normalizer plugin to normalize the url, default is true ");
+    System.out.println("    -adddays          - Adds numDays to the current time to facilitate crawling urls already");
+    System.out.println("                        fetched sooner then db.fetch.interval.default. Default value is 0.");
+    System.out.println("----------------------------------------------------------------------------------------------------");
+    System.out.println("Please set the params.");
   }
 
   public int run(String[] args) throws Exception {
     if (args.length <= 0) {
-      System.out
-          .println("Usage: GeneratorJob [-topN N] [-crawlId id] [-noFilter] [-noNorm] [-adddays numDays]");
-      System.out
-          .println("    -topN <N>      - number of top URLs to be selected, default is Long.MAX_VALUE ");
-      System.out
-          .println("    -crawlId <id>  - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
-      System.out
-          .println("    -noFilter      - do not activate the filter plugin to filter the url, default is true ");
-      System.out
-          .println("    -noNorm        - do not activate the normalizer plugin to normalize the url, default is true ");
-      System.out
-          .println("    -adddays       - Adds numDays to the current time to facilitate crawling urls already");
-      System.out
-          .println("                     fetched sooner then db.fetch.interval.default. Default value is 0.");
-      System.out.println("    -batchId       - the batch id ");
-      System.out.println("----------------------");
-      System.out.println("Please set the params.");
+      printUsage();
+      return -1;
+    }
+
+    Configuration conf = getConf();
+
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "");
+    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY, FetchMode.NATIVE.value());
+    if (!FetchMode.validate(fetchMode)) {
+      System.out.println("-fetchMode accepts one of [native|proxy|crowdsourcing]");
       return -1;
     }
 
@@ -253,30 +289,32 @@ public class GeneratorJob extends NutchJob implements Tool {
     String batchId = NutchUtil.generateBatchId();
 
     for (int i = 0; i < args.length; i++) {
-      if ("-topN".equals(args[i])) {
+      if ("-crawlId".equals(args[i])) {
+        crawlId = args[++i];
+      } else if ("-batchId".equals(args[i])) {
+        batchId = args[++i];
+      } else if ("-fetchMode".equals(args[i])) {
+        fetchMode = args[++i];
+      } else if ("-topN".equals(args[i])) {
         topN = Long.parseLong(args[++i]);
       } else if ("-noFilter".equals(args[i])) {
         filter = false;
       } else if ("-noNorm".equals(args[i])) {
         norm = false;
-      } else if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
       } else if ("-adddays".equals(args[i])) {
         long numDays = Integer.parseInt(args[++i]);
         pseudoCurrTime += numDays * 1000L * 60 * 60 * 24;
-      } else if ("-batchId".equals(args[i])) {
-        batchId = args[++i];
-      }
-      else {
+      } else {
         System.err.println("Unrecognized arg " + args[i]);
         return -1;
       }
     }
 
-    getConf().set(Nutch.GENERATOR_BATCH_ID, batchId);
+    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
+    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
 
     try {
-      return (generate(topN, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
+      return (generate(topN, batchId, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
     } catch (Exception e) {
       LOG.error(StringUtils.stringifyException(e));
       return -1;
@@ -287,6 +325,7 @@ public class GeneratorJob extends NutchJob implements Tool {
     LOG.info("---------------------------------------------------\n\n");
 
     int res = ToolRunner.run(NutchConfiguration.create(), new GeneratorJob(), args);
+
     System.exit(res);
   }
 }

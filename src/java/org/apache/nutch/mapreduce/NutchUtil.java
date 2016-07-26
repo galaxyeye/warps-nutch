@@ -16,23 +16,18 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobID;
-import org.apache.hadoop.mapreduce.JobStatus;
-import org.apache.nutch.api.model.request.JobConfig;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.service.model.request.JobConfig;
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Map;
+import java.util.Random;
 
 public class NutchUtil {
 
@@ -52,46 +47,6 @@ public class NutchUtil {
 
     return MessageFormat.format("{0}-{1}-{2}-{3}", jobConfig.getCrawlId(),
         jobConfig.getConfId(), jobConfig.getType(), String.valueOf(hashCode));
-  }
-
-  public static final Map<String, Object> toArgMap(Object... args) {
-    if (args == null) {
-      return null;
-    }
-
-    if (args.length % 2 != 0) {
-      throw new RuntimeException("expected pairs of argName argValue");
-    }
-
-    HashMap<String, Object> res = new HashMap<String, Object>();
-    for (int i = 0; i < args.length; i += 2) {
-      if (args[i + 1] != null) {
-        res.put(String.valueOf(args[i]), args[i + 1]);
-      }
-    }
-
-    return res;
-  }
-
-  public static String printArgMap(Object... args) {
-    return printArgMap(toArgMap(args));
-  }
-
-  public static String printArgMap(Map<String, Object> args) {
-    StringBuilder sb = new StringBuilder();
-
-    int i = 0;
-    for (Entry<String, Object> arg : args.entrySet()) {
-      if (i++ > 0) {
-        sb.append(", ");
-      }
-
-      sb.append(arg.getKey());
-      sb.append(" : ");
-      sb.append(arg.getValue());
-    }
-
-    return sb.toString();
   }
 
   public static String get(Map<String, Object> args, String name) {
