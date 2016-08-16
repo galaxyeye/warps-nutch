@@ -18,7 +18,7 @@ package org.apache.nutch.indexer.basic;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -46,7 +46,7 @@ public class TestBasicIndexingFilter {
     BasicIndexingFilter filter = new BasicIndexingFilter();
     filter.setConf(conf);
     assertNotNull(filter);
-    NutchDocument doc = new NutchDocument();
+    IndexDocument doc = new IndexDocument();
     WebPage page = WebPage.newBuilder().build();
     page.getInlinks().put(new Utf8("http://nutch.apache.org/"),
         new Utf8("Welcome to Nutch"));
@@ -79,7 +79,7 @@ public class TestBasicIndexingFilter {
     BasicIndexingFilter filter = new BasicIndexingFilter();
     filter.setConf(conf);
     assertNotNull(filter);
-    NutchDocument doc = new NutchDocument();
+    IndexDocument doc = new IndexDocument();
     WebPage page = WebPage.newBuilder().build();
     page.getInlinks().put(new Utf8("http://exceedmaximumtitleurl.org/"),
         new Utf8("exceeding title site"));
@@ -91,7 +91,6 @@ public class TestBasicIndexingFilter {
       fail(e.getMessage());
     }
     assertNotNull(doc);
-    assertEquals("assert title field only has 10 characters", 10, doc
-        .getFieldValue("title").length());
+    assertEquals("assert title field only has 10 characters", 10, doc.getFieldValue("title"));
   }
 }

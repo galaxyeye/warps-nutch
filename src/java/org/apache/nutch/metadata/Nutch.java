@@ -24,141 +24,146 @@ import org.apache.hadoop.io.Text;
  */
 public interface Nutch {
 
-  public static final String ORIGINAL_CHAR_ENCODING = "OriginalCharEncoding";
+  String ORIGINAL_CHAR_ENCODING = "OriginalCharEncoding";
 
-  public static final String CHAR_ENCODING_FOR_CONVERSION = "CharEncodingForConversion";
+  String CHAR_ENCODING_FOR_CONVERSION = "CharEncodingForConversion";
 
-  public static final String SIGNATURE_KEY = "nutch.content.digest";
+  String SIGNATURE_KEY = "nutch.content.digest";
 
-  public static final String BATCH_NAME_KEY = "nutch.batch.name";
+  String BATCH_NAME_KEY = "nutch.batch.name";
 
-  public static final String SCORE_KEY = "nutch.crawl.score";
+  String SCORE_KEY = "nutch.crawl.score";
 
-  public static final String GENERATE_TIME_KEY = "_ngt_";
+  String GENERATE_TIME_KEY = "_ngt_";
 
-  public static final Text WRITABLE_GENERATE_TIME_KEY = new Text(GENERATE_TIME_KEY);
+  Text WRITABLE_GENERATE_TIME_KEY = new Text(GENERATE_TIME_KEY);
 
-  public static final String PROTO_STATUS_KEY = "_pst_";
+  String PROTO_STATUS_KEY = "_pst_";
 
-  public static final Text WRITABLE_PROTO_STATUS_KEY = new Text(PROTO_STATUS_KEY);
+  Text WRITABLE_PROTO_STATUS_KEY = new Text(PROTO_STATUS_KEY);
 
-  public static final String FETCH_TIME_KEY = "_ftk_";
+  String FETCH_TIME_KEY = "_ftk_";
 
-  public static final String FETCH_STATUS_KEY = "_fst_";
+  String FETCH_STATUS_KEY = "_fst_";
 
   /**
    * Sites may request that search engines don't provide access to cached
    * documents.
    */
-  public static final String CACHING_FORBIDDEN_KEY = "caching.forbidden";
+  String CACHING_FORBIDDEN_KEY = "caching.forbidden";
 
-  public static final Utf8 CACHING_FORBIDDEN_KEY_UTF8 = new Utf8(CACHING_FORBIDDEN_KEY);
+  Utf8 CACHING_FORBIDDEN_KEY_UTF8 = new Utf8(CACHING_FORBIDDEN_KEY);
 
   /** Show both original forbidden content and summaries (default). */
-  public static final String CACHING_FORBIDDEN_NONE = "none";
+  String CACHING_FORBIDDEN_NONE = "none";
 
   /** Don't show either original forbidden content or summaries. */
-  public static final String CACHING_FORBIDDEN_ALL = "all";
+  String CACHING_FORBIDDEN_ALL = "all";
 
   /** Don't show original forbidden content, but show summaries. */
-  public static final String CACHING_FORBIDDEN_CONTENT = "content";
+  String CACHING_FORBIDDEN_CONTENT = "content";
 
-  public static final String REPR_URL_KEY = "_repr_";
+  String REPR_URL_KEY = "_repr_";
 
-  public static final Text WRITABLE_REPR_URL_KEY = new Text(REPR_URL_KEY);
+  Text WRITABLE_REPR_URL_KEY = new Text(REPR_URL_KEY);
 
-  public static final String ALL_BATCH_ID_STR = "-all";
+  String ALL_BATCH_ID_STR = "-all";
 
-  public static final Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
+  Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
 
-  public static final String CRAWL_ID_KEY = "storage.crawl.id";
+  String CRAWL_ID_KEY = "storage.crawl.id";
 
-  public static final String FETCH_MODE_KEY = "fetcher.fetch.mode";
+  String FETCH_MODE_KEY = "fetcher.fetch.mode";
 
-  public static final Utf8 DISTANCE = new Utf8("dist");
+  Utf8 DISTANCE = new Utf8("dist");
 
   // short constants for cmd-line args
-  /** Batch id to select. */
-  public static final String ARG_BATCH = "batch";
   /** Crawl id to use. */
-  public static final String ARG_CRAWL = "crawl";
+  String ARG_CRAWL = "crawl";
+  /** Batch id to select. */
+  String ARG_BATCH = "batch";
+  /** Fetch mode. */
+  String ARG_FETCH_MODE = "fetchMode";
   /** Resume previously aborted op. */
-  public static final String ARG_RESUME = "resume";
+  String ARG_RESUME = "resume";
   /** Force processing even if there are locks or inconsistencies. */
-  public static final String ARG_FORCE = "force";
+  String ARG_FORCE = "force";
   /** Sort statistics. */
-  public static final String ARG_SORT = "sort";
+  String ARG_SORT = "sort";
   /** Solr URL. */
-  public static final String ARG_SOLR = "solr";
+  String ARG_SOLR = "solr";
+  /** Reindex . */
+  String ARG_REINDEX = "reindex";
   /** Number of fetcher threads (per map task). */
-  public static final String ARG_THREADS = "threads";
+  String ARG_THREADS = "threads";
   /** Number of fetcher tasks. */
-  public static final String ARG_NUMTASKS = "numTasks";
+  String ARG_NUMTASKS = "numTasks";
   /** Generate topN scoring URLs. */
-  public static final String ARG_TOPN = "topN";
+  String ARG_TOPN = "topN";
   /** The notion of current time. */
-  public static final String ARG_CURTIME = "curTime";
+  String ARG_CURTIME = "curTime";
   /** Apply URLFilters. */
-  public static final String ARG_FILTER = "filter";
+  String ARG_FILTER = "filter";
   /** Apply URLNormalizers. */
-  public static final String ARG_NORMALIZE = "normalize";
+  String ARG_NORMALIZE = "normalize";
   /** Whitespace-separated list of seed URLs. */
-  public static final String ARG_SEEDLIST = "seed";
+  String ARG_SEEDLIST = "seed";
   /** a path to a directory containing a list of seed URLs. */
-  public static final String ARG_SEEDDIR = "seedDir";
+  String ARG_SEEDDIR = "seedDir";
   /** Class to run as a NutchTool. */
-  public static final String ARG_CLASS = "class";
+  String ARG_CLASS = "class";
   /** Depth (number of cycles) of a crawl. */
-  public static final String ARG_DEPTH = "depth";
+  String ARG_DEPTH = "depth";
 
-  public static final String ARG_START_KEY = "startKey";
+  String ARG_START_KEY = "startKey";
 
-  public static final String ARG_END_KEY = "endKey";
+  String ARG_END_KEY = "endKey";
 
-  public static final String ARG_LIMIT = "limit";
+  String ARG_LIMIT = "limit";
 
   // short constants for status / results fields
   /** Status / result message. */
-  public static final String STAT_MESSAGE = "msg";
+  String STAT_MESSAGE = "msg";
   /** Phase of processing. */
-  public static final String STAT_PHASE = "phase";
+  String STAT_PHASE = "phase";
   /** Progress (float). */
-  public static final String STAT_PROGRESS = "progress";
+  String STAT_PROGRESS = "progress";
   /** Jobs. */
-  public static final String STAT_JOBS = "jobs";
+  String STAT_JOBS = "jobs";
   /** Counters. */
-  public static final String STAT_COUNTERS = "counters";
+  String STAT_COUNTERS = "counters";
 
-  public static final String COUNTER_GROUP_STATUS = "Runtime Status";
+  String COUNTER_GROUP_STATUS = "Runtime Status";
 
-  public static final String INFECTED_ROWS = "injectedRows";
+  String INFECTED_ROWS = "injectedRows";
 
   /** UI */
-  public static final String UI_CRAWL_ID = "qiwu.ui.crawl.id";
+  String UI_CRAWL_ID = "qiwu.ui.crawl.id";
 
   /** Generator **/
-  public static final String GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
-  public static final String GENERATOR_MIN_SCORE = "generate.min.score";
-  public static final String GENERATOR_FILTER = "generate.filter";
-  public static final String GENERATOR_NORMALISE = "generate.normalise";
+  String GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
+  String GENERATOR_MIN_SCORE = "generate.min.score";
+  String GENERATOR_FILTER = "generate.filter";
+  String GENERATOR_NORMALISE = "generate.normalise";
   // The maximum number of urls in a single fetchlist
-  public static final String GENERATOR_MAX_COUNT = "generate.max.count";
-  public static final String GENERATOR_MAX_DISTANCE = "generate.max.distance";
-  public static final String GENERATOR_COUNT_MODE = "generate.count.mode";
-  public static final String GENERATOR_COUNT_VALUE_DOMAIN = "domain";
-  public static final String GENERATOR_COUNT_VALUE_HOST = "host";
-  public static final String GENERATOR_COUNT_VALUE_IP = "ip";
-  public static final String GENERATOR_TOP_N = "generate.topN";
-  public static final String GENERATOR_CUR_TIME = "generate.curr.time";
-  public static final String GENERATOR_DELAY = "crawl.gen.delay";
-  public static final String GENERATOR_RANDOM_SEED = "generate.partition.seed";
-  public static final String GENERATOR_BATCH_ID = "generate.batch.id";
-  public static final String GENERATOR_IGNORE_GENERATED = "generator.ignore.generated";
+  String GENERATOR_MAX_COUNT = "generate.max.count";
+  String GENERATOR_MAX_DISTANCE = "generate.max.distance";
+  String GENERATOR_COUNT_MODE = "generate.count.mode";
+  String GENERATOR_COUNT_VALUE_DOMAIN = "domain";
+  String GENERATOR_COUNT_VALUE_HOST = "host";
+  String GENERATOR_COUNT_VALUE_IP = "ip";
+  String GENERATOR_TOP_N = "generate.topN";
+  String GENERATOR_CUR_TIME = "generate.curr.time";
+  String GENERATOR_DELAY = "crawl.gen.delay";
+  String GENERATOR_RANDOM_SEED = "generate.partition.seed";
+  String GENERATOR_BATCH_ID = "generate.batch.id";
+  String GENERATOR_IGNORE_GENERATED = "generator.ignore.generated";
 
   /**
    * Master service
    * */
-  public static final String DEFAULT_MASTER_HOSTNAME = "master";
-  public static final int DEFAULT_MASTER_PORT = 8182;
-  
+  String DEFAULT_MASTER_HOSTNAME = "master";
+  int DEFAULT_MASTER_PORT = 8182;
+
+  String NUTCH_LOCAL_COMMAND_FILE = "/tmp/.NUTCH_LOCAL_FILE_COMMAND";
 }

@@ -1,19 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.apache.nutch.indexer;
 
 import org.apache.hadoop.conf.Configuration;
@@ -69,76 +53,55 @@ public class IndexWriters {
   }
 
   public void open(Configuration conf) throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].open(conf);
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.open(conf);
     }
   }
 
-  public void write(NutchDocument doc) throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].write(doc);
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+  public void write(IndexDocument doc) throws IOException {
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.write(doc);
     }
   }
 
-  public void update(NutchDocument doc) throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].update(doc);
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+  public void update(IndexDocument doc) throws IOException {
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.update(doc);
     }
   }
 
   public void delete(String key) throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].delete(key);
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.delete(key);
     }
   }
 
   public void close() throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].close();
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.close();
     }
   }
 
   public void commit() throws IOException {
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      try {
-        this.indexWriters[i].commit();
-      } catch (IOException ioe) {
-        throw ioe;
-      }
+    for (IndexWriter indexWriter : indexWriters) {
+      indexWriter.commit();
     }
   }
 
   // lists the active IndexWriters and their configuration
   public String describe() throws IOException {
     StringBuffer buffer = new StringBuffer();
-    if (this.indexWriters.length == 0)
+    if (indexWriters.length == 0) {
       buffer.append("No IndexWriters activated - check your configuration\n");
-    else
-      buffer.append("Active IndexWriters :\n");
-    for (int i = 0; i < this.indexWriters.length; i++) {
-      buffer.append(this.indexWriters[i].describe()).append("\n");
     }
+    else {
+      buffer.append("Active IndexWriters :\n");
+    }
+
+    for (IndexWriter indexWriter : indexWriters) {
+      buffer.append(indexWriter.describe()).append("\n");
+    }
+
     return buffer.toString();
   }
-
 }

@@ -25,13 +25,13 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * An {@link org.apache.nutch.indexer.IndexingFilter} that adds <code>tag</code>
+ * An {@link IndexingFilter} that adds <code>tag</code>
  * field(s) to the document.
  * 
  * @see <a href="http://www.microformats.org/wiki/rel-tag">
@@ -77,7 +77,7 @@ public class RelTagIndexingFilter implements IndexingFilter {
    * The {@link RelTagIndexingFilter} filter object.
    * 
    * @param doc
-   *          The {@link NutchDocument} object
+   *          The {@link IndexDocument} object
    * @param url
    *          URL to be filtered for rel-tag's
    * @param page
@@ -85,7 +85,7 @@ public class RelTagIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    */
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     // Check if some Rel-Tags found, possibly put there by RelTagParser
     ByteBuffer bb = page.getMetadata().get(new Utf8(RelTagParser.REL_TAG));

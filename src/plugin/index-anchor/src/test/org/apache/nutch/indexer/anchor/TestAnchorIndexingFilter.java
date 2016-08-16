@@ -18,7 +18,7 @@ package org.apache.nutch.indexer.anchor;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class TestAnchorIndexingFilter {
     conf.setBoolean("anchorIndexingFilter.deduplicate", true);
     AnchorIndexingFilter filter = new AnchorIndexingFilter();
     filter.setConf(conf);
-    NutchDocument doc = new NutchDocument();
+    IndexDocument doc = new IndexDocument();
     WebPage page = WebPage.newBuilder().build();
     page.getInlinks().put(new Utf8("http://example1.com/"),
         new Utf8("cool site"));
@@ -47,11 +47,9 @@ public class TestAnchorIndexingFilter {
         new Utf8("fun site"));
     filter.filter(doc, "http://myurldoesnotmatter.com/", page);
 
-    assertTrue("test if there is an anchor at all", doc.getFieldNames()
-        .contains("anchor"));
+    assertTrue("test if there is an anchor at all", doc.getFieldNames().contains("anchor"));
 
-    assertEquals("test dedup, we expect 2", 2, doc.getFieldValues("anchor")
-        .size());
+    assertEquals("test dedup, we expect 2", 2, doc.getFieldValues("anchor").size());
   }
 
 }

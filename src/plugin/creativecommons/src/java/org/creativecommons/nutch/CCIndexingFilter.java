@@ -21,7 +21,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.CreativeCommons;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
@@ -58,7 +58,7 @@ public class CCIndexingFilter implements IndexingFilter {
    * "http://creativecommons.org/licenses/xx-xx/xx/xx", where "xx" names a
    * license feature.
    */
-  public void addUrlFeatures(NutchDocument doc, String urlString) {
+  public void addUrlFeatures(IndexDocument doc, String urlString) {
     try {
       URL url = new URL(urlString);
 
@@ -80,7 +80,7 @@ public class CCIndexingFilter implements IndexingFilter {
     }
   }
 
-  private void addFeature(NutchDocument doc, String feature) {
+  private void addFeature(IndexDocument doc, String feature) {
     doc.add(FIELD, feature);
   }
 
@@ -98,7 +98,7 @@ public class CCIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
 
     ByteBuffer blicense = page.getMetadata().get(

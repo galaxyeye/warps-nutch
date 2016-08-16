@@ -16,13 +16,13 @@
  */
 package org.apache.nutch.scoring;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.hadoop.conf.Configurable;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.plugin.FieldPluggable;
 import org.apache.nutch.storage.WebPage;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * A contract defining behavior of scoring plugins.
@@ -72,7 +72,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * 
    * @param url
    *          url of the page
-   * @param datum
+   * @param page
    *          page row. Modifications will be persisted.
    * @param initSort
    *          initial sort value, or a value from previous filters in chain
@@ -85,12 +85,12 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * 
    * @param fromUrl
    *          url of the source page
-   * @param row
+   * @param page
    *          page row
    * @param scoreData
-   *          A list of {@link OutlinkedScoreDatum}s for every outlink. These
-   *          {@link OutlinkedScoreDatum}s will be passed to
-   *          {@link #updateScore(String, OldWebTableRow, List)} for every
+   *          A list of {@link ScoreDatum}s for every outlink. These
+   *          {@link ScoreDatum}s will be passed to
+   *          {@link #updateScore(String, WebPage, List)} for every
    *          outlinked URL.
    * @param allCount
    *          number of all collected outlinks from the source page
@@ -107,8 +107,8 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param url
    *          url of the page
    * @param page
-   * @param inlinked
-   *          list of {@link OutlinkedScoreDatum}s for all inlinks pointing to
+   * @param inlinkedScoreData
+   *          list of {@link ScoreDatum}s for all inlinks pointing to
    *          this URL.
    * @throws ScoringFilterException
    */
@@ -124,7 +124,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          document. NOTE: this already contains all information collected by
    *          indexing filters. Implementations may modify this instance, in
    *          order to store/remove some information.
-   * @param row
+   * @param page
    *          page row
    * @param initScore
    *          initial boost value for the Lucene document.
@@ -134,6 +134,6 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *         document directly.
    * @throws ScoringFilterException
    */
-  public float indexerScore(String url, NutchDocument doc, WebPage page,
+  public float indexerScore(String url, IndexDocument doc, WebPage page,
       float initScore) throws ScoringFilterException;
 }

@@ -19,7 +19,7 @@ package org.apache.nutch.indexer.more;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
@@ -54,10 +54,9 @@ public class TestMoreIndexingFilter {
     MoreIndexingFilter filter = new MoreIndexingFilter();
     filter.setConf(conf);
     assertNotNull(filter);
-    NutchDocument doc = new NutchDocument();
+    IndexDocument doc = new IndexDocument();
     try {
-      filter.filter(doc, "http://nutch.apache.org/index.html", WebPage
-          .newBuilder().build());
+      filter.filter(doc, "http://nutch.apache.org/index.html", WebPage.newBuilder().build());
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -75,8 +74,8 @@ public class TestMoreIndexingFilter {
     }
   }
 
-  private void assertContentType(Configuration conf, String source,
-      String expected) throws IndexingException {
+  private void assertContentType(Configuration conf, String source, String expected)
+      throws IndexingException {
     MoreIndexingFilter filter = new MoreIndexingFilter();
     filter.setConf(conf);
     WebPage page = WebPage.newBuilder().build();
@@ -84,7 +83,7 @@ public class TestMoreIndexingFilter {
     page.setContent(ByteBuffer.wrap("text".getBytes()));
     page.setTitle(new Utf8("title"));
     page.getHeaders().put(EncodingDetector.CONTENT_TYPE_UTF8, new Utf8(source));
-    NutchDocument doc = filter.filter(new NutchDocument(), url, page);
+    IndexDocument doc = filter.filter(new IndexDocument(), url, page);
     assertEquals("mime type not detected", expected, doc.getFieldValue("type"));
   }
 }

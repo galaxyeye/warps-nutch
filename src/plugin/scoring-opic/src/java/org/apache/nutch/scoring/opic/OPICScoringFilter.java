@@ -17,6 +17,18 @@
 
 package org.apache.nutch.scoring.opic;
 
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.scoring.ScoringFilter;
+import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.storage.WebPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -24,19 +36,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.filters.CrawlFilters;
-import org.apache.nutch.indexer.NutchDocument;
-import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.scoring.ScoringFilter;
-import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This plugin implements a variant of an Online Page Importance Computation
@@ -168,7 +167,7 @@ public class OPICScoringFilter implements ScoringFilter {
   }
 
   /** Dampen the boost value by scorePower. */
-  public float indexerScore(String url, NutchDocument doc, WebPage row, float initScore) {
+  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) {
     return (float) Math.pow(row.getScore(), scorePower) * initScore;
   }
 

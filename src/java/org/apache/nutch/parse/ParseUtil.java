@@ -18,14 +18,7 @@ package org.apache.nutch.parse;
 
 // Commons Logging imports
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -44,7 +37,13 @@ import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Utility class containing methods to simply perform parsing utilities such
@@ -115,7 +114,7 @@ public class ParseUtil extends Configured {
    *           If there is an error parsing.
    */
   public Parse parse(String url, WebPage page) throws ParserNotFound, ParseException {
-    Parser[] parsers = null;
+    Parser[] parsers;
 
     String contentType = TableUtil.toString(page.getContentType());
 
@@ -125,7 +124,7 @@ public class ParseUtil extends Configured {
       if (LOG.isDebugEnabled()) {
         // LOG.debug("Parsing [" + url + "] with [" + parsers[i] + "]");
       }
-      Parse parse = null;
+      Parse parse;
 
       if (maxParseTime != -1)
         parse = runParser(parsers[i], url, page);

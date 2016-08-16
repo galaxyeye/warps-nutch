@@ -16,16 +16,16 @@
  */
 package org.apache.nutch.indexer.tld;
 
-import static org.junit.Assert.*;
+import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.TableUtil;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.nutch.indexer.NutchDocument;
-import org.apache.nutch.storage.WebPage;
-
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * JUnit test case which populates a HashMap with URL's and top level domain
@@ -97,9 +97,9 @@ public class TestTLDIndexingFilter {
     assertNotNull(filter);
 
     for (Entry<String, String> entry : urls.entrySet()) {
-      NutchDocument doc = new NutchDocument();
-      assertNotNull(doc);
       String url = entry.getKey();
+      IndexDocument doc = new IndexDocument(TableUtil.reverseUrl(url));
+
       try {
         filter.filter(doc, url, page);
       } catch (Exception e) {

@@ -12,170 +12,160 @@
   language governing permissions and limitations under the License. -->
 
 <ivy-module version="1.0">
-  <info organisation="org.apache.nutch" module="nutch">
-    <license name="Apache 2.0"
-             url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
-    <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
-    <description homepage="http://nutch.apache.org">Nutch is an open source web-search
-      software. It builds on Hadoop, Tika and Solr, adding web-specifics, such as a crawler,
-      a link-graph database etc.
-    </description>
-  </info>
+    <info organisation="org.apache.nutch" module="nutch">
+        <license name="Apache 2.0"
+                 url="http://www.apache.org/licenses/LICENSE-2.0.txt/"/>
+        <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org"/>
+        <description homepage="http://nutch.apache.org">Nutch is an open source web-search
+            software. It builds on Hadoop, Tika and Solr, adding web-specifics, such as a crawler,
+            a link-graph database etc.
+        </description>
+    </info>
 
-  <configurations>
-    <include file="${basedir}/ivy/ivy-configurations.xml" />
-  </configurations>
+    <configurations>
+        <include file="${basedir}/ivy/ivy-configurations.xml"/>
+    </configurations>
 
-  <publications>
-    <!--get the artifact from our module name -->
-    <artifact conf="master" />
-  </publications>
+    <publications>
+        <!--get the artifact from our module name -->
+        <artifact conf="master"/>
+    </publications>
 
-  <dependencies>
-    <!-- Common -->
-    <dependency org="org.apache.commons" name="commons-lang3" rev="3.3.2" conf="*->default" />
-    <dependency org="org.apache.commons" name="commons-collections4" rev="4.0" conf="*->default" />
-    <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.2.5" conf="*->master" />
-    <dependency org="commons-codec" name="commons-codec" rev="1.3" conf="*->default" />
+    <dependencies>
+        <!-- Common -->
+        <dependency org="org.apache.commons" name="commons-lang3" rev="3.3.2" conf="*->default"/>
+        <dependency org="org.apache.commons" name="commons-collections4" rev="4.0" conf="*->default"/>
+        <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.2.5" conf="*->master"/>
+        <dependency org="commons-codec" name="commons-codec" rev="1.3" conf="*->default"/>
 
-    <dependency org="com.google.guava" name="guava" rev="12.0.1" />
-    <dependency org="com.google.code.crawler-commons" name="crawler-commons" rev="0.5" />
-    <dependency org="com.google.code.gson" name="gson" rev="2.2.4" />
-    <dependency org="com.googlecode.juniversalchardet" name="juniversalchardet" rev="1.0.3"/>
+        <dependency org="com.google.guava" name="guava" rev="12.0.1"/>
+        <dependency org="com.google.code.crawler-commons" name="crawler-commons" rev="0.5"/>
+        <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
+        <dependency org="com.googlecode.juniversalchardet" name="juniversalchardet" rev="1.0.3"/>
 
-    <dependency org="com.ibm.icu" name="icu4j" rev="4.0.1" />
+        <dependency org="com.ibm.icu" name="icu4j" rev="4.0.1"/>
 
-    <dependency org="xerces" name="xercesImpl" rev="2.9.1" />
-    <dependency org="xerces" name="xmlParserAPIs" rev="2.6.2" />
-    <dependency org="xalan" name="serializer" rev="2.7.1" />
-    <dependency org="oro" name="oro" rev="2.0.8" />
+        <dependency org="xerces" name="xercesImpl" rev="2.9.1"/>
+        <dependency org="xerces" name="xmlParserAPIs" rev="2.6.2"/>
+        <dependency org="xalan" name="serializer" rev="2.7.1"/>
+        <dependency org="oro" name="oro" rev="2.0.8"/>
 
-    <!-- Spring -->
-    <dependency org="org.springframework" name="spring-core" rev="4.0.4.RELEASE" conf="*->default" />
-    <dependency org="org.springframework" name="spring-context" rev="4.0.4.RELEASE" conf="*->default" />
-    <dependency org="org.springframework" name="spring-web" rev="4.0.4.RELEASE" conf="*->default" />
-    <dependency org="org.springframework" name="spring-orm" rev="4.0.4.RELEASE" conf="*->default" />
-    <dependency org="org.springframework" name="spring-test" rev="4.0.4.RELEASE" conf="test->default"/>
+        <!-- Spring -->
+        <dependency org="org.springframework" name="spring-core" rev="4.0.4.RELEASE" conf="*->default"/>
+        <dependency org="org.springframework" name="spring-context" rev="4.0.4.RELEASE" conf="*->default"/>
+        <dependency org="org.springframework" name="spring-web" rev="4.0.4.RELEASE" conf="*->default"/>
+        <dependency org="org.springframework" name="spring-orm" rev="4.0.4.RELEASE" conf="*->default"/>
+        <dependency org="org.springframework" name="spring-test" rev="4.0.4.RELEASE" conf="test->default"/>
 
-    <!-- Web app dependencies -->
-    <dependency org="org.restlet.jse" name="org.restlet" rev="2.2.3" conf="*->default" />
-    <dependency org="org.restlet.jse" name="org.restlet.ext.jackson" rev="2.2.3" conf="*->default" />
-    <dependency org="org.restlet.jse" name="org.restlet.ext.jaxrs" rev="2.2.3" conf="*->default" />
+        <!-- Web app dependencies -->
+        <dependency org="org.restlet.jse" name="org.restlet" rev="2.2.3" conf="*->default"/>
+        <dependency org="org.restlet.jse" name="org.restlet.ext.jackson" rev="2.2.3" conf="*->default"/>
+        <dependency org="org.restlet.jse" name="org.restlet.ext.jaxrs" rev="2.2.3" conf="*->default"/>
 
-    <dependency org="org.mortbay.jetty" name="jetty" rev="7.0.0.pre5" conf="*->default" />
-    <dependency org="org.mortbay.jetty" name="jetty-util" rev="7.0.0.pre5" conf="*->default" />
-    <dependency org="org.mortbay.jetty" name="jetty-client" rev="7.0.0.pre5" conf="*->default" />
+        <dependency org="org.mortbay.jetty" name="jetty" rev="7.0.0.pre5" conf="*->default"/>
+        <dependency org="org.mortbay.jetty" name="jetty-util" rev="7.0.0.pre5" conf="*->default"/>
+        <dependency org="org.mortbay.jetty" name="jetty-client" rev="7.0.0.pre5" conf="*->default"/>
 
-    <!-- Required by : jersey client -->
-    <dependency org="com.sun.jersey" name="jersey-client" rev="1.8" conf="*->default" />
-    <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.9.13" conf="*->default" />
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.13" conf="*->default" />
+        <!-- Required by : jersey client -->
+        <dependency org="com.sun.jersey" name="jersey-client" rev="1.8" conf="*->default"/>
+        <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.9.13" conf="*->default"/>
+        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.13" conf="*->default"/>
 
-    <!-- Not sure to use, need check -->
-    <dependency org="org.apache.tomcat" name="jasper" rev="6.0.16" conf="*->default" />
-    <dependency org="dk.brics.automaton" name="automaton" rev="1.11-8" conf="*->default" />
+        <!-- Not sure to use, need check -->
+        <dependency org="org.apache.tomcat" name="jasper" rev="6.0.16" conf="*->default"/>
+        <dependency org="dk.brics.automaton" name="automaton" rev="1.11-8" conf="*->default"/>
 
-    <!--Artifacts required for testing -->
-    <dependency org="junit" name="junit" rev="4.11" conf="*->default" />
-    <dependency org="log4j" name="log4j" rev="1.2.15" conf="*->master" />
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->master" />
+        <!--Artifacts required for testing -->
+        <dependency org="junit" name="junit" rev="4.11" conf="*->default"/>
+        <dependency org="log4j" name="log4j" rev="1.2.15" conf="*->master"/>
+        <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->master"/>
 
-    <dependency org="org.jdom" name="jdom" rev="1.1.2" conf="test->default"/>
-    <dependency org="org.mockito" name="mockito-all" rev="1.9.5" conf="test->default"/>
+        <dependency org="org.jdom" name="jdom" rev="1.1.2" conf="test->default"/>
+        <dependency org="org.mockito" name="mockito-all" rev="1.9.5" conf="test->default"/>
 
-    <!-- Content process -->
-    <!--
-    <dependency org="org.jdom" name="jdom" rev="1.1" conf="*->default" />
-     -->
-    <dependency org="dom4j" name="dom4j" rev="1.6" conf="*->default" />
-    <dependency org="net.sourceforge.nekohtml" name="nekohtml" rev="1.9.19" conf="*->master"/>
-    <dependency org="org.apache.solr" name="solr-solrj" rev="4.6.0" conf="*->default" />
-    <dependency org="org.apache.tika" name="tika-core" rev="1.6" />
+        <!-- Content process -->
+        <dependency org="dom4j" name="dom4j" rev="1.6" conf="*->default"/>
+        <dependency org="net.sourceforge.nekohtml" name="nekohtml" rev="1.9.19" conf="*->master"/>
+        <dependency org="org.apache.solr" name="solr-solrj" rev="6.1.0" conf="*->default"/>
+        <dependency org="org.apache.tika" name="tika-core" rev="1.7"/>
+        <dependency org="de.l3s.boilerpipe" name="boilerpipe" rev="1.1.0"/>
 
-    <!-- Local storage -->
-    <!-- hsqldb is used by TestGoraStorage -->
-    <dependency org="org.hsqldb" name="hsqldb" rev="2.2.8" conf="*->default" />
-    <dependency org="com.j256.ormlite" name="ormlite-jdbc" rev="4.48" conf="*->default" />
-    <dependency org="com.h2database" name="h2" rev="1.4.180" conf="*->default" />
-    <dependency org="org.eclipse.persistence" name="javax.persistence" rev="2.0.0" conf="*->default" />
+        <!-- Local storage -->
+        <!-- hsqldb is used by TestGoraStorage -->
+        <dependency org="org.hsqldb" name="hsqldb" rev="2.2.8" conf="*->default"/>
+        <dependency org="com.j256.ormlite" name="ormlite-jdbc" rev="4.48" conf="*->default"/>
+        <dependency org="com.h2database" name="h2" rev="1.4.180" conf="*->default"/>
+        <dependency org="org.eclipse.persistence" name="javax.persistence" rev="2.0.0" conf="*->default"/>
 
-    <!-- Distributed storage -->
-    <!-- runtime required -->
-    <!--
-    <dependency org="org.apache.hadoop" name="hadoop-core" rev="1.2.1" conf="*->default">
-      <exclude org="net.sf.kosmosfs" name="kfs" />
-      <exclude org="net.java.dev.jets3t" name="jets3t" />
-      <exclude org="org.eclipse.jdt" name="core" />
-      <exclude org="org.mortbay.jetty" name="jsp-*" />
-    </dependency>
-     -->
-    <!--
-    <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.5.2" conf="default" />
-    <dependency org="org.apache.hadoop" name="hadoop-common" rev="2.5.2" conf="default" />
-     -->
-    <dependency org="org.apache.hbase" name="hbase-common" rev="0.98.8-hadoop2" conf="*->default,sources" />
-    <dependency org="org.apache.hbase" name="hbase-client" rev="0.98.8-hadoop2" conf="*->default,sources" />
+        <!-- Distributed storage -->
+        <!--
 
-    <!--================-->
-    <!-- Gora artifacts -->
-    <!--================-->
-    <dependency org="org.apache.gora" name="gora-core" rev="0.6" conf="*->default" />
+        <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.5.2" conf="default" />
+        <dependency org="org.apache.hadoop" name="hadoop-common" rev="2.5.2" conf="default" />
+         -->
+        <dependency org="org.apache.hbase" name="hbase-common" rev="0.98.8-hadoop2" conf="*->default,sources"/>
+        <dependency org="org.apache.hbase" name="hbase-client" rev="0.98.8-hadoop2" conf="*->default,sources"/>
 
-    <!-- Uncomment this to use SQL as Gora backend. It should be noted that the
-    gora-sql 0.1.1-incubating artifact is NOT compatable with gora-core 0.3. Users should
-    downgrade to gora-core 0.2.1 in order to use SQL as a backend. -->
+        <!--================-->
+        <!-- Gora artifacts -->
+        <!--================-->
+        <dependency org="org.apache.gora" name="gora-core" rev="0.6" conf="*->default"/>
 
-    <!--
-    <dependency org="org.apache.gora" name="gora-sql" rev="0.3">
-        <exclude org="org.apache.hadoop" name="avro"/>
-        <exclude org="org.apache.hadoop" name="hadoop-core" rev="1.0.1"/>
-        <exclude org="org.apache.hadoop" name="hadoop-test"/>
-        <exclude org="org.jdom" name="jdom" rev="1.0"/>
-        <exclude org="org.jdom" name="jdom" rev="1.1"/>
-    </dependency>
-     -->
+        <!-- Uncomment this to use SQL as Gora backend. It should be noted that the
+        gora-sql 0.1.1-incubating artifact is NOT compatable with gora-core 0.3. Users should
+        downgrade to gora-core 0.2.1 in order to use SQL as a backend. -->
 
-    <!-- Uncomment this to use MySQL as database with SQL as Gora store. -->
-    <!-- TODO : it seems to be a bug to use mysql connector -->
-    <!--
-    <dependency org="mysql" name="mysql-connector-java" rev="5.1.18" conf="*->default"/>
-    -->
+        <!--
+        <dependency org="org.apache.gora" name="gora-sql" rev="0.3">
+            <exclude org="org.apache.hadoop" name="avro"/>
+            <exclude org="org.apache.hadoop" name="hadoop-core" rev="1.0.1"/>
+            <exclude org="org.apache.hadoop" name="hadoop-test"/>
+            <exclude org="org.jdom" name="jdom" rev="1.0"/>
+            <exclude org="org.jdom" name="jdom" rev="1.1"/>
+        </dependency>
+         -->
 
-    <!-- Uncomment this to use HBase as Gora backend. -->
-    <dependency org="org.apache.gora" name="gora-hbase" rev="0.6" conf="*->default" />
+        <!-- Uncomment this to use MySQL as database with SQL as Gora store. -->
+        <!-- TODO : it seems to be a bug to use mysql connector -->
+        <!--
+        <dependency org="mysql" name="mysql-connector-java" rev="5.1.18" conf="*->default"/>
+        -->
 
-    <!-- Uncomment this to use Accumulo as Gora backend. -->
-    <!--
-    <dependency org="org.apache.gora" name="gora-accumulo" rev="0.6" conf="*->default" />
-    -->
-    <!-- Uncomment this to use Cassandra as Gora backend. -->
-    <!--
-    <dependency org="org.apache.gora" name="gora-cassandra" rev="0.6" conf="*->default" />
-    -->
-    <!-- Uncomment this to use MongoDB as Gora backend. -->
-    <!--
-    <dependency org="org.apache.gora" name="gora-mongodb" rev="0.6" conf="*->default" />
-    -->
-    <!-- Uncomment this to use Solr as Gora backend. -->
-    <!--
-    <dependency org="org.apache.gora" name="gora-solr" rev="0.6" conf="*->default" />
-    -->
-    <!-- The gora-compiler is used within the 'ant generate-gora-src' target to compile
-    the Gora .avsc files within ./src/gora
-    -->
-    <dependency org="org.apache.gora" name="gora-compiler-cli" rev="0.6" conf="*->default"/>
-    <dependency org="org.apache.gora" name="gora-compiler" rev="0.6" conf="*->default"/>
+        <!-- Uncomment this to use HBase as Gora backend. -->
+        <dependency org="org.apache.gora" name="gora-hbase" rev="0.6" conf="*->default"/>
 
-    <!--global exclusion -->
-    <exclude module="ant" />
-    <exclude module="slf4j-jdk14" />
-    <exclude module="slf4j-simple" />
-    <exclude module="jmxtools" />
-    <exclude module="jms" />
-    <exclude module="jmxri" />
-    <exclude module="thrift" />
-    <exclude org="hsqldb"/>
-    <exclude org="maven-plugins"/>
-  </dependencies>
+        <!-- Uncomment this to use Accumulo as Gora backend. -->
+        <!--
+        <dependency org="org.apache.gora" name="gora-accumulo" rev="0.6" conf="*->default" />
+        -->
+        <!-- Uncomment this to use Cassandra as Gora backend. -->
+        <!--
+        <dependency org="org.apache.gora" name="gora-cassandra" rev="0.6" conf="*->default" />
+        -->
+        <!-- Uncomment this to use MongoDB as Gora backend. -->
+        <!--
+        <dependency org="org.apache.gora" name="gora-mongodb" rev="0.6" conf="*->default" />
+        -->
+        <!-- Uncomment this to use Solr as Gora backend. -->
+        <!--
+        <dependency org="org.apache.gora" name="gora-solr" rev="0.6" conf="*->default" />
+        -->
+        <!-- The gora-compiler is used within the 'ant generate-gora-src' target to compile
+        the Gora .avsc files within ./src/gora
+        -->
+        <dependency org="org.apache.gora" name="gora-compiler-cli" rev="0.6" conf="*->default"/>
+        <dependency org="org.apache.gora" name="gora-compiler" rev="0.6" conf="*->default"/>
+
+        <!--global exclusion -->
+        <exclude module="ant"/>
+        <exclude module="slf4j-jdk14"/>
+        <exclude module="slf4j-simple"/>
+        <exclude module="jmxtools"/>
+        <exclude module="jms"/>
+        <exclude module="jmxri"/>
+        <exclude module="thrift"/>
+        <exclude org="hsqldb"/>
+        <exclude org="maven-plugins"/>
+    </dependencies>
 
 </ivy-module>

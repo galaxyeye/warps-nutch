@@ -16,23 +16,23 @@
  */
 package org.apache.nutch.crawl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.AbstractNutchTest;
+import org.apache.nutch.util.CrawlTestUtil;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.avro.util.Utf8;
-import org.apache.hadoop.fs.Path;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.AbstractNutchTest;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.util.CrawlTestUtil;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Basic injector test: 1. Creates a text file with urls 2. Injects them into
@@ -62,7 +62,7 @@ public class TestInjector extends AbstractNutchTest {
 
     InjectorJob injector = new InjectorJob();
     injector.setConf(conf);
-    injector.inject(urlPath);
+    injector.inject(urlPath, "test");
 
     // verify results
     List<String> read = readDb();
@@ -84,7 +84,7 @@ public class TestInjector extends AbstractNutchTest {
       urlsCheck.add(u + "\tnutch.score=1");
     }
     CrawlTestUtil.generateSeedList(fs, urlPath, urls2);
-    injector.inject(urlPath);
+    injector.inject(urlPath, "test");
     urls.addAll(urlsCheck);
 
     // verify results

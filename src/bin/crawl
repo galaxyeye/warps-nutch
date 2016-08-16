@@ -85,22 +85,23 @@ timeLimitFetch=180
 addDays=0
 #############################################
 
-# determines whether mode based on presence of job file
-mode=local
-if [ -f "${bin}"/../*nutch*.job ]; then
-    mode=distributed
-fi
-
 # note that some of the options listed here could be set in the 
 # corresponding hadoop site xml param file 
 commonOptions="-D mapred.reduce.tasks=$numTasks -D mapred.child.java.opts=-Xmx1000m -D mapred.reduce.tasks.speculative.execution=false -D mapred.map.tasks.speculative.execution=false -D mapred.compress.map.output=true"
 
- # check that hadoop can be found on the path 
-if [ $mode = "distributed" ]; then
+# determines whether mode based on presence of job file
+if [ $NUTCH_RUNTIME_MODE == "DISTRIBUTE" ]; then
+ # check that hadoop can be found on the path
  if [ $(which hadoop | wc -l ) -eq 0 ]; then
     echo "Can't find Hadoop executable. Add HADOOP_HOME/bin to the path or run in local mode."
     exit -1;
  fi
+
+ HDFS_SEED_DIR=/tmp/nutch-seeds
+ hadoop fs -mkdir -p $HDFS_SEED_DIR
+ hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI/$HDFS_SEED_DIR"
+
+ SEEDDIR=$HDFS_SEED_DIR
 fi
 
 function __bin_nutch {
@@ -123,20 +124,21 @@ function __bin_nutch {
 echo "Injecting seed URLs"
 __bin_nutch inject "$SEEDDIR" -crawlId "$CRAWL_ID"
 
-
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))
 do
+  DATE=`date +%s`
   if [ -e ".STOP" ]
   then
    echo "STOP file found - escaping loop"
+   mv .STOP ".STOP_EXECUTED_$DATE"
    break
   fi
 
   echo `date` ": Iteration $a of $LIMIT"
 
   echo "Generating batchId"
-  batchId=`date +%s`-$RANDOM
+  batchId=$DATE-$RANDOM
 
   echo "Generating a new fetchlist"
   generate_args=($commonOptions -topN $sizeFetchlist -noNorm -noFilter -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
@@ -175,7 +177,7 @@ do
     __bin_nutch index $commonOptions -D solr.server.url=$SOLRURL -all -crawlId "$CRAWL_ID"
 
     echo "SOLR dedup -> $SOLRURL"
-    __bin_nutch solrdedup $commonOptions $SOLRURL
+    # __bin_nutch solrdedup $commonOptions $SOLRURL
   else
       echo "Skipping indexing tasks: no SOLR url provided."
   fi
@@ -183,4 +185,3 @@ do
 done
 
 exit 0
-

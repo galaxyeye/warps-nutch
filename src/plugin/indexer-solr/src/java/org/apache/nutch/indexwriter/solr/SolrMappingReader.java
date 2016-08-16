@@ -16,43 +16,43 @@
  */
 package org.apache.nutch.indexwriter.solr;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.ObjectCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class SolrMappingReader {
   public static Logger LOG = LoggerFactory.getLogger(SolrMappingReader.class);
 
   private Configuration conf;
 
-  private Map<String, String> keyMap = new HashMap<String, String>();
-  private Map<String, String> copyMap = new HashMap<String, String>();
+  private Map<String, String> keyMap = new HashMap<>();
+  private Map<String, String> copyMap = new HashMap<>();
   private String uniqueKey = "id";
 
   public static synchronized SolrMappingReader getInstance(Configuration conf) {
     ObjectCache cache = ObjectCache.get(conf);
-    SolrMappingReader instance = (SolrMappingReader) cache
-        .getObject(SolrMappingReader.class.getName());
+
+    SolrMappingReader instance = (SolrMappingReader) cache.getObject(SolrMappingReader.class.getName());
     if (instance == null) {
       instance = new SolrMappingReader(conf);
       cache.setObject(SolrMappingReader.class.getName(), instance);
     }
+
     return instance;
   }
 
@@ -62,9 +62,8 @@ public class SolrMappingReader {
   }
 
   private void parseMapping() {
-    InputStream ssInputStream = null;
-    ssInputStream = conf.getConfResourceAsInputStream(conf.get(
-        SolrConstants.MAPPING_FILE, "solrindex-mapping.xml"));
+    String mappingFile = conf.get(SolrConstants.MAPPING_FILE, "solrindex-mapping.xml");
+    InputStream ssInputStream = conf.getConfResourceAsInputStream(mappingFile);
 
     InputSource inputSource = new InputSource(ssInputStream);
     try {
@@ -82,6 +81,7 @@ public class SolrMappingReader {
               element.getAttribute("dest"));
         }
       }
+
       NodeList copyFieldList = rootElement.getElementsByTagName("copyField");
       if (copyFieldList.getLength() > 0) {
         for (int i = 0; i < copyFieldList.getLength(); i++) {
@@ -92,6 +92,7 @@ public class SolrMappingReader {
               element.getAttribute("dest"));
         }
       }
+
       NodeList uniqueKeyItem = rootElement.getElementsByTagName("uniqueKey");
       if (uniqueKeyItem.getLength() > 1) {
         LOG.warn("More than one unique key definitions found in solr index mapping, using default 'id'");
@@ -126,7 +127,7 @@ public class SolrMappingReader {
 
   public String hasCopy(String key) {
     if (copyMap.containsKey(key)) {
-      key = copyMap.get(key);
+      key = (String) copyMap.get(key);
     }
     return key;
   }
@@ -136,6 +137,13 @@ public class SolrMappingReader {
       key = keyMap.get(key);
     }
     return key;
+  }
+
+  public String mapKeyIfExists(String key) throws IOException {
+    if (keyMap.containsKey(key)) {
+      return keyMap.get(key);
+    }
+    return null;
   }
 
   public String mapCopyKey(String key) throws IOException {

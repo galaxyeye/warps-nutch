@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
@@ -134,7 +134,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public float indexerScore(String url, NutchDocument doc, WebPage row,
+  public float indexerScore(String url, IndexDocument doc, WebPage row,
       float initScore) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       initScore = filter.indexerScore(url, doc, row, initScore);

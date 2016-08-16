@@ -1,12 +1,5 @@
 package org.apache.nutch.parse;
 
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.filters.CrawlFilters;
@@ -14,6 +7,14 @@ import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Map;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TestCrawlFilter {
 
@@ -28,7 +29,7 @@ public class TestCrawlFilter {
    * */
   @Before
   public void setUp() throws IOException {
-    String crawlFilterRules = FileUtils.readFileToString(new File("/tmp/crawl_filters.json"));
+    String crawlFilterRules = FileUtils.readFileToString(new File("/tmp/crawl_filters.json"), "utf-8");
     Configuration conf = NutchConfiguration.create();
     conf.set(CrawlFilters.CRAWL_FILTER_RULES, crawlFilterRules);
 

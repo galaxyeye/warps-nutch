@@ -10,7 +10,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.storage.WebPage;
@@ -22,7 +22,7 @@ import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.apache.oro.text.regex.Perl5Pattern;
-import org.apache.solr.common.util.DateUtil;
+// import org.apache.solr.common.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     addTime(doc, page, url);
     addLength(doc, page, url);
@@ -69,15 +69,16 @@ public class MoreIndexingFilter implements IndexingFilter {
 
   // Add time related meta info. Add last-modified if present. Index date as
   // last-modified, or, if that's not present, use fetch time.
-  private NutchDocument addTime(NutchDocument doc, WebPage page, String url) {
+  private IndexDocument addTime(IndexDocument doc, WebPage page, String url) {
     long time = -1;
     CharSequence lastModified = page.getHeaders().get(
         new Utf8(HttpHeaders.LAST_MODIFIED));
     // String lastModified = data.getMeta(Metadata.LAST_MODIFIED);
     if (lastModified != null) { // try parse last-modified
       time = getTime(lastModified.toString(), url); // use as time
-      String formlastModified = DateUtil.getThreadLocalDateFormat().format(
-          new Date(time));
+      // String formlastModified = DateUtil.getThreadLocalDateFormat().format(new Date(time));
+      String formlastModified = new Date(time).toString();
+
       // store as string
       doc.add("lastModified", formlastModified);
     }
@@ -86,8 +87,8 @@ public class MoreIndexingFilter implements IndexingFilter {
       time = page.getModifiedTime(); // use Modified time
     }
 
-    String dateString = DateUtil.getThreadLocalDateFormat().format(
-        new Date(time));
+    // String dateString = DateUtil.getThreadLocalDateFormat().format(new Date(time));
+    String dateString = new Date(time).toString();
 
     // un-stored, indexed and un-tokenized
     doc.add("date", dateString);
@@ -129,7 +130,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   // Add Content-Length
-  private NutchDocument addLength(NutchDocument doc, WebPage page, String url) {
+  private IndexDocument addLength(IndexDocument doc, WebPage page, String url) {
     CharSequence contentLength = page.getHeaders().get(
         new Utf8(HttpHeaders.CONTENT_LENGTH));
     if (contentLength != null) {
@@ -162,7 +163,7 @@ public class MoreIndexingFilter implements IndexingFilter {
    * @param url
    * @return
    */
-  private NutchDocument addType(NutchDocument doc, WebPage page, String url) {
+  private IndexDocument addType(IndexDocument doc, WebPage page, String url) {
     String mimeType = null;
     CharSequence contentType = page.getContentType();
     if (contentType == null)
@@ -239,7 +240,7 @@ public class MoreIndexingFilter implements IndexingFilter {
     }
   }
 
-  private NutchDocument resetTitle(NutchDocument doc, WebPage page, String url) {
+  private IndexDocument resetTitle(IndexDocument doc, WebPage page, String url) {
     CharSequence contentDisposition = page.getHeaders().get(
         new Utf8(HttpHeaders.CONTENT_DISPOSITION));
     if (contentDisposition == null)

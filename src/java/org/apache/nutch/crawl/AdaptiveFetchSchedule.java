@@ -69,16 +69,16 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
   public void setConf(Configuration conf) {
     super.setConf(conf);
-    if (conf == null)
+    if (conf == null) {
       return;
+    }
+
     INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
     MIN_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.min_interval", 60);
-    MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.max_interval",
-        SECONDS_PER_DAY * 365); // 1 year
+    MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.max_interval", SECONDS_PER_DAY * 365); // 1 year
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
-    SYNC_DELTA_RATE = conf.getFloat(
-        "db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
+    SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
 
   @Override

@@ -18,6 +18,7 @@ package org.apache.nutch.mapreduce;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
@@ -49,6 +50,36 @@ public class NutchUtil {
         jobConfig.getConfId(), jobConfig.getType(), String.valueOf(hashCode));
   }
 
+  /**
+   * Get a unsigned integer, if the configured value is negative, return the default value
+   * @param conf Configuration
+   * @param name The property name
+   * @param defaultValue The default value return if the configured value is negative
+   * @return a positive integer
+   * */
+  public static Integer getUint(Configuration conf, String name, Integer defaultValue) {
+    Integer value = conf.getInt(name, defaultValue);
+    if (value < 0) {
+      value = defaultValue;
+    }
+    return value;
+  }
+
+  /**
+   * Get a unsigned long integer, if the configured value is negative, return the default value
+   * @param conf Configuration
+   * @param name The property name
+   * @param defaultValue The default value return if the configured value is negative
+   * @return a positive long integer
+   * */
+  public static Long getUlong(Configuration conf, String name, Long defaultValue) {
+    Long value = conf.getLong(name, defaultValue);
+    if (value < 0) {
+      value = defaultValue;
+    }
+    return value;
+  }
+  
   public static String get(Map<String, Object> args, String name) {
     return (String) args.get(name);
   }

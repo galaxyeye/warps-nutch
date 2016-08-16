@@ -16,14 +16,8 @@
  */
 package org.apache.nutch.crawl;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
@@ -36,6 +30,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Basic generator test. 1. Insert entries in webtable 2. Generates entries to
@@ -288,8 +289,7 @@ public class TestGenerator extends AbstractNutchTest {
     // generate batch
     GeneratorJob g = new GeneratorJob();
     g.setConf(config);
-    String batchId = g.generate(numResults, System.currentTimeMillis(), filter,
-        false);
+    String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), System.currentTimeMillis(), filter, false);
     if (batchId == null)
       throw new RuntimeException("Generator failed");
   }

@@ -114,6 +114,10 @@ if [ "$NUTCH_CONF_DIR" = "" ]; then
   export NUTCH_CONF_DIR="$NUTCH_HOME/conf"
 fi
 
+if [ -f $NUTCH_CONF_DIR/slaves ]; then
+  export NUMBER_SLAVES=`cat $NUTCH_CONF_DIR/slaves | wc -l`
+fi
+
 # Allow alternate nutch conf dir location.
 NUTCH_CONF_DIR="${NUTCH_CONF_DIR:-$NUTCH_HOME/conf}"
 
@@ -142,13 +146,6 @@ if [ -z "$JAVA_HOME" ]; then
     cat 1>&2 <<EOF
 +======================================================================+
 |      Error: JAVA_HOME is not set and Java could not be found         |
-+----------------------------------------------------------------------+
-| Please download the latest Sun JDK from the Sun Java web site        |
-|       > http://java.sun.com/javase/downloads/ <                      |
-|                                                                      |
-| HBase requires Java 1.6 or later.                                    |
-| NOTE: This script will find Sun Java whether you install using the   |
-|       binary or the RPM based installer.                             |
 +======================================================================+
 EOF
     exit 1

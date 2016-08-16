@@ -118,14 +118,14 @@ elif [ "$COMMAND" = "readhostdb" ] ; then
 elif [ "$COMMAND" = "elasticindex" ] ; then
   CLASS=org.apache.nutch.indexer.elastic.ElasticIndexerJob
 elif [ "$COMMAND" = "solrindex" ] ; then
-  CLASS="org.apache.nutch.indexer.IndexingJob -D solr.server.url=$1"
+  CLASS="org.apache.nutch.indexer.IndexingJob -Dsolr.server.url=$1"
   shift
 elif [ "$COMMAND" = "index" ] ; then
   CLASS=org.apache.nutch.indexer.IndexingJob
 elif [ "$COMMAND" = "solrdedup" ] ; then
   CLASS=org.apache.nutch.indexer.solr.SolrDeleteDuplicates
 elif [ "$COMMAND" = "solrclean" ] ; then
-  CLASS="org.apache.nutch.indexer.CleaningJob -D solr.server.url=$2 $1"
+  CLASS="org.apache.nutch.indexer.CleaningJob -Dsolr.server.url=$2 $1"
   shift; shift
 elif [ "$COMMAND" = "clean" ] ; then
   CLASS=org.apache.nutch.indexer.CleaningJob
@@ -144,7 +144,8 @@ else
   CLASS=$COMMAND
 fi
 
-export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-$COMMAND-$HOSTNAME
+# export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-$COMMAND-$HOSTNAME
+export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-all-$HOSTNAME
 export NUTCH_LOGFILE=$NUTCH_LOG_PREFIX.log
 export NUTCH_LOGOUT=$NUTCH_LOG_PREFIX.out
 

@@ -102,19 +102,14 @@ public class TestAdaptiveFetchSchedule extends TestCase {
    *          AdaptiveFetch Algorithm.
    */
   private void validateFetchInterval(int changed, int getInterval) {
-
     if (changed == FetchSchedule.STATUS_UNKNOWN) {
       assertEquals(getInterval, interval);
-
     } else if (changed == FetchSchedule.STATUS_MODIFIED) {
       calculateInterval = (int) (interval - (interval * dec_rate));
       assertEquals(getInterval, calculateInterval);
-
     } else if (changed == FetchSchedule.STATUS_NOTMODIFIED) {
       calculateInterval = (int) (interval + (interval * inc_rate));
       assertEquals(getInterval, calculateInterval);
     }
-
   }
-
 }

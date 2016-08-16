@@ -17,11 +17,11 @@
 
 package org.apache.nutch.util;
 
+import org.apache.hadoop.conf.Configuration;
+
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
-
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * Utility to create Hadoop {@link Configuration}s that include Nutch-specific
@@ -77,16 +77,18 @@ public class NutchConfiguration {
    * @param nutchProperties
    *          a set of properties to define (or override)
    */
-  public static Configuration create(boolean addNutchResources,
-      Properties nutchProperties) {
+  public static Configuration create(boolean addNutchResources, Properties nutchProperties) {
     Configuration conf = new Configuration();
     setUUID(conf);
+
     if (addNutchResources) {
       addNutchResources(conf);
     }
+
     for (Entry<Object, Object> e : nutchProperties.entrySet()) {
       conf.set(e.getKey().toString(), e.getValue().toString());
     }
+
     return conf;
   }
 

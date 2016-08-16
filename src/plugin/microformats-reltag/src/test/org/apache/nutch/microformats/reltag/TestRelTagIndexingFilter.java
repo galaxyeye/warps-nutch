@@ -18,7 +18,7 @@ package org.apache.nutch.microformats.reltag;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
@@ -42,7 +42,8 @@ public class TestRelTagIndexingFilter {
     RelTagIndexingFilter filter = new RelTagIndexingFilter();
     filter.setConf(conf);
     assertNotNull(filter);
-    NutchDocument doc = new NutchDocument();
+
+    IndexDocument doc = new IndexDocument();
     WebPage page = WebPage.newBuilder().build();
     byte[] bytes = new byte[10];
     ByteBuffer bbuf = ByteBuffer.wrap(bytes);

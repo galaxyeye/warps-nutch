@@ -17,30 +17,38 @@
 package org.apache.nutch.indexwriter.solr;
 
 public interface SolrConstants {
-  public static final String SOLR_PREFIX = "solr.";
 
-  public static final String SERVER_URL = SOLR_PREFIX + "server.url";
+  String SOLR_PREFIX = "solr.";
 
-  public static final String COMMIT_SIZE = SOLR_PREFIX + "commit.size";
+  String SERVER_URL = SOLR_PREFIX + "server.url";
 
-  public static final String COMMIT_INDEX = SOLR_PREFIX + "commit.index";
+  String COMMIT_SIZE = SOLR_PREFIX + "commit.size";
 
-  public static final String MAPPING_FILE = SOLR_PREFIX + "mapping.file";
+  String MAPPING_FILE = SOLR_PREFIX + "mapping.file";
 
-  public static final String USE_AUTH = SOLR_PREFIX + "auth";
+  String USE_AUTH = SOLR_PREFIX + "auth";
 
-  public static final String USERNAME = SOLR_PREFIX + "auth.username";
+  String USERNAME = SOLR_PREFIX + "auth.username";
 
-  public static final String PASSWORD = SOLR_PREFIX + "auth.password";
+  String PASSWORD = SOLR_PREFIX + "auth.password";
 
-  public static final String ID_FIELD = "id";
+  String COLLECTION = SOLR_PREFIX + "collection";
 
-  public static final String URL_FIELD = "url";
+  String ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
 
-  public static final String BOOST_FIELD = "boost";
+  String ID_FIELD = "id";
 
-  public static final String TIMESTAMP_FIELD = "tstamp";
+  String URL_FIELD = "url";
 
-  public static final String DIGEST_FIELD = "digest";
+  String BOOST_FIELD = "boost";
 
+  String TIMESTAMP_FIELD = "tstamp";
+
+  String DIGEST_FIELD = "digest";
+
+  @Deprecated
+  String COMMIT_INDEX = SOLR_PREFIX + "commit.index";
+
+  @Deprecated
+  String PARAMS = SOLR_PREFIX + "params";
 }

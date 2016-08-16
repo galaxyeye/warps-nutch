@@ -17,19 +17,19 @@
 
 package org.apache.nutch.scoring.tld;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.domain.DomainSuffix;
 import org.apache.nutch.util.domain.DomainSuffixes;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Scoring filter to boost tlds.
@@ -89,19 +89,18 @@ public class TLDScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public float indexerScore(String url, NutchDocument doc, WebPage page,
+  public float indexerScore(String url, IndexDocument doc, WebPage page,
       float initScore) throws ScoringFilterException {
-    List<String> tlds = doc.getFieldValues("tld");
+    List<Object> tlds = doc.getFieldValues("tld");
     float boost = 1.0f;
 
     if (tlds != null) {
-      for (String tld : tlds) {
-        DomainSuffix entry = tldEntries.get(tld);
+      for (Object tld : tlds) {
+        DomainSuffix entry = tldEntries.get(tld.toString());
         if (entry != null)
           boost *= entry.getBoost();
       }
     }
     return initScore * boost;
   }
-
 }

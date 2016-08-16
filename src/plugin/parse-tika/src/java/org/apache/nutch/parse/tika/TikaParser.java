@@ -54,12 +54,11 @@ import java.util.HashSet;
  * Wrapper for Tika parsers. Mimics the HTMLParser but using the XHTML
  * representation returned by Tika as SAX events
  ***/
-
 public class TikaParser implements org.apache.nutch.parse.Parser {
 
   public static final Logger LOG = LoggerFactory.getLogger(TikaParser.class);
 
-  private static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static Collection<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.BASE_URL);
@@ -93,12 +92,10 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     if (parser == null) {
       String message = "Can't retrieve Tika parser for mime-type " + mimeType;
       LOG.error(message);
-      return ParseStatusUtils.getEmptyParse(ParseStatusCodes.FAILED_EXCEPTION,
-          message, getConf());
+      return ParseStatusUtils.getEmptyParse(ParseStatusCodes.FAILED_EXCEPTION, message, getConf());
     }
 
-    LOG.debug("Using Tika parser " + parser.getClass().getName()
-        + " for mime-type " + mimeType);
+    LOG.debug("Using Tika parser " + parser.getClass().getName() + " for mime-type " + mimeType);
 
     Metadata tikamd = new Metadata();
 
@@ -107,8 +104,9 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     DocumentFragment root = doc.createDocumentFragment();
     DOMBuilder domhandler = new DOMBuilder(doc, root);
     ParseContext context = new ParseContext();
-    if (HTMLMapper != null)
+    if (HTMLMapper != null) {
       context.set(HtmlMapper.class, HTMLMapper);
+    }
     // to add once available in Tika
     // context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     tikamd.set(Metadata.CONTENT_TYPE, mimeType);
@@ -168,8 +166,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
       if (tikaMDName.equalsIgnoreCase(TikaCoreProperties.TITLE.toString()))
         continue;
       // TODO what if multivalued?
-      page.getMetadata().put(new Utf8(tikaMDName),
-          ByteBuffer.wrap(Bytes.toBytes(tikamd.get(tikaMDName))));
+      page.getMetadata().put(new Utf8(tikaMDName), ByteBuffer.wrap(Bytes.toBytes(tikamd.get(tikaMDName))));
     }
 
     // no outlinks? try OutlinkExtractor e.g works for mime types where no
@@ -183,16 +180,14 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     if (metaTags.getRefresh()) {
       status.setMinorCode((int) ParseStatusCodes.SUCCESS_REDIRECT);
       status.getArgs().add(new Utf8(metaTags.getRefreshHref().toString()));
-      status.getArgs().add(
-          new Utf8(Integer.toString(metaTags.getRefreshTime())));
+      status.getArgs().add(new Utf8(Integer.toString(metaTags.getRefreshTime())));
     }
 
     Parse parse = new Parse(text, title, outlinks, status);
     parse = htmlParseFilters.filter(url, page, parse, metaTags, root);
 
     if (metaTags.getNoCache()) { // not okay to cache
-      page.getMetadata().put(new Utf8(Nutch.CACHING_FORBIDDEN_KEY),
-          ByteBuffer.wrap(Bytes.toBytes(cachingPolicy)));
+      page.getMetadata().put(new Utf8(Nutch.CACHING_FORBIDDEN_KEY), ByteBuffer.wrap(Bytes.toBytes(cachingPolicy)));
     }
 
     return parse;

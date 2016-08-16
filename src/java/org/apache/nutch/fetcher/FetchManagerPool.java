@@ -26,7 +26,7 @@ public class FetchManagerPool {
   private Queue<Integer> jobIDs = Lists.newLinkedList();
 
   private FetchManagerPool() {
-    this.name = this.getClass().getName() + "." + TimingUtil.now("d.Hms");
+    this.name = this.getClass().getSimpleName() + "." + TimingUtil.now("d.Hms");
 
     LOG.info("Initialize fetch manager pool " + name);
   }

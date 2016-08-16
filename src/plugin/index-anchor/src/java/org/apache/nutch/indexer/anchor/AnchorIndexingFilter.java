@@ -16,11 +16,10 @@
  */
 package org.apache.nutch.indexer.anchor;
 
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -76,7 +75,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
    * {@code anchorIndexingFilter.deduplicate} in nutch-default.xml.
    * 
    * @param doc
-   *          The {@link NutchDocument} object
+   *          The {@link IndexDocument} object
    * @param url
    *          URL to be filtered for anchor text
    * @param page
@@ -84,7 +83,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    */
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     HashSet<String> set = null;
 
@@ -119,7 +118,6 @@ public class AnchorIndexingFilter implements IndexingFilter {
    * setup the mapreduce job by specifying the fields needed. All extensions
    * that work on WebPage are able to specify what fields they need.
    */
-  @Override
   public Collection<WebPage.Field> getFields() {
     return FIELDS;
   }

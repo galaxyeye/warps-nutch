@@ -79,9 +79,9 @@ public class JSParseFilter implements ParseFilter, Parser {
    * @param parse
    *          {@link Parse} object holding parse status
    * @param metatags
-   *          within the {@link NutchDocument}
+   *          within the {@link IndexDocument}
    * @param doc
-   *          The {@link NutchDocument} object
+   *          The {@link IndexDocument} object
    * @return parse the actual {@link Parse} object
    */
   @Override

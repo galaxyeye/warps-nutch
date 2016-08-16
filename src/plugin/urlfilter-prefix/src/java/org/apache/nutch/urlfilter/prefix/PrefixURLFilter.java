@@ -19,26 +19,18 @@
 
 package org.apache.nutch.urlfilter.prefix;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.plugin.Extension;
+import org.apache.nutch.plugin.PluginRepository;
+import org.apache.nutch.util.PrefixStringMatcher;
+import org.apache.nutch.util.TrieStringMatcher;
+import org.apache.nutch.net.URLFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.net.*;
-
-import org.apache.nutch.util.PrefixStringMatcher;
-import org.apache.nutch.util.TrieStringMatcher;
-
-import org.apache.nutch.plugin.Extension;
-import org.apache.nutch.plugin.PluginRepository;
-
-import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.StringReader;
-
-import java.util.List;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Filters URLs based on a file of URL prefixes. The file is named by (1)

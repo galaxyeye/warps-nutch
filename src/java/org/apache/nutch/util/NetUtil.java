@@ -1,18 +1,24 @@
 package org.apache.nutch.util;
 
+import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.parse.ParserMapper;
+import org.apache.nutch.protocol.*;
+import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
 
 public class NetUtil {
 
-  protected static final Logger logger = LoggerFactory.getLogger(NetUtil.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(NetUtil.class);
 
   public static int ProxyConnectionTimeout = 5 * 1000;
 
@@ -89,7 +95,7 @@ public class NetUtil {
 
   public static String getHostname() {
     try {
-      return FileUtils.readFileToString(new File("/etc/hostname")).trim();
+      return FileUtils.readFileToString(new File("/etc/hostname"), "utf-8").trim();
     } catch (IOException e) {
       return null;
     }
@@ -121,10 +127,50 @@ public class NetUtil {
     return "http://" + host + ":" + port;
   }
 
-  public static void main(String[] args) throws InterruptedException {
-//    NetUtil.testNetwork("101.45.122.133", 19180);
-//    NetUtil.testNetwork("192.168.1.101", 19180);
-    NetUtil.testNetwork("127.0.0.1", 19080);
-    // logger.info(proxyManager.toString());
+  public static WebPage getWebPage(String url, String contentType, Configuration conf) throws ProtocolNotFound {
+    LOG.info("fetching: " + url);
+
+    ProtocolFactory factory = new ProtocolFactory(conf);
+    Protocol protocol = factory.getProtocol(url);
+    WebPage page = WebPage.newBuilder().build();
+
+    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
+
+    if (!protocolOutput.getStatus().isSuccess()) {
+      LOG.warn("Fetch failed with protocol status: "
+          + ProtocolStatusUtils.getName(protocolOutput.getStatus().getCode())
+          + ": " + ProtocolStatusUtils.getMessage(protocolOutput.getStatus()));
+      return null;
+    }
+    page.setStatus((int)CrawlStatus.STATUS_FETCHED);
+
+    Content content = protocolOutput.getContent();
+
+    if (content == null) {
+      LOG.warn("No content for " + url);
+      return null;
+    }
+    page.setBaseUrl(new org.apache.avro.util.Utf8(url));
+    page.setContent(ByteBuffer.wrap(content.getContent()));
+
+    if (contentType != null) {
+      content.setContentType(contentType);      
+    }
+    else {
+      contentType = content.getContentType();
+    }
+
+    if (contentType == null) {
+      LOG.warn("Failed to determine content type!");
+      return null;
+    }
+
+    page.setContentType(new Utf8(contentType));
+
+    if (ParserMapper.isTruncated(url, page)) {
+      LOG.warn("Content is truncated, parse may fail!");
+    }
+
+    return page;
   }
 }

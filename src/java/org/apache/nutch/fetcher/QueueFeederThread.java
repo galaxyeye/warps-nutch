@@ -1,8 +1,5 @@
 package org.apache.nutch.fetcher;
 
-import java.io.IOException;
-import java.util.Iterator;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.nutch.fetcher.data.FetchEntry;
@@ -10,6 +7,10 @@ import org.apache.nutch.fetcher.data.FetchItemQueues;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class feeds the queues with input items, and re-fills them as
@@ -25,6 +26,7 @@ public class QueueFeederThread extends Thread {
   private final int feedLimit;
   private Iterator<FetchEntry> currentIter;
   boolean hasMore;
+  AtomicBoolean completed = new AtomicBoolean(false);
   private long timeLimitMillis = -1;
 
   @SuppressWarnings("rawtypes")
@@ -54,7 +56,7 @@ public class QueueFeederThread extends Thread {
     int timeLimitCount = 0;
 
     try {
-      while (hasMore) {
+      while (!completed.get() && hasMore) {
         long now = System.currentTimeMillis();
         if (timeLimitMillis > now && now >= timeLimitMillis) {
           // enough .. lets' simply
@@ -114,5 +116,9 @@ public class QueueFeederThread extends Thread {
     LOG.info("QueueFeeder finished: total " + feededCount + " records. Hit by time limit : " + timeLimitCount);
 
     context.getCounter(Nutch.COUNTER_GROUP_STATUS, "HitByTimeLimit-QueueFeeder").increment(timeLimitCount);
+  }
+
+  public void complete() {
+    completed.set(true);
   }
 }

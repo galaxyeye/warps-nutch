@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.util.URLUtil;
@@ -46,7 +46,7 @@ public class TLDIndexingFilter implements IndexingFilter {
   private static final Collection<Field> fields = new ArrayList<Field>();
 
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     try {
       URL _url = new URL(url);

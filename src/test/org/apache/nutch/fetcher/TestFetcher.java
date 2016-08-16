@@ -16,27 +16,28 @@
  */
 package org.apache.nutch.fetcher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.GeneratorJob;
 import org.apache.nutch.crawl.InjectorJob;
 import org.apache.nutch.crawl.URLWebPage;
+import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.util.AbstractNutchTest;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.CrawlTestUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mortbay.jetty.Server;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Basic fetcher test 1. generate seedlist 2. inject 3. generate 3. fetch 4.
@@ -46,6 +47,7 @@ import org.mortbay.jetty.Server;
 public class TestFetcher extends AbstractNutchTest {
 
   final static Path testdir = new Path("build/test/fetch-test");
+  String crawlId = "test";
   Path urlPath;
   Server server;
 
@@ -84,18 +86,18 @@ public class TestFetcher extends AbstractNutchTest {
 
     // inject
     InjectorJob injector = new InjectorJob(conf);
-    injector.inject(urlPath);
+    injector.inject(urlPath, crawlId);
 
     // generate
     long time = System.currentTimeMillis();
     GeneratorJob g = new GeneratorJob(conf);
-    String batchId = g.generate(Long.MAX_VALUE, time, false, false);
+    String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), time, false, false);
 
     // fetch
     time = System.currentTimeMillis();
     conf.setBoolean(FetcherJob.PARSE_KEY, true);
     FetcherJob fetcher = new FetcherJob(conf);
-    fetcher.fetch(batchId, 1, false, -1);
+    fetcher.fetch(crawlId, "native", batchId, 1, false, -1);
 
     time = System.currentTimeMillis() - time;
 
@@ -143,7 +145,7 @@ public class TestFetcher extends AbstractNutchTest {
     try {
       conf.setBoolean(FetcherJob.PARSE_KEY, true);
       FetcherJob fetcher = new FetcherJob(conf);
-      fetcher.checkConfiguration();
+      fetcher.checkConfiguration(fetcher.getConf());
     } catch (IllegalArgumentException iae) {
       String message = iae.getMessage();
       failedNoAgentName = message.equals("Fetcher: No agents listed in "

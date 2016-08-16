@@ -29,8 +29,7 @@
 # The java implementation to use.  Java 1.8 required.
 export JAVA_HOME="/usr/lib/jvm/java-8-sun"
 
-# The slaves number in the cluster, used to decide hadoop reduce task number by setting mapred.reduce.tasks
-export NUMBER_SLAVES=`cat ./slaves | wc -l`
+export HDFS_BASE_URI=hdfs://galaxyeye:9000
 
 # Extra Java CLASSPATH elements.  Optional.
 # export NUTCH_CLASSPATH=

@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.collection.CollectionManager;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.util.NutchConfiguration;
@@ -59,7 +59,7 @@ public class SubcollectionIndexingFilter extends Configured implements
    * @param doc
    * @param url
    */
-  private void addSubCollectionField(NutchDocument doc, String url) {
+  private void addSubCollectionField(IndexDocument doc, String url) {
     for (String collname : CollectionManager.getCollectionManager(getConf())
         .getSubCollections(url)) {
       doc.add(FIELD_NAME, collname);
@@ -72,7 +72,7 @@ public class SubcollectionIndexingFilter extends Configured implements
   }
 
   @Override
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     addSubCollectionField(doc, url);
     return doc;

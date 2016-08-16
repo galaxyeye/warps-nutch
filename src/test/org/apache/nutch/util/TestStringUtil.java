@@ -17,47 +17,17 @@
 
 package org.apache.nutch.util;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 /** Unit tests for StringUtil methods. */
 public class TestStringUtil {
 
   @Test
-  public void testRightPad() {
-    String s = "my string";
-
-    String ps = StringUtil.rightPad(s, 0);
-    assertTrue(s.equals(ps));
-
-    ps = StringUtil.rightPad(s, 9);
-    assertTrue(s.equals(ps));
-
-    ps = StringUtil.rightPad(s, 10);
-    assertTrue((s + " ").equals(ps));
-
-    ps = StringUtil.rightPad(s, 15);
-    assertTrue((s + "      ").equals(ps));
-
+  public void testRegex() {
+    String text = "http://aitxt.com/book/12313413874";
+    String regex = "http://(.*)aitxt.com(.*)";
+    assertTrue(text.matches(regex));
   }
-
-  @Test
-  public void testLeftPad() {
-    String s = "my string";
-
-    String ps = StringUtil.leftPad(s, 0);
-    assertTrue(s.equals(ps));
-
-    ps = StringUtil.leftPad(s, 9);
-    assertTrue(s.equals(ps));
-
-    ps = StringUtil.leftPad(s, 10);
-    assertTrue((" " + s).equals(ps));
-
-    ps = StringUtil.leftPad(s, 15);
-    assertTrue(("      " + s).equals(ps));
-
-  }
-
 }

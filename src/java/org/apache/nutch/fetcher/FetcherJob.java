@@ -44,8 +44,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
- * Multi-threaded fetcher.
- * 
+ * Fetch job
  */
 public class FetcherJob extends NutchJob implements Tool {
 
@@ -58,7 +57,7 @@ public class FetcherJob extends NutchJob implements Tool {
   public static final String PARSE_KEY = "fetcher.parse";
   public static final String THREADS_KEY = "fetcher.threads.fetch";
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.MARKERS);
@@ -78,7 +77,7 @@ public class FetcherJob extends NutchJob implements Tool {
   }
 
   public Collection<WebPage.Field> getFields(Job job) {
-    Collection<WebPage.Field> fields = new HashSet<WebPage.Field>(FIELDS);
+    Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
     if (job.getConfiguration().getBoolean(PARSE_KEY, false)) {
       ParserJob parserJob = new ParserJob();
       fields.addAll(parserJob.getFields(job));
@@ -98,27 +97,26 @@ public class FetcherJob extends NutchJob implements Tool {
 
     checkConfiguration(conf);
 
-    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
-    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
-    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, "");
+    String fetchMode = NutchUtil.get(args, Nutch.ARG_FETCH_MODE, "native");
     batchId = NutchUtil.get(args, Nutch.ARG_BATCH, Nutch.ALL_BATCH_ID_STR);
+    int threads = NutchUtil.getInt(args, Nutch.ARG_THREADS, 5);
+    boolean resume = NutchUtil.getBoolean(args, Nutch.ARG_RESUME, false);
 
     numTasks = getConf().getInt("mapred.reduce.tasks", 2); // default value
     // since mapred.reduce.tasks is deprecated
     // numTasks = getConf().getInt("mapreduce.job.reduces", 2);
     numTasks = NutchUtil.getInt(args, Nutch.ARG_NUMTASKS, numTasks);
 
-    int threads = NutchUtil.getInt(args, Nutch.ARG_THREADS, 5);
-    boolean resume = NutchUtil.getBoolean(args, Nutch.ARG_RESUME, false);
-
-    getConf().setInt(THREADS_KEY, threads);
-    getConf().set(Nutch.GENERATOR_BATCH_ID, batchId);
-    getConf().setBoolean(RESUME_KEY, resume);
+    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
+    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
+    conf.setInt(THREADS_KEY, threads);
+    conf.set(Nutch.GENERATOR_BATCH_ID, batchId);
+    conf.setBoolean(RESUME_KEY, resume);
 
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
-        "UICrawlId", UICrawlId,
         "batchId", batchId,
         "fetchMode", fetchMode,
         "numTasks", numTasks,
@@ -149,8 +147,7 @@ public class FetcherJob extends NutchJob implements Tool {
         "className", this.getClass().getSimpleName(),
         "workingDir", currentJob.getWorkingDirectory(),
         "jobName", currentJob.getJobName(),
-        "realSchema", store.getSchemaName(),
-        "batchId", batchId
+        "realSchema", store.getSchemaName()
     ));
 
     currentJob.waitForCompletion(true);
@@ -171,8 +168,10 @@ public class FetcherJob extends NutchJob implements Tool {
    * @return 0 on success
    * @throws Exception
    * */
-  public int fetch(String batchId, int threads, boolean resume, int numTasks) throws Exception {
+  public int fetch(String crawlId, String fetchMode, String batchId, int threads, boolean resume, int numTasks) throws Exception {
     run(StringUtil.toArgMap(
+        Nutch.ARG_CRAWL, crawlId,
+        Nutch.ARG_FETCH_MODE, fetchMode,
         Nutch.ARG_BATCH, batchId,
         Nutch.ARG_THREADS, threads,
         Nutch.ARG_RESUME, resume,
@@ -247,10 +246,10 @@ public class FetcherJob extends NutchJob implements Tool {
       }
     }
 
-    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
-    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
+//    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
+//    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
 
-    int fetchcode = fetch(batchId, threads, resume, numTasks); // run the Fetcher
+    int fetchcode = fetch(crawlId, fetchMode, batchId, threads, resume, numTasks);
 
     return fetchcode;
   }

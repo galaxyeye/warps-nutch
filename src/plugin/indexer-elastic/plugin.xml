@@ -18,7 +18,7 @@
 <plugin id="indexer-elastic" name="ElasticIndexWriter" version="1.0.0"
   provider-name="nutch.apache.org">
 
-<runtime>
+  <runtime>
     <library name="indexer-elastic.jar">
       <export name="*" />
     </library>

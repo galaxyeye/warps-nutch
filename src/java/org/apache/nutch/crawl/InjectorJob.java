@@ -93,8 +93,6 @@ public class InjectorJob extends NutchJob implements Tool {
       Configuration conf = context.getConfiguration();
 
       String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
-      String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
-      int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
 
       interval = context.getConfiguration().getInt("db.fetch.interval.default", 2592000);
       scfilters = new ScoringFilters(context.getConfiguration());
@@ -104,8 +102,6 @@ public class InjectorJob extends NutchJob implements Tool {
       LOG.info(StringUtil.formatParams(
           "className", this.getClass().getSimpleName(),
           "crawlId", crawlId,
-          "UICrawlId", UICrawlId,
-          "fetchMode", fetchMode,
           "fetchInterval", interval,
           "scoreInjected", scoreInjected,
           "injectTime", TimingUtil.format(curTime)
@@ -223,18 +219,14 @@ public class InjectorJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
-    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
-    String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, "");
     String seedDir = NutchUtil.get(args, Nutch.ARG_SEEDDIR);
 
-    conf.setLong("injector.current.time", startTime);
+    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
 
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
-        "UICrawlId", UICrawlId,
-        "fetchMode", fetchMode,
         "seedDir", seedDir,
         "jobStartTime", TimingUtil.format(startTime)
     ));
@@ -251,8 +243,7 @@ public class InjectorJob extends NutchJob implements Tool {
     currentJob.setMapOutputValueClass(WebPage.class);
     currentJob.setOutputFormatClass(GoraOutputFormat.class);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(
-        currentJob.getConfiguration(), String.class, WebPage.class);
+    DataStore<String, WebPage> store = StorageUtils.createWebStore(currentJob.getConfiguration(), String.class, WebPage.class);
     GoraOutputFormat.setOutput(currentJob, store, true);
 
     currentJob.setReducerClass(Reducer.class);
@@ -268,9 +259,18 @@ public class InjectorJob extends NutchJob implements Tool {
     currentJob.waitForCompletion(true);
   }
 
-  public void inject(String urlDir) throws Exception {
-    LOG.info("Injecting urlDir: " + urlDir);
-    run(StringUtil.toArgMap(Nutch.ARG_SEEDDIR, urlDir));
+  public void inject(Path path, String crawlId) throws Exception {
+    run(StringUtil.toArgMap(
+        Nutch.ARG_SEEDDIR, path.toString(),
+        Nutch.ARG_CRAWL, crawlId
+    ));
+  }
+
+  public void inject(String urlDir, String crawlId) throws Exception {
+    run(StringUtil.toArgMap(
+        Nutch.ARG_SEEDDIR, urlDir,
+        Nutch.ARG_CRAWL, crawlId
+    ));
   }
 
   private void printUsage() {
@@ -296,19 +296,14 @@ public class InjectorJob extends NutchJob implements Tool {
     for (int i = 1; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
         crawlId = args[++i];
-      } else if ("-fetchMode".equals(args[i])) {
-        fetchMode = args[++i];
       } else {
         System.err.println("Unrecognized arg " + args[i]);
         return -1;
       }
     }
 
-    conf.set(Nutch.CRAWL_ID_KEY, crawlId);
-    conf.set(Nutch.FETCH_MODE_KEY, fetchMode);
-
     try {
-      inject(args[0]);
+      inject(args[0], crawlId);
       return 0;
     } catch (Exception e) {
       LOG.error("InjectorJob: " + StringUtil.stringifyException(e));

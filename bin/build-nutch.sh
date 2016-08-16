@@ -69,6 +69,10 @@ NUTCH_RUNTIME=$NUTCH_SRC_HOME/runtime
 NUTCH_DEPLOGY=$NUTCH_RUNTIME/deploy
 NUTCH_LOCAL=$NUTCH_RUNTIME/local
 
+if [[ ! -e $BUILD_DIR ]]; then
+  mkdir $BUILD_DIR
+fi
+
 echo "Working direcotry : `pwd`"
 echo "Nutch version : `cat $NUTCH_SRC_HOME/VERSION`"
 echo "Log file : $BUILD_LOGOUT_PATH"

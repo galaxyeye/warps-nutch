@@ -18,10 +18,6 @@
 package org.apache.nutch.protocol.file;
 
 // JDK imports
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
@@ -29,6 +25,10 @@ import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.MimeUtil;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
 
 /************************************
  * FileResponse.java mimics file replies as http response. It tries its best to

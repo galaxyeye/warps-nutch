@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class FetchManager extends Configured {
+public class FetchManager extends Configured {
 
   static private final Logger LOG = FetcherJob.LOG;
 
@@ -80,8 +80,8 @@ class FetchManager extends Configured {
   private final int maxThreadsPerQueue;
 
   private final LinkedList<FetchThread> fetchThreads = Lists.newLinkedList();
-  private final AtomicInteger activeFetchThreadCount = new AtomicInteger(0);
-  private final AtomicInteger waitingFetchThreadCount = new AtomicInteger(0);
+  final AtomicInteger activeFetchThreadCount = new AtomicInteger(0);
+  final AtomicInteger waitingFetchThreadCount = new AtomicInteger(0);
 
   // timer
   private final long startTime = System.currentTimeMillis(); // start time of fetcher run
@@ -210,8 +210,6 @@ class FetchManager extends Configured {
    * consume a fetch item and try to download the target web page
    * 
    * TODO : add FetchQueues.consumeFetchItems to make locking inside loop
-   * 
-   * 
    * */
   List<FetchItem> consumeFetchItems(int number) {
     List<FetchItem> fetchItems = Lists.newArrayList();
@@ -246,7 +244,7 @@ class FetchManager extends Configured {
     return fetchItems.isEmpty() ? null : fetchItems.iterator().next();
   }
 
-  void produceFetchResut(FetchResult result) {
+  public void produceFetchResut(FetchResult result) {
     fetchResultQueue.add(result);
   }
 
@@ -399,7 +397,7 @@ class FetchManager extends Configured {
 
     int bandwidthTargetCheckCounter = 0;
     long bytesAtLastBWTCheck = 0L;
-    
+
     // adjust the number of threads if a target bandwidth has been set
     if (targetBandwidth > 0) {
       if (bandwidthTargetCheckCounter < bandwidthTargetCheckEveryNSecs) {
@@ -446,12 +444,12 @@ class FetchManager extends Configured {
           LOG.info("Exceeding target bandwidth (" + bpsSinceLastCheck / 1000
               + " vs " + (targetBandwidth / 1000)
               + " kbps). \t=> excessThreads = " + excessThreads);
-          
+
           // keep at least one
           if (excessThreads >= fetchThreads.size()) {
             excessThreads = 0;            
           }
-          
+
           // de-activates threads
           for (int i = 0; i < excessThreads; i++) {
             FetchThread thread = fetchThreads.removeLast();
@@ -607,6 +605,7 @@ class FetchManager extends Configured {
     }
 
     if (content != null) {
+      // Content is added to page here for ParseUtil be able to parse it.
       page.setContent(ByteBuffer.wrap(content.getContent()));
       page.setContentType(new Utf8(content.getContentType()));
       page.setBaseUrl(new Utf8(content.getBaseUrl()));

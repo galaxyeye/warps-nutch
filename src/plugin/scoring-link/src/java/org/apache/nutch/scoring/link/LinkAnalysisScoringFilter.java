@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
@@ -86,7 +86,7 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public float indexerScore(String url, NutchDocument doc, WebPage page,
+  public float indexerScore(String url, IndexDocument doc, WebPage page,
       float initScore) throws ScoringFilterException {
     return (normalizedScore * page.getScore());
   }

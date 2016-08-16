@@ -22,7 +22,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 /**
- * An {@link org.apache.nutch.indexer.IndexingFilter} that adds a
+ * An {@link IndexingFilter} that adds a
  * <code>lang</code> (language) field to the document.
  * 
  * It tries to find the language of the document by checking if
@@ -58,7 +58,7 @@ public class LanguageIndexingFilter implements IndexingFilter {
   public LanguageIndexingFilter() {
   }
 
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
 
     // check if LANGUAGE found, possibly put there by HTMLLanguageParser

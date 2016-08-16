@@ -26,6 +26,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.DbUpdaterJob;
 import org.apache.nutch.crawl.GeneratorJob;
 import org.apache.nutch.crawl.InjectorJob;
+import org.apache.nutch.fetcher.FetchMode;
 import org.apache.nutch.fetcher.FetcherJob;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.mapreduce.WebTableReader;
@@ -195,6 +196,7 @@ public class Benchmark extends Configured implements Tool {
     Job job = Job.getInstance(getConf());
 
     Configuration conf = job.getConfiguration();
+    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "test");
 
     FileSystem fs = FileSystem.get(conf);
     Path dir = new Path(getConf().get("hadoop.tmp.dir"), "bench-"
@@ -229,13 +231,13 @@ public class Benchmark extends Configured implements Tool {
 
     long start = System.currentTimeMillis();
     // initialize crawlDb
-    injector.inject(rootUrlDir.toString());
+    injector.inject(rootUrlDir, crawlId);
     long delta = System.currentTimeMillis() - start;
     res.addTiming("inject", "0", delta);
     int i;
     for (i = 0; i < depth; i++) { // generate new batch
       start = System.currentTimeMillis();
-      String batchId = generator.generate(topN, NutchUtil.generateBatchId(), System.currentTimeMillis(), false, false);
+      String batchId = generator.generate(topN, crawlId, NutchUtil.generateBatchId(), System.currentTimeMillis(), false, false);
       delta = System.currentTimeMillis() - start;
       res.addTiming("generate", i + "", delta);
       if (batchId == null) {
@@ -244,7 +246,7 @@ public class Benchmark extends Configured implements Tool {
       }
       boolean isParsing = getConf().getBoolean("fetcher.parse", false);
       start = System.currentTimeMillis();
-      fetcher.fetch(batchId, threads, false, -1); // fetch it
+      fetcher.fetch("", FetchMode.NATIVE.value(), batchId, threads, false, -1); // fetch it
       delta = System.currentTimeMillis() - start;
       res.addTiming("fetch", i + "", delta);
       if (!isParsing) {

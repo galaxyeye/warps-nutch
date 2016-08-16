@@ -24,6 +24,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -34,6 +35,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class TestCCParseFilter {
 
   private static final File testDir = new File(System.getProperty("test.input"));

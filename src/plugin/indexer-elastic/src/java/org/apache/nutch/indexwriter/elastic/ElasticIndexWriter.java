@@ -26,8 +26,9 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexWriter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -72,8 +73,9 @@ public class ElasticIndexWriter implements IndexWriter {
   private boolean createNewBulk = false;
 
   @Override
-  public void open(Configuration job) throws IOException {
+  public void open(JobConf job, String name) throws IOException {
     clusterName = job.get(ElasticConstants.CLUSTER);
+
     host = job.get(ElasticConstants.HOST);
     port = job.getInt(ElasticConstants.PORT, 9300);
 
@@ -120,7 +122,7 @@ public class ElasticIndexWriter implements IndexWriter {
   }
 
   @Override
-  public void write(NutchDocument doc) throws IOException {
+  public void write(IndexDocument doc) throws IOException {
     String id = (String) doc.getFieldValue("id");
     String type = doc.getDocumentMeta().get("type");
     if (type == null)
@@ -131,10 +133,11 @@ public class ElasticIndexWriter implements IndexWriter {
 
     // Loop through all fields of this doc
     for (String fieldName : doc.getFieldNames()) {
-      if (doc.getFieldValues(fieldName).size() > 1) {
+      if (doc.getField(fieldName).getValues().size() > 1) {
         source.put(fieldName, doc.getFieldValue(fieldName));
-        // Loop through the values to keep track of the size of this document
-        for (Object value : doc.getFieldValues(fieldName)) {
+        // Loop through the values to keep track of the size of this
+        // document
+        for (Object value : doc.getField(fieldName).getValues()) {
           bulkLength += value.toString().length();
         }
       } else {
@@ -179,7 +182,7 @@ public class ElasticIndexWriter implements IndexWriter {
   }
 
   @Override
-  public void update(NutchDocument doc) throws IOException {
+  public void update(IndexDocument doc) throws IOException {
     write(doc);
   }
 
@@ -242,8 +245,7 @@ public class ElasticIndexWriter implements IndexWriter {
     sb.append("\t").append(ElasticConstants.CLUSTER)
         .append(" : elastic prefix cluster\n");
     sb.append("\t").append(ElasticConstants.HOST).append(" : hostname\n");
-    sb.append("\t").append(ElasticConstants.PORT)
-        .append(" : port  (default 9300)\n");
+    sb.append("\t").append(ElasticConstants.PORT).append(" : port\n");
     sb.append("\t").append(ElasticConstants.INDEX)
         .append(" : elastic index command \n");
     sb.append("\t").append(ElasticConstants.MAX_BULK_DOCS)
@@ -270,5 +272,11 @@ public class ElasticIndexWriter implements IndexWriter {
   @Override
   public Configuration getConf() {
     return config;
+  }
+
+  @Override
+  public void open(Configuration job) throws IOException {
+    // TODO Auto-generated method stub
+    
   }
 }

@@ -28,7 +28,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.NutchDocument;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -47,7 +47,7 @@ public class MetadataIndexer implements IndexingFilter {
   private static final String INDEX_PREFIX = "meta_";
   private static final String PARSE_META_PREFIX = "meta_";
 
-  public NutchDocument filter(NutchDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
 
     // just in case

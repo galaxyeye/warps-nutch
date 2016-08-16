@@ -16,15 +16,18 @@
  */
 package org.apache.nutch.indexer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
+
+import java.net.MalformedURLException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TestIndexingFilters {
 
@@ -34,7 +37,7 @@ public class TestIndexingFilters {
    * @throws IndexingException
    */
   @Test
-  public void testNonExistingIndexingFilter() throws IndexingException {
+  public void testNonExistingIndexingFilter() throws IndexingException, MalformedURLException {
     Configuration conf = NutchConfiguration.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
@@ -47,7 +50,10 @@ public class TestIndexingFilters {
     WebPage page = WebPage.newBuilder().build();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
-    filters.filter(new NutchDocument(), "http://www.example.com/", page);
+
+    String url = "http://www.example.com/";
+    String key = TableUtil.reverseUrl(url);
+    filters.filter(new IndexDocument(key), url, page);
   }
 
   /**
@@ -65,7 +71,7 @@ public class TestIndexingFilters {
     WebPage page = WebPage.newBuilder().build();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
-    NutchDocument doc = filters.filter(null, "http://www.example.com/", page);
+    IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
 
     assertNull(doc);
   }
@@ -76,7 +82,7 @@ public class TestIndexingFilters {
    * @throws IndexingException
    */
   @Test
-  public void testFilterCacheIndexingFilter() throws IndexingException {
+  public void testFilterCacheIndexingFilter() throws IndexingException, MalformedURLException {
     Configuration conf = NutchConfiguration.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
@@ -84,12 +90,14 @@ public class TestIndexingFilters {
     String class1 = "org.apache.nutch.indexer.basic.BasicIndexingFilter";
     conf.set(IndexingFilters.INDEXINGFILTER_ORDER, class1);
 
+    String url = "http://www.example.com/";
+    String key = TableUtil.reverseUrl(url);
+
     IndexingFilters filters1 = new IndexingFilters(conf);
     WebPage page = WebPage.newBuilder().build();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
-    NutchDocument fdoc1 = filters1.filter(new NutchDocument(),
-        "http://www.example.com/", page);
+    IndexDocument fdoc1 = filters1.filter(new IndexDocument(key), url, page);
 
     // add another index filter
     String class2 = "org.apache.nutch.indexer.metadata.MetadataIndexer";
@@ -99,9 +107,8 @@ public class TestIndexingFilters {
     // add MetadataIndxer filter
     conf.set(IndexingFilters.INDEXINGFILTER_ORDER, class1 + " " + class2);
     IndexingFilters filters2 = new IndexingFilters(conf);
-    NutchDocument fdoc2 = filters2.filter(new NutchDocument(),
-        "http://www.example.com/", page);
+
+    IndexDocument fdoc2 = filters2.filter(new IndexDocument(key), url, page);
     assertEquals(fdoc1.getFieldNames().size(), fdoc2.getFieldNames().size());
   }
-
 }

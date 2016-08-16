@@ -81,7 +81,7 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
 
     LOG.info(StringUtil.formatParams(
         "finishTime", TimingUtil.format(System.currentTimeMillis()),
-        "reducerTasks", TimingUtil.elapsedTime(startTime)
+        "mapTime", TimingUtil.elapsedTime(startTime)
     ));
   }
 

@@ -43,8 +43,8 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
     super.setup(context);
 
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
-    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+    int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
 
     resume = conf.getBoolean(FetcherJob.RESUME_KEY, false);
 

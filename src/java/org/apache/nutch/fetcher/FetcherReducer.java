@@ -23,10 +23,12 @@ import org.apache.nutch.fetcher.data.FetchEntry;
 import org.apache.nutch.fetcher.data.FetchItemQueues;
 import org.apache.nutch.fetcher.server.FetcherServer;
 import org.apache.nutch.mapreduce.NutchReducer;
+import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -52,7 +54,7 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
   private FetchManager fetchManager;
   private FetchMode fetchMode = FetchMode.NATIVE;
 
-  private long fetchJobTimeout = Long.MAX_VALUE;
+  private long fetchJobTimeout;
   private long fetchTaskTimeout;
   private long pendingQueueCheckInterval;
   private long pendingQueueLastCheckTime;
@@ -79,7 +81,7 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
 
-    fetchMode = FetchMode.fromString(conf.get("fetcher.fetch.mode", FetchMode.NATIVE.value()));
+    fetchMode = FetchMode.fromString(conf.get(Nutch.FETCH_MODE_KEY, FetchMode.NATIVE.value()));
 
     if (fetchMode.equals(FetchMode.CROWDSOURCING)) {
       fetchServerPort = tryAcquireFetchServerPort();
@@ -90,14 +92,13 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
     getCounter().register(FetchManager.Counter.class);
     getReporter().silence();
 
-    fetchJobTimeout = 60 * 1000 * conf.getLong("fetcher.timelimit.mins", Long.MAX_VALUE / (60 * 1000));
-    fetchTaskTimeout = 60 * 1000 * conf.getInt("mapred.task.timeout.mins", 16);
-    pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
+    fetchJobTimeout = 60 * 1000 * NutchUtil.getUint(conf, "fetcher.timelimit.mins", Integer.MAX_VALUE / 60 / 1000 / 2);
+    fetchTaskTimeout = 60 * 1000 * NutchUtil.getUint(conf, "mapred.task.timeout.mins", Integer.MAX_VALUE / 60 / 1000 / 2);
     pendingQueueCheckInterval = 60 * 1000 * conf.getLong("fetcher.pending.queue.check.time.mins", 8);
+    pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
     pendingQueueLastCheckTime = startTime;
     fetchThreadCount = conf.getInt("fetcher.threads.fetch", 5);
     maxFeedPerThread = conf.getInt("fetcher.queue.depth.multiplier", 100);
-
     reportInterval = conf.getInt("fetcher.pending.timeout.secs", 20);
 
     /**
@@ -105,8 +106,8 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
      * We should keep a minimal fetch speed
      * */
     minPageThroughputRate = conf.getInt("fetcher.throughput.threshold.pages", -1);
-    maxLowThroughputCount = conf.getInt("fetcher.throughput.threshold.sequence", 5);
-    throughputCheckTimeLimit = startTime + conf.getLong("fetcher.throughput.threshold.check.after", -1);
+    maxLowThroughputCount = conf.getInt("fetcher.throughput.threshold.sequence", 10);
+    throughputCheckTimeLimit = startTime + conf.getLong("fetcher.throughput.threshold.check.after", 30 * 1000);
 
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
@@ -118,18 +119,19 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
         "fetchJobTimeout(m)", fetchJobTimeout / 60 / 1000,
         "fetchTaskTimeout(m)", fetchTaskTimeout / 60 / 1000,
         "pendingQueueCheckInterval(m)", pendingQueueCheckInterval / 60 / 1000,
-        "pendingTimeout", pendingTimeout,
-        "pendingQueueLastCheckTime", pendingQueueLastCheckTime,
+        "pendingTimeout(m)", pendingTimeout / 60 / 1000,
+        "pendingQueueLastCheckTime", TimingUtil.format(pendingQueueLastCheckTime),
         "fetchThreadCount", fetchThreadCount,
         "maxFeedPerThread", maxFeedPerThread,
         "fetchServerPort", fetchServerPort,
         "minPageThroughputRate", minPageThroughputRate,
         "maxLowThroughputCount", maxLowThroughputCount,
-        "throughputCheckTimeLimit", throughputCheckTimeLimit,
+        "throughputCheckTimeLimit", TimingUtil.format(throughputCheckTimeLimit),
         "reportInterval(s)", reportInterval
     ));
 
-    LOG.info("use the following command to finishi the task : \necho finish " + jobName + " >> /tmp/.NUTCH_LOCAL_FILE_COMMAND");
+    LOG.info("use the following command to finishi the task : \n>>>\n"
+        + "echo finish " + jobName + " >> /tmp/.NUTCH_LOCAL_FILE_COMMAND" + "\n<<<");
   }
 
   @Override
@@ -270,6 +272,8 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
        * Read local filesystem for control commands
        * */
       if (checkLocalFileCommandExists("finish " + jobName)) {
+        handleFinishJobCommand();
+        LOG.info("Find finish-job command in local command file " + Nutch.NUTCH_LOCAL_COMMAND_FILE + ", exit the job...");
         break;
       }
 
@@ -306,13 +310,19 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
     }
   }
 
+  private void handleFinishJobCommand() {
+    queueFeederThread.complete();
+    fetchManager.clearFetchItemQueues();
+    fetchManager.dumpFetchItems(remainderLimit);
+  }
+
   /**
    * Check local command file.
    * */
   private boolean checkLocalFileCommandExists(String command) {
     boolean exist = false;
 
-    Path path = Paths.get("/tmp/.NUTCH_LOCAL_FILE_COMMAND");
+    Path path = Paths.get(Nutch.NUTCH_LOCAL_COMMAND_FILE);
     if (Files.exists(path)) {
       try {
         List<String> lines = Files.readAllLines(path);
@@ -365,7 +375,7 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
   private int checkFetchEfficiency(Context context) throws IOException {
     lowThroughputCount++;
 
-    LOG.warn(lowThroughputCount + ": Fetch speed to slow, minimum speed should be " + minPageThroughputRate + " pages per second");
+    LOG.warn(lowThroughputCount + ": Fetch speed too slow, minimum speed should be " + minPageThroughputRate + " pages per second");
 
     // Quit if we dropped below threshold too many times
     if (lowThroughputCount > maxLowThroughputCount) {
@@ -375,10 +385,11 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
       minPageThroughputRate = -1;
 
       // Empty the queues cleanly and get number of items that were dropped
+      // TODO : make this queue specified, because some fetch queue might be faster
       int hitByThrougputThreshold = fetchManager.clearFetchItemQueues();
 
       if (hitByThrougputThreshold != 0) {
-        context.getCounter("FetcherStatus", "unacceptableFetchEfficiency").increment(hitByThrougputThreshold);
+        context.getCounter("Runtime Status", "unacceptableFetchEfficiency").increment(hitByThrougputThreshold);
       }
     }
 
