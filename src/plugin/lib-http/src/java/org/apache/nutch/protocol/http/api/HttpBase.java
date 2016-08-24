@@ -17,6 +17,26 @@
 package org.apache.nutch.protocol.http.api;
 
 // JDK imports
+import crawlercommons.robots.BaseRobotRules;
+import org.apache.avro.util.Utf8;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.fetcher.FetchMode;
+import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.net.protocols.Response;
+import org.apache.nutch.net.proxy.NoProxyException;
+import org.apache.nutch.net.proxy.ProxyPool;
+import org.apache.nutch.net.proxy.ProxyPoolFactory;
+import org.apache.nutch.protocol.*;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.DeflateUtils;
+import org.apache.nutch.util.GZIPUtils;
+import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketException;
@@ -27,33 +47,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.nutch.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.avro.util.Utf8;
-import org.apache.commons.lang.math.NumberUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.fetcher.FetchMode;
-import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.net.proxy.NoProxyException;
-import org.apache.nutch.net.proxy.ProxyPool;
-import org.apache.nutch.net.proxy.ProxyPoolFactory;
-import org.apache.nutch.protocol.Content;
-import org.apache.nutch.protocol.Protocol;
-import org.apache.nutch.protocol.ProtocolException;
-import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.protocol.ProtocolStatusCodes;
-import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.util.GZIPUtils;
-import org.apache.nutch.util.DeflateUtils;
-import org.apache.nutch.util.MimeUtil;
-
-
 // crawler-commons imports
-import crawlercommons.robots.BaseRobotRules;
 
 public abstract class HttpBase implements Protocol {
 
@@ -155,9 +149,11 @@ public abstract class HttpBase implements Protocol {
     this.timeout = conf.getInt("http.timeout", 10000);
     this.fetchMaxRetry = conf.getInt("http.fetch.max.retry", 5);
     this.maxContent = conf.getInt("http.content.limit", 64 * 1024);
-    this.userAgent = getAgentString(conf.get("http.agent.name"),
-        conf.get("http.agent.version"), conf.get("http.agent.description"),
-        conf.get("http.agent.url"), conf.get("http.agent.email"));
+//    this.userAgent = getAgentString(conf.get("http.agent.name"),
+//        conf.get("http.agent.version"), conf.get("http.agent.description"),
+//        conf.get("http.agent.url"), conf.get("http.agent.email"));
+    this.userAgent = getAgentString(conf.get("http.agent.name"));
+
     this.acceptLanguage = conf.get("http.accept.language", acceptLanguage);
     this.accept = conf.get("http.accept", accept);
     this.mimeTypes = new MimeUtil(conf);
@@ -400,6 +396,10 @@ public abstract class HttpBase implements Protocol {
 
   public Set<String> getTlsPreferredProtocols() {
     return tlsPreferredProtocols;
+  }
+
+  private static String getAgentString(String agentName) {
+    return agentName;
   }
 
   private static String getAgentString(String agentName, String agentVersion,

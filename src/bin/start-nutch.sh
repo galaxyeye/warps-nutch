@@ -29,7 +29,7 @@ usage="Usage: start-nutch.sh"
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin">/dev/null; pwd`
 
-. "$bin"/nutch-config.sh
+    . "$bin"/nutch-config.sh
 
 # start nutch daemons
 errCode=$?
@@ -46,4 +46,3 @@ else
 fi
 
 "$bin"/nutch-daemon.sh --config "${NUTCH_CONF_DIR}" $commandToRun master $@
-

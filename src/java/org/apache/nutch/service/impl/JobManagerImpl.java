@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchJob;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.ConfManager;
 import org.apache.nutch.service.JobManager;
 import org.apache.nutch.service.NutchServer;
@@ -66,6 +67,10 @@ public class JobManagerImpl implements JobManager {
 
     Configuration conf = cloneConfiguration(configId);
     conf = fixCrawlFilterRules(conf);
+
+    if (jobConfig.getCrawlId() != null) {
+      conf.set(Nutch.CRAWL_ID_KEY, jobConfig.getCrawlId());
+    }
 
     NutchJob nutchJob = createNutchJob(jobConfig, conf);
     worker = new JobWorker(jobConfig, conf, nutchJob);

@@ -206,7 +206,11 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
       IndexDocument doc = new IndexDocument(key);
 
       doc.add("id", key);
-      doc.add("digest", StringUtil.toHexString(page.getSignature()));
+
+      // TODO : we may not need digest
+      if (page.getSignature() != null) {
+        doc.add("digest", StringUtil.toHexString(page.getSignature()));
+      }
 
       if (page.getBatchId() != null) {
         doc.add("batchId", page.getBatchId().toString());

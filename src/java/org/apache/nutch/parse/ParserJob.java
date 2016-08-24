@@ -74,7 +74,7 @@ public class ParserJob extends NutchJob implements Tool {
 
   public Collection<WebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
-    Collection<WebPage.Field> fields = new HashSet<WebPage.Field>(FIELDS);
+    Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
     ParserFactory parserFactory = new ParserFactory(conf);
     ParseFilters parseFilters = new ParseFilters(conf);
 
@@ -103,7 +103,7 @@ public class ParserJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, conf.get(Nutch.CRAWL_ID_KEY));
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
 
@@ -111,6 +111,7 @@ public class ParserJob extends NutchJob implements Tool {
     Boolean resume = NutchUtil.getBoolean(args, Nutch.ARG_RESUME, false);
     Boolean force = NutchUtil.getBoolean(args, Nutch.ARG_FORCE, false);
 
+    getConf().set(Nutch.CRAWL_ID_KEY, crawlId);
     getConf().set(Nutch.GENERATOR_BATCH_ID, batchId);
     getConf().setBoolean(RESUME_KEY, resume);
     getConf().setBoolean(FORCE_KEY, force);

@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetcher.data.FetchEntry;
 import org.apache.nutch.fetcher.data.FetchItemQueues;
+import org.apache.nutch.fetcher.indexer.IndexManager;
 import org.apache.nutch.fetcher.server.FetcherServer;
 import org.apache.nutch.mapreduce.NutchReducer;
 import org.apache.nutch.mapreduce.NutchUtil;
@@ -60,13 +61,14 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
   private long pendingQueueLastCheckTime;
   private long pendingTimeout;
 
-  /** final */
-  private int minPageThroughputRate;
-  /** final */
-  private long throughputCheckTimeLimit;
-  /** final */
-  private int maxLowThroughputCount;
+  /** Index */
+  private boolean indexJustInTime = false;
+  private int indexThreadCount = 1;
+  private IndexManager indexManager;
 
+  private int minPageThroughputRate;
+  private long throughputCheckTimeLimit;
+  private int maxLowThroughputCount;
   private int lowThroughputCount = 0;
 
   /** Report interval in seconds */
@@ -86,8 +88,6 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
     if (fetchMode.equals(FetchMode.CROWDSOURCING)) {
       fetchServerPort = tryAcquireFetchServerPort();
     }
-    fetchManager = new FetchManager(context.getJobID().getId(), getCounter(), context);
-    FetchManagerPool.getInstance().put(fetchManager);
 
     getCounter().register(FetchManager.Counter.class);
     getReporter().silence();
@@ -109,6 +109,12 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
     maxLowThroughputCount = conf.getInt("fetcher.throughput.threshold.sequence", 10);
     throughputCheckTimeLimit = startTime + conf.getLong("fetcher.throughput.threshold.check.after", 30 * 1000);
 
+    indexJustInTime = conf.getBoolean(Nutch.INDEX_JUST_IN_TIME, false);
+    if (indexJustInTime) {
+      indexManager = new IndexManager(conf);
+    }
+    fetchManager = FetchManagerPool.getInstance().create(context.getJobID().getId(), indexManager, getCounter(), context);
+
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
@@ -127,7 +133,9 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
         "minPageThroughputRate", minPageThroughputRate,
         "maxLowThroughputCount", maxLowThroughputCount,
         "throughputCheckTimeLimit", TimingUtil.format(throughputCheckTimeLimit),
-        "reportInterval(s)", reportInterval
+        "reportInterval(s)", reportInterval,
+        "indexJustInTime", indexJustInTime,
+        "indexThreadCount", indexThreadCount
     ));
 
     LOG.info("use the following command to finishi the task : \n>>>\n"
@@ -152,6 +160,10 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
 
       // Threads for native or proxy mode
       startNativeFetcherThreads(context);
+    }
+
+    if (indexJustInTime) {
+      startIndexThreads(context);
     }
 
     startCheckAndReportLoop(context);
@@ -207,6 +219,14 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
    * */
   private void startNativeFetcherThreads(Context context) {
     fetchManager.startFetchThreads(queueFeederThread, fetchThreadCount, context);
+  }
+
+  /**
+   * Start index threads
+   * Blocking
+   * */
+  private void startIndexThreads(Context context) throws IOException {
+    indexManager.startIndexThreads(indexThreadCount, context);
   }
 
   private void startCheckAndReportLoop(Context context) throws IOException {
@@ -276,8 +296,9 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
         LOG.info("Find finish-job command in local command file " + Nutch.NUTCH_LOCAL_COMMAND_FILE + ", exit the job...");
         break;
       }
-
     } while (fetchManager.getActiveFetchThreadCount() > 0);
+
+
   }
 
   /**
@@ -312,6 +333,8 @@ public class FetcherReducer extends NutchReducer<IntWritable, FetchEntry, String
 
   private void handleFinishJobCommand() {
     queueFeederThread.complete();
+    indexManager.halt();
+
     fetchManager.clearFetchItemQueues();
     fetchManager.dumpFetchItems(remainderLimit);
   }

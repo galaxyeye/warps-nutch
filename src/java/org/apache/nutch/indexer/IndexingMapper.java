@@ -8,7 +8,6 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.NutchMapper;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.storage.Mark;
@@ -24,7 +23,7 @@ import java.io.IOException;
  */
 public class IndexingMapper extends NutchMapper<String, WebPage, String, IndexDocument> {
 
-  public enum Counter { unmatchStatus, notUpdated, indexFailed };
+  public enum Counter { unmatchStatus, notUpdated, alreadyIndexed, indexFailed };
 
   private DataStore<String, WebPage> storage;
   private Utf8 batchId;
@@ -86,7 +85,14 @@ public class IndexingMapper extends NutchMapper<String, WebPage, String, IndexDo
         getCounter().increase(Counter.notUpdated);
         // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
         return;
-      }      
+      }
+
+      mark = Mark.INDEX_MARK.checkMark(page);
+      if (mark != null) {
+        getCounter().increase(Counter.alreadyIndexed);
+        // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
+        return;
+      }
     }
 
     IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
@@ -99,7 +105,8 @@ public class IndexingMapper extends NutchMapper<String, WebPage, String, IndexDo
     // LOG.debug("Indexing : " + TableUtil.unreverseUrl(key));
 
     if (!reindex) {
-      Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));      
+      // Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
+      Mark.INDEX_MARK.putMark(page, new Utf8(batchId));
     }
 
     // LOG.debug(TableUtil.toString(page.getText()));

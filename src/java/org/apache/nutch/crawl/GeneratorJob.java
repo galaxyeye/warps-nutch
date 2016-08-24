@@ -82,7 +82,7 @@ public class GeneratorJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, "");
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, conf.get(Nutch.CRAWL_ID_KEY));
     String batchId = NutchUtil.get(args, Nutch.ARG_BATCH, NutchUtil.generateBatchId());
     long topN = NutchUtil.getLong(args, Nutch.ARG_TOPN, Long.MAX_VALUE);
     boolean filter = NutchUtil.getBoolean(args, Nutch.ARG_FILTER, true);

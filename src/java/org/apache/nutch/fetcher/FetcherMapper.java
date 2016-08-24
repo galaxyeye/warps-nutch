@@ -35,6 +35,8 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
   public enum Counter { rows, notGenerated, alreadyFetched };
 
   private boolean resume;
+  private int limit = -1;
+  private int count = 0;
 
   private Random random = new Random();
 
@@ -45,6 +47,7 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    limit = conf.getInt(Nutch.ARG_LIMIT, -1);
 
     resume = conf.getBoolean(FetcherJob.RESUME_KEY, false);
 
@@ -55,7 +58,8 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
         "crawlId", crawlId,
         "UICrawlId", UICrawlId,
         "fetchMode", fetchMode,
-        "resume", resume
+        "resume", resume,
+        "limit", limit
     ));
   }
 
@@ -98,10 +102,8 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
 
     // LOG.debug("Fetcher mapper : " + key);
 
-    /**
-     * TODO : Consider also update the WebPage row, add a new mark FETCHING_MARK.
-     * If we have FETCHING_MARK, we can fetch rows with "already generated" safely
-     * (multiple.row)context.write(TableUtil.reverseUrl(key.url), page);
-     * */
+    if (limit > 0 && ++count > limit) {
+      stop("Hit limit " + limit + ", finish the mapper.");
+    }
   }
 }

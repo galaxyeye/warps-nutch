@@ -79,15 +79,13 @@ public class DbUpdaterJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL);
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, conf.get(Nutch.CRAWL_ID_KEY));
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
     batchId = NutchUtil.get(args, Nutch.ARG_BATCH, Nutch.ALL_BATCH_ID_STR);
 
     getConf().set(Nutch.BATCH_NAME_KEY, batchId);
-    if (crawlId != null) {
-      getConf().set(Nutch.CRAWL_ID_KEY, crawlId);
-    }
+    getConf().set(Nutch.CRAWL_ID_KEY, crawlId);
 
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),

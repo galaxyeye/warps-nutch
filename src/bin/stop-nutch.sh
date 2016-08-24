@@ -49,11 +49,8 @@ pid=${NUTCH_PID_DIR:-/tmp}/nutch-$NUTCH_IDENT_STRING-master.pid
 echo -n stopping nutch
 echo "`date` Stopping nutch (via master)" >> $loglog
 
-nohup nice -n ${NUTCH_NICENESS:-0} "$NUTCH_HOME"/bin/nutch \
-   --config "${NUTCH_CONF_DIR}" \
-   master stop "$@" > "$logout" 2>&1 < /dev/null &
+nohup nice -n ${NUTCH_NICENESS:-0} "$NUTCH_HOME"/bin/nutch-daemon.sh --config "${NUTCH_CONF_DIR}" stop master "$@" > "$logout" 2>&1 < /dev/null &
 
 waitForProcessEnd `cat $pid` 'stop-master-command'
 
 rm -f $pid
-

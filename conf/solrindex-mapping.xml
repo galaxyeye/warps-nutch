@@ -48,7 +48,7 @@
     <!-- Use fixed field type detection, do not support automatically mapping, every field should be here -->
     <fields>
         <field dest="id" source="id"/>
-        <field dest="name" source="html"/>
+        <field dest="name" source="name"/>
         <field dest="content" source="content"/>
         <field dest="content_type" source="content_type"/>
         <field dest="title" source="title"/>

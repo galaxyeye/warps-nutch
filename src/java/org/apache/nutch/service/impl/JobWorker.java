@@ -47,10 +47,6 @@ public class JobWorker implements Runnable {
     }
 
     jobInfo = new JobInfo(NutchUtil.generateJobId(jobConfig, hashCode()), jobConfig, State.IDLE, "idle");
-
-    if (jobConfig.getCrawlId() != null) {
-      conf.set(Nutch.CRAWL_ID_KEY, jobConfig.getCrawlId());
-    }
   }
 
   @Override

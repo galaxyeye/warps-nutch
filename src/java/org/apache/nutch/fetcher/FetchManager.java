@@ -9,6 +9,7 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.fetcher.data.FetchItem;
 import org.apache.nutch.fetcher.data.FetchItemQueues;
 import org.apache.nutch.fetcher.data.FetchResult;
+import org.apache.nutch.fetcher.indexer.IndexManager;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
@@ -46,7 +47,9 @@ public class FetchManager extends Configured {
     readyFetchItems, pendingFetchItems,
     pagesThroughput, bytesThroughput,
     waitingFetchThreadCount, activeFetchThreadCount
-  };
+  }
+
+  ;
 
   private Integer jobID;
 
@@ -59,7 +62,7 @@ public class FetchManager extends Configured {
   /**
    * Our own Hardware bandwidth in Mbytes, if exceed the limit, slows down the task scheduling.
    * TODO : automatically adjust
-   * */
+   */
   private final int bandwidth;
 
   // handle redirect
@@ -94,17 +97,19 @@ public class FetchManager extends Configured {
   private final AtomicInteger fetchErrors = new AtomicInteger(0); // total fetch fetchErrors
   /**
    * fetch speed counted by totalPages per second
-   * */
+   */
   private float pagesThroughputRate = 0;
   /**
    * fetch speed counted by total totalBytes per second
-   * */
+   */
   private float bytesThroughputRate = 0;
+
+  private IndexManager indexManager;
 
   private NutchCounter counter;
 
   @SuppressWarnings("rawtypes")
-  FetchManager(int jobID, NutchCounter counter, Context context) {
+  FetchManager(int jobID, IndexManager indexManager, NutchCounter counter, Context context) throws IOException {
     Configuration conf = context.getConfiguration();
     setConf(conf);
 
@@ -123,16 +128,16 @@ public class FetchManager extends Configured {
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
     this.parse = conf.getBoolean(FetcherJob.PARSE_KEY, false);
+    if (indexManager != null) {
+      this.indexManager = indexManager;
+      parse = true; // indexer depends on paser
+    }
     if (parse) {
       this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
       this.parseUtil = new ParseUtil(getConf());
     }
 
-    try {
-      this.fetchItemQueues = new FetchItemQueues(conf);
-    } catch (IOException e) {
-      LOG.error(e.toString());
-    }
+    this.fetchItemQueues = new FetchItemQueues(conf);
 
     LOG.info(StringUtil.formatParams(
         "jobID", jobID,
@@ -142,7 +147,9 @@ public class FetchManager extends Configured {
     ));
   }
 
-  String name() { return "FetchManager-" + jobID; }
+  String name() {
+    return "FetchManager-" + jobID;
+  }
 
   Integer jobID() {
     return jobID;
@@ -178,13 +185,24 @@ public class FetchManager extends Configured {
 
   /**
    * Instantaneous speed
+   *
    * @return instantaneous speed
-   * */
-  float getPagesThroughputRate() { return pagesThroughputRate; }
+   */
+  float getPagesThroughputRate() {
+    return pagesThroughputRate;
+  }
 
-  float getBytesThroughput() { return bytesThroughputRate; }
+  float getBytesThroughput() {
+    return bytesThroughputRate;
+  }
 
-  int getActiveFetchThreadCount() { return activeFetchThreadCount.get(); }
+  int getActiveFetchThreadCount() {
+    return activeFetchThreadCount.get();
+  }
+
+  IndexManager getIndexManager() {
+    return indexManager;
+  }
 
   void setParseOnFetch(boolean parse) {
     this.parse = parse;
@@ -208,9 +226,9 @@ public class FetchManager extends Configured {
 
   /**
    * consume a fetch item and try to download the target web page
-   * 
+   * <p>
    * TODO : add FetchQueues.consumeFetchItems to make locking inside loop
-   * */
+   */
   List<FetchItem> consumeFetchItems(int number) {
     List<FetchItem> fetchItems = Lists.newArrayList();
     if (number <= 0) {
@@ -251,8 +269,7 @@ public class FetchManager extends Configured {
   FetchResult consumeFetchResut() {
     try {
       return fetchResultQueue.remove(0);
-    }
-    catch(IndexOutOfBoundsException e) {
+    } catch (IndexOutOfBoundsException e) {
     }
 
     return null;
@@ -264,7 +281,7 @@ public class FetchManager extends Configured {
 
   /**
    * Finish the fetch item anyway, even if it's failed to download the target page
-   * */
+   */
   void finishFetchItem(FetchItem fetchItem) {
     fetchItemQueues.finishFetchItem(fetchItem);
     lastTaskFinishTime.set(System.currentTimeMillis());
@@ -272,7 +289,7 @@ public class FetchManager extends Configured {
 
   /**
    * Finished downloading the web page
-   * */
+   */
   void finishFetchItem(String queueID, long itemID, ProtocolOutput output) {
     FetchItem fetchItem = fetchItemQueues.getPendingFetchItem(queueID, itemID);
 
@@ -289,8 +306,7 @@ public class FetchManager extends Configured {
       doFinishFetchTask(fetchItem, output);
 
       counter.increase(Counter.finishedTasks);
-    }
-    catch (final Throwable t) {
+    } catch (final Throwable t) {
       // unexpected exception
       // unblock
       fetchItemQueues.finishFetchItem(fetchItem);
@@ -299,17 +315,14 @@ public class FetchManager extends Configured {
 
       try {
         output(fetchItem, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
-      }
-      catch (IOException | InterruptedException e) {
+      } catch (IOException | InterruptedException e) {
         LOG.error("fetcher throwable caught", e);
-      }
-      finally {
+      } finally {
         if (fetchItem != null) {
           fetchItemQueues.finishFetchItem(fetchItem);
         }
       }
-    }
-    finally {
+    } finally {
       lastTaskFinishTime.set(System.currentTimeMillis());
     }
   }
@@ -320,9 +333,10 @@ public class FetchManager extends Configured {
 
   /**
    * Wait for a while and report task status
+   *
    * @param reportInterval Report interval
    * @param context
-   * */
+   */
   void waitAndReport(int reportInterval, Context context) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
@@ -330,7 +344,8 @@ public class FetchManager extends Configured {
 
     try {
       Thread.sleep(reportInterval * 1000);
-    } catch (InterruptedException ignored) {}
+    } catch (InterruptedException ignored) {
+    }
 
     pagesThroughputRate = (totalPages.get() - pagesLastSec) / reportInterval;
     bytesThroughputRate = (totalBytes.get() - bytesLastSec) / reportInterval;
@@ -360,14 +375,14 @@ public class FetchManager extends Configured {
     status.append(totalPages).append(" pages, ").append(fetchErrors).append(" errors, ");
 
     // average speed
-    status.append(Math.round((((float) totalPages.get())*10)/elapsed)/10.0).append(" ");
+    status.append(Math.round((((float) totalPages.get()) * 10) / elapsed) / 10.0).append(" ");
     // instantaneous speed
-    status.append(Math.round((pagesThroughput*10)/10.0)).append(" pages/s, ");
+    status.append(Math.round((pagesThroughput * 10) / 10.0)).append(" pages/s, ");
 
     // average speed
-    status.append(Math.round((((float) totalBytes.get())*8)/1024)/elapsed).append(" ");
+    status.append(Math.round((((float) totalBytes.get()) * 8) / 1024) / elapsed).append(" ");
     // instantaneous speed
-    status.append(Math.round((bytesThroughput)*8)/1024).append(" kb/s, ");
+    status.append(Math.round((bytesThroughput) * 8) / 1024).append(" kb/s, ");
 
     status.append(readyFetchItems).append(" ready ");
     status.append(pendingFetchItems).append(" pending ");
@@ -402,8 +417,7 @@ public class FetchManager extends Configured {
     if (targetBandwidth > 0) {
       if (bandwidthTargetCheckCounter < bandwidthTargetCheckEveryNSecs) {
         bandwidthTargetCheckCounter++;
-      }
-      else if (bandwidthTargetCheckCounter == bandwidthTargetCheckEveryNSecs) {
+      } else if (bandwidthTargetCheckCounter == bandwidthTargetCheckEveryNSecs) {
         long bpsSinceLastCheck = ((totalBytes.get() - bytesAtLastBWTCheck) * 8) / bandwidthTargetCheckEveryNSecs;
 
         bytesAtLastBWTCheck = totalBytes.get();
@@ -411,7 +425,7 @@ public class FetchManager extends Configured {
 
         int averageBdwPerThread = 0;
         if (activeFetchThreadCount.get() > 0) {
-          averageBdwPerThread = Math.round(bpsSinceLastCheck / activeFetchThreadCount.get());          
+          averageBdwPerThread = Math.round(bpsSinceLastCheck / activeFetchThreadCount.get());
         }
 
         LOG.info("averageBdwPerThread : " + (averageBdwPerThread / 1000) + " kbps");
@@ -447,7 +461,7 @@ public class FetchManager extends Configured {
 
           // keep at least one
           if (excessThreads >= fetchThreads.size()) {
-            excessThreads = 0;            
+            excessThreads = 0;
           }
 
           // de-activates threads
@@ -462,14 +476,14 @@ public class FetchManager extends Configured {
 
   /**
    * Dump fetch items
-   * */
+   */
   synchronized void dumpFetchItems(int limit) {
     fetchItemQueues.dump(limit);
   }
 
   /**
    * Dump fetch threads
-   * */
+   */
   synchronized void dumpFetchThreads() {
     for (int i = 0; i < fetchThreads.size(); i++) {
       FetchThread thread = fetchThreads.get(i);
@@ -506,59 +520,65 @@ public class FetchManager extends Configured {
 
     updateStatus(fetchItem.getUrl(), length);
 
-    switch(status.getCode()) {
-    case ProtocolStatusCodes.WOULDBLOCK:
-      // retry ?
-      fetchItemQueues.produceFetchItem(fetchItem);
-      break;
+    switch (status.getCode()) {
+      case ProtocolStatusCodes.WOULDBLOCK:
+        // retry ?
+        fetchItemQueues.produceFetchItem(fetchItem);
+        break;
 
-    case ProtocolStatusCodes.SUCCESS:        // got a page
-      output(fetchItem, content, status, CrawlStatus.STATUS_FETCHED);
-      break;
+      case ProtocolStatusCodes.SUCCESS:        // got a page
+        output(fetchItem, content, status, CrawlStatus.STATUS_FETCHED);
 
-    case ProtocolStatusCodes.MOVED:         // redirect
-    case ProtocolStatusCodes.TEMP_MOVED:
-      byte code;
-      boolean temp;
-      if (status.getCode() == ProtocolStatusCodes.MOVED) {
-        code = CrawlStatus.STATUS_REDIR_PERM;
-        temp = false;
-      } else {
-        code = CrawlStatus.STATUS_REDIR_TEMP;
-        temp = true;
-      }
-      final String newUrl = ProtocolStatusUtils.getMessage(status);
-      handleRedirect(fetchItem.getUrl(), newUrl, temp,  FetcherJob.PROTOCOL_REDIR, fetchItem.getPage());
-      output(fetchItem, content, status, code);
-      break;
-    case ProtocolStatusCodes.EXCEPTION:
-      logFetchFailure(fetchItem.getUrl(), ProtocolStatusUtils.getMessage(status));
+        WebPage page = fetchItem.getPage();
+        Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
+        if (indexManager != null && page != null) {
+          indexManager.produce(fetchItem);
+        }
+        break;
+
+      case ProtocolStatusCodes.MOVED:         // redirect
+      case ProtocolStatusCodes.TEMP_MOVED:
+        byte code;
+        boolean temp;
+        if (status.getCode() == ProtocolStatusCodes.MOVED) {
+          code = CrawlStatus.STATUS_REDIR_PERM;
+          temp = false;
+        } else {
+          code = CrawlStatus.STATUS_REDIR_TEMP;
+          temp = true;
+        }
+        final String newUrl = ProtocolStatusUtils.getMessage(status);
+        handleRedirect(fetchItem.getUrl(), newUrl, temp, FetcherJob.PROTOCOL_REDIR, fetchItem.getPage());
+        output(fetchItem, content, status, code);
+        break;
+      case ProtocolStatusCodes.EXCEPTION:
+        logFetchFailure(fetchItem.getUrl(), ProtocolStatusUtils.getMessage(status));
       /* FALLTHROUGH */
-    case ProtocolStatusCodes.RETRY:          // retry
-    case ProtocolStatusCodes.BLOCKED:
-      output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
-      break;
+      case ProtocolStatusCodes.RETRY:          // retry
+      case ProtocolStatusCodes.BLOCKED:
+        output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
+        break;
 
-    case ProtocolStatusCodes.GONE:           // gone
-    case ProtocolStatusCodes.NOTFOUND:
-    case ProtocolStatusCodes.ACCESS_DENIED:
-    case ProtocolStatusCodes.ROBOTS_DENIED:
-      output(fetchItem, null, status, CrawlStatus.STATUS_GONE);
-      break;
-    case ProtocolStatusCodes.NOTMODIFIED:
-      output(fetchItem, null, status, CrawlStatus.STATUS_NOTMODIFIED);
-      break;
-    default:
-      if (LOG.isWarnEnabled()) {
-        LOG.warn("Unknown ProtocolStatus: " + status.getCode());
-      }
+      case ProtocolStatusCodes.GONE:           // gone
+      case ProtocolStatusCodes.NOTFOUND:
+      case ProtocolStatusCodes.ACCESS_DENIED:
+      case ProtocolStatusCodes.ROBOTS_DENIED:
+        output(fetchItem, null, status, CrawlStatus.STATUS_GONE);
+        break;
+      case ProtocolStatusCodes.NOTMODIFIED:
+        output(fetchItem, null, status, CrawlStatus.STATUS_NOTMODIFIED);
+        break;
+      default:
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Unknown ProtocolStatus: " + status.getCode());
+        }
 
-      output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
+        output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
     } // switch
   }
 
   private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WebPage page)
-  throws URLFilterException, IOException, InterruptedException {
+      throws URLFilterException, IOException, InterruptedException {
     newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
     newUrl = urlFilters.filter(newUrl);
     if (newUrl == null || newUrl.equals(url)) {
@@ -566,7 +586,7 @@ public class FetchManager extends Configured {
     }
 
     if (ignoreExternalLinks) {
-      String toHost   = new URL(newUrl).getHost().toLowerCase();
+      String toHost = new URL(newUrl).getHost().toLowerCase();
       String fromHost = new URL(url).getHost().toLowerCase();
       if (toHost == null || !toHost.equals(fromHost)) {
         // external links
@@ -589,14 +609,14 @@ public class FetchManager extends Configured {
 
   /**
    * Write the reduce result back to the backend storage
-   * */
+   */
   @SuppressWarnings("unchecked")
   private void output(FetchItem fetchItem, Content content, ProtocolStatus pstatus, byte status)
-  throws IOException, InterruptedException {
+      throws IOException, InterruptedException {
     String url = fetchItem.getUrl();
     WebPage page = fetchItem.getPage();
 
-    page.setStatus((int)status);
+    page.setStatus((int) status);
     final long prevFetchTime = page.getFetchTime();
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(System.currentTimeMillis());
@@ -611,7 +631,11 @@ public class FetchManager extends Configured {
       page.setBaseUrl(new Utf8(content.getBaseUrl()));
     }
 
+    /** Set fetch mark */
     Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
+    /** Unset index mark if exist, this page should be re-indexed */
+    Mark.INDEX_MARK.removeMarkIfExist(page);
+
     String key = TableUtil.reverseUrl(url);
 
     if (parse) {
@@ -622,7 +646,7 @@ public class FetchManager extends Configured {
 
     // Remove content if storingContent is false. Content is added to page above
     // for ParseUtil be able to parse it.
-    if(content != null && !storingContent) {
+    if (content != null && !storingContent) {
       page.setContent(ByteBuffer.wrap(new byte[0]));
     }
 

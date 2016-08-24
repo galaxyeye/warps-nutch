@@ -246,6 +246,7 @@ public class Benchmark extends Configured implements Tool {
       }
       boolean isParsing = getConf().getBoolean("fetcher.parse", false);
       start = System.currentTimeMillis();
+
       fetcher.fetch("", FetchMode.NATIVE.value(), batchId, threads, false, -1); // fetch it
       delta = System.currentTimeMillis() - start;
       res.addTiming("fetch", i + "", delta);

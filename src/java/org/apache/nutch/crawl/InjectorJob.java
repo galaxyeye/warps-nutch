@@ -17,6 +17,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.mapreduce.GoraOutputFormat;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -127,7 +128,8 @@ public class InjectorJob extends NutchJob implements Tool {
       String reversedUrl = null;
       WebPage row = WebPage.newBuilder().build();
       try {
-        reversedUrl = TableUtil.reverseUrl(url); // collect it
+        // remove all metadata in the url string
+        reversedUrl = TableUtil.reverseUrl(StringUtils.substringBefore(url, "\t")); // collect it
         row.setFetchTime(curTime);
         row.setFetchInterval(customInterval);
       }
@@ -136,6 +138,7 @@ public class InjectorJob extends NutchJob implements Tool {
       }
 
       if (reversedUrl == null) {
+        LOG.warn("Ignore illegal formatted url : " + url);
         return;
       }
 
@@ -219,7 +222,7 @@ public class InjectorJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, "");
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, conf.get(Nutch.CRAWL_ID_KEY));
     String seedDir = NutchUtil.get(args, Nutch.ARG_SEEDDIR);
 
     conf.set(Nutch.CRAWL_ID_KEY, crawlId);

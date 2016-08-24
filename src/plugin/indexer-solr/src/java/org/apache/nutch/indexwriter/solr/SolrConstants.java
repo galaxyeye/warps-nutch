@@ -22,6 +22,10 @@ public interface SolrConstants {
 
   String SERVER_URL = SOLR_PREFIX + "server.url";
 
+  String ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
+
+  String COLLECTION = SOLR_PREFIX + "collection";
+
   String COMMIT_SIZE = SOLR_PREFIX + "commit.size";
 
   String MAPPING_FILE = SOLR_PREFIX + "mapping.file";
@@ -31,10 +35,6 @@ public interface SolrConstants {
   String USERNAME = SOLR_PREFIX + "auth.username";
 
   String PASSWORD = SOLR_PREFIX + "auth.password";
-
-  String COLLECTION = SOLR_PREFIX + "collection";
-
-  String ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
 
   String ID_FIELD = "id";
 

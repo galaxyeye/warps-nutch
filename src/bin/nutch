@@ -96,7 +96,7 @@ if [ "$COMMAND" = "crawl" ] ; then
   echo "Command $COMMAND is deprecated, please use bin/crawl instead"
   exit -1
 elif [ "$COMMAND" = "master" ] ; then
-  CLASS=org.apache.nutch.api.NutchServer
+  CLASS=org.apache.nutch.service.NutchServer
 elif [ "$COMMAND" = "inject" ] ; then
   CLASS=org.apache.nutch.crawl.InjectorJob
 elif [ "$COMMAND" = "hostinject" ] ; then
@@ -118,8 +118,7 @@ elif [ "$COMMAND" = "readhostdb" ] ; then
 elif [ "$COMMAND" = "elasticindex" ] ; then
   CLASS=org.apache.nutch.indexer.elastic.ElasticIndexerJob
 elif [ "$COMMAND" = "solrindex" ] ; then
-  CLASS="org.apache.nutch.indexer.IndexingJob -Dsolr.server.url=$1"
-  shift
+  CLASS="org.apache.nutch.indexer.IndexingJob"
 elif [ "$COMMAND" = "index" ] ; then
   CLASS=org.apache.nutch.indexer.IndexingJob
 elif [ "$COMMAND" = "solrdedup" ] ; then
@@ -158,6 +157,7 @@ if [ $NUTCH_RUNTIME_MODE == "DISTRIBUTE" ]; then
  fi
  # distributed mode
  EXEC_CALL=(hadoop jar "$NUTCH_JOB")
+ echo "${EXEC_CALL[@]}" $CLASS "$@"
  exec "${EXEC_CALL[@]}" $CLASS "$@"
  exit 0
 fi

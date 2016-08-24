@@ -82,6 +82,13 @@ public class BasicIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    */
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+    String contentType = TableUtil.toString(page.getContentType());
+    if (!contentType.contains("html")) {
+      return null;
+    }
+
+    // get content type
+    doc.add("content_type", contentType);
 
     String reprUrl = TableUtil.toString(page.getReprUrl());
     String reprUrlString = reprUrl != null ? reprUrl.toString() : null;
@@ -116,7 +123,7 @@ public class BasicIndexingFilter implements IndexingFilter {
     // String content = TableUtil.toString(page.getText());
     String content = Bytes.toString(page.getContent().array());
     try {
-      // TODO : we should do this in nutch
+      // TODO : we should do this in nutch?
       // Extract the article content using boilerpipe
       content = ArticleExtractor.INSTANCE.getText(content);
     } catch (BoilerpipeProcessingException e) {
@@ -151,9 +158,6 @@ public class BasicIndexingFilter implements IndexingFilter {
         doc.add("cache", caching);
       }
     }
-
-    // get content type
-    doc.add("content_type", page.getContentType().toString());
 
     // add timestamp when fetched, for deduplication
     // String tstamp = DateUtil.getThreadLocalDateFormat().format(new Date(page.getFetchTime()));

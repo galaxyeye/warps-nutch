@@ -34,7 +34,7 @@
 #
 # Modelled after $HADOOP_HOME/bin/hadoop-daemon.sh
 
-usage="Usage: NUTCH-daemon.sh [--config <conf-dir>]\
+usage="Usage: nutch-daemon.sh [--config <conf-dir>]\
  (start|stop|restart|autorestart) <NUTCH-COMMAND> \
  <args...>"
 
@@ -58,9 +58,9 @@ COMMAND=$1
 shift
 
 echo "nutch home : $NUTCH_HOME"
-if [ -z $DEV_NUTCH_HOME ]; then
-echo "we are in development mode..."
-echo "development home : ${DEV_NUTCH_HOME}"
+if [ -n $DEV_NUTCH_HOME ]; then
+    echo "we are in development mode..."
+    echo "development home : ${DEV_NUTCH_HOME}"
 fi
 echo "working direcotry : `pwd`"
 echo "nutch version : `cat $NUTCH_HOME/VERSION`"

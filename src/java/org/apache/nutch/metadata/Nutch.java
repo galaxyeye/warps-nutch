@@ -82,34 +82,22 @@ public interface Nutch {
   String ARG_CRAWL = "crawl";
   /** Batch id to select. */
   String ARG_BATCH = "batch";
-  /** Fetch mode. */
-  String ARG_FETCH_MODE = "fetchMode";
   /** Resume previously aborted op. */
   String ARG_RESUME = "resume";
   /** Force processing even if there are locks or inconsistencies. */
   String ARG_FORCE = "force";
   /** Sort statistics. */
   String ARG_SORT = "sort";
-  /** Solr URL. */
-  String ARG_SOLR = "solr";
-  /** Reindex . */
-  String ARG_REINDEX = "reindex";
   /** Number of fetcher threads (per map task). */
   String ARG_THREADS = "threads";
   /** Number of fetcher tasks. */
   String ARG_NUMTASKS = "numTasks";
-  /** Generate topN scoring URLs. */
-  String ARG_TOPN = "topN";
   /** The notion of current time. */
   String ARG_CURTIME = "curTime";
   /** Apply URLFilters. */
   String ARG_FILTER = "filter";
   /** Apply URLNormalizers. */
   String ARG_NORMALIZE = "normalize";
-  /** Whitespace-separated list of seed URLs. */
-  String ARG_SEEDLIST = "seed";
-  /** a path to a directory containing a list of seed URLs. */
-  String ARG_SEEDDIR = "seedDir";
   /** Class to run as a NutchTool. */
   String ARG_CLASS = "class";
   /** Depth (number of cycles) of a crawl. */
@@ -120,6 +108,46 @@ public interface Nutch {
   String ARG_END_KEY = "endKey";
 
   String ARG_LIMIT = "limit";
+
+  /**
+   * Injector Relative Argments
+   * */
+  /** Whitespace-separated list of seed URLs. */
+  String ARG_SEEDLIST = "seed";
+  /** a path to a directory containing a list of seed URLs. */
+  String ARG_SEEDDIR = "seedDir";
+
+  /**
+   * Fetcher Relative Argments
+   * */
+  /** Fetch mode. */
+  String ARG_FETCH_MODE = "fetchMode";
+
+  /**
+   * Generator Relative Argments
+   * */
+  /** Generate topN scoring URLs. */
+  String ARG_TOPN = "topN";
+
+  /**
+   * Indexer Relative Arguments
+   * */
+  /** Index immediately once the content is fetched. */
+  String ARG_INDEX = "index";
+  /** Solr URL. */
+  String ARG_SOLR = "solr";
+  /** ZooKeeper. */
+  String ARG_ZK = "zk";
+  /** Solr Collection. */
+  String ARG_COLLECTION = "collection";
+  /** Reindex. */
+  String ARG_REINDEX = "reindex";
+
+  String INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
+  String SOLR_PREFIX = "solr.";
+  String SOLR_SERVER_URL = SOLR_PREFIX + "server.url";
+  String SOLR_ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
+  String SOLR_COLLECTION = SOLR_PREFIX + "collection";
 
   // short constants for status / results fields
   /** Status / result message. */

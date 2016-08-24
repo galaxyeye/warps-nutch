@@ -18,6 +18,7 @@ package org.apache.nutch.mapreduce;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
@@ -102,6 +103,26 @@ public class NutchUtil {
   public static Boolean getBoolean(Map<String, Object> args, String name, boolean defaultValue) {
     Boolean value = (Boolean) args.get(name);
     return value == null ? defaultValue : value;
+  }
+
+  public static String[] getStrings(Map<String, Object> args, String name, String[] defaultValue) {
+    String valueString = get(args, name, null);
+    if (valueString == null) {
+      return defaultValue;
+    }
+    return org.apache.hadoop.util.StringUtils.getStrings(valueString);
+  }
+
+  public static void setIfNotNull(Configuration conf, String name, String value) {
+    if (name != null && value != null) {
+      conf.set(name, value);
+    }
+  }
+
+  public static void setIfNotEmpty(Configuration conf, String name, String value) {
+    if (StringUtils.isNoneEmpty(name) && StringUtils.isNoneEmpty(value)) {
+      conf.set(name, value);
+    }
   }
 
   public static Map<String, Object> recordJobStatus(Job job) {

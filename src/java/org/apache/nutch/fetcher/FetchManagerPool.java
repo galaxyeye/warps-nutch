@@ -3,11 +3,15 @@ package org.apache.nutch.fetcher;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.nutch.fetcher.data.FetchItem;
+import org.apache.nutch.fetcher.indexer.IndexManager;
+import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -41,6 +45,12 @@ public class FetchManagerPool {
 
   public String name() {
     return this.name;
+  }
+
+  public synchronized FetchManager create(int jobID, IndexManager indexManager, NutchCounter counter, Reducer.Context context) throws IOException {
+    FetchManager fetchManager = new FetchManager(jobID, indexManager, counter, context);
+    put(fetchManager);
+    return fetchManager;
   }
 
   public synchronized void put(FetchManager fetchManager) {

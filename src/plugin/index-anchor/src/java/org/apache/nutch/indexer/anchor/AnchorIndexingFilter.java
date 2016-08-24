@@ -55,7 +55,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
   public void setConf(Configuration conf) {
     this.conf = conf;
 
-    deduplicate = conf.getBoolean("anchorIndexingFilter.deduplicate", false);
+    deduplicate = conf.getBoolean("anchorIndexingFilter.deduplicate", true);
     LOG.info("Anchor deduplication is: " + (deduplicate ? "on" : "off"));
   }
 

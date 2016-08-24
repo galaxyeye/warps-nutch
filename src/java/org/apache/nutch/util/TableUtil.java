@@ -16,11 +16,11 @@
  ******************************************************************************/
 package org.apache.nutch.util;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-
-import org.apache.commons.lang.StringUtils;
 
 public class TableUtil {
 
@@ -33,13 +33,12 @@ public class TableUtil {
    * E.g. "http://bar.foo.com:8983/to/index.html?a=b" becomes
    * "com.foo.bar:8983:http/to/index.html?a=b".
    * 
-   * @param url
+   * @param urlString
    *          url to be reversed
    * @return Reversed url
    * @throws MalformedURLException
    */
-  public static String reverseUrl(String urlString)
-      throws MalformedURLException {
+  public static String reverseUrl(String urlString) throws MalformedURLException {
     return reverseUrl(new URL(urlString));
   }
 
@@ -148,7 +147,8 @@ public class TableUtil {
   /**
    * Convert given Utf8 instance to String and and cleans out any offending "�"
    * from the String.
-   * 
+   *
+   * TODO : bad function name
    * 
    * @param utf8
    *          Utf8 object

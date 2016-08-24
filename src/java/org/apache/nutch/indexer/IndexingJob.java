@@ -27,14 +27,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.mapreduce.NutchJob;
-import org.apache.nutch.mapreduce.NutchMapper;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.parse.ParseStatusCodes;
-import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -42,7 +38,6 @@ import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,7 +45,6 @@ import java.util.Map;
 /**
  * Generic indexer which relies on the plugins implementing IndexWriter
  **/
-
 public class IndexingJob extends NutchJob implements Tool {
 
   public static Logger LOG = LoggerFactory.getLogger(IndexingJob.class);
@@ -99,17 +93,23 @@ public class IndexingJob extends NutchJob implements Tool {
 
     Configuration conf = getConf();
 
-    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, "");
+    String crawlId = NutchUtil.get(args, Nutch.ARG_CRAWL, conf.get(Nutch.CRAWL_ID_KEY));
     batchId = NutchUtil.get(args, Nutch.ARG_BATCH, Nutch.ALL_BATCH_ID_STR);
     int threads = NutchUtil.getInt(args, Nutch.ARG_THREADS, 5);
     boolean resume = NutchUtil.getBoolean(args, Nutch.ARG_RESUME, false);
     boolean reindex = NutchUtil.getBoolean(args, Nutch.ARG_REINDEX, false);
-    numTasks = conf.getInt("mapred.reduce.tasks", 2); // default value
     // since mapred.reduce.tasks is deprecated
     // numTasks = getConf().getInt("mapreduce.job.reduces", 2);
-    numTasks = NutchUtil.getInt(args, Nutch.ARG_NUMTASKS, numTasks);
+    numTasks = NutchUtil.getInt(args, Nutch.ARG_NUMTASKS, conf.getInt("mapred.reduce.tasks", 2));
     int limit = NutchUtil.getInt(args, Nutch.ARG_LIMIT, -1);
+    // indexer parameters
+    String solrUrl = NutchUtil.get(args, Nutch.SOLR_SERVER_URL, conf.get(Nutch.SOLR_SERVER_URL));
+    String zkHostString = NutchUtil.get(args, Nutch.SOLR_ZOOKEEPER_HOSTS, conf.get(Nutch.SOLR_ZOOKEEPER_HOSTS));
+    String solrCollection = NutchUtil.get(args, Nutch.SOLR_COLLECTION, conf.get(Nutch.SOLR_COLLECTION));
 
+    /**
+     * Re-set computed properties
+     * */
     conf.set(Nutch.CRAWL_ID_KEY, crawlId);
     conf.setInt(THREADS_KEY, threads);
     conf.set(Nutch.GENERATOR_BATCH_ID, batchId);
@@ -117,6 +117,13 @@ public class IndexingJob extends NutchJob implements Tool {
     conf.setBoolean(Nutch.ARG_REINDEX, reindex);
     conf.setInt(Nutch.ARG_LIMIT, limit);
 
+    NutchUtil.setIfNotNull(conf, Nutch.SOLR_SERVER_URL, solrUrl);
+    NutchUtil.setIfNotNull(conf, Nutch.SOLR_ZOOKEEPER_HOSTS, zkHostString);
+    NutchUtil.setIfNotNull(conf, Nutch.SOLR_COLLECTION, solrCollection);
+
+    /**
+     * Report paramemters
+     * */
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
@@ -125,7 +132,10 @@ public class IndexingJob extends NutchJob implements Tool {
         "threads", threads,
         "resume", resume,
         "reindex", reindex,
-        "limit", limit
+        "limit", limit,
+        "solrUrl", solrUrl,
+        "zkHostString", zkHostString,
+        "solrCollection", solrCollection
     ));
   }
 
@@ -188,40 +198,66 @@ public class IndexingJob extends NutchJob implements Tool {
    * @return 0 on success
    * @throws Exception
    * */
-  public int index(String crawlId, String batchId, int threads, boolean resume, boolean reindex, int limit, int numTasks) throws Exception {
+  public int index(String crawlId, String batchId,
+                   int threads, boolean resume, boolean reindex, int limit, int numTasks,
+                   String solrUrl, String zkHostString, String collection) throws Exception {
     run(StringUtil.toArgMap(
         Nutch.ARG_CRAWL, crawlId,
         Nutch.ARG_BATCH, batchId,
         Nutch.ARG_THREADS, threads,
         Nutch.ARG_RESUME, resume,
         Nutch.ARG_REINDEX, reindex,
-        Nutch.ARG_LIMIT, limit,
-        Nutch.ARG_NUMTASKS, numTasks > 0 ? numTasks : null));
+        Nutch.ARG_LIMIT, limit > 0 ? limit : null,
+        Nutch.ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
+        Nutch.SOLR_SERVER_URL, solrUrl,
+        Nutch.SOLR_ZOOKEEPER_HOSTS, zkHostString,
+        Nutch.SOLR_COLLECTION, collection
+    ));
 
     return 0;
   }
 
+  private void printUsage() {
+    String usage = "Usage: IndexingJob (<batchId> | -all | -reindex) [-crawlId <id>] "
+        + "\n \t \t   [-resume] [-threads N] [-limit limit] [-numTasks N]\n"
+        + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
+        + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
+        + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");"
+        + "    -threads N    - number of fetching threads per task\n"
+        + "    -resume       - resume interrupted job\n"
+        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapred.map.tasks)"
+        + "    -solrUrl - solr server url, for example, http://localhost:8983/solr/gettingstarted\n"
+        + "    -zkHostString  - zk host string, zoomkeeper higher priority then solrUrl\n"
+        + "    -collection    - collection name if zkHostString is specified\n";
+
+    System.err.println(usage);
+  }
+
   public int run(String[] args) throws Exception {
     if (args.length < 1) {
-      System.err.println("Usage: IndexingJob (<batchId> | -all | -reindex) [-crawlId <id>]");
+      printUsage();
       return -1;
     }
 
     Configuration conf = getConf();
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "");
+    String batchId = Nutch.ALL_BATCH_ID_STR;
+    String solrUrl = conf.get(Nutch.SOLR_SERVER_URL);
+    String zkHostString = conf.get(Nutch.SOLR_ZOOKEEPER_HOSTS);
+    String collection = conf.get(Nutch.SOLR_COLLECTION);
+
     int numTasks = -1;
     int threads = 10;
     boolean resume = false;
     boolean reindex = false;
     int limit = -1;
 
-//    if (args.length == 3 && "-crawlId".equals(args[1])) {
-//      getConf().set(Nutch.CRAWL_ID_KEY, args[2]);
-//    }
-
     for (int i = 1; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
         crawlId = args[++i];
+      } else if ("-batchId".equals(args[i])) {
+        batchId = args[++i];
       } else if ("-threads".equals(args[i])) {
         threads = Integer.parseInt(args[++i]);
       } else if ("-resume".equals(args[i])) {
@@ -232,12 +268,18 @@ public class IndexingJob extends NutchJob implements Tool {
         numTasks = Integer.parseInt(args[++i]);
       } else if ("-limit".equals(args[i])) {
         limit = Integer.parseInt(args[++i]);
+      } else if ("-solrUrl".equals(args[i])) {
+        solrUrl = args[++i];
+      } else if ("-zkHostString".equals(args[i])) {
+        zkHostString = args[++i];
+      } else if ("-collection".equals(args[i])) {
+        collection = args[++i];
       } else {
         throw new IllegalArgumentException("arg " + args[i] + " not recognized");
       }
     }
 
-    return index(crawlId, batchId, threads, resume, reindex, limit, numTasks);
+    return index(crawlId, batchId, threads, resume, reindex, limit, numTasks, solrUrl, zkHostString, collection);
   }
 
   public static void main(String[] args) throws Exception {
