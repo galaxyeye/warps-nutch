@@ -3,7 +3,6 @@ package org.apache.nutch.fetcher.indexer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.nutch.fetcher.FetcherJob;
 import org.apache.nutch.fetcher.data.FetchItem;
 import org.apache.nutch.indexer.IndexDocument;
@@ -32,12 +31,11 @@ public class IndexManager {
 
   // private final BlockingQueue<FetchItem> queue = Queues.newLinkedBlockingQueue(batchSize);
   private final BlockingQueue<FetchItem> queue = Queues.newLinkedBlockingQueue(batchSize);
-  private IndexWriters indexWriters;
+  private final IndexWriters indexWriters;
 
   private final LinkedList<IndexThread> indexThreads = Lists.newLinkedList();
   private AtomicBoolean halt = new AtomicBoolean(false);
 
-  // TODO : singleton?
   public IndexManager(Configuration conf) throws IOException {
     this.conf = conf;
 
@@ -45,14 +43,6 @@ public class IndexManager {
 
     indexWriters = new IndexWriters(conf);
     indexWriters.open(conf);
-  }
-
-  public void startIndexThreads(int threadCount, Reducer.Context context) throws IOException {
-    for (int i = 0; i < threadCount; i++) {
-      IndexThread indexThread = new IndexThread(this, context);
-      indexThreads.add(indexThread);
-      indexThread.start();
-    }
   }
 
   public void halt() {
@@ -81,35 +71,40 @@ public class IndexManager {
       }
 
       synchronized (indexWriters) {
-        indexWriters.close();
-        indexWriters = null;
+        indexWriters.commit();
       }
     }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
+    catch (Exception e) {
+      LOG.error(e.toString());
+    }
+    finally {
+      indexWriters.close();
     }
 
-    LOG.info("All done. Exit.");
+    LOG.info("All done, exit index thread");
   }
 
   /**
    * thread safety
    * */
-  public void index(FetchItem fetchItem) throws IOException {
-    String url = fetchItem.getUrl();
-    String key = TableUtil.reverseUrl(url);
-    WebPage page = fetchItem.getPage();
+  public void index(FetchItem fetchItem) {
+    try {
+      String url = fetchItem.getUrl();
+      String key = TableUtil.reverseUrl(url);
+      WebPage page = fetchItem.getPage();
 
-    if (key != null && page != null) {
-      IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
-      if (doc != null) {
-        synchronized (indexWriters) {
-          if (indexWriters != null) {
+      if (key != null && page != null) {
+        IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
+        if (doc != null) {
+          synchronized (indexWriters) {
             indexWriters.write(doc);
           }
-        }
+        } // if
       } // if
-    } // if
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
   }
 
   /**

@@ -38,12 +38,11 @@ import java.util.Map.Entry;
  */
 public class AnchorIndexingFilter implements IndexingFilter {
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(AnchorIndexingFilter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(AnchorIndexingFilter.class);
   private Configuration conf;
   private boolean deduplicate = false;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.INLINKS);
@@ -56,7 +55,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
     this.conf = conf;
 
     deduplicate = conf.getBoolean("anchorIndexingFilter.deduplicate", true);
-    LOG.info("Anchor deduplication is: " + (deduplicate ? "on" : "off"));
+//    LOG.info("Anchor deduplication is: " + (deduplicate ? "on" : "off"));
   }
 
   /**
@@ -83,8 +82,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    */
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
-      throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
     HashSet<String> set = null;
 
     for (Entry<CharSequence, CharSequence> e : page.getInlinks().entrySet()) {
@@ -95,7 +93,7 @@ public class AnchorIndexingFilter implements IndexingFilter {
 
       if (deduplicate) {
         if (set == null)
-          set = new HashSet<String>();
+          set = new HashSet<>();
         String lcAnchor = anchor.toLowerCase();
 
         // Check if already processed the current anchor

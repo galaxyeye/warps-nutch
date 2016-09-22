@@ -52,7 +52,7 @@ public class OPICScoringFilter implements ScoringFilter {
 
   private final static Utf8 CASH_KEY = new Utf8("_csh_");
 
-  private final static Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private final static Set<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.METADATA);

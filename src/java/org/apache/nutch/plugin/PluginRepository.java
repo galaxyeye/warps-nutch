@@ -16,23 +16,18 @@
  */
 package org.apache.nutch.plugin;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.regex.Pattern;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * The plugin repositority is a registry of all plugins.
@@ -67,25 +62,20 @@ public class PluginRepository {
    * @see java.lang.Object#Object()
    */
   public PluginRepository(Configuration conf) throws RuntimeException {
-    fActivatedPlugins = new HashMap<String, Plugin>();
-    fExtensionPoints = new HashMap<String, ExtensionPoint>();
+    fActivatedPlugins = new HashMap<>();
+    fExtensionPoints = new HashMap<>();
     this.conf = new Configuration(conf);
     this.auto = conf.getBoolean("plugin.auto-activation", true);
     String[] pluginFolders = conf.getStrings("plugin.folders");
-    PluginManifestParser manifestParser = new PluginManifestParser(this.conf,
-        this);
-    Map<String, PluginDescriptor> allPlugins = manifestParser
-        .parsePluginFolder(pluginFolders);
+    PluginManifestParser manifestParser = new PluginManifestParser(this.conf, this);
+    Map<String, PluginDescriptor> allPlugins = manifestParser.parsePluginFolder(pluginFolders);
     if (allPlugins.isEmpty()) {
-      LOG.warn("No plugins found on paths of property plugin.folders=\"{}\"",
-          conf.get("plugin.folders"));
+      LOG.warn("No plugins found on paths of property plugin.folders=\"{}\"", conf.get("plugin.folders"));
     }
     Pattern excludes = Pattern.compile(conf.get("plugin.excludes", ""));
     Pattern includes = Pattern.compile(conf.get("plugin.includes", ""));
-    Map<String, PluginDescriptor> filteredPlugins = filter(excludes, includes,
-        allPlugins);
-    fRegisteredPlugins = getDependencyCheckedPlugins(filteredPlugins,
-        this.auto ? allPlugins : filteredPlugins);
+    Map<String, PluginDescriptor> filteredPlugins = filter(excludes, includes, allPlugins);
+    fRegisteredPlugins = getDependencyCheckedPlugins(filteredPlugins, this.auto ? allPlugins : filteredPlugins);
     installExtensionPoints(fRegisteredPlugins);
     try {
       installExtensions(fRegisteredPlugins);

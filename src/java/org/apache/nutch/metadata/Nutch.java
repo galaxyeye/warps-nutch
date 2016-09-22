@@ -19,10 +19,14 @@ package org.apache.nutch.metadata;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.Text;
 
+import java.nio.ByteBuffer;
+
 /**
  * A collection of Nutch internal metadata constants.
  */
 public interface Nutch {
+
+  ByteBuffer YES_VAL = ByteBuffer.wrap(new byte[] { 'y' });
 
   String ORIGINAL_CHAR_ENCODING = "OriginalCharEncoding";
 
@@ -77,6 +81,9 @@ public interface Nutch {
 
   Utf8 DISTANCE = new Utf8("dist");
 
+  /**
+   * All arguments from command line
+   * */
   // short constants for cmd-line args
   /** Crawl id to use. */
   String ARG_CRAWL = "crawl";
@@ -118,7 +125,7 @@ public interface Nutch {
   String ARG_SEEDDIR = "seedDir";
 
   /**
-   * Fetcher Relative Argments
+   * SimpleFetcher Relative Argments
    * */
   /** Fetch mode. */
   String ARG_FETCH_MODE = "fetchMode";
@@ -143,14 +150,18 @@ public interface Nutch {
   /** Reindex. */
   String ARG_REINDEX = "reindex";
 
+  /**
+   * Indexing
+   * */
   String INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
   String SOLR_PREFIX = "solr.";
   String SOLR_SERVER_URL = SOLR_PREFIX + "server.url";
   String SOLR_ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
   String SOLR_COLLECTION = SOLR_PREFIX + "collection";
 
-  // short constants for status / results fields
-  /** Status / result message. */
+  /**
+   * Status / result message.
+   * */
   String STAT_MESSAGE = "msg";
   /** Phase of processing. */
   String STAT_PHASE = "phase";
@@ -165,10 +176,15 @@ public interface Nutch {
 
   String INFECTED_ROWS = "injectedRows";
 
-  /** UI */
+  /**
+   * UI
+   * */
   String UI_CRAWL_ID = "qiwu.ui.crawl.id";
 
-  /** Generator **/
+  /**
+   * Generator
+   * */
+  String GENERATOR_GENERATE_TIME = "generate.generate.time";
   String GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
   String GENERATOR_MIN_SCORE = "generate.min.score";
   String GENERATOR_FILTER = "generate.filter";
@@ -188,10 +204,20 @@ public interface Nutch {
   String GENERATOR_IGNORE_GENERATED = "generator.ignore.generated";
 
   /**
+   * Document fields
+   * */
+  String DOC_FIELD_PAGE_TITLE = "page_title";
+  String DOC_FIELD_ARTICLE_TITLE = "article_title";
+  String DOC_FIELD_TEXT_CONTENT = "text_content";
+  String DOC_FIELD_HTML_CONTENT = "html_content";
+  String DOC_FIELD_PAGE_CATEGORY = "page_category";
+
+  /**
    * Master service
    * */
   String DEFAULT_MASTER_HOSTNAME = "master";
   int DEFAULT_MASTER_PORT = 8182;
 
-  String NUTCH_LOCAL_COMMAND_FILE = "/tmp/.NUTCH_LOCAL_FILE_COMMAND";
+  String NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
+  String NUTCH_LOCAL_COMMAND_FILE = NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
 }

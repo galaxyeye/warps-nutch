@@ -1,14 +1,14 @@
 package org.apache.nutch.fetcher.data;
 
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.nutch.fetcher.FetcherJob;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
+
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class described the item to be fetched.
@@ -39,7 +39,7 @@ public class FetchItem {
   Key key;
   WebPage page;
   URL u;
-  long pendingStart = 0;
+  long pendingStartTime = -1;
 
   public FetchItem(int jobID, String url, WebPage page, URL u, String queueID) {
     this.page = page;
@@ -75,12 +75,12 @@ public class FetchItem {
     return key;
   }
 
-  public long getPendingStart() {
-    return pendingStart;
+  public long getPendingStartTime() {
+    return pendingStartTime;
   }
 
-  public void setPendingStart(long pendingStart) {
-    this.pendingStart = pendingStart;
+  public void setPendingStartTime(long pendingStartTime) {
+    this.pendingStartTime = pendingStartTime;
   }
 
   /** 
@@ -91,7 +91,9 @@ public class FetchItem {
   public static FetchItem create(int jobID, String url, WebPage page, String queueMode) {
     final URL u = getUrl(url);
 
-    if (u == null) return null;
+    if (u == null) {
+      return null;
+    }
 
     final String proto = u.getProtocol().toLowerCase();
     final String host = getHost(u, queueMode).toLowerCase();

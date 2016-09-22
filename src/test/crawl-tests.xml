@@ -4,10 +4,23 @@
 
 <configuration>
 
+<!--<property>-->
+  <!--<name>plugin.includes</name>-->
+  <!--<value>parse-tika|protocol-http|urlfilter-suffix|scoring-opic</value>-->
+  <!--<description>Enable required plugins.</description>-->
+<!--</property>-->
+
 <property>
   <name>plugin.includes</name>
-  <value>parse-tika|protocol-http|urlfilter-suffix|scoring-opic</value>
-  <description>Enable required plugins.</description>
+  <value>protocol-(http|crowd)|urlfilter-suffix|parse-(html|tika)|index-(basic|anchor|metadata)|indexer-solr|scoring-opic</value>
+  <description>Regular expression naming plugin directory names to
+      include.  Any plugin not matching this expression is excluded.
+      In any case you need at least include the nutch-extensionpoints plugin. By
+      default Nutch includes crawling just HTML and plain text via HTTP,
+      and basic indexing and search plugins. In order to use HTTPS please enable
+      protocol-httpclient, but be aware of possible intermittent problems with the
+      underlying commons-httpclient library.
+  </description>
 </property>
 
 <property>
@@ -19,7 +32,7 @@
 <property>
   <name>fetcher.server.delay</name>
   <value>0.2</value>
-  <description>The number of seconds the fetcher will delay between 
+  <description>The number of seconds the fetcher will delay between
    successive requests to the same server.</description>
 </property>
 
@@ -38,14 +51,19 @@
   <value>true</value>
 </property>
 
-<property>                                                                                                                                                   
-  <name>http.robots.agents</name>                                                                                                                            
-  <value>test-nutch,*</value>                                                                                                                                
-  <description>The agent strings we'll look for in robots.txt files,                                                                                         
-  comma-separated, in decreasing order of precedence. You should                                                                                             
-  put the value of http.agent.name as the first agent name, and keep the                                                                                     
-  default * at the end of the list. E.g.: BlurflDev,Blurfl,*                                                                                                 
-  </description>                                                                                                                                             
+<property>
+    <name>extractor.regex.rule.file</name>
+    <value>regex-extractor.txt</value>
+</property>
+
+<property>
+  <name>http.robots.agents</name>
+  <value>test-nutch,*</value>
+  <description>The agent strings we'll look for in robots.txt files,
+  comma-separated, in decreasing order of precedence. You should
+  put the value of http.agent.name as the first agent name, and keep the
+  default * at the end of the list. E.g.: BlurflDev,Blurfl,*
+  </description>
 </property>
 
 </configuration>

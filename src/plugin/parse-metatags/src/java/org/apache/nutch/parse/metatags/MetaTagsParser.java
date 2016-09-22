@@ -16,18 +16,6 @@
  */
 package org.apache.nutch.parse.metatags;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Map.Entry;
-
 import org.apache.avro.util.Utf8;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,8 +26,12 @@ import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.util.TableUtil;
 import org.w3c.dom.DocumentFragment;
+
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Parse HTML meta tags (keywords, description) and store them in the parse
@@ -48,14 +40,17 @@ import org.w3c.dom.DocumentFragment;
  */
 public class MetaTagsParser implements ParseFilter {
 
-  private static final Log LOG = LogFactory.getLog(MetaTagsParser.class
-      .getName());
+  private static final Log LOG = LogFactory.getLog(MetaTagsParser.class.getName());
 
   private Configuration conf;
 
   public static final String PARSE_META_PREFIX = "meta_";
 
-  private Set<String> metatagset = new HashSet<String>();
+  private Set<String> metatagset = new HashSet<>();
+
+  public MetaTagsParser() {
+    System.out.println("****************************MetaTagsParser***********************");
+  }
 
   public void setConf(Configuration conf) {
     this.conf = conf;
@@ -71,36 +66,16 @@ public class MetaTagsParser implements ParseFilter {
     return this.conf;
   }
 
-  /**
-   * Check whether the metatag is in the list of metatags to be indexed (or if
-   * '*' is specified). If yes, add it to parse metadata.
-   */
-  private void addIndexedMetatags(Map<CharSequence, ByteBuffer> metadata,
-      String metatag, String value) {
-    String lcMetatag = metatag.toLowerCase(Locale.ROOT);
-    if (metatagset.contains("*") || metatagset.contains(lcMetatag)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Found meta tag: " + lcMetatag + "\t" + value);
-      }
-      metadata.put(new Utf8(PARSE_META_PREFIX + lcMetatag),
-          ByteBuffer.wrap(value.getBytes()));
-    }
-  }
-
-  public Parse filter(String url, WebPage page, Parse parse,
-      HTMLMetaTags metaTags, DocumentFragment doc) {
-
+  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
     // temporary map: cannot concurrently iterate over and modify page metadata
-    Map<CharSequence, ByteBuffer> metadata = new HashMap<CharSequence, ByteBuffer>();
+    Map<CharSequence, ByteBuffer> metadata = new HashMap<>();
 
     // check in the metadata first : the tika-parser
     // might have stored the values there already.
     // Values are then additionally stored with the prefixed key.
-    for (Entry<CharSequence, ByteBuffer> entry : page.getMetadata().entrySet()) {
-      String mdName = entry.getKey().toString();
-      String value = Bytes.toStringBinary(entry.getValue().array());
-      addIndexedMetatags(metadata, mdName, value);
-    }
+    page.getMetadata().keySet().stream().map(CharSequence::toString).forEach(
+        key -> addIndexedMetatags(metadata, key, TableUtil.getMetadata(page, key))
+    );
 
     // add temporary metadata to page metadata
     for (Entry<CharSequence, ByteBuffer> entry : metadata.entrySet()) {
@@ -129,6 +104,22 @@ public class MetaTagsParser implements ParseFilter {
     }
 
     return parse;
+  }
+
+  /**
+   * Check whether the metatag is in the list of metatags to be indexed (or if
+   * '*' is specified). If yes, add it to parse metadata.
+   */
+  private void addIndexedMetatags(Map<CharSequence, ByteBuffer> metadata, String metatag, String value) {
+    // System.out.println(metatag + " -> " + value);
+
+    String lcMetatag = metatag.toLowerCase(Locale.ROOT);
+    if (metatagset.contains("*") || metatagset.contains(lcMetatag)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Found meta tag: " + lcMetatag + "\t" + value);
+      }
+      metadata.put(new Utf8(PARSE_META_PREFIX + lcMetatag), ByteBuffer.wrap(value.getBytes()));
+    }
   }
 
   @Override

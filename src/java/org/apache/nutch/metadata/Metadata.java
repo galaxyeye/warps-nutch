@@ -16,6 +16,9 @@
  */
 package org.apache.nutch.metadata;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -24,9 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-
 /**
  * A multi-valued metadata container.
  * 
@@ -34,19 +34,24 @@ import org.apache.hadoop.io.Writable;
  * @author J&eacute;r&ocirc;me Charron
  * 
  */
-public class Metadata implements Writable, CreativeCommons, DublinCore,
-    HttpHeaders, Nutch, Feed {
+public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHeaders, Nutch, Feed {
+
+  /**
+   * Nutch metadata
+   * */
+  /** Fetch time history, comma seperated fetch timestamp */
+  public static String META_FETCH_TIME_HISTORY = "META-NUTCH-FETCH-TIME-HISTORY";
+  public static String META_TMP = "META-TMP-";
 
   /**
    * A map of all metadata attributes.
    */
-  private Map<String, String[]> metadata = null;
+  private Map<String, String[]> metadata = new HashMap<>();
 
   /**
    * Constructs a new, empty metadata.
    */
   public Metadata() {
-    metadata = new HashMap<String, String[]>();
   }
 
   /**
@@ -255,5 +260,4 @@ public class Metadata implements Writable, CreativeCommons, DublinCore,
       }
     }
   }
-
 }

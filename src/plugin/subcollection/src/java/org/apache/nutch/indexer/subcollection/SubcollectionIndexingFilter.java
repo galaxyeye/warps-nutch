@@ -16,23 +16,22 @@
  */
 package org.apache.nutch.indexer.subcollection;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.collection.CollectionManager;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.util.NutchConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class SubcollectionIndexingFilter extends Configured implements
-    IndexingFilter {
+import java.util.ArrayList;
+import java.util.Collection;
+
+public class SubcollectionIndexingFilter extends Configured implements IndexingFilter {
 
   public SubcollectionIndexingFilter() {
     super(NutchConfiguration.create());
@@ -50,8 +49,7 @@ public class SubcollectionIndexingFilter extends Configured implements
   /**
    * Logger
    */
-  public static final Logger LOG = LoggerFactory
-      .getLogger(SubcollectionIndexingFilter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(SubcollectionIndexingFilter.class);
 
   /**
    * "Mark" document to be a part of subcollection
@@ -60,20 +58,18 @@ public class SubcollectionIndexingFilter extends Configured implements
    * @param url
    */
   private void addSubCollectionField(IndexDocument doc, String url) {
-    for (String collname : CollectionManager.getCollectionManager(getConf())
-        .getSubCollections(url)) {
+    for (String collname : CollectionManager.getCollectionManager(getConf()).getSubCollections(url)) {
       doc.add(FIELD_NAME, collname);
     }
   }
 
   @Override
   public Collection<Field> getFields() {
-    return new ArrayList<Field>();
+    return new ArrayList<>();
   }
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
-      throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
     addSubCollectionField(doc, url);
     return doc;
   }

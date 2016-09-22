@@ -1,3 +1,4 @@
++http://(.*).23wx.com(.*)
 +http://(.*)sxcnw.net(.*)
 +http://(.*)tsxsw.com(.*)
 +http://(.*)kanshuge.com(.*)

@@ -50,7 +50,9 @@ if [ "$CRAWL_ID" = "" ]; then
 fi
 
 if [ "$SOLRURL" = "" ]; then
-    echo "No SOLRURL specified. Skipping indexing."
+    # echo "No SOLRURL specified. Skipping indexing."
+    echo "No SOLRURL specified. Index just in time."
+    INDEX_JIT_OPTIONS=" -index -collection information_native_0724"
 fi
 
 if [ "$LIMIT" = "" ]; then
@@ -73,8 +75,8 @@ fi
 numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
-# 250K per task?
-sizeFetchlist=`expr $numSlaves \* 50000`
+# 10K per task?
+sizeFetchlist=`expr $numSlaves \* 10000`
 
 # time limit for feching
 timeLimitFetch=180
@@ -90,7 +92,7 @@ addDays=0
 commonOptions="-D mapred.reduce.tasks=$numTasks -D mapred.child.java.opts=-Xmx1000m -D mapred.reduce.tasks.speculative.execution=false -D mapred.map.tasks.speculative.execution=false -D mapred.compress.map.output=true"
 
 # determines whether mode based on presence of job file
-if [ $NUTCH_RUNTIME_MODE == "DISTRIBUTE" ]; then
+if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
  # check that hadoop can be found on the path
  if [ $(which hadoop | wc -l ) -eq 0 ]; then
     echo "Can't find Hadoop executable. Add HADOOP_HOME/bin to the path or run in local mode."
@@ -159,7 +161,8 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
+  # __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
+  __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 $INDEX_JIT_OPTIONS
 
   # parsing the batch
   echo "Parsing : "

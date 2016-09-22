@@ -625,6 +625,25 @@ public final class StringUtil {
     return r;
   }
 
+  public static float tryParseFloat(String s) {
+    return tryParseFloat(s, 0.0f);
+  }
+
+  public static float tryParseFloat(String s, float defaultValue) {
+    float r = defaultValue;
+
+    if (StringUtils.isEmpty(s)) {
+      return r;
+    }
+
+    try {
+      r = Float.parseFloat(s);
+    } catch (Exception e) {
+    }
+
+    return r;
+  }
+
   public static int tryParseInt(String s) {
     return tryParseInt(s, 0);
   }
@@ -638,6 +657,25 @@ public final class StringUtil {
 
     try {
       r = Integer.parseInt(s);
+    } catch (Exception e) {
+    }
+
+    return r;
+  }
+
+  public static long tryParseLong(String s) {
+    return tryParseLong(s, 0);
+  }
+
+  public static long tryParseLong(String s, long defaultValue) {
+    long r = defaultValue;
+
+    if (StringUtils.isEmpty(s)) {
+      return r;
+    }
+
+    try {
+      r = Long.parseLong(s);
     } catch (Exception e) {
     }
 
@@ -722,6 +760,10 @@ public final class StringUtil {
     return formatParamsMap(toArgMap(args));
   }
 
+  public static String formatParamsLine(Object... args) {
+    return formatParamsMapToLine(toArgMap(args));
+  }
+
   public static String formatParamsMap(Map<String, Object> params) {
     if (params.isEmpty()) {
       return "";
@@ -730,20 +772,41 @@ public final class StringUtil {
     StringBuilder sb = new StringBuilder();
 
     sb.append('\n');
-    sb.append(String.format("%10sParams Table%-15s\n", "----------", "----------"));
-    sb.append(String.format("%15s   %-15s\n", "Name", "Value"));
+    sb.append(String.format("%20sParams Table%-25s\n", "----------", "----------"));
+    sb.append(String.format("%25s   %-25s\n", "Name", "Value"));
     int i = 0;
     for (Map.Entry<String, Object> arg : params.entrySet()) {
       if (i++ > 0) {
         sb.append("\n");
       }
 
-      sb.append(String.format("%15s", arg.getKey()));
+      sb.append(String.format("%25s", arg.getKey()));
       sb.append(" : ");
       sb.append(arg.getValue());
     }
 
     sb.append('\n');
+
+    return sb.toString();
+  }
+
+  public static String formatParamsMapToLine(Map<String, Object> params) {
+    if (params.isEmpty()) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+
+    int i = 0;
+    for (Map.Entry<String, Object> arg : params.entrySet()) {
+      if (i++ > 0) {
+        sb.append(", ");
+      }
+
+      sb.append(arg.getKey());
+      sb.append(" : ");
+      sb.append(arg.getValue());
+    }
 
     return sb.toString();
   }

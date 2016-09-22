@@ -3,7 +3,6 @@ package org.apache.nutch.util;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.service.model.request.SeedUrl;
@@ -12,10 +11,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
+import java.text.DecimalFormat;
 import java.util.*;
-
-import static org.apache.commons.lang.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by vincent on 16-7-20.
@@ -83,21 +81,17 @@ public class TestAnything {
   }
 
   @Test
-  public void testDateFormat() {
-    Date date = new Date("Sat May 27 12:21:42 CST 2017");
-    String dateString = DateFormatUtils.format(date, ISO_DATETIME_TIME_ZONE_FORMAT.getPattern(), TimeZone.getTimeZone("PRC"));
-    System.out.println(dateString);
+  public void testDecimalFormat() {
+    DecimalFormat df = new DecimalFormat("0.0##");
+    System.out.println(df.format(.5678));
+    System.out.println(df.format(6.5));
+    System.out.println(df.format(56.5678));
+    System.out.println(df.format(123456.5678));
 
-    dateString = DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
-    System.out.println(dateString);
-
-    date = new Date();
-    // dateString = DateFormatUtils.format(date, ISO_DATETIME_TIME_ZONE_FORMAT.getPattern());
-    dateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(date.toInstant());
-    System.out.println(dateString);
-
-    dateString = DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
-    System.out.println(dateString);
+    System.out.println(df.format(.0));
+    System.out.println(df.format(6.00));
+    System.out.println(df.format(56.0000));
+    System.out.println(df.format(123456.00001));
   }
 
   @Test
@@ -126,4 +120,23 @@ public class TestAnything {
     System.out.println(StringUtils.join(urls));
   }
 
+  @Test
+  public void testTreeMap() {
+    final Map<Integer, String> ints = new TreeMap<>(Comparator.reverseOrder());
+    ints.put(1, "1");
+    ints.put(2, "2");
+    ints.put(3, "3");
+    ints.put(4, "4");
+    ints.put(5, "5");
+
+    System.out.println(ints.keySet().iterator().next());
+  }
+
+  @Test
+  public void testAtomic() {
+    AtomicInteger counter = new AtomicInteger(100);
+    int deleted = 10;
+    counter.addAndGet(0 - deleted);
+    System.out.println(counter);
+  }
 }

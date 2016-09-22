@@ -48,22 +48,22 @@ public class SolrUtils {
 
     ArrayList<SolrClient> solrClients = new ArrayList<>();
 
-    if (zkHostString != null && zkHostString.length > 0) {
+    for (int i = 0; i < urls.length; i++) {
+      SolrClient client = new HttpSolrClient.Builder(urls[i])
+          .withHttpClient(HTTP_CLIENT)
+          .build();
+      solrClients.add(client);
+    }
+
+    if (solrClients.isEmpty() && zkHostString != null && zkHostString.length > 0) {
       for (int i = 0; i < zkHostString.length; i++) {
         CloudSolrClient client = getCloudSolrClient(zkHostString);
         client.setDefaultCollection(conllection);
         solrClients.add(client);
       }
-    } else {
-      for (int i = 0; i < urls.length; i++) {
-        SolrClient client = new HttpSolrClient.Builder(urls[i])
-            .withHttpClient(HTTP_CLIENT)
-            .build();
-        solrClients.add(client);
-      }
     }
 
-    LOG.info(StringUtil.formatParams(
+    LOG.info(StringUtil.formatParamsLine(
         "className", SolrUtils.class.getSimpleName(),
         "urls", StringUtils.join(urls, ", "),
         "zkHostString", StringUtils.join(zkHostString, ", "),

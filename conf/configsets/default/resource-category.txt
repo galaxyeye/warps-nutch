@@ -1,0 +1,9 @@
+# every line contains to parts, the first part is the domain pattern, and the
+# second part is the resource category
+news.* 资讯
+bbs.* 论坛
+tieba.* 贴吧
+blog.* 博客
+.*.weixin.com 微信
+.*.weibo.com 微博
+.+ 资讯

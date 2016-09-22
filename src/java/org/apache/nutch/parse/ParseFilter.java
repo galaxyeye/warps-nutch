@@ -29,7 +29,7 @@ import org.w3c.dom.DocumentFragment;
  */
 public interface ParseFilter extends FieldPluggable, Configurable {
   /** The name of the extension point. */
-  final static String X_POINT_ID = ParseFilter.class.getName();
+  String X_POINT_ID = ParseFilter.class.getName();
 
   /**
    * Adds metadata or otherwise modifies a parse, given the DOM tree of a page.

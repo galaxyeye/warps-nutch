@@ -19,6 +19,9 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.NutchConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -54,6 +57,8 @@ import org.apache.nutch.storage.WebPage;
  * @author Andrzej Bialecki
  */
 public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
+  // Loggg
+  public static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
   private float INC_RATE;
 
@@ -84,11 +89,12 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   @Override
   public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
       long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
-    super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime,
-        fetchTime, modifiedTime, state);
+    super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
     long refTime = fetchTime;
-    if (modifiedTime <= 0)
+    if (modifiedTime <= 0) {
       modifiedTime = fetchTime;
+    }
+
     int interval = page.getFetchInterval();
     switch (state) {
     case FetchSchedule.STATUS_MODIFIED:
@@ -100,18 +106,19 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     case FetchSchedule.STATUS_UNKNOWN:
       break;
     }
+
     if (SYNC_DELTA) {
       // try to synchronize with the time of change
       // TODO: different from normal class (is delta in seconds)?
       int delta = (int) ((fetchTime - modifiedTime) / 1000L);
-      if (delta > interval)
+      if (delta > interval) {
         interval = delta;
+      }
       refTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
     }
-    if (interval < MIN_INTERVAL)
-      interval = MIN_INTERVAL;
-    if (interval > MAX_INTERVAL)
-      interval = MAX_INTERVAL;
+
+    if (interval < MIN_INTERVAL) interval = MIN_INTERVAL;
+    if (interval > MAX_INTERVAL) interval = MAX_INTERVAL;
 
     page.setFetchInterval(interval);
     page.setFetchTime(refTime + interval * 1000L);
@@ -119,4 +126,67 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     page.setPrevModifiedTime(prevModifiedTime);
   }
 
+  public static void main(String[] args) throws Exception {
+    FetchSchedule fs = new AdaptiveFetchSchedule();
+    fs.setConf(NutchConfiguration.create());
+    // we start the time at 0, for simplicity
+    long curTime = 0;
+    long delta = 1000L * 3600L * 24L; // 2 hours
+    // we trigger the update of the page every 30 days
+    long update = 1000L * 3600L * 24L * 30L; // 30 days
+    boolean changed = true;
+    long lastModified = 0;
+    int miss = 0;
+    int totalMiss = 0;
+    int maxMiss = 0;
+    int fetchCnt = 0;
+    int changeCnt = 0;
+    // initial fetchInterval is 10 days
+    // WebPage p = new WebPage(1, 3600 * 24 * 30, 1.0f);
+    WebPage p = WebPage.newBuilder().build();
+    p.setStatus(0);
+    p.setFetchInterval(3600 * 24 * 30);
+    p.setScore(1.0f);
+    p.setFetchTime(0L);
+
+    LOG.info(p.toString());
+    // let's move the timeline a couple of deltas
+    for (int i = 0; i < 10000; i++) {
+      if (lastModified + update < curTime) {
+        // System.out.println("i=" + i + ", lastModified=" + lastModified +
+        // ", update=" + update + ", curTime=" + curTime);
+        changed = true;
+        changeCnt++;
+        lastModified = curTime;
+      }
+
+      LOG.info(i + ". " + changed + "\twill fetch at "
+          + (p.getFetchTime() / delta) + "\tinterval "
+          + (p.getFetchInterval() / SECONDS_PER_DAY) + " days" + "\t missed "
+          + miss);
+      if (p.getFetchTime() <= curTime) {
+        fetchCnt++;
+        fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified,
+            changed ? FetchSchedule.STATUS_MODIFIED
+                : FetchSchedule.STATUS_NOTMODIFIED);
+
+        LOG.info("\tfetched & adjusted: " + "\twill fetch at "
+            + (p.getFetchTime() / delta) + "\tinterval "
+            + (p.getFetchInterval() / SECONDS_PER_DAY) + " days");
+
+        if (!changed) miss++;
+        if (miss > maxMiss) maxMiss = miss;
+        changed = false;
+        totalMiss += miss;
+        miss = 0;
+      }
+
+      if (changed) {
+        miss++;
+      }
+      curTime += delta;
+    }
+    LOG.info("Total missed: " + totalMiss + ", max miss: " + maxMiss);
+    LOG.info("Page changed " + changeCnt + " times, fetched " + fetchCnt + " times.");
+  }
 }

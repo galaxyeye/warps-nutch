@@ -17,27 +17,17 @@
 
 package org.apache.nutch.indexer.basic;
 
-import de.l3s.boilerpipe.BoilerpipeProcessingException;
-import de.l3s.boilerpipe.extractors.ArticleExtractor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.URLUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
+import java.util.regex.Pattern;
 
 // import org.apache.solr.common.util.DateUtil;
 
@@ -51,12 +41,10 @@ import java.util.HashSet;
  */
 public class BasicIndexingFilter implements IndexingFilter {
 
-  public static final Logger LOG = LoggerFactory.getLogger(BasicIndexingFilter.class);
+  private static int MAX_CONTENT_LENGTH;
+  private static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
 
-  private int MAX_TITLE_LENGTH;
-  private int MAX_CONTENT_LENGTH;
   private Configuration conf;
-  private boolean addDomain;
 
   private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
 
@@ -64,8 +52,6 @@ public class BasicIndexingFilter implements IndexingFilter {
     FIELDS.add(WebPage.Field.TITLE);
     FIELDS.add(WebPage.Field.TEXT);
     FIELDS.add(WebPage.Field.CONTENT);
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
   }
 
   /**
@@ -80,116 +66,86 @@ public class BasicIndexingFilter implements IndexingFilter {
    * @param page
    *          {@link WebPage} object relative to the URL
    * @return filtered NutchDocument
-   */
+   * */
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
-    String contentType = TableUtil.toString(page.getContentType());
-    if (!contentType.contains("html")) {
-      return null;
-    }
+    addDocFields(doc, url, page);
 
-    // get content type
-    doc.add("content_type", contentType);
+    addPageCategory(doc, url, page);
 
-    String reprUrl = TableUtil.toString(page.getReprUrl());
-    String reprUrlString = reprUrl != null ? reprUrl.toString() : null;
-    String urlString = url.toString();
+    doc.add("outlinks_count", page.getOutlinks().size());
 
-    String host;
-    try {
-      URL u;
-      if (reprUrlString != null) {
-        u = new URL(reprUrlString);
-      } else {
-        u = new URL(urlString);
-      }
-
-      if (addDomain) {
-        doc.add("domain", URLUtil.getDomainName(u));
-      }
-
-      host = u.getHost();
-    } catch (MalformedURLException e) {
-      throw new IndexingException(e);
-    }
-
-    if (host != null) {
-      doc.add("host", host);
-    }
-
-    // url is both stored and indexed, so it's both searchable and returned
-    doc.add("url", reprUrlString == null ? urlString : reprUrlString);
-
-    // content
-    // String content = TableUtil.toString(page.getText());
-    String content = Bytes.toString(page.getContent().array());
-    try {
-      // TODO : we should do this in nutch?
-      // Extract the article content using boilerpipe
-      content = ArticleExtractor.INSTANCE.getText(content);
-    } catch (BoilerpipeProcessingException e) {
-      LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
-    }
-
-    if (content.length() == 0) {
-      content = TableUtil.toString(page.getText());
-    }
-
-    if (MAX_CONTENT_LENGTH > -1 && content.length() > MAX_CONTENT_LENGTH) {
-      content = content.substring(0, MAX_CONTENT_LENGTH);
-    }
-    doc.add("content", StringUtil.cleanField(content));
-
-    // title
-    String title = TableUtil.toString(page.getTitle());
-    if (MAX_TITLE_LENGTH > -1 && title.length() > MAX_TITLE_LENGTH) {
-      // truncate　title if needed
-      title = title.substring(0, MAX_TITLE_LENGTH);
-    }
-    if (title.length() > 0) {
-      // NUTCH-1004 Do not index empty values for title field
-      doc.add("title", title);
-    }
-
-    // add cached content/summary display policy, if available
-    ByteBuffer cachingRaw = page.getMetadata().get(Nutch.CACHING_FORBIDDEN_KEY_UTF8);
-    if (cachingRaw != null) {
-      String caching = Bytes.toString(cachingRaw.array());
-      if (!caching.equals(Nutch.CACHING_FORBIDDEN_NONE)) {
-        doc.add("cache", caching);
-      }
-    }
-
-    // add timestamp when fetched, for deduplication
-    // String tstamp = DateUtil.getThreadLocalDateFormat().format(new Date(page.getFetchTime()));
-    // add timestamp when fetched, for deduplication
-    doc.add("tstamp", new Date(page.getFetchTime()));
+    doc.addIfAbsent("id", doc.getKey());
 
     return doc;
   }
 
+  private void addDocFields(IndexDocument doc, String url, WebPage page) {
+    page.getDocFields().entrySet().stream()
+        .filter(entry -> entry.getValue().toString().length() < MAX_CONTENT_LENGTH)
+        .forEach(entry -> doc.add(entry.getKey(), entry.getValue()));
+  }
+
+  private void addPageCategory(IndexDocument doc, String url, WebPage page) {
+    doc.add(Nutch.DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page));
+  }
+
+  /**
+   * TODO : do it inside boilerpipe
+   * */
+  private String sniffPageCategory(IndexDocument doc, String url, WebPage page) {
+    String pageCategory = "";
+
+    String textContent = (String)page.getDocField(Nutch.DOC_FIELD_TEXT_CONTENT);
+    if (textContent == null) {
+      return pageCategory;
+    }
+
+    double _char = textContent.length();
+    double _a = page.getOutlinks().size();
+//    if (_char / _a < 15) {
+//      pageCategory = "index";
+//    }
+
+    if (textContent.isEmpty()) {
+      if (_a > 30) {
+        pageCategory = "index";
+      }
+    }
+    else if (_char > 1000) {
+      pageCategory = "detail";
+    }
+    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = "detail";
+    }
+    else if (StringUtils.countMatches(url, "/") <= 3) {
+      // http://t.tt/12345678
+      pageCategory = "index";
+    }
+    else if (url.contains("index")) {
+      pageCategory = "index";
+    }
+
+    return pageCategory;
+  }
+
   /**
    * Set the {@link Configuration} object
-   */
+   * */
   public void setConf(Configuration conf) {
     this.conf = conf;
-    this.MAX_TITLE_LENGTH = conf.getInt("indexer.max.title.length", 100);
-    this.MAX_CONTENT_LENGTH = conf.getInt("indexer.max.content.length", 10 * 10000);
-    this.addDomain = conf.getBoolean("indexer.add.domain", true);
 
-    LOG.info(StringUtil.formatParams(
-        "className", this.getClass().getSimpleName(),
-        "MAX_TITLE_LENGTH", MAX_TITLE_LENGTH,
-        "MAX_CONTENT_LENGTH", MAX_CONTENT_LENGTH,
-        "addDomain", addDomain
-    ));
+    MAX_CONTENT_LENGTH = conf.getInt("indexer.max.content.length", 10 * 10000);
+
+//    LOG.info(StringUtil.formatParamsLine(
+//        "className", this.getClass().getSimpleName(),
+//        "MAX_CONTENT_LENGTH", MAX_CONTENT_LENGTH
+//    ));
   }
 
   /**
    * Get the {@link Configuration} object
    */
-  public Configuration getConf() {
-    return this.conf;
-  }
+  public Configuration getConf() { return this.conf; }
 
   /**
    * Gets all the fields for a given {@link WebPage} Many datastores need to

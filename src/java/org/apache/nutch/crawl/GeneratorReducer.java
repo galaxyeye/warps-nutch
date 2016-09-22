@@ -51,7 +51,7 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
   private long limit;
   private long maxCount;
   private boolean byDomain = false;
-  private Map<String, Integer> hostCountMap = new HashMap<String, Integer>(); // TODO : better name?
+  private Map<String, Integer> hostCountMap = new HashMap<>(); // TODO : better name?
   private Utf8 batchId;
 
   @Override
@@ -62,13 +62,13 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
+    batchId = new Utf8(conf.get(Nutch.GENERATOR_BATCH_ID, Nutch.ALL_BATCH_ID_STR));
 
+    // Generate top N links only
     limit = conf.getLong(Nutch.GENERATOR_TOP_N, Long.MAX_VALUE);
     limit /= context.getNumReduceTasks();
 
     maxCount = conf.getLong(Nutch.GENERATOR_MAX_COUNT, -2);
-    batchId = new Utf8(conf.get(Nutch.GENERATOR_BATCH_ID, Nutch.ALL_BATCH_ID_STR));
-
     String countMode = conf.get(Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST);
     if (countMode.equals(Nutch.GENERATOR_COUNT_VALUE_DOMAIN)) {
       byDomain = true;
@@ -94,7 +94,7 @@ public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, Strin
 
     for (WebPage page : values) {
       if (count >= limit) {
-        stop("generated enought pages");
+        stop("Enough pages generated, quit");
         return;
       }
 

@@ -16,7 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
 import org.apache.gora.store.DataStore;
@@ -42,8 +41,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class GeneratorJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(GeneratorJob.class);
 
-  private static final Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Set<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.FETCH_TIME);
@@ -89,6 +90,8 @@ public class GeneratorJob extends NutchJob implements Tool {
     boolean norm = NutchUtil.getBoolean(args, Nutch.ARG_NORMALIZE, true);
     long pseudoCurrTime = NutchUtil.getLong(args, Nutch.ARG_CURTIME, startTime);
 
+    String nutchTmpDir = conf.get("nutch.tmp.dir", Nutch.NUTCH_TMP_DIR);
+
     conf.set(Nutch.CRAWL_ID_KEY, crawlId);
     conf.set(Nutch.GENERATOR_BATCH_ID, batchId);
     conf.setLong(Nutch.GENERATE_TIME_KEY, startTime); // seems not used, (or pseudoCurrTime used?)
@@ -118,19 +121,11 @@ public class GeneratorJob extends NutchJob implements Tool {
         "topN", topN,
         "domainMode", domainMode,
         Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST,
-        URLPartitioner.PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST
+        URLPartitioner.PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST,
+        "nutchTmpDir", nutchTmpDir
     ));
 
-    try {
-      // TODO : what if in distributed mode?
-      // Path path = new Path("/tmp/" + crawlId + "/last.batch.id");
-      // File.mkdir(path.parent());
-      //
-      FileUtils.writeStringToFile(new File("logs/last-batch-id"), batchId, "utf-8");
-    }
-    catch (IOException e) {
-      LOG.error(e.toString());
-    }
+    Files.write(Paths.get(nutchTmpDir, "last-batch-id"), batchId.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
   }
 
   @Override

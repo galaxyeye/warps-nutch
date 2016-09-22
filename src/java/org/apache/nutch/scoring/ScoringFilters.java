@@ -17,12 +17,6 @@
 
 package org.apache.nutch.scoring;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.indexer.IndexDocument;
@@ -32,6 +26,8 @@ import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.ObjectCache;
+
+import java.util.*;
 
 /**
  * Creates and caches {@link ScoringFilter} implementing plugins.
@@ -44,10 +40,10 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   public ScoringFilters(Configuration conf) {
     super(conf);
+
     ObjectCache objectCache = ObjectCache.get(conf);
     String order = conf.get("scoring.filter.order");
-    this.filters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class
-        .getName());
+    this.filters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
 
     if (this.filters == null) {
       String[] orderedFilters = null;
@@ -56,23 +52,23 @@ public class ScoringFilters extends Configured implements ScoringFilter {
       }
 
       try {
-        ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(
-            ScoringFilter.X_POINT_ID);
-        if (point == null)
+        ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(ScoringFilter.X_POINT_ID);
+        if (point == null) {
           throw new RuntimeException(ScoringFilter.X_POINT_ID + " not found.");
+        }
+
         Extension[] extensions = point.getExtensions();
-        HashMap<String, ScoringFilter> filterMap = new HashMap<String, ScoringFilter>();
+        HashMap<String, ScoringFilter> filterMap = new HashMap<>();
         for (int i = 0; i < extensions.length; i++) {
           Extension extension = extensions[i];
-          ScoringFilter filter = (ScoringFilter) extension
-              .getExtensionInstance();
+          ScoringFilter filter = (ScoringFilter) extension.getExtensionInstance();
           if (!filterMap.containsKey(filter.getClass().getName())) {
             filterMap.put(filter.getClass().getName(), filter);
           }
         }
+
         if (orderedFilters == null) {
-          objectCache.setObject(ScoringFilter.class.getName(), filterMap
-              .values().toArray(new ScoringFilter[0]));
+          objectCache.setObject(ScoringFilter.class.getName(), filterMap.values().toArray(new ScoringFilter[0]));
         } else {
           ScoringFilter[] filter = new ScoringFilter[orderedFilters.length];
           for (int i = 0; i < orderedFilters.length; i++) {
@@ -83,15 +79,14 @@ public class ScoringFilters extends Configured implements ScoringFilter {
       } catch (PluginRuntimeException e) {
         throw new RuntimeException(e);
       }
-      this.filters = (ScoringFilter[]) objectCache
-          .getObject(ScoringFilter.class.getName());
+
+      this.filters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
     }
   }
 
   /** Calculate a sort value for Generate. */
   @Override
-  public float generatorSortValue(String url, WebPage row, float initSort)
-      throws ScoringFilterException {
+  public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       initSort = filter.generatorSortValue(url, row, initSort);
     }
@@ -100,8 +95,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a new initial score, used when adding newly discovered pages. */
   @Override
-  public void initialScore(String url, WebPage row)
-      throws ScoringFilterException {
+  public void initialScore(String url, WebPage row) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       filter.initialScore(url, row);
     }
@@ -109,8 +103,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a new initial score, used when injecting new pages. */
   @Override
-  public void injectedScore(String url, WebPage row)
-      throws ScoringFilterException {
+  public void injectedScore(String url, WebPage row) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       filter.injectedScore(url, row);
     }
@@ -118,24 +111,21 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row,
-      Collection<ScoreDatum> scoreData, int allCount)
-      throws ScoringFilterException {
+                                        Collection<ScoreDatum> scoreData, int allCount) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
     }
   }
 
   @Override
-  public void updateScore(String url, WebPage row,
-      List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }
   }
 
   @Override
-  public float indexerScore(String url, IndexDocument doc, WebPage row,
-      float initScore) throws ScoringFilterException {
+  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) throws ScoringFilterException {
     for (ScoringFilter filter : filters) {
       initScore = filter.indexerScore(url, doc, row, initScore);
     }
@@ -144,7 +134,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   @Override
   public Collection<WebPage.Field> getFields() {
-    Set<WebPage.Field> fields = new HashSet<WebPage.Field>();
+    Set<WebPage.Field> fields = new HashSet<>();
     for (ScoringFilter filter : filters) {
       Collection<WebPage.Field> pluginFields = filter.getFields();
       if (pluginFields != null) {

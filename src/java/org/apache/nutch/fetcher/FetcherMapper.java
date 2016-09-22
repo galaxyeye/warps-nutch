@@ -15,7 +15,7 @@ import java.util.Random;
 
 /**
  * <p>
- * Mapper class for Fetcher.
+ * Mapper class for SimpleFetcher.
  * </p>
  * <p>
  * This class reads the random integer written by {@link GeneratorJob} as its
@@ -24,7 +24,7 @@ import java.util.Random;
  * </p>
  * <p>
  * This approach (combined with the use of PartitionUrlByHost makes
- * sure that Fetcher is still polite while also randomizing the key order. If
+ * sure that SimpleFetcher is still polite while also randomizing the key order. If
  * one host has a huge number of URLs in your table while other hosts have
  * not, {@link FetcherReducer} will not be stuck on one host but process URLs
  * from other hosts as well.
@@ -47,7 +47,9 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
     String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
     String fetchMode = conf.get(Nutch.FETCH_MODE_KEY);
     int UICrawlId = conf.getInt(Nutch.UI_CRAWL_ID, 0);
+    int numTasks = conf.getInt("mapred.reduce.tasks", 2);
     limit = conf.getInt(Nutch.ARG_LIMIT, -1);
+    limit = limit < 2 * numTasks ? limit : limit/numTasks;
 
     resume = conf.getBoolean(FetcherJob.RESUME_KEY, false);
 
@@ -100,7 +102,7 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
 
     context.write(new IntWritable(random.nextInt(65536)), new FetchEntry(conf, key, page));
 
-    // LOG.debug("Fetcher mapper : " + key);
+    // LOG.debug("SimpleFetcher mapper : " + key);
 
     if (limit > 0 && ++count > limit) {
       stop("Hit limit " + limit + ", finish the mapper.");

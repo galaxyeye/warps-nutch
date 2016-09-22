@@ -16,14 +16,14 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.util.TableUtil;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 public class ParseStatusUtils {
 
@@ -79,7 +79,10 @@ public class ParseStatusUtils {
     ParseStatus status = ParseStatus.newBuilder().build();
     status.setMajorCode((int) ParseStatusCodes.FAILED);
     status.setMinorCode((int) ParseStatusCodes.FAILED_EXCEPTION);
-    status.getArgs().add(new Utf8(e.toString()));
+
+    if (e != null) {
+      status.getArgs().add(new Utf8(e.toString()));
+    }
 
     return new Parse("", "", new Outlink[0], status);
   }

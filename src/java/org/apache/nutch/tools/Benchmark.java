@@ -53,7 +53,7 @@ public class Benchmark extends Configured implements Tool {
 
   private void createSeeds(FileSystem fs, Path seedsDir, int count)
       throws Exception {
-    OutputStream os = fs.create(new Path(seedsDir, "seeds"));
+    OutputStream os = fs.create(new Path(seedsDir, "configsets/default/seeds"));
     for (int i = 0; i < count; i++) {
       String url = "http://www.test-" + i + ".com/\r\n";
       os.write(url.getBytes());
@@ -137,7 +137,7 @@ public class Benchmark extends Configured implements Tool {
           .println("\t-seeds NN\tcreate NN unique hosts in a seed list (default: 1)");
       System.err.println("\t-depth NN\tperform NN crawl cycles (default: 10)");
       System.err
-          .println("\t-threads NN\tuse NN threads per Fetcher task (default: 10)");
+          .println("\t-threads NN\tuse NN threads per SimpleFetcher task (default: 10)");
       // XXX what is the equivalent here? not an additional job...
       // System.err.println("\t-keep\tkeep batchId data (default: delete after updatedb)");
       System.err.println("\t-plugins <regex>\toverride 'plugin.includes'.");
@@ -252,7 +252,7 @@ public class Benchmark extends Configured implements Tool {
       res.addTiming("fetch", i + "", delta);
       if (!isParsing) {
         start = System.currentTimeMillis();
-        parseBatch.parse(batchId, false, false); // parse it, if needed
+        parseBatch.parse("", batchId, false, false); // parse it, if needed
         delta = System.currentTimeMillis() - start;
         res.addTiming("parse", i + "", delta);
       }

@@ -1,18 +1,23 @@
 package org.apache.nutch.indexer;
 
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.nutch.plugin.Pluggable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 /**
  * Created by vincent on 16-8-1.
  */
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.nutch.plugin.Pluggable;
-
 public interface IndexWriter extends Configurable, Pluggable {
+
+  Logger LOG = LoggerFactory.getLogger(IndexWriter.class);
+
   /** The name of the extension point. */
-  final static String X_POINT_ID = IndexWriter.class.getName();
+  String X_POINT_ID = IndexWriter.class.getName();
 
   void open(JobConf jobConf, String name) throws IOException;
 

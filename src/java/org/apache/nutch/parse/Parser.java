@@ -29,7 +29,7 @@ import org.apache.nutch.storage.WebPage;
  */
 public interface Parser extends FieldPluggable, Configurable {
   /** The name of the extension point. */
-  public final static String X_POINT_ID = Parser.class.getName();
+  String X_POINT_ID = Parser.class.getName();
 
   /**
    * <p>

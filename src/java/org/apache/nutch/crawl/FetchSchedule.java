@@ -31,13 +31,13 @@ import java.util.Collection;
 public interface FetchSchedule extends Configurable {
 
   /** It is unknown whether page was changed since our last visit. */
-  public static final int STATUS_UNKNOWN = 0;
+  int STATUS_UNKNOWN = 0;
   /** Page is known to have been modified since our last visit. */
-  public static final int STATUS_MODIFIED = 1;
+  int STATUS_MODIFIED = 1;
   /** Page is known to remain unmodified since our last visit. */
-  public static final int STATUS_NOTMODIFIED = 2;
+  int STATUS_NOTMODIFIED = 2;
 
-  public static final int SECONDS_PER_DAY = 3600 * 24;
+  int SECONDS_PER_DAY = 3600 * 24;
 
   /**
    * Initialize fetch schedule related data. Implementations should at least set
@@ -49,7 +49,7 @@ public interface FetchSchedule extends Configurable {
    *          URL of the page.
    * @param page
    */
-  public void initializeSchedule(String url, WebPage page);
+  void initializeSchedule(String url, WebPage page);
 
   /**
    * Sets the <code>fetchInterval</code> and <code>fetchTime</code> on a
@@ -80,7 +80,7 @@ public interface FetchSchedule extends Configurable {
    *          changed; implementations are free to follow a sensible default
    *          behavior.
    */
-  public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
+  void setFetchSchedule(String url, WebPage page, long prevFetchTime,
       long prevModifiedTime, long fetchTime, long modifiedTime, int state);
 
   /**
@@ -93,7 +93,7 @@ public interface FetchSchedule extends Configurable {
    *          URL of the page
    * @param page
    */
-  public void setPageGoneSchedule(String url, WebPage page, long prevFetchTime,
+  void setPageGoneSchedule(String url, WebPage page, long prevFetchTime,
       long prevModifiedTime, long fetchTime);
 
   /**
@@ -111,7 +111,7 @@ public interface FetchSchedule extends Configurable {
    * @param fetchTime
    *          current fetch time
    */
-  public void setPageRetrySchedule(String url, WebPage page,
+  void setPageRetrySchedule(String url, WebPage page,
       long prevFetchTime, long prevModifiedTime, long fetchTime);
 
   /**
@@ -119,7 +119,7 @@ public interface FetchSchedule extends Configurable {
    * 
    * @return the date as a long.
    */
-  public long calculateLastFetchTime(WebPage page);
+  long calculateLastFetchTime(WebPage page);
 
   /**
    * This method provides information whether the page is suitable for selection
@@ -142,7 +142,7 @@ public interface FetchSchedule extends Configurable {
    * @return true, if the page should be considered for inclusion in the current
    *         fetchlist, otherwise false.
    */
-  public boolean shouldFetch(String url, WebPage row, long curTime);
+  boolean shouldFetch(String url, WebPage row, long curTime);
 
   /**
    * This method resets fetchTime, fetchInterval, modifiedTime and page
@@ -156,7 +156,7 @@ public interface FetchSchedule extends Configurable {
    *          fetchTime to now. If false, force refetch whenever the next fetch
    *          time is set.
    */
-  public void forceRefetch(String url, WebPage row, boolean asap);
+  void forceRefetch(String url, WebPage row, boolean asap);
 
-  public Collection<WebPage.Field> getFields();
+  Collection<WebPage.Field> getFields();
 }

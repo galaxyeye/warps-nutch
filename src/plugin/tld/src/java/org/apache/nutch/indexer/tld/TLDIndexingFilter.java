@@ -17,20 +17,20 @@
 
 package org.apache.nutch.indexer.tld;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.util.URLUtil;
 import org.apache.nutch.util.domain.DomainSuffix;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Adds the Top level domain extensions to the index
@@ -38,12 +38,11 @@ import org.apache.nutch.util.domain.DomainSuffix;
  * @author Enis Soztutar &lt;enis.soz.nutch@gmail.com&gt;
  */
 public class TLDIndexingFilter implements IndexingFilter {
-  public static final Logger LOG = LoggerFactory
-      .getLogger(TLDIndexingFilter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TLDIndexingFilter.class);
 
   private Configuration conf;
 
-  private static final Collection<Field> fields = new ArrayList<Field>();
+  private static final Collection<Field> fields = new ArrayList<>();
 
   @Override
   public IndexDocument filter(IndexDocument doc, String url, WebPage page)

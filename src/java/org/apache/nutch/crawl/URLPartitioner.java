@@ -17,11 +17,6 @@
 
 package org.apache.nutch.crawl;
 
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
@@ -34,6 +29,11 @@ import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 
 /**
  * Partition urls by host, domain name or IP depending on the value of the
@@ -85,8 +85,7 @@ public class URLPartitioner implements Configurable {
     int hashCode;
     URL url = null;
     try {
-      urlString = normalizers.normalize(urlString,
-          URLNormalizers.SCOPE_PARTITION);
+      urlString = normalizers.normalize(urlString, URLNormalizers.SCOPE_PARTITION);
       hashCode = urlString.hashCode();
       url = new URL(urlString);
     } catch (MalformedURLException e) {
@@ -114,14 +113,12 @@ public class URLPartitioner implements Configurable {
     return (hashCode & Integer.MAX_VALUE) % numReduceTasks;
   }
 
-  public static class SelectorEntryPartitioner extends
-      Partitioner<SelectorEntry, WebPage> implements Configurable {
+  public static class SelectorEntryPartitioner extends Partitioner<SelectorEntry, WebPage> implements Configurable {
     private URLPartitioner partitioner = new URLPartitioner();
     private Configuration conf;
 
     @Override
-    public int getPartition(SelectorEntry selectorEntry, WebPage page,
-        int numReduces) {
+    public int getPartition(SelectorEntry selectorEntry, WebPage page, int numReduces) {
       return partitioner.getPartition(selectorEntry.url, numReduces);
     }
 

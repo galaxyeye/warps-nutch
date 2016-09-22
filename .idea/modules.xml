@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/qiwur-nutch.iml" filepath="$PROJECT_DIR$/qiwur-nutch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/qiwur-nutch.iml" filepath="$PROJECT_DIR$/.idea/qiwur-nutch.iml" />
     </modules>
   </component>
 </project>

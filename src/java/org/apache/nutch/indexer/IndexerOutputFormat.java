@@ -42,8 +42,7 @@ public class IndexerOutputFormat extends OutputFormat<String, IndexDocument> {
   }
 
   @Override
-  public RecordWriter<String, IndexDocument> getRecordWriter(TaskAttemptContext contex)
-      throws IOException, InterruptedException {
+  public RecordWriter<String, IndexDocument> getRecordWriter(TaskAttemptContext contex) throws InterruptedException {
     // final IndexWriter[] writers =
     // NutchIndexWriterFactory.getNutchIndexWriters(job.getConfiguration());
 
@@ -52,13 +51,13 @@ public class IndexerOutputFormat extends OutputFormat<String, IndexDocument> {
 
     return new RecordWriter<String, IndexDocument>() {
       @Override
-      public void write(String key, IndexDocument doc) throws IOException {
+      public void write(String key, IndexDocument doc) {
         // TODO: Check Write Status for delete or write.
         writers.write(doc);
       }
 
       @Override
-      public void close(TaskAttemptContext contex) throws IOException, InterruptedException {
+      public void close(TaskAttemptContext contex) throws InterruptedException {
         writers.close();
       }
     };

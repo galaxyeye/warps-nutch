@@ -1,10 +1,13 @@
 package org.apache.nutch.util;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
+import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Arrays;
 
 public class RuntimeUtil {
 
@@ -28,4 +31,25 @@ public class RuntimeUtil {
     return false;
   }
 
+  public static void main(String[] args) throws Exception {
+    int res = 0;
+
+    JSONArray data = new JSONArray(Arrays.asList(args));
+
+    System.out.println("It's crowdsourcing mode, forward the command to NutchServer...");
+
+    ProcessBuilder builder = new ProcessBuilder("curl",
+        "-v",
+        "-H", "'Content-Type: application/json'",
+        "-X", "PUT",
+        "--data", data.toString(),
+        "http://127.0.0.1:8182/exec/fetch");
+    System.out.println("Execute command : " + StringUtils.join(builder.command(), " "));
+    builder.inheritIO();
+    Process process = builder.start();
+
+    res = process.waitFor();
+
+    System.exit(res);
+  }
 }

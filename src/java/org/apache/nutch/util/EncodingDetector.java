@@ -16,14 +16,8 @@
  */
 package org.apache.nutch.util;
 
-import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
+import com.ibm.icu.text.CharsetDetector;
+import com.ibm.icu.text.CharsetMatch;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
@@ -31,8 +25,16 @@ import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ibm.icu.text.CharsetDetector;
-import com.ibm.icu.text.CharsetMatch;
+import java.io.ByteArrayInputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A simple class for detecting character encodings.
@@ -61,6 +63,21 @@ import com.ibm.icu.text.CharsetMatch;
 public class EncodingDetector {
 
   public final static Utf8 CONTENT_TYPE_UTF8 = new Utf8(Response.CONTENT_TYPE);
+
+  // I used 1000 bytes at first, but found that some documents have
+  // meta tag well past the first 1000 bytes.
+  // (e.g. http://cn.promo.yahoo.com/customcare/music.html)
+  private static final int CHUNK_SIZE = 2000;
+
+  // NUTCH-1006 Meta equiv with single quotes not accepted
+  private static Pattern metaPattern = Pattern.compile(
+      "<meta\\s+([^>]*http-equiv=(\"|')?content-type(\"|')?[^>]*)>",
+      Pattern.CASE_INSENSITIVE);
+  private static Pattern charsetPattern = Pattern.compile(
+      "charset=\\s*([a-z][_\\-0-9a-z]*)", Pattern.CASE_INSENSITIVE);
+  private static Pattern charsetPatternHTML5 = Pattern.compile(
+      "<meta\\s+charset\\s*=\\s*[\"']?([a-z][_\\-0-9a-z]*)[^>]*>",
+      Pattern.CASE_INSENSITIVE);
 
   private class EncodingClue {
     private final String value;
@@ -103,16 +120,17 @@ public class EncodingDetector {
     }
   }
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(EncodingDetector.class);
+  public static final Logger LOG = LoggerFactory.getLogger(EncodingDetector.class);
 
   public static final int NO_THRESHOLD = -1;
 
   public static final String MIN_CONFIDENCE_KEY = "encodingdetector.charset.min.confidence";
 
-  private static final HashMap<String, String> ALIASES = new HashMap<String, String>();
+  private static final HashMap<String, String> ALIASES = new HashMap<>();
 
-  private static final HashSet<String> DETECTABLES = new HashSet<String>();
+  private static final HashSet<String> DETECTABLES = new HashSet<>();
+
+  private String defaultCharEncoding;
 
   // CharsetDetector will die without a minimum amount of data.
   private static final int MIN_LENGTH = 4;
@@ -140,11 +158,16 @@ public class EncodingDetector {
     ALIASES.put("ISO-8859-1", "windows-1252");
     ALIASES.put("EUC-KR", "x-windows-949");
     ALIASES.put("x-EUC-CN", "GB18030");
-    ALIASES.put("GBK", "GB18030");
+    /**
+     * GB18030有两个版本：GB18030-2000和GB18030-2005，
+     * GB18030-2000是GBK的取代版本，它的主要特点是在GBK基础上增加了CJK统一汉字扩充A的汉字。
+     * GB18030-2005的主要特点是在GB18030-2000基础上增加了CJK统一汉字扩充B的汉字。
+     * @see http://www.fmddlmyy.cn/text24.html
+     * */
+    // ALIASES.put("GBK", "GB18030");
     // ALIASES.put("Big5", "Big5HKSCS");
     // ALIASES.put("TIS620", "Cp874");
     // ALIASES.put("ISO-8859-11", "Cp874");
-
   }
 
   private final int minConfidence;
@@ -156,7 +179,17 @@ public class EncodingDetector {
   public EncodingDetector(Configuration conf) {
     minConfidence = conf.getInt(MIN_CONFIDENCE_KEY, -1);
     detector = new CharsetDetector();
-    clues = new ArrayList<EncodingClue>();
+    clues = new ArrayList<>();
+
+    this.defaultCharEncoding = conf.get("parser.character.encoding.default", "windows-1252");
+  }
+
+  public String sniffEncoding(WebPage page) {
+    autoDetectClues(page, true);
+    addClue(sniffCharacterEncoding(page.getContent().array()), "sniffed");
+    String encoding = guessEncoding(page, defaultCharEncoding);
+
+    return encoding;
   }
 
   public void autoDetectClues(WebPage page, boolean filter) {
@@ -165,8 +198,63 @@ public class EncodingDetector {
         filter);
   }
 
-  private void autoDetectClues(ByteBuffer dataBuffer, CharSequence typeUtf8,
-      String encoding, boolean filter) {
+  /**
+   * Given a <code>byte[]</code> representing an html file of an
+   * <em>unknown</em> encoding, read out 'charset' parameter in the meta tag
+   * from the first <code>CHUNK_SIZE</code> bytes. If there's no meta tag for
+   * Content-Type or no charset is specified, the content is checked for a
+   * Unicode Byte Order Mark (BOM). This will also cover non-byte oriented
+   * character encodings (UTF-16 only). If no character set can be determined,
+   * <code>null</code> is returned. <br />
+   * See also
+   * http://www.w3.org/International/questions/qa-html-encoding-declarations,
+   * http://www.w3.org/TR/2011/WD-html5-diff-20110405/#character-encoding, and
+   * http://www.w3.org/TR/REC-xml/#sec-guessing
+   *
+   * @param content
+   *          <code>byte[]</code> representation of an html file
+   */
+  public String sniffCharacterEncoding(byte[] content) {
+    int length = content.length < CHUNK_SIZE ? content.length : CHUNK_SIZE;
+
+    // We don't care about non-ASCII parts so that it's sufficient
+    // to just inflate each byte to a 16-bit value by padding.
+    // For instance, the sequence {0x41, 0x82, 0xb7} will be turned into
+    // {U+0041, U+0082, U+00B7}.
+    String str = new String(content, 0, length, StandardCharsets.US_ASCII);
+
+    Matcher metaMatcher = metaPattern.matcher(str);
+    String encoding = null;
+    if (metaMatcher.find()) {
+      Matcher charsetMatcher = charsetPattern.matcher(metaMatcher.group(1));
+      if (charsetMatcher.find())
+        encoding = charsetMatcher.group(1);
+    }
+    if (encoding == null) {
+      // check for HTML5 meta charset
+      metaMatcher = charsetPatternHTML5.matcher(str);
+      if (metaMatcher.find()) {
+        encoding = metaMatcher.group(1);
+      }
+    }
+    if (encoding == null) {
+      // check for BOM
+      if (content.length >= 3 && content[0] == (byte) 0xEF
+          && content[1] == (byte) 0xBB && content[2] == (byte) 0xBF) {
+        encoding = "UTF-8";
+      } else if (content.length >= 2) {
+        if (content[0] == (byte) 0xFF && content[1] == (byte) 0xFE) {
+          encoding = "UTF-16LE";
+        } else if (content[0] == (byte) 0xFE && content[1] == (byte) 0xFF) {
+          encoding = "UTF-16BE";
+        }
+      }
+    }
+
+    return encoding;
+  }
+
+  private void autoDetectClues(ByteBuffer dataBuffer, CharSequence typeUtf8, String encoding, boolean filter) {
     int length = dataBuffer.remaining();
     String type = TableUtil.toString(typeUtf8);
 
@@ -212,7 +300,7 @@ public class EncodingDetector {
   /**
    * Guess the encoding with the previously specified list of clues.
    * 
-   * @param row
+   * @param page
    *          URL's row
    * @param defaultValue
    *          Default encoding to return if no encoding can be detected with
@@ -267,8 +355,7 @@ public class EncodingDetector {
       String charset = clue.value;
       if (minConfidence >= 0 && clue.confidence >= minConfidence) {
         if (LOG.isTraceEnabled()) {
-          LOG.trace(baseUrl + ": Choosing encoding: " + charset
-              + " with confidence " + clue.confidence);
+          LOG.trace(baseUrl + ": Choosing encoding: " + charset + " with confidence " + clue.confidence);
         }
         return resolveEncodingAlias(charset).toLowerCase();
       } else if (clue.confidence == NO_THRESHOLD && bestClue == defaultClue) {
@@ -279,6 +366,7 @@ public class EncodingDetector {
     if (LOG.isTraceEnabled()) {
       LOG.trace(baseUrl + ": Choosing encoding: " + bestClue);
     }
+
     return bestClue.value.toLowerCase();
   }
 
@@ -347,22 +435,28 @@ public class EncodingDetector {
    * @param contentTypeUtf8
    */
   public static String parseCharacterEncoding(CharSequence contentTypeUtf8) {
-    if (contentTypeUtf8 == null)
-      return (null);
+    if (contentTypeUtf8 == null) {
+      return null;
+    }
+
     String contentType = contentTypeUtf8.toString();
     int start = contentType.indexOf("charset=");
-    if (start < 0)
-      return (null);
+    if (start < 0) {
+      return null;
+    }
+
     String encoding = contentType.substring(start + 8);
     int end = encoding.indexOf(';');
-    if (end >= 0)
+    if (end >= 0) {
       encoding = encoding.substring(0, end);
-    encoding = encoding.trim();
-    if ((encoding.length() > 2) && (encoding.startsWith("\""))
-        && (encoding.endsWith("\"")))
-      encoding = encoding.substring(1, encoding.length() - 1);
-    return (encoding.trim());
+    }
 
+    encoding = encoding.trim();
+    if ((encoding.length() > 2) && (encoding.startsWith("\"")) && (encoding.endsWith("\""))) {
+      encoding = encoding.substring(1, encoding.length() - 1);
+    }
+
+    return encoding.trim();
   }
 
   /*

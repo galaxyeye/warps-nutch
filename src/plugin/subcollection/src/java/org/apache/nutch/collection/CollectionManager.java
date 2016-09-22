@@ -16,32 +16,21 @@
  */
 package org.apache.nutch.collection;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.util.DomUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.ObjectCache;
 import org.apache.xerces.dom.DocumentImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import java.io.*;
+import java.net.URL;
+import java.util.*;
 
 public class CollectionManager extends Configured {
 
@@ -71,11 +60,9 @@ public class CollectionManager extends Configured {
         LOG.info("initializing CollectionManager");
       }
       // initialize known subcollections
-      configfile = getConf().getResource(
-          getConf().get("subcollections.config", DEFAULT_FILE_NAME));
+      configfile = getConf().getResource(getConf().get("subcollections.config", DEFAULT_FILE_NAME));
 
-      InputStream input = getConf().getConfResourceAsInputStream(
-          getConf().get("subcollections.config", DEFAULT_FILE_NAME));
+      InputStream input = getConf().getConfResourceAsInputStream(getConf().get("subcollections.config", DEFAULT_FILE_NAME));
       parse(input);
     } catch (Exception e) {
       if (LOG.isWarnEnabled()) {
@@ -88,8 +75,7 @@ public class CollectionManager extends Configured {
     Element collections = DomUtil.getDom(input);
 
     if (collections != null) {
-      NodeList nodeList = collections
-          .getElementsByTagName(Subcollection.TAG_COLLECTION);
+      NodeList nodeList = collections.getElementsByTagName(Subcollection.TAG_COLLECTION);
 
       if (LOG.isInfoEnabled()) {
         LOG.info("file has" + nodeList.getLength() + " elements");
@@ -173,7 +159,7 @@ public class CollectionManager extends Configured {
    * @return Space delimited string of collection names url is part of
    */
   public List<String> getSubCollections(final String url) {
-    List<String> collections = new ArrayList<String>();
+    List<String> collections = new ArrayList<>();
     final Iterator<Subcollection> iterator = collectionMap.values().iterator();
 
     while (iterator.hasNext()) {
@@ -215,18 +201,15 @@ public class CollectionManager extends Configured {
 
       while (iterator.hasNext()) {
         final Subcollection subCol = iterator.next();
-        final Element collection = doc
-            .createElement(Subcollection.TAG_COLLECTION);
+        final Element collection = doc.createElement(Subcollection.TAG_COLLECTION);
         collections.appendChild(collection);
         final Element name = doc.createElement(Subcollection.TAG_NAME);
         name.setNodeValue(subCol.getName());
         collection.appendChild(name);
-        final Element whiteList = doc
-            .createElement(Subcollection.TAG_WHITELIST);
+        final Element whiteList = doc.createElement(Subcollection.TAG_WHITELIST);
         whiteList.setNodeValue(subCol.getWhiteListString());
         collection.appendChild(whiteList);
-        final Element blackList = doc
-            .createElement(Subcollection.TAG_BLACKLIST);
+        final Element blackList = doc.createElement(Subcollection.TAG_BLACKLIST);
         blackList.setNodeValue(subCol.getBlackListString());
         collection.appendChild(blackList);
       }

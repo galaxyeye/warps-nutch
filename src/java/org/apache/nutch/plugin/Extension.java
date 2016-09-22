@@ -16,10 +16,10 @@
  */
 package org.apache.nutch.plugin;
 
-import java.util.HashMap;
-
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+
+import java.util.HashMap;
 
 /**
  * An <code>Extension</code> is a kind of listener descriptor that will be
@@ -153,8 +153,7 @@ public class Extension {
     synchronized (getId()) {
       try {
         PluginRepository pluginRepository = PluginRepository.get(conf);
-        Class extensionClazz = pluginRepository.getCachedClass(fDescriptor,
-            getClazz());
+        Class extensionClazz = pluginRepository.getCachedClass(fDescriptor, getClazz());
         // lazy loading of Plugin in case there is no instance of the plugin
         // already.
         pluginRepository.getPluginInstance(getDescriptor());

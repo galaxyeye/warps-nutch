@@ -16,6 +16,8 @@
  */
 package org.apache.nutch.indexwriter.solr;
 
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
@@ -31,8 +33,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SolrMappingReader {
@@ -41,7 +43,6 @@ public class SolrMappingReader {
   private Configuration conf;
 
   private Map<String, String> keyMap = new HashMap<>();
-  private Map<String, String> copyMap = new HashMap<>();
   private String uniqueKey = "id";
 
   public static synchronized SolrMappingReader getInstance(Configuration conf) {
@@ -65,6 +66,7 @@ public class SolrMappingReader {
     String mappingFile = conf.get(SolrConstants.MAPPING_FILE, "solrindex-mapping.xml");
     InputStream ssInputStream = conf.getConfResourceAsInputStream(mappingFile);
 
+    List<String> solrFields = Lists.newArrayList();
     InputSource inputSource = new InputSource(ssInputStream);
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -75,23 +77,16 @@ public class SolrMappingReader {
       if (fieldList.getLength() > 0) {
         for (int i = 0; i < fieldList.getLength(); i++) {
           Element element = (Element) fieldList.item(i);
-          LOG.info("source: " + element.getAttribute("source") + " dest: "
-              + element.getAttribute("dest"));
-          keyMap.put(element.getAttribute("source"),
-              element.getAttribute("dest"));
+
+          String source = element.getAttribute("name");
+          String dest = source;
+
+          solrFields.add(dest);
+          keyMap.put(source, dest);
         }
       }
 
-      NodeList copyFieldList = rootElement.getElementsByTagName("copyField");
-      if (copyFieldList.getLength() > 0) {
-        for (int i = 0; i < copyFieldList.getLength(); i++) {
-          Element element = (Element) copyFieldList.item(i);
-          LOG.info("source: " + element.getAttribute("source") + " dest: "
-              + element.getAttribute("dest"));
-          copyMap.put(element.getAttribute("source"),
-              element.getAttribute("dest"));
-        }
-      }
+      LOG.info("Registered " + solrFields.size() + " solr fields : " + StringUtils.join(solrFields, ", "));
 
       NodeList uniqueKeyItem = rootElement.getElementsByTagName("uniqueKey");
       if (uniqueKeyItem.getLength() > 1) {
@@ -102,34 +97,13 @@ public class SolrMappingReader {
       } else {
         uniqueKey = uniqueKeyItem.item(0).getFirstChild().getNodeValue();
       }
-    } catch (MalformedURLException e) {
-      LOG.warn(e.toString());
-    } catch (SAXException e) {
-      LOG.warn(e.toString());
-    } catch (IOException e) {
-      LOG.warn(e.toString());
-    } catch (ParserConfigurationException e) {
+    } catch (SAXException|IOException|ParserConfigurationException e) {
       LOG.warn(e.toString());
     }
   }
 
   public Map<String, String> getKeyMap() {
     return keyMap;
-  }
-
-  public Map<String, String> getCopyMap() {
-    return copyMap;
-  }
-
-  public String getUniqueKey() {
-    return uniqueKey;
-  }
-
-  public String hasCopy(String key) {
-    if (copyMap.containsKey(key)) {
-      key = (String) copyMap.get(key);
-    }
-    return key;
   }
 
   public String mapKey(String key) throws IOException {
@@ -144,12 +118,5 @@ public class SolrMappingReader {
       return keyMap.get(key);
     }
     return null;
-  }
-
-  public String mapCopyKey(String key) throws IOException {
-    if (copyMap.containsKey(key)) {
-      key = copyMap.get(key);
-    }
-    return key;
   }
 }

@@ -9,6 +9,8 @@ package org.apache.nutch.indexer;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
 import org.apache.nutch.storage.WebPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -20,8 +22,11 @@ import java.util.Collection;
  * sequentially on the parse.
  */
 public interface IndexingFilter extends FieldPluggable, Configurable {
+
+  Logger LOG = LoggerFactory.getLogger(IndexingFilter.class);
+
   /** The name of the extension point. */
-  final static String X_POINT_ID = IndexingFilter.class.getName();
+  String X_POINT_ID = IndexingFilter.class.getName();
 
   /**
    * Adds fields or otherwise modifies the document that will be indexed for a

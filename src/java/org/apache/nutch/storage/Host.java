@@ -86,8 +86,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
   };
 
-  public static final String[] _ALL_FIELDS = { "metadata", "outlinks",
-      "inlinks", };
+  public static final String[] _ALL_FIELDS = { "metadata", "outlinks", "inlinks", };
 
   /**
    * Gets the total field count.

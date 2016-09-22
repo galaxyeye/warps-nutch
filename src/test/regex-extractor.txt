@@ -1,0 +1,9 @@
+[url:*]
+author    (记者：)([一-龥]+)     -char-position=1,1000
+director  (编辑：)([一-龥]+)     -char-position=1,1000
+reference (来源：)([一-龥]+)     -char-position=1,1000
+reference (转载自：)([一-龥]+)   -char-position=1,1000
+keywords  (关键词：)(.+)         -char-position=1,1000
+keywords  (标签：)(.+)          -char-position=1,1000
+
+[url:http://news.163.com/*]

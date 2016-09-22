@@ -17,27 +17,27 @@
 
 package org.apache.nutch.parse.html;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.Parser;
 import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.NutchConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestHtmlParser {
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(TestHtmlParser.class);
+  public static final Logger LOG = LoggerFactory.getLogger(TestHtmlParser.class);
 
   private static final String encodingTestKeywords = "français, español, русский язык, čeština, ελληνικά";
   private static final String encodingTestBody = "<ul>\n  <li>français\n  <li>español\n  <li>русский язык\n  <li>čeština\n  <li>ελληνικά\n</ul>";
@@ -133,5 +133,4 @@ public class TestHtmlParser {
       }
     }
   }
-
 }

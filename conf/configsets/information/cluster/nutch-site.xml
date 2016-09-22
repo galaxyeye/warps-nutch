@@ -8,7 +8,7 @@
     <!-- storage -->
     <property>
         <name>storage.crawl.id</name>
-        <value>information_native</value>
+        <value>information</value>
         <description>crawl pages for information/intelligence mining
         </description>
     </property>
@@ -16,6 +16,20 @@
     <property>
         <name>storage.data.store.class</name>
         <value>org.apache.gora.hbase.store.HBaseStore</value>
+    </property>
+
+    <!-- plugin -->
+    <property>
+        <name>plugin.includes</name>
+        <value>protocol-(http|crowd)|urlfilter-(domain|prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+        <description>Regular expression naming plugin directory names to
+            include.  Any plugin not matching this expression is excluded.
+            In any case you need at least include the nutch-extensionpoints plugin. By
+            default Nutch includes crawling just HTML and plain text via HTTP,
+            and basic indexing and search plugins. In order to use HTTPS please enable
+            protocol-httpclient, but be aware of possible intermittent problems with the
+            underlying commons-httpclient library.
+        </description>
     </property>
 
     <!-- fetcher -->
@@ -37,7 +51,7 @@
 
     <property>
         <name>fetcher.throughput.threshold.pages</name>
-        <value>-1</value>
+        <value>1</value>
         <description>The threshold of minimum pages per second. If the fetcher
             downloads less
             pages per second than the configured threshold, the
@@ -103,16 +117,13 @@
     <property>
         <name>http.timeout</name>
         <value>300000</value>
-        <description>we have a very long time out setting, it's for a reason
-        </description>
+        <description>we have a very long time out setting, it's for a reason</description>
     </property>
 
     <property>
         <name>mapred.task.timeout.mins</name>
         <value>10</value>
-        <description>fetch thread will exit if no any fetch item for
-            mapred.task.timeout minutes
-        </description>
+        <description>fetch thread will exit if no any fetch item for mapred.task.timeout minutes</description>
     </property>
 
     <property>
@@ -128,9 +139,7 @@
     <property>
         <name>parser.skip.truncated</name>
         <value>false</value>
-        <description>no truncate actually since we give a very large value for
-            http.content.limit
-        </description>
+        <description>no truncate actually since we give a very large value for http.content.limit</description>
     </property>
 
     <property>
@@ -151,9 +160,7 @@
     <property>
         <name>db.ignore.external.links</name>
         <value>false</value>
-        <description>If true, outlinks leading from a page to external hosts
-            will be ignored
-        </description>
+        <description>If true, outlinks leading from a page to external hosts will be ignored</description>
     </property>
 
     <property>
@@ -169,8 +176,30 @@
         </description>
     </property>
 
-    <!-- <property> <name>plugin.includes</name> <value>protocol-(http|crowd)|urlfilter-regex|parse-(html)|index-(basic|anchor)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
-        </property> -->
+    <property>
+        <name>plugin.includes</name>
+        <value>protocol-(http|crowd)|urlfilter-regex|parse-(html|tika)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+        <description>Regular expression naming plugin directory names to
+            include.  Any plugin not matching this expression is excluded.
+            In any case you need at least include the nutch-extensionpoints plugin. By
+            default Nutch includes crawling just HTML and plain text via HTTP,
+            and basic indexing and search plugins. In order to use HTTPS please enable
+            protocol-httpclient, but be aware of possible intermittent problems with the
+            underlying commons-httpclient library.
+        </description>
+    </property>
+
+    <!-- Indexing -->
+    <!-- index-metadata plugin properties -->
+    <property>
+        <name>index.metadata</name>
+        <value>title,description,keywords</value>
+        <description>
+            Comma-separated list of keys to be taken from the metadata to generate fields.
+            Can be used e.g. for 'description' or 'keywords' provided that these values are generated
+            by a parser (see parse-metatags plugin)
+        </description>
+    </property>
 
     <!-- Scoring -->
     <!-- This is a temporary solution to indicate important links -->

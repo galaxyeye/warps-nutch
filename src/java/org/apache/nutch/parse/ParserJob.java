@@ -168,7 +168,6 @@ public class ParserJob extends NutchJob implements Tool {
   }
 
   public int run(String[] args) throws Exception {
-
     if (args.length < 1) {
       printUsage();
       return -1;
@@ -189,7 +188,8 @@ public class ParserJob extends NutchJob implements Tool {
 
     for (int i = 0; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+        crawlId = args[++i];
+        // getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
       }
       else if ("-resume".equals(args[i])) {
         resume = true;
@@ -198,13 +198,18 @@ public class ParserJob extends NutchJob implements Tool {
       }
     }
 
-    parse(batchId, resume, force);
+    parse(crawlId, batchId, resume, force);
 
     return 0;
   }
 
-  public void parse(String batchId, boolean resume, boolean force) {
-    run(StringUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_RESUME, resume, Nutch.ARG_FORCE, force));
+  public void parse(String crawlId, String batchId, boolean resume, boolean force) {
+    run(StringUtil.toArgMap(
+        Nutch.ARG_CRAWL, crawlId,
+        Nutch.ARG_BATCH, batchId,
+        Nutch.ARG_RESUME, resume,
+        Nutch.ARG_FORCE, force
+    ));
   }
 
   public static void main(String[] args) throws Exception {

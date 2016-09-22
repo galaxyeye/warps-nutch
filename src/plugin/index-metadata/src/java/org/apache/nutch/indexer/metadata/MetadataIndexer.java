@@ -17,21 +17,18 @@
 
 package org.apache.nutch.indexer.metadata;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.URLUtil;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 /**
  * Indexer which can be configured to extract metadata from the crawldb, parse
@@ -42,30 +39,115 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 public class MetadataIndexer implements IndexingFilter {
   private Configuration conf;
-  private static Map<Utf8, String> parseFieldnames;
   private static final String PARSE_CONF_PROPERTY = "index.metadata";
   private static final String INDEX_PREFIX = "meta_";
   private static final String PARSE_META_PREFIX = "meta_";
 
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
-      throws IndexingException {
+  private static SiteNames siteNames;
+  private static ResourceCategory resourceCategory;
+  private static Map<String, String> parseFieldnames = new TreeMap<>();
 
-    // just in case
-    if (doc == null)
+  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+
+  static {
+    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(WebPage.Field.FETCH_TIME);
+    FIELDS.add(WebPage.Field.CONTENT_TYPE);
+  }
+
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+    addTime(doc, url, page);
+
+    addHost(doc, url, page);
+
+    // Metadata-indexer does not meet all our requirement
+    addGeneralMetadata(doc, url, page);
+
+    addPageMetadata(doc, url, page);
+
+    return doc;
+  }
+
+  private void addHost(IndexDocument doc, String url, WebPage page) throws IndexingException {
+    String reprUrl = TableUtil.toString(page.getReprUrl());
+    String reprUrlString = reprUrl != null ? reprUrl : null;
+    String urlString = url;
+
+    String host;
+    try {
+      URL u;
+      if (reprUrlString != null) {
+        u = new URL(reprUrlString);
+      } else {
+        u = new URL(urlString);
+      }
+
+      String domain = URLUtil.getDomainName(u);
+
+      doc.add("domain", domain);
+      doc.add("site_name", siteNames.getSiteName(domain));
+      doc.add("resource_category", resourceCategory.getCategory(domain));
+      doc.add("url", reprUrlString == null ? urlString : reprUrlString);
+
+      host = u.getHost();
+      if (host != null) {
+        doc.add("host", host);
+      }
+    } catch (MalformedURLException e) {
+      throw new IndexingException(e);
+    }
+  }
+
+  private void addTime(IndexDocument doc, String url, WebPage page) {
+    Date crawlTime = new Date(page.getFetchTime());
+    Date indexTime = new Date();
+    Date firstCrawlTime = crawlTime;
+
+    String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
+    if (fetchTimeHistory != null) {
+      String[] times = fetchTimeHistory.split(",");
+      firstCrawlTime = new Date(Long.parseLong(times[0]));
+      doc.add("first_crawl_time", firstCrawlTime);
+    }
+
+    doc.add("last_crawl_time", crawlTime);
+    doc.add("first_index_time", indexTime);
+    doc.add("last_index_time", indexTime);
+    doc.add("fetch_time_history", fetchTimeHistory);
+
+//    if (LOG.isDebugEnabled()) {
+//      String report = DateTimeFormatter.ISO_INSTANT.format(crawlTime.toInstant());
+//      report += ",\t" + DateTimeFormatter.ISO_INSTANT.format(indexTime.toInstant());
+//      report += ",\t" + DateTimeFormatter.ISO_INSTANT.format(firstCrawlTime.toInstant());
+//
+//      LOG.debug(report);
+//    }
+  }
+
+  private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {
+    String contentType = TableUtil.toString(page.getContentType());
+    if (contentType == null || !contentType.contains("html")) {
+      LOG.warn("Content type " + contentType + " is not fully supported");
+      // return doc;
+    }
+
+    // doc.add("encoding", page.getDocFieldAsString("encoding", ""));
+
+    // get content type
+    doc.add("content_type", contentType);
+  }
+
+  private IndexDocument addPageMetadata(IndexDocument doc, String url, WebPage page) {
+    if (doc == null || parseFieldnames.isEmpty()) {
       return doc;
+    }
 
-    // add the fields from parsemd
-    if (parseFieldnames != null) {
-      for (Entry<Utf8, String> metatag : parseFieldnames.entrySet()) {
-        ByteBuffer bvalues = page.getMetadata().get(metatag.getKey());
-        if (bvalues != null) {
-          String key = metatag.getValue();
-          String value = Bytes.toString(bvalues.array());
-          String[] values = value.split("\t");
-          for (String eachvalue : values) {
-            doc.add(key, eachvalue);
-          }
-        }
+    for (Map.Entry<String, String> metatag : parseFieldnames.entrySet()) {
+      String k = metatag.getValue();
+      String metadata = TableUtil.getMetadata(page, metatag.getKey());
+
+      if (metadata != null) {
+        Arrays.stream(metadata.split("\t")).forEach(v -> doc.add(k, v));
       }
     }
 
@@ -74,15 +156,22 @@ public class MetadataIndexer implements IndexingFilter {
 
   public void setConf(Configuration conf) {
     this.conf = conf;
-    String[] metatags = conf.getStrings(PARSE_CONF_PROPERTY);
-    parseFieldnames = new TreeMap<Utf8, String>();
-    for (int i = 0; i < metatags.length; i++) {
-      parseFieldnames.put(
-          new Utf8(PARSE_META_PREFIX + metatags[i].toLowerCase(Locale.ROOT)),
-          INDEX_PREFIX + metatags[i]);
-    }
-    // TODO check conflict between field names e.g. could have same label
-    // from different sources
+
+    conf.getStringCollection(PARSE_CONF_PROPERTY).stream().forEach(metatag -> {
+      String key = PARSE_META_PREFIX + metatag.toLowerCase(Locale.ROOT);
+      String value = INDEX_PREFIX + metatag;
+
+      parseFieldnames.put(key, value);
+    });
+
+    siteNames = new SiteNames(conf);
+    resourceCategory = new ResourceCategory(conf);
+
+//    LOG.info(StringUtil.formatParamsLine(
+//        "className", this.getClass().getSimpleName(),
+//        "siteNames", siteNames.count(),
+//        "resourceCategory", resourceCategory.count()
+//    ));
   }
 
   public Configuration getConf() {
@@ -90,7 +179,7 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
-    return null;
+  public Collection<WebPage.Field> getFields() {
+    return FIELDS;
   }
 }

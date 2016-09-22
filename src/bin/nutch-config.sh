@@ -51,21 +51,6 @@ if [ -z "$NUTCH_HOME" ]; then
   export NUTCH_HOME=$NUTCH_HOME
 fi
 
-#check to see if the conf dir or hbase home are given as an optional arguments
-while [ $# -gt 1 ]
-do
-  if [ "--config" = "$1" ]
-  then
-    shift
-    confdir=$1
-    shift
-    NUTCH_CONF_DIR=$confdir
-  else
-    # Presume we are at end of options and break
-    break
-  fi
-done
-
 # NUTCH_JOB
 if [ -f "${NUTCH_HOME}"/*nutch*-job.jar ]; then
   local=false
@@ -106,20 +91,25 @@ if [ "$NUTCH_IDENT_STRING" = "" ]; then
   export NUTCH_IDENT_STRING="$USER"
 fi
 
-if [ "$NUTCH_PID_DIR" = "" ]; then
+# get tmp directory
+if [ "$NUTCH_TMP_DIR" = "" ]; then
+  export NUTCH_TMP_DIR="/tmp/nutch-$USER"
+fi
+mkdir -p "$NUTCH_TMP_DIR"
+
+if [ $NUTCH_PID_DIR="" ]; then
   export NUTCH_PID_DIR="/tmp"
 fi
 
-if [ "$NUTCH_CONF_DIR" = "" ]; then
-  export NUTCH_CONF_DIR="$NUTCH_HOME/conf"
-fi
+DATE=`date +%s`
+export DEFAULT_NUTCH_CONF_DIR="$NUTCH_HOME/conf/configsets/default"
+export NUTCH_CONF_DIR=$NUTCH_TMP_DIR/conf/$DATE
+mkdir -p $NUTCH_CONF_DIR
+cp -r $DEFAULT_NUTCH_CONF_DIR/* $NUTCH_CONF_DIR/
 
 if [ -f $NUTCH_CONF_DIR/slaves ]; then
   export NUMBER_SLAVES=`cat $NUTCH_CONF_DIR/slaves | wc -l`
 fi
-
-# Allow alternate nutch conf dir location.
-NUTCH_CONF_DIR="${NUTCH_CONF_DIR:-$NUTCH_HOME/conf}"
 
 # REST JMX opts
 if [[ -n "$NUTCH_JMX_OPTS" && -z "$NUTCH_REST_JMX_OPTS" ]]; then
@@ -131,7 +121,7 @@ if [ -z "$NUTCH_REST_OPTS" ]; then
   export NUTCH_REST_OPTS="$NUTCH_REST_JMX_OPTS"
 fi
 
-# Source the hbase-env.sh.  Will have JAVA_HOME defined.
+# Source the hbase-env.sh.  Will have JAVA_HOME defined
 if [ -z "$NUTCH_ENV_INIT" ] && [ -f "${NUTCH_CONF_DIR}/nutch-env.sh" ]; then
   . "${NUTCH_CONF_DIR}/nutch-env.sh"
   export NUTCH_ENV_INIT="true"
@@ -150,4 +140,3 @@ if [ -z "$JAVA_HOME" ]; then
 EOF
     exit 1
 fi
-

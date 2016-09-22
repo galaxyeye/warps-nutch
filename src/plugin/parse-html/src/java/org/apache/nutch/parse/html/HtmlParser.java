@@ -17,23 +17,10 @@
 
 package org.apache.nutch.parse.html;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.kohlschutter.boilerpipe.BoilerpipeProcessingException;
+import com.kohlschutter.boilerpipe.document.TextDocument;
+import com.kohlschutter.boilerpipe.extractors.ChineseNewsExtractor;
+import com.kohlschutter.boilerpipe.sax.BoilerpipeSAXInput;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -41,190 +28,228 @@ import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.Parse;
-import org.apache.nutch.parse.ParseFilters;
-import org.apache.nutch.parse.ParseStatusCodes;
-import org.apache.nutch.parse.ParseStatusUtils;
-import org.apache.nutch.parse.Parser;
+import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.google.gson.Gson;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class HtmlParser implements Parser {
 
   public static final Logger LOG = LoggerFactory.getLogger("org.apache.nutch.parse.html");
 
-  // I used 1000 bytes at first, but found that some documents have
-  // meta tag well past the first 1000 bytes.
-  // (e.g. http://cn.promo.yahoo.com/customcare/music.html)
-  private static final int CHUNK_SIZE = 2000;
-
-  // NUTCH-1006 Meta equiv with single quotes not accepted
-  private static Pattern metaPattern = Pattern.compile(
-      "<meta\\s+([^>]*http-equiv=(\"|')?content-type(\"|')?[^>]*)>",
-      Pattern.CASE_INSENSITIVE);
-  private static Pattern charsetPattern = Pattern.compile(
-      "charset=\\s*([a-z][_\\-0-9a-z]*)", Pattern.CASE_INSENSITIVE);
-  private static Pattern charsetPatternHTML5 = Pattern.compile(
-      "<meta\\s+charset\\s*=\\s*[\"']?([a-z][_\\-0-9a-z]*)[^>]*>",
-      Pattern.CASE_INSENSITIVE);
-
-  private static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static Collection<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.BASE_URL);
   }
 
   private String parserImpl;
-
   private CrawlFilters crawlFilters;
-
   private String defaultCharEncoding;
-
   private Configuration conf;
+  private RegexExtractor regexExtractor;
+  private EncodingDetector encodingDetector;
 
-  private DOMContentUtils utils;
-
+  private DOMContentUtils domContentUtils;
   private ParseFilters htmlParseFilters;
-
   private String cachingPolicy;
+
+  private DocumentFragment docRoot;
+
+  private HTMLMetaTags metaTags = new HTMLMetaTags();
+  private Outlink[] outlinks = new Outlink[0];
 
   public void setConf(Configuration conf) {
     this.conf = conf;
     this.htmlParseFilters = new ParseFilters(getConf());
     this.parserImpl = getConf().get("parser.html.impl", "neko");
     this.defaultCharEncoding = getConf().get("parser.character.encoding.default", "windows-1252");
-    this.utils = new DOMContentUtils(conf);
+    this.domContentUtils = new DOMContentUtils(conf);
     this.cachingPolicy = getConf().get("parser.caching.forbidden.policy", Nutch.CACHING_FORBIDDEN_CONTENT);
     this.crawlFilters = CrawlFilters.create(conf);
+    this.regexExtractor = new RegexExtractor(conf);
+    this.encodingDetector = new EncodingDetector(conf);
+
+    LOG.info(StringUtil.formatParamsLine(
+        "className", this.getClass().getSimpleName(),
+        "parserImpl", parserImpl,
+        "defaultCharEncoding", defaultCharEncoding,
+        "cachingPolicy", cachingPolicy
+    ));
   }
 
   public Parse getParse(String url, WebPage page) {
-    HTMLMetaTags metaTags = new HTMLMetaTags();
-    
-    String baseUrl = TableUtil.toString(page.getBaseUrl());
-    URL base;
+    URL baseURL;
     try {
-      base = new URL(baseUrl);
+      baseURL = new URL(TableUtil.toString(page.getBaseUrl()));
     } catch (MalformedURLException e) {
       return ParseStatusUtils.getEmptyParse(e, getConf());
     }
 
-    String text = "";
-    String title = "";
-    Outlink[] outlinks = new Outlink[0];
+    InputSource input = getContentAsInputSource(page);
+    String encoding = encodingDetector.sniffEncoding(page);
+    // System.out.println("******************************" + encoding + "**********************");
+    setEncoding(page, encoding);
+    input.setEncoding(encoding);
+    docRoot = doParse(input);
 
-    // parse the content
-    DocumentFragment root;
-    try {
-      ByteBuffer contentInOctets = page.getContent();
-      InputSource input = new InputSource(new ByteArrayInputStream(
-          contentInOctets.array(), contentInOctets.arrayOffset()
-              + contentInOctets.position(), contentInOctets.remaining()));
-
-      EncodingDetector detector = new EncodingDetector(conf);
-      detector.autoDetectClues(page, true);
-      detector.addClue(sniffCharacterEncoding(contentInOctets), "sniffed");
-      String encoding = detector.guessEncoding(page, defaultCharEncoding);
-
-      page.getMetadata().put(new Utf8(Metadata.ORIGINAL_CHAR_ENCODING),
-          ByteBuffer.wrap(Bytes.toBytes(encoding)));
-      page.getMetadata().put(new Utf8(Metadata.CHAR_ENCODING_FOR_CONVERSION),
-          ByteBuffer.wrap(Bytes.toBytes(encoding)));
-
-      input.setEncoding(encoding);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Parsing...");
-      }
-      root = parse(input);
-    } catch (IOException e) {
-      LOG.error("Failed with the following IOException: ", e);
-      return ParseStatusUtils.getEmptyParse(e, getConf());
-    } catch (DOMException e) {
-      LOG.error("Failed with the following DOMException: ", e);
-      return ParseStatusUtils.getEmptyParse(e, getConf());
-    } catch (SAXException e) {
-      LOG.error("Failed with the following SAXException: ", e);
-      return ParseStatusUtils.getEmptyParse(e, getConf());
-    } catch (Exception e) {
-      LOG.error("Failed with the following Exception: ", e);
-      return ParseStatusUtils.getEmptyParse(e, getConf());
+    if (docRoot == null) {
+      return ParseStatusUtils.getEmptyParse(null, getConf());
     }
 
     // get meta directives
-    HTMLMetaProcessor.getMetaTags(metaTags, root, base);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Meta tags for " + base + ": " + metaTags.toString());
-    }
+    HTMLMetaProcessor.getMetaTags(metaTags, docRoot, baseURL);
+    setMetadata(page, metaTags);
 
-    // check meta directives
+    // Check meta directives
     if (!metaTags.getNoIndex()) { // okay to index
-      StringBuilder sb = new StringBuilder();
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Getting text...");
-      }
-      utils.getText(sb, root); // extract text
-      text = sb.toString();
-      sb.setLength(0);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Getting title...");
-      }
-      utils.getTitle(sb, root); // extract title
-      title = sb.toString().trim();
+      // Get input source, again. It's not reusable
+      InputSource input2 = getContentAsInputSource(page, encoding);
+      extractByBoilerpipe(page, input2);
     }
 
-    if (crawlFilters.testTextSatisfied(text)) {
-      if (!metaTags.getNoFollow()) { // okay to follow links
-        ArrayList<Outlink> l = new ArrayList<Outlink>(); // extract outlinks
-        URL baseTag = utils.getBase(root);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("Getting links...");
-        }
-        utils.getOutlinks(baseTag != null ? baseTag : base, l, root, crawlFilters);
-        outlinks = l.toArray(new Outlink[l.size()]);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("found " + outlinks.length + " outlinks in " + url);
-        }
-      }
-    }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Page content not pass crawlFilters test");
-      }
+    String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
+    String textContent = page.getDocFieldAsString(Nutch.DOC_FIELD_TEXT_CONTENT);
+
+    getOutlinks(url, baseURL, textContent);
+
+    ParseStatus status = getStatus(metaTags);
+    Parse parse = new Parse(textContent, pageTitle, outlinks, status);
+    parse = htmlParseFilters.filter(url, page, parse, metaTags, docRoot);
+
+    if (metaTags.getNoCache()) {
+      // not okay to cache
+      TableUtil.putMetadata(page, Nutch.CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
+    return parse;
+  }
+
+  private DocumentFragment doParse(InputSource input) {
+    try {
+      return parse(input);
+    } catch (SAXException|DOMException|IOException e) {
+      LOG.error("Failed to parse, message : {}", e);
+    } catch (Throwable e) {
+      LOG.error("Failed to parse, message : {}", e);
+    }
+
+    return null;
+  }
+
+  private InputSource getContentAsInputSource(WebPage page, String encoding) {
+    InputSource input = getContentAsInputSource(page);
+    input.setEncoding(encoding);
+    return input;
+  }
+
+  private InputSource getContentAsInputSource(WebPage page) {
+    ByteBuffer contentInOctets = page.getContent();
+
+    ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
+        contentInOctets.arrayOffset() + contentInOctets.position(),
+        contentInOctets.remaining());
+
+    return new InputSource(stream);
+  }
+
+  private ParseStatus getStatus(HTMLMetaTags metaTags) {
     ParseStatus status = ParseStatus.newBuilder().build();
     status.setMajorCode((int) ParseStatusCodes.SUCCESS);
     if (metaTags.getRefresh()) {
       status.setMinorCode((int) ParseStatusCodes.SUCCESS_REDIRECT);
       status.getArgs().add(new Utf8(metaTags.getRefreshHref().toString()));
-      status.getArgs().add(
-          new Utf8(Integer.toString(metaTags.getRefreshTime())));
+      status.getArgs().add(new Utf8(Integer.toString(metaTags.getRefreshTime())));
     }
 
-    Parse parse = new Parse(text, title, outlinks, status);
-    parse = htmlParseFilters.filter(url, page, parse, metaTags, root);
+    return status;
+  }
 
-    if (metaTags.getNoCache()) { // not okay to cache
-      page.getMetadata().put(new Utf8(Nutch.CACHING_FORBIDDEN_KEY),
-          ByteBuffer.wrap(Bytes.toBytes(cachingPolicy)));
+  private void getOutlinks(String url, URL base, String text) {
+    if (text.isEmpty()) {
+      return;
     }
 
-    return parse;
+    // TODO : do it during iteration the nodes
+    if (!crawlFilters.testTextSatisfied(text)) {
+      LOG.debug("Filtered by text content");
+      return;
+    }
+
+    if (!metaTags.getNoFollow()) { // okay to follow links
+      ArrayList<Outlink> l = new ArrayList<>(); // extract outlinks
+      URL baseTag = domContentUtils.getBase(docRoot);
+
+      domContentUtils.getOutlinks(baseTag != null ? baseTag : base, l, docRoot, crawlFilters);
+      outlinks = l.toArray(new Outlink[l.size()]);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("found " + outlinks.length + " outlinks in " + url);
+      }
+    }
+  }
+
+  private void setEncoding(WebPage page, String encoding) {
+    page.putDocField("encoding", encoding);
+    TableUtil.putMetadata(page, Nutch.ORIGINAL_CHAR_ENCODING, encoding);
+    TableUtil.putMetadata(page, Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
+  }
+
+  private void setMetadata(WebPage page, HTMLMetaTags metaTags) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Meta tags for " + page.getBaseUrl() + ": " + metaTags.toString());
+    }
+
+    Metadata metadata = metaTags.getGeneralTags();
+    for (String name : metadata.names()) {
+      TableUtil.putMetadata(page, "meta_" + name, metadata.get(name));
+    }
+  }
+
+  private void extractByBoilerpipe(WebPage page, InputSource input) {
+    LOG.trace("Try extract by boilerpipe");
+
+    if (page.getContent() == null) {
+      LOG.warn("Can not extract content, page content is null");
+      return;
+    }
+
+    try {
+      TextDocument doc = new BoilerpipeSAXInput(input).getTextDocument();
+
+      ChineseNewsExtractor extractor = new ChineseNewsExtractor();
+      extractor.setRegexFieldRules(regexExtractor.getRegexFieldRules());
+      extractor.setLabeledFieldRules(regexExtractor.getLabeledFieldRules());
+      extractor.setTerminatingBlocksContains(regexExtractor.getTerminatingBlocksContains());
+      extractor.setTerminatingBlocksStartsWith(regexExtractor.getTerminatingBlocksStartsWith());
+
+      extractor.process(doc);
+
+      page.setTitle(doc.getPageTitle());
+      page.putDocField(Nutch.DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
+      page.putDocField(Nutch.DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+
+      doc.getFields().entrySet().stream().forEach(entry -> page.putDocField(entry.getKey(), entry.getValue()));
+    } catch (BoilerpipeProcessingException |SAXException e) {
+      LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
+    }
   }
 
   public Configuration getConf() {
@@ -234,70 +259,6 @@ public class HtmlParser implements Parser {
   @Override
   public Collection<WebPage.Field> getFields() {
     return FIELDS;
-  }
-
-  /**
-   * Given a <code>ByteBuffer</code> representing an html file of an
-   * <em>unknown</em> encoding, read out 'charset' parameter in the meta tag
-   * from the first <code>CHUNK_SIZE</code> bytes. If there's no meta tag for
-   * Content-Type or no charset is specified, the content is checked for a
-   * Unicode Byte Order Mark (BOM). This will also cover non-byte oriented
-   * character encodings (UTF-16 only). If no character set can be determined,
-   * <code>null</code> is returned. <br />
-   * See also
-   * http://www.w3.org/International/questions/qa-html-encoding-declarations,
-   * http://www.w3.org/TR/2011/WD-html5-diff-20110405/#character-encoding, and
-   * http://www.w3.org/TR/REC-xml/#sec-guessing <br />
-   * 
-   * @param content
-   *          <code>ByteBuffer</code> representation of an html file
-   */
-  private static String sniffCharacterEncoding(ByteBuffer content) {
-    int length = Math.min(content.remaining(), CHUNK_SIZE);
-
-    // We don't care about non-ASCII parts so that it's sufficient
-    // to just inflate each byte to a 16-bit value by padding.
-    // For instance, the sequence {0x41, 0x82, 0xb7} will be turned into
-    // {U+0041, U+0082, U+00B7}.
-    String str = "";
-    try {
-      str = new String(content.array(), content.arrayOffset()
-          + content.position(), length, Charset.forName("ASCII").toString());
-    } catch (UnsupportedEncodingException e) {
-      // code should never come here, but just in case...
-      return null;
-    }
-
-    Matcher metaMatcher = metaPattern.matcher(str);
-    String encoding = null;
-    if (metaMatcher.find()) {
-      Matcher charsetMatcher = charsetPattern.matcher(metaMatcher.group(1));
-      if (charsetMatcher.find())
-        encoding = new String(charsetMatcher.group(1));
-    }
-    if (encoding == null) {
-      // check for HTML5 meta charset
-      metaMatcher = charsetPatternHTML5.matcher(str);
-      if (metaMatcher.find()) {
-        encoding = new String(metaMatcher.group(1));
-      }
-    }
-    if (encoding == null) {
-      // check for BOM
-      if (length >= 3 && content.get(0) == (byte) 0xEF
-          && content.get(1) == (byte) 0xBB && content.get(2) == (byte) 0xBF) {
-        encoding = "UTF-8";
-      } else if (length >= 2) {
-        if (content.get(0) == (byte) 0xFF && content.get(1) == (byte) 0xFE) {
-          encoding = "UTF-16LE";
-        } else if (content.get(0) == (byte) 0xFE
-            && content.get(1) == (byte) 0xFF) {
-          encoding = "UTF-16BE";
-        }
-      }
-    }
-
-    return encoding;
   }
 
   private DocumentFragment parse(InputSource input) throws Exception {
@@ -321,31 +282,15 @@ public class HtmlParser implements Parser {
   }
 
   private DocumentFragment parseNeko(InputSource input) throws Exception {
-    org.cyberneko.html.parsers.DOMFragmentParser parser = 
-        new org.cyberneko.html.parsers.DOMFragmentParser();
+    org.cyberneko.html.parsers.DOMFragmentParser parser = new org.cyberneko.html.parsers.DOMFragmentParser();
     try {
-      parser
-          .setFeature(
-              "http://cyberneko.org/html/features/scanner/allow-selfclosing-iframe",
-              true);
-      parser.setFeature("http://cyberneko.org/html/features/augmentations",
-          true);
-      parser.setProperty(
-          "http://cyberneko.org/html/properties/default-encoding",
-          defaultCharEncoding);
-      parser
-          .setFeature(
-              "http://cyberneko.org/html/features/scanner/ignore-specified-charset",
-              true);
-      parser
-          .setFeature(
-              "http://cyberneko.org/html/features/balance-tags/ignore-outside-content",
-              false);
-      parser.setFeature(
-          "http://cyberneko.org/html/features/balance-tags/document-fragment",
-          true);
-      parser.setFeature("http://cyberneko.org/html/features/report-errors",
-          LOG.isTraceEnabled());
+      parser.setFeature("http://cyberneko.org/html/features/scanner/allow-selfclosing-iframe", true);
+      parser.setFeature("http://cyberneko.org/html/features/augmentations", true);
+      parser.setProperty("http://cyberneko.org/html/properties/default-encoding", defaultCharEncoding);
+      parser.setFeature("http://cyberneko.org/html/features/scanner/ignore-specified-charset", true);
+      parser.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
+      parser.setFeature("http://cyberneko.org/html/features/balance-tags/document-fragment", true);
+      parser.setFeature("http://cyberneko.org/html/features/report-errors", LOG.isTraceEnabled());
     } catch (SAXException e) {
     }
 
@@ -404,5 +349,4 @@ public class HtmlParser implements Parser {
     System.out.println("text: " + parse.getText());
     System.out.println("outlinks: " + Arrays.toString(parse.getOutlinks()));
   }
-
 }

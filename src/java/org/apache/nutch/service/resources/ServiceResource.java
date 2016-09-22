@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 /**
- * Fetcher Server Resource
+ * SimpleFetcher Server Resource
  * */
 @Path("/service")
 public class ServiceResource extends AbstractResource {

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * FetchManagerPool is shared by all Nutch Fetch Jobs
@@ -23,11 +24,13 @@ public class FetchManagerPool {
 
   public static final Logger LOG = LoggerFactory.getLogger(FetchManagerPool.class);
 
+  private AtomicInteger managerIdGenerater = new AtomicInteger(0);
+
   private static FetchManagerPool instance;
 
   private String name;
   private Map<Integer, FetchManager> fetchManagers = Maps.newTreeMap();
-  private Queue<Integer> jobIDs = Lists.newLinkedList();
+  private Queue<Integer> ids = Lists.newLinkedList();
 
   private FetchManagerPool() {
     this.name = this.getClass().getSimpleName() + "." + TimingUtil.now("d.Hms");
@@ -35,7 +38,7 @@ public class FetchManagerPool {
     LOG.info("Initialize fetch manager pool " + name);
   }
 
-  public static FetchManagerPool getInstance() {
+  public synchronized static FetchManagerPool getInstance() {
     if(instance == null) {
       instance = new FetchManagerPool();
     }
@@ -43,49 +46,61 @@ public class FetchManagerPool {
     return instance;
   }
 
-  public String name() {
+  public synchronized String name() {
     return this.name;
   }
 
-  public synchronized FetchManager create(int jobID, IndexManager indexManager, NutchCounter counter, Reducer.Context context) throws IOException {
-    FetchManager fetchManager = new FetchManager(jobID, indexManager, counter, context);
+  public synchronized FetchManager create(IndexManager indexManager, NutchCounter counter, Reducer.Context context) throws IOException {
+    FetchManager fetchManager = new FetchManager(generateManagerId(), indexManager, counter, context);
     put(fetchManager);
     return fetchManager;
   }
 
   public synchronized void put(FetchManager fetchManager) {
-    int jobID = fetchManager.jobID();
+    int id = fetchManager.getId();
 
-    fetchManagers.put(jobID, fetchManager);
-    jobIDs.add(jobID);
+    fetchManagers.put(id, fetchManager);
+    ids.add(id);
 
-    LOG.info("Add fetch manager #" + jobID);
+    LOG.info("Add fetch manager #" + id);
     LOG.info("status : " + __toString());
   }
 
-  public synchronized FetchManager get(int jobID) {
-    return fetchManagers.get(jobID);
+  public synchronized FetchManager get(int id) {
+    return fetchManagers.get(id);
+  }
+
+  public synchronized void remove(int id) {
+    ids.remove(id);
+    fetchManagers.remove(id);
+
+    LOG.info("Remove fetch manager #" + id + " from pool");
+    LOG.info("status : " + __toString());
+  }
+
+  public synchronized void clear() {
+    ids.clear();
+    fetchManagers.clear();
   }
 
   /**
    * Random get @param count fetch items from an iterative selected job
-   * @throws InterruptedException
    * */
   public synchronized List<FetchItem.Key> randomFetchItems(int count) {
     List<FetchItem.Key> keys = Lists.newArrayList();
 
-    Integer jobID = jobIDs.poll();
-    if (jobID == null) {
+    Integer id = ids.poll();
+    if (id == null) {
       // LOG.debug("No running fetcher job");
       return Lists.newArrayList();
     }
 
     try {
-      FetchManager fetchManager = fetchManagers.get(jobID);
+      FetchManager fetchManager = fetchManagers.get(id);
       if (fetchManager == null) {
-        LOG.error("Failed to find a fetch manager using jobID #" + jobID);
+        LOG.error("Failed to find a fetch manager using id #" + id);
 
-        remove(jobID);
+        remove(id);
         return Lists.newArrayList();
       }
 
@@ -97,21 +112,9 @@ public class FetchManagerPool {
       LOG.error(e.toString());
     }
 
-    jobIDs.add(jobID); // put back to the queue
+    ids.add(id); // put back to the queue
 
     return keys;
-  }
-
-  public synchronized void remove(int jobID) {
-    jobIDs.remove(jobID);
-    fetchManagers.remove(jobID);
-
-    LOG.info("Remove fetch manager #" + jobID + " from pool");
-  }
-
-  public synchronized void clear() {
-    jobIDs.clear();
-    fetchManagers.clear();
   }
 
   @Override
@@ -119,10 +122,14 @@ public class FetchManagerPool {
     return __toString();
   }
 
+  private int generateManagerId() {
+    return managerIdGenerater.incrementAndGet();
+  }
+
   private String __toString() {
     StringBuilder sb = new StringBuilder();
 
-    sb.append("Job IDs : " + StringUtils.join(jobIDs, ", "));
+    sb.append("Job IDs : " + StringUtils.join(ids, ", "));
     sb.append("\tQueue Size : " + fetchManagers.size());
 
     return sb.toString();    

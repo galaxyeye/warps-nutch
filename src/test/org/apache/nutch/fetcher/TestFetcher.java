@@ -148,7 +148,7 @@ public class TestFetcher extends AbstractNutchTest {
       fetcher.checkConfiguration(fetcher.getConf());
     } catch (IllegalArgumentException iae) {
       String message = iae.getMessage();
-      failedNoAgentName = message.equals("Fetcher: No agents listed in "
+      failedNoAgentName = message.equals("SimpleFetcher: No agents listed in "
           + "'http.agent.name' property.");
     } catch (Exception e) {
     }

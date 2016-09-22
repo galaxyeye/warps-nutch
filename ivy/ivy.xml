@@ -88,7 +88,7 @@
         <dependency org="net.sourceforge.nekohtml" name="nekohtml" rev="1.9.19" conf="*->master"/>
         <dependency org="org.apache.solr" name="solr-solrj" rev="6.1.0" conf="*->default"/>
         <dependency org="org.apache.tika" name="tika-core" rev="1.7"/>
-        <dependency org="de.l3s.boilerpipe" name="boilerpipe" rev="1.1.0"/>
+        <dependency org="org.ccil.cowan.tagsoup" name="tagsoup" rev="1.2" conf="*->master"/>
 
         <!-- Local storage -->
         <!-- hsqldb is used by TestGoraStorage -->

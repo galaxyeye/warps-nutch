@@ -36,9 +36,7 @@
      <ant dir="language-identifier" target="deploy"/>
      <ant dir="lib-http" target="deploy"/>
      <ant dir="lib-nekohtml" target="deploy"/>
-  	 <!--
-     <ant dir="lib-regex-filter" target="deploy"/>
-     -->
+  	 <!--<ant dir="lib-regex-filter" target="deploy"/>-->
      <ant dir="lib-xml" target="deploy"/>
      <ant dir="microformats-reltag" target="deploy"/>
      <ant dir="nutch-extensionpoints" target="deploy"/>
@@ -47,7 +45,7 @@
      <ant dir="protocol-crowd" target="deploy"/>
      <ant dir="protocol-http" target="deploy"/>
      <ant dir="protocol-httpclient" target="deploy"/>
-     <ant dir="protocol-sftp" target="deploy"/>
+     <!--<ant dir="protocol-sftp" target="deploy"/>-->
      <ant dir="parse-js" target="deploy"/>
      <ant dir="parse-html" target="deploy"/>
      <ant dir="parse-tika" target="deploy"/>
@@ -59,9 +57,7 @@
      <ant dir="urlfilter-automaton" target="deploy"/>
      <ant dir="urlfilter-domain" target="deploy" />
      <ant dir="urlfilter-prefix" target="deploy"/>
-  	 <!--
-     <ant dir="urlfilter-regex" target="deploy"/>
-     -->
+  	 <!--<ant dir="urlfilter-regex" target="deploy"/>-->
      <ant dir="urlfilter-suffix" target="deploy"/>
      <ant dir="urlfilter-validator" target="deploy"/>
      <ant dir="urlnormalizer-basic" target="deploy"/>
@@ -94,9 +90,7 @@
      <ant dir="urlfilter-automaton" target="test"/>
      <ant dir="urlfilter-domain" target="test"/>
      <ant dir="urlfilter-prefix" target="test"/>
-  	 <!--
-     <ant dir="urlfilter-regex" target="test"/>
-     -->
+  	 <!--<ant dir="urlfilter-regex" target="test"/>-->
      <ant dir="urlfilter-suffix" target="test"/>
      <ant dir="urlfilter-validator" target="test"/>
      <ant dir="urlnormalizer-basic" target="test"/>
@@ -148,7 +142,7 @@
     <ant dir="protocol-httpclient" target="clean"/>
     <ant dir="protocol-crowd" target="clean"/>
     <ant dir="protocol-http" target="clean"/>
-    <ant dir="protocol-sftp" target="clean"/>
+    <!--<ant dir="protocol-sftp" target="clean"/>-->
     <ant dir="scoring-link" target="clean"/>
     <ant dir="scoring-opic" target="clean"/>
     <ant dir="subcollection" target="clean"/>

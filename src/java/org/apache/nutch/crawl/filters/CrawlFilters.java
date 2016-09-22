@@ -16,12 +16,12 @@
  ******************************************************************************/
 package org.apache.nutch.crawl.filters;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.filters.CrawlFilter.PageType;
@@ -32,11 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
+import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 /**
  * TODO : need full unit test
@@ -67,8 +65,7 @@ public class CrawlFilters extends Configured {
       CrawlFilters filters = new CrawlFilters(conf);
 
       if (filterRules != null) {
-        Gson gson = new GsonBuilder()
-          .excludeFieldsWithoutExposeAnnotation().create();
+        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         filters = gson.fromJson(filterRules, CrawlFilters.class);
         filters.setConf(conf);
       }

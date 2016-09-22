@@ -17,12 +17,7 @@
 
 package org.apache.nutch.parse.html;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.parse.Outlink;
@@ -31,10 +26,16 @@ import org.apache.nutch.util.NodeWalker;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A collection of methods for extracting content from DOM trees.
@@ -45,8 +46,7 @@ import org.w3c.dom.NodeList;
  */
 public class DOMContentUtils {
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger("org.apache.nutch.parse.html");
+  public static final Logger LOG = LoggerFactory.getLogger("org.apache.nutch.parse.html");
 
   public static class LinkParams {
     public String elName;
@@ -111,8 +111,7 @@ public class DOMContentUtils {
    * 
    * @return true if nested anchors were found
    */
-  public boolean getText(StringBuilder sb, Node node,
-      boolean abortOnNestedAnchors) {
+  public boolean getText(StringBuilder sb, Node node, boolean abortOnNestedAnchors) {
     if (getTextHelper(sb, node, abortOnNestedAnchors, 0)) {
       return true;
     }
@@ -121,7 +120,7 @@ public class DOMContentUtils {
 
   /**
    * This is a convinience method, equivalent to
-   * {@link #getText(StringBuffer,Node,boolean) getText(sb, node, false)}.
+   * {@link #getText(StringBuilder,Node,boolean) getText(sb, node, false)}.
    * 
    */
   public void getText(StringBuilder sb, Node node) {
@@ -177,7 +176,8 @@ public class DOMContentUtils {
    * This method takes a {@link StringBuffer} and a DOM {@link Node}, and will
    * append the content text found beneath the first <code>title</code> node to
    * the <code>StringBuffer</code>.
-   * 
+   *
+   *
    * @return true if a title node was found, false otherwise
    */
   public boolean getTitle(StringBuilder sb, Node node) {
@@ -201,6 +201,55 @@ public class DOMContentUtils {
     }
 
     return false;
+  }
+
+  public Map<String, String> getMetadata(Node node) {
+    Map<String, String> metadata = Maps.newLinkedHashMap();
+    StringBuilder sb = new StringBuilder();
+
+    NodeWalker walker = new NodeWalker(node);
+
+    while (walker.hasNext()) {
+      Node currentNode = walker.nextNode();
+      String nodeName = currentNode.getNodeName();
+      short nodeType = currentNode.getNodeType();
+
+      if ("body".equalsIgnoreCase(nodeName)) { // stop after HEAD
+        return metadata;
+      }
+
+      if (nodeType == Node.ELEMENT_NODE) {
+        if ("title".equalsIgnoreCase(nodeName)) {
+          sb.setLength(0);
+          getText(sb, currentNode);
+          metadata.put("meta-title", sb.toString());
+        }
+        else if ("meta".equalsIgnoreCase(nodeName)) {
+          getMetadataFromMetaTag(metadata, node);
+        }
+      } // if nodeType ...
+    }
+
+    return metadata;
+  }
+
+  private void getMetadataFromMetaTag(Map<String, String> metadata, Node metaNode) {
+    String attrValue = DomUtil.getAttribute(metaNode, "name");
+    if (attrValue == null) {
+      return;
+    }
+
+    if ("keywords".equalsIgnoreCase(attrValue)) {
+      attrValue = DomUtil.getAttribute(metaNode, "content");
+      if (attrValue != null) {
+        metadata.put("meta-keywords", attrValue);
+      }
+    } else if ("description".equalsIgnoreCase(attrValue)) {
+      attrValue = DomUtil.getAttribute(metaNode, "content");
+      if (attrValue != null) {
+        metadata.put("meta-description", attrValue);
+      }
+    }
   }
 
   /** If Node contains a BASE tag then it's HREF is returned. */

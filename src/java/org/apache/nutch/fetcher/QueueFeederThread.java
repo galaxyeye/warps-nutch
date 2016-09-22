@@ -82,15 +82,10 @@ public class QueueFeederThread extends Thread {
           continue;
         }
 
-//        LOG.debug("try feeding at most " + feedCapacity + " input urls ...");
-//        if (LOG.isDebugEnabled() && (feedCapacity % 20 == 0)) {
-//          LOG.debug("feeding " + feedCapacity + " input urls ...");
-//        }
-
         while (feedCapacity > 0 && currentIter.hasNext()) {
           FetchEntry entry = currentIter.next();
           final String url = TableUtil.unreverseUrl(entry.getKey());
-          queues.produceFetchItem(context.getJobID().getId(), url, entry.getWebPage());
+          queues.produce(context.getJobID().getId(), url, entry.getWebPage());
           feedCapacity--;
           feededCount++;
         }
@@ -120,5 +115,9 @@ public class QueueFeederThread extends Thread {
 
   public void complete() {
     completed.set(true);
+  }
+
+  public boolean isCompleted() {
+    return completed.get();
   }
 }

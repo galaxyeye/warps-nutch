@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.indexer;
 
+import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -33,6 +34,7 @@ import org.apache.nutch.util.TableUtil;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -45,7 +47,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
   private String url = "";
 
-  private Map<String, IndexField> fields = new HashMap<>();
+  private Map<String, IndexField> fields = new LinkedMap<>();
 
   private Metadata documentMeta = new Metadata();
 
@@ -65,6 +67,14 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
   public String getUrl() {
     return url;
+  }
+
+  public void addIfAbsent(String name, Object value) {
+    IndexField field = fields.get(name);
+    if (field == null) {
+      field = new IndexField(value);
+      fields.put(name, field);
+    }
   }
 
   public void add(String name, Object value) {
@@ -162,22 +172,30 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
       sb.append("\t");
       sb.append(entry.getKey());
       sb.append(":\t");
-      sb.append(entry.getValue());
+      sb.append(format(entry.getValue()));
       sb.append("\n");
     }
     sb.append("}\n");
     return sb.toString();
   }
 
-  public static class Builder {
-    private static final Log LOG = LogFactory.getLog(new Object() {
-    }.getClass().getEnclosingClass());
+  private String format(Object obj) {
+    if (obj instanceof Date) {
+      return DateTimeFormatter.ISO_INSTANT.format(((Date)obj).toInstant());
+    }
+    else {
+      return obj.toString();
+    }
+  }
 
-    private final IndexingFilters filters;
+  public static class Builder {
+    private static final Log LOG = LogFactory.getLog(new Object() {}.getClass().getEnclosingClass());
+
+    private final IndexingFilters indexingFilters;
     private final ScoringFilters scoringFilters;
 
     public Builder(Configuration conf) {
-      filters = new IndexingFilters(conf);
+      indexingFilters = new IndexingFilters(conf);
       scoringFilters = new ScoringFilters(conf);
     }
 
@@ -200,12 +218,26 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
      *          The key of the page (reversed url).
      * @param page
      *          The {@link WebPage}.
-     * @return The indexed document, or null if skipped by index filters.
+     * @return The indexed document, or null if skipped by index indexingFilters.
      */
     public IndexDocument build(String key, WebPage page) {
       IndexDocument doc = new IndexDocument(key);
 
-      doc.add("id", key);
+      String url = doc.getUrl();
+
+      try {
+        doc = indexingFilters.filter(doc, url, page);
+      } catch (IndexingException e) {
+        LOG.warn("Error indexing " + key + ": " + e);
+        return null;
+      }
+
+      // skip documents discarded by indexing indexingFilters
+      if (doc == null) {
+        return null;
+      }
+
+      doc.addIfAbsent("id", key);
 
       // TODO : we may not need digest
       if (page.getSignature() != null) {
@@ -216,22 +248,8 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
         doc.add("batchId", page.getBatchId().toString());
       }
 
-      String url = doc.getUrl();
-
-      try {
-        doc = filters.filter(doc, url, page);
-      } catch (IndexingException e) {
-        LOG.warn("Error indexing " + key + ": " + e);
-        return null;
-      }
-
-      // skip documents discarded by indexing filters
-      if (doc == null) {
-        return null;
-      }
-
       float boost = 1.0f;
-      // run scoring filters
+      // run scoring indexingFilters
       try {
         boost = scoringFilters.indexerScore(url, doc, page, boost);
       } catch (final ScoringFilterException e) {

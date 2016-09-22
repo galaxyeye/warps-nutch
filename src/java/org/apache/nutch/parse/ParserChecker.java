@@ -17,35 +17,19 @@
 
 package org.apache.nutch.parse;
 
-import com.google.common.collect.Sets;
-import org.apache.avro.util.Utf8;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.NutchUtil;
-import org.apache.nutch.net.URLFilters;
-import org.apache.nutch.net.URLNormalizers;
-import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Parser checker, useful for testing parser. It also accurately reports
@@ -78,12 +62,8 @@ public class ParserChecker extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(ParserChecker.class);
 
-  private CrawlFilters crawlFilters;
-  private URLFilters filters;
-  private URLNormalizers normalizers;
   private Boolean dumpText;
   private Boolean force;
-  private String contentType;
   private String url;
 
   public ParserChecker() {
@@ -101,10 +81,6 @@ public class ParserChecker extends NutchJob implements Tool {
       results.put("error", "Url must be specified");
     }
 
-    crawlFilters = CrawlFilters.create(getConf());
-    filters = new URLFilters(getConf());
-    normalizers = new URLNormalizers(getConf(), URLNormalizers.SCOPE_OUTLINK);
-
     LOG.info(StringUtil.formatParams(
         "url", url,
         "dumpText", dumpText,
@@ -114,133 +90,9 @@ public class ParserChecker extends NutchJob implements Tool {
 
   @Override
   public void doRun(Map<String, Object> args) throws Exception {
-    WebPage page = getWebPage();
-
-    // Parse parse = new ParseUtil(conf).parse(url, page);
-    ParseUtil parseUtil = new ParseUtil(getConf());
-    String key = TableUtil.reverseUrl(url);
-    Parse parse = parseUtil.process(key, page);
-
-    if (parse == null) {
-      LOG.error("Problem with parse - check log");
-      results.put("parseStatus", "error");
-      return;
-    }
-
-    // Calculate the signature
-    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
-
-    if (LOG.isInfoEnabled()) {
-      LOG.info("parsing: " + url);
-      LOG.info("contentType: " + contentType);
-      LOG.info("signature: " + StringUtil.toHexString(signature));
-    }
-
-    // LOG.info("---------\nMetadata\n---------\n");
-    Map<CharSequence, ByteBuffer> metadata = page.getMetadata();
-    StringBuffer sb = new StringBuffer();
-    if (metadata != null) {
-      Iterator<Entry<CharSequence, ByteBuffer>> iterator = metadata.entrySet().iterator();
-
-      while (iterator.hasNext()) {
-        Entry<CharSequence, ByteBuffer> entry = iterator.next();
-        sb.append(entry.getKey().toString()).append(" : \t")
-            .append(Bytes.toString(entry.getValue().array())).append("\n");
-      }
-
-      results.put("Metadata", sb);
-    }
-
-    Set<String> filteredOutlinks = Sets.newTreeSet();
-    for (CharSequence link : page.getOutlinks().keySet()) {
-      filteredOutlinks.add(link.toString());
-    }
-    results.put("Outlinks", StringUtils.join(filteredOutlinks, '\n'));
-
-    // DiscardedOutlinks
-    Set<String> discardedOutlinks = Sets.newTreeSet();
-    for (Outlink outlink : parse.getOutlinks()) {
-      String toUrl = outlink.getToUrl();
-      toUrl = normalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
-      toUrl = filters.filter(toUrl);
-      if (toUrl == null) {
-        discardedOutlinks.add(outlink.getToUrl());
-      }
-    }
-    results.put("DiscardOutlinks", StringUtils.join(discardedOutlinks, '\n'));
-
-    if (page.getHeaders() != null) {
-      Map<CharSequence, CharSequence> headers = page.getHeaders();
-      StringBuffer headersb = new StringBuffer();
-      if (metadata != null) {
-        Iterator<Entry<CharSequence, CharSequence>> iterator = headers.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-          Entry<CharSequence, CharSequence> entry = iterator.next();
-          headersb
-            .append(entry.getKey().toString())
-            .append(" : \t")
-            .append(entry.getValue())
-            .append("\n");
-        }
-
-        results.put("Headers", headersb);
-      }
-    }
-
-    if (dumpText) {
-      results.put("ParseText", parse.getText());
-    }
-  }
-
-  private WebPage getWebPage() throws ProtocolNotFound {
-    LOG.info("fetching: " + url);
-
-    results.put("url", url);
-
-    ProtocolFactory factory = new ProtocolFactory(getConf());
-    Protocol protocol = factory.getProtocol(url);
-    WebPage page = WebPage.newBuilder().build();
-
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
-
-    if (!protocolOutput.getStatus().isSuccess()) {
-      LOG.error("Fetch failed with protocol status: "
-          + ProtocolStatusUtils.getName(protocolOutput.getStatus().getCode())
-          + ": " + ProtocolStatusUtils.getMessage(protocolOutput.getStatus()));
-      return null;
-    }
-    page.setStatus((int)CrawlStatus.STATUS_FETCHED);
-
-    Content content = protocolOutput.getContent();
-
-    if (content == null) {
-      LOG.error("No content for " + url);
-      results.put("content", content.toString());
-      return null;
-    }
-    page.setBaseUrl(new org.apache.avro.util.Utf8(url));
-    page.setContent(ByteBuffer.wrap(content.getContent()));
-
-    if (force) {
-      content.setContentType(contentType);
-    } else {
-      contentType = content.getContentType();
-    }
-
-    if (contentType == null) {
-      LOG.error("Failed to determine content type!");
-      return null;
-    }
-
-    page.setContentType(new Utf8(contentType));
-
-    if (ParserMapper.isTruncated(url, page)) {
-      LOG.warn("Content is truncated, parse may fail!");
-      results.put("contentStatus", "truncated");
-    }
-
-    return page;
+    SimpleParser parser = new SimpleParser(getConf());
+    parser.parse(url);
+    results.putAll(parser.getResult());
   }
 
   public int run(String[] args) throws Exception {

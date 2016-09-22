@@ -39,13 +39,13 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    LOG.debug("--mapper setup--");
-
     conf = context.getConfiguration();
     counter = new NutchCounter(context);
     reporter = new NutchReporter(counter);
 
-    LOG.info(StringUtil.formatParams(
+    LOG.info(StringUtil.formatParamsLine(
+        "---- mapper setup ", " ----",
+        "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),
         "hostname", counter.getHostname()
     ));
@@ -66,8 +66,6 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
   }
 
   public void doRun(Context context) throws IOException, InterruptedException {
-    LOG.debug("mapper running--");
-
     while (!completed && context.nextKeyValue()) {
       map(context.getCurrentKey(), context.getCurrentValue(), context);
     }
@@ -75,13 +73,14 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
 
   @Override
   protected void cleanup(Context context) {
-    LOG.debug("mapper cleanup--");
-
     reporter.stopReporter();
 
-    LOG.info(StringUtil.formatParams(
-        "finishTime", TimingUtil.format(System.currentTimeMillis()),
-        "mapTime", TimingUtil.elapsedTime(startTime)
+    LOG.info(StringUtil.formatParamsLine(
+        "---- mapper cleanup ", " ----",
+        "className", this.getClass().getSimpleName(),
+        "startTime", TimingUtil.format(startTime),
+        "finishTime", TimingUtil.now(),
+        "timeElapsed", TimingUtil.elapsedTime(startTime)
     ));
   }
 

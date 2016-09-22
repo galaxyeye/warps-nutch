@@ -20,17 +20,8 @@
 bin=`dirname "$0"`
 bin=`cd "$bin">/dev/null; pwd`
 
-# This will set NUTCH_HOME, etc.
- . "$bin"/nutch-config.sh
-
-in_dev_env=false
-if [ -n "${DEV_NUTCH_HOME}" ]; then
-  in_dev_env=true
-fi
-
-# if no args specified, show usage
-if [ $# = 0 ]; then
-  echo "Usage: nutch COMMAND"
+function printUsage() {
+  echo "Usage: nutch [--config dir] COMMAND"
   echo "where COMMAND is one of:"
   echo " master    	run nutch master service"
   echo " inject		inject new urls into the database"
@@ -57,17 +48,61 @@ if [ $# = 0 ]; then
   echo " CLASSNAME 	run the class named CLASSNAME"
   echo "Most commands print help when invoked w/o parameters."
   exit 1
+}
+
+# if no args specified, show usage
+if [ $# = 0 ]; then
+  printUsage
+  exit 0
 fi
+
+# This will set NUTCH_HOME, etc.
+
+ . "$bin"/nutch-config.sh
 
 # get arguments
 COMMAND=$1
 shift
 
+for i in "$@"
+do
+case ${i} in
+    -c=*|--config-file=*)
+    PROGRAM_NUTCH_CONF_DIR="${i#*=}"
+    cp -r $NUTCH_HOME/$PROGRAM_NUTCH_CONF_DIR/* $NUTCH_CONF_DIR/
+    shift
+    ;;
+    -s=*|--seed=*)
+    SEED="${i#*=}"
+    shift
+    ;;
+    --default)
+    DEFAULT=YES
+    shift
+    ;;
+    *)
+          # unknown option
+    ;;
+esac
+done
+
+if [ "$NUTCH_CONF_DIR" = "" ]; then
+  echo "Configuration directory is not available"
+  printUsage
+  exit 0
+fi
+
+# echo "Use configuration directory : $NUTCH_CONF_DIR"
+# ls $NUTCH_CONF_DIR
+
+#echo $@
+#exit 0
+
 JAVA="$JAVA_HOME/bin/java"
 # JAVA_HEAP_MAX=-Xmx1000m
 
 # CLASSPATH initially contains $NUTCH_CONF_DIR, or defaults to $NUTCH_HOME/conf
-CLASSPATH="${NUTCH_CONF_DIR:=$NUTCH_HOME/conf}"
+CLASSPATH="${NUTCH_CONF_DIR}"
 CLASSPATH="${CLASSPATH}:$JAVA_HOME/lib/tools.jar"
 
 # so that filenames w/ spaces are handled correctly in loops below
@@ -143,37 +178,53 @@ else
   CLASS=$COMMAND
 fi
 
+PID="$NUTCH_PID_DIR/nutch-$HBASE_IDENT_STRING-$COMMAND.pid"
 # export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-$COMMAND-$HOSTNAME
-export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-all-$HOSTNAME
-export NUTCH_LOGFILE=$NUTCH_LOG_PREFIX.log
-export NUTCH_LOGOUT=$NUTCH_LOG_PREFIX.out
+NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-all-$HOSTNAME
+NUTCH_LOGFILE=$NUTCH_LOG_PREFIX.log
+NUTCH_LOGOUT=$NUTCH_LOG_PREFIX.out
 
 # distribute mode
 if [ $NUTCH_RUNTIME_MODE == "DISTRIBUTE" ]; then
- # check that hadoop can be found on the path
- if [ $(which hadoop | wc -l ) -eq 0 ]; then
+  # check that hadoop can be found on the path
+  if [ $(which hadoop | wc -l ) -eq 0 ]; then
     echo "Can't find Hadoop executable. Add HADOOP_HOME/bin to the path or run in local mode."
     exit -1;
- fi
- # distributed mode
- EXEC_CALL=(hadoop jar "$NUTCH_JOB")
- echo "${EXEC_CALL[@]}" $CLASS "$@"
- exec "${EXEC_CALL[@]}" $CLASS "$@"
- exit 0
+  fi
+
+  # distributed mode
+  EXEC_CALL=(hadoop jar "$NUTCH_JOB")
+  echo "${EXEC_CALL[@]}" $CLASS "$@"
+  exec "${EXEC_CALL[@]}" $CLASS "$@"
+  exit 0
 fi
 
 # local mode
 loglog="${NUTCH_LOG_DIR}/${NUTCH_LOGFILE}"
 logout="${NUTCH_LOG_DIR}/${NUTCH_LOGOUT}"
-logcmd="${NUTCH_LOG_DIR}/last-cmd-name"
+logcmd="${NUTCH_TMP_DIR}/last-cmd-name"
 
 NUTCH_OPTS=($NUTCH_OPTS -Dhadoop.log.dir=$NUTCH_LOG_DIR)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dhadoop.log.file=$NUTCH_LOGFILE)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.home.dir=$NUTCH_HOME)
+NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.tmp.dir=$NUTCH_TMP_DIR)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.id.str=$NUTCH_IDENT_STRING)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.root.logger=${NUTCH_ROOT_LOGGER:-INFO,console})
 
 export CLASSPATH
+
+check_before_start() {
+    #ckeck if the process is not running
+    mkdir -p "$NUTCH_PID_DIR"
+    if [ -f $PID ]; then
+      if kill -0 `cat $PID` > /dev/null 2>&1; then
+        echo $COMMAND running as process `cat $PID`.  Stop it first.
+        exit 1
+      fi
+    fi
+}
+
+# check_before_start
 
 # fix for the external Xerces lib issue with SAXParserFactory
 NUTCH_OPTS=(-Djavax.xml.parsers.DocumentBuilderFactory=com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl "${NUTCH_OPTS[@]}")
@@ -201,3 +252,5 @@ echo "Log file : $loglog"
 
 echo "${EXEC_CALL[@]}" $CLASS "$@"
 exec "${EXEC_CALL[@]}" $CLASS "$@"
+
+# echo $! > $PID

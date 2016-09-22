@@ -16,16 +16,16 @@
  */
 package org.apache.nutch.util;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.storage.WebPage;
 import org.junit.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestEncodingDetector {
   private static Configuration conf = NutchConfiguration.create();

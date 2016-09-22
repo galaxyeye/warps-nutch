@@ -17,12 +17,6 @@
 
 package org.apache.nutch.parse.tika;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.util.NodeWalker;
@@ -30,6 +24,12 @@ import org.apache.nutch.util.URLUtil;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * A collection of methods for extracting content from DOM trees.
@@ -64,7 +64,7 @@ public class DOMContentUtils {
 
   public void setConf(Configuration conf) {
     // forceTags is used to override configurable tag ignoring, later on
-    Collection<String> forceTags = new ArrayList<String>(1);
+    Collection<String> forceTags = new ArrayList<>(1);
 
     linkParams.clear();
     linkParams.put("a", new LinkParams("a", "href", 1));
@@ -103,8 +103,7 @@ public class DOMContentUtils {
    * 
    * @return true if nested anchors were found
    */
-  private boolean getText(StringBuffer sb, Node node,
-      boolean abortOnNestedAnchors) {
+  private boolean getText(StringBuffer sb, Node node, boolean abortOnNestedAnchors) {
     if (getTextHelper(sb, node, abortOnNestedAnchors, 0)) {
       return true;
     }
@@ -122,13 +121,11 @@ public class DOMContentUtils {
 
   // returns true if abortOnNestedAnchors is true and we find nested
   // anchors
-  private boolean getTextHelper(StringBuffer sb, Node node,
-      boolean abortOnNestedAnchors, int anchorDepth) {
+  private boolean getTextHelper(StringBuffer sb, Node node, boolean abortOnNestedAnchors, int anchorDepth) {
     boolean abort = false;
     NodeWalker walker = new NodeWalker(node);
 
     while (walker.hasNext()) {
-
       Node currentNode = walker.nextNode();
       String nodeName = currentNode.getNodeName();
       short nodeType = currentNode.getNodeType();
@@ -173,11 +170,9 @@ public class DOMContentUtils {
    * @return true if a title node was found, false otherwise
    */
   public boolean getTitle(StringBuffer sb, Node node) {
-
     NodeWalker walker = new NodeWalker(node);
 
     while (walker.hasNext()) {
-
       Node currentNode = walker.nextNode();
       String nodeName = currentNode.getNodeName();
       short nodeType = currentNode.getNodeType();
@@ -199,7 +194,6 @@ public class DOMContentUtils {
 
   /** If Node contains a BASE tag then it's HREF is returned. */
   URL getBase(Node node) {
-
     NodeWalker walker = new NodeWalker(node);
 
     while (walker.hasNext()) {

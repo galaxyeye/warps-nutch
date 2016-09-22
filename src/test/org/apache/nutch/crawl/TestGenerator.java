@@ -69,7 +69,7 @@ public class TestGenerator extends AbstractNutchTest {
    * @throws Exception
    */
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  @Ignore("Temporarily disable until NUTCH-1572 is addressed.")
   public void testGenerateHighest() throws Exception {
 
     final int NUM_RESULTS = 2;
@@ -87,8 +87,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(NUM_RESULTS, conf, false);
 
-    ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore,
-        Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // sort urls by score desc
     Collections.sort(l, new ScoreComparator());
@@ -134,7 +133,7 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateHostLimit() throws Exception {
-    ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
+    ArrayList<URLWebPage> list = new ArrayList<>();
 
     list.add(createURLWebPage("http://www.example.com/index1.html", 1, 1));
     list.add(createURLWebPage("http://www.example.com/index2.html", 1, 1));
@@ -150,8 +149,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.set(Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
-        Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -160,8 +158,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
-        FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as 2 + 1 skipped (already generated)
@@ -170,8 +167,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
-        FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as now all have generate mark
@@ -186,7 +182,7 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateDomainLimit() throws Exception {
-    ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
+    ArrayList<URLWebPage> list = new ArrayList<>();
 
     list.add(createURLWebPage("http://one.example.com/index.html", 1, 1));
     list.add(createURLWebPage("http://one.example.com/index1.html", 1, 1));
@@ -206,8 +202,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
-        Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -216,8 +211,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
-        FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 2 + 1 skipped (already generated)
@@ -226,8 +220,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
-        FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify we got right amount of records
     assertEquals(6, fetchList.size()); // 3 + 3 skipped (already generated)
@@ -242,8 +235,7 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testFilter() throws IOException, Exception {
-
-    ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
+    ArrayList<URLWebPage> list = new ArrayList<>();
 
     list.add(createURLWebPage("http://www.example.com/index.html", 1, 1));
     list.add(createURLWebPage("http://www.example.net/index.html", 1, 1));
@@ -266,12 +258,10 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
-        FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     // verify nothing got filtered
     assertEquals(list.size(), fetchList.size());
-
   }
 
   /**
@@ -303,13 +293,11 @@ public class TestGenerator extends AbstractNutchTest {
    * @param score
    * @return Constructed object
    */
-  private URLWebPage createURLWebPage(final String url,
-      final int fetchInterval, final float score) {
+  private URLWebPage createURLWebPage(final String url, final int fetchInterval, final float score) {
     WebPage page = WebPage.newBuilder().build();
     page.setFetchInterval(fetchInterval);
     page.setScore(score);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
     return new URLWebPage(url, page);
   }
-
 }

@@ -35,7 +35,7 @@ import java.util.List;
  */
 public interface ScoringFilter extends Configurable, FieldPluggable {
   /** The name of the extension point. */
-  public final static String X_POINT_ID = ScoringFilter.class.getName();
+  String X_POINT_ID = ScoringFilter.class.getName();
 
   /**
    * Set an initial score for newly injected pages. Note: newly injected pages
@@ -48,8 +48,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          new page. Filters will modify it in-place.
    * @throws ScoringFilterException
    */
-  public void injectedScore(String url, WebPage page)
-      throws ScoringFilterException;
+  void injectedScore(String url, WebPage page) throws ScoringFilterException;
 
   /**
    * Set an initial score for newly discovered pages. Note: newly discovered
@@ -63,8 +62,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param page
    * @throws ScoringFilterException
    */
-  public void initialScore(String url, WebPage page)
-      throws ScoringFilterException;
+  void initialScore(String url, WebPage page) throws ScoringFilterException;
 
   /**
    * This method prepares a sort value for the purpose of sorting and selecting
@@ -77,8 +75,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param initSort
    *          initial sort value, or a value from previous filters in chain
    */
-  public float generatorSortValue(String url, WebPage page, float initSort)
-      throws ScoringFilterException;
+  float generatorSortValue(String url, WebPage page, float initSort) throws ScoringFilterException;
 
   /**
    * Distribute score value from the current page to all its outlinked pages.
@@ -96,7 +93,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          number of all collected outlinks from the source page
    * @throws ScoringFilterException
    */
-  public void distributeScoreToOutlinks(String fromUrl, WebPage page,
+  void distributeScoreToOutlinks(String fromUrl, WebPage page,
       Collection<ScoreDatum> scoreData, int allCount)
       throws ScoringFilterException;
 
@@ -112,8 +109,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          this URL.
    * @throws ScoringFilterException
    */
-  public void updateScore(String url, WebPage page,
-      List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException;
+  void updateScore(String url, WebPage page, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException;
 
   /**
    * This method calculates a Lucene document boost.
@@ -134,6 +130,5 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *         document directly.
    * @throws ScoringFilterException
    */
-  public float indexerScore(String url, IndexDocument doc, WebPage page,
-      float initScore) throws ScoringFilterException;
+  float indexerScore(String url, IndexDocument doc, WebPage page, float initScore) throws ScoringFilterException;
 }

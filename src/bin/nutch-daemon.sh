@@ -208,5 +208,3 @@ case $startStop in
   exit 1
   ;;
 esac
-
-

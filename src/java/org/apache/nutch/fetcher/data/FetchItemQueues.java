@@ -1,46 +1,65 @@
 package org.apache.nutch.fetcher.data;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetcher.FetchMode;
 import org.apache.nutch.fetcher.FetcherJob;
 import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.Host;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.text.DecimalFormat;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Convenience class - a collection of queues that keeps track of the total
- * number of items, and provides items eligible for fetching from any queue.
+ * Keeps track of the all fetch items
+ *
+ * TODO : synchronize on workingQueues, not functions
  */
 public class FetchItemQueues {
   public static final Logger LOG = FetcherJob.LOG;
 
-  public static final String QUEUE_MODE_HOST = "byHost";
-  public static final String QUEUE_MODE_DOMAIN = "byDomain";
-  public static final String QUEUE_MODE_IP = "byIP";
+  static final String QUEUE_MODE_HOST = "byHost";
+  static final String QUEUE_MODE_DOMAIN = "byDomain";
+  static final String QUEUE_MODE_IP = "byIP";
 
-  private Map<String, FetchItemQueue> queues = new HashMap<String, FetchItemQueue>();
-  private AtomicInteger readyItemCount = new AtomicInteger(0);
-  private AtomicInteger pendingItemCount = new AtomicInteger(0);
-  private Configuration conf;
+  private final Configuration conf;
+//  private final Map<String, FetchItemQueue> workingQueues = new HashMap<>();
+//  private final PriorityQueue<FetchItemQueue> priorityWorkingQueues = new PriorityQueue<>();
+  private final FetchItemPriorityQueue workingQueues = new FetchItemPriorityQueue();
 
-  private int maxThreads;
+  // private final Map<String, FetchItemQueue> workingQueues = new ConcurrentHashMap<>();
+  /**
+   * Tracking time cost of each queue
+   */
+  private final Map<String, Double> queueTimeCosts = new TreeMap<>();
+  private final Set<String> unreachableHosts = Sets.newTreeSet();
+
+  private final AtomicInteger readyItemCount = new AtomicInteger(0);
+  private final AtomicInteger pendingItemCount = new AtomicInteger(0);
+  private final AtomicInteger finishedItemCount = new AtomicInteger(0);
+
+  private final long crawlDelay;
+  private final long minCrawlDelay;
+
   private String queueMode;
-  private long crawlDelay;
-  private long minCrawlDelay;
+  private int maxThreads;
+  private boolean useHostSettings = false;
+
   /**
    * Once timeout, the pending items should be put to the ready queue again.
-   * */
+   */
   private long pendingTimeout = 3 * 60 * 1000;
 
-  boolean useHostSettings = false;
-  HostDb hostDb = null;
+  private HostDb hostDb = null;
+
+  private int nextQueuePosition = 0;
 
   public FetchItemQueues(Configuration conf) throws IOException {
     this.conf = conf;
@@ -58,8 +77,6 @@ public class FetchItemQueues {
       queueMode = QUEUE_MODE_HOST;
     }
 
-    LOG.info("Using queue mode : " + queueMode);
-
     // Optionally enable host specific queue behavior
     if (queueMode.equals(QUEUE_MODE_HOST)) {
       useHostSettings = conf.getBoolean("fetcher.queue.use.host.settings", false);
@@ -73,68 +90,86 @@ public class FetchItemQueues {
     this.crawlDelay = (long) (conf.getFloat("fetcher.server.delay", 1.0f) * 1000);
     this.minCrawlDelay = (long) (conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000);
     this.pendingTimeout = conf.getLong("fetcher.pending.timeout", 3 * 60 * 1000);
+
+    LOG.info(StringUtil.formatParamsLine(
+        "className", this.getClass().getSimpleName(),
+        "maxThreadsPerQueue", maxThreads,
+        "queueMode", queueMode,
+        "useHostSettings", useHostSettings,
+        "crawlDelay", crawlDelay,
+        "minCrawlDelay", minCrawlDelay,
+        "pendingTimeout", pendingTimeout
+    ));
   }
 
-  public synchronized void produceFetchItem(FetchItem item) {
-    final FetchItemQueue queue = getFetchItemQueue(item.getQueueID());
-    queue.produceFetchItem(item);
-    readyItemCount.incrementAndGet();
-  }
+  public synchronized void produce(FetchItem item) { doProduce(item, 0); }
 
-  public synchronized void produceFetchItem(int jobID, String url, WebPage page) {
+  public synchronized void produce(int jobID, String url, WebPage page) {
     final FetchItem it = FetchItem.create(jobID, url, page, queueMode);
-    if (it != null) produceFetchItem(it);
+    if (it != null) {
+      doProduce(it, 0);
+    }
   }
 
-  public synchronized FetchItem consumeFetchItem() {
-    final Iterator<Map.Entry<String, FetchItemQueue>> it = queues.entrySet().iterator();
+  private void doProduce(FetchItem item, int priority) {
+    FetchItemQueue queue = getOrCreateFetchItemQueue(item.getQueueID(), priority);
+    queue.produce(item);
+    readyItemCount.incrementAndGet();
+    queueTimeCosts.put(queue.getId(), 0.0);
+  }
 
-    while (it.hasNext()) {
-      final FetchItemQueue queue = it.next().getValue();
-      // reap empty queues
-      if (queue.getFetchQueueSize() == 0 && queue.getFetchingQueueSize() == 0) {
-        it.remove();
-        continue;
-      }
+  public synchronized FetchItem consume(String queueId) {
+    FetchItemQueue queue = workingQueues.getOrPeek(queueId);
+    return doConsume(queue);
+  }
 
-      final FetchItem item = queue.consumeFetchItem();
-      if (item != null) {
-        readyItemCount.decrementAndGet();
-        pendingItemCount.incrementAndGet();
-
-        if (readyItemCount.get() < 0) {
-          LOG.error("Ready item count runs negative");
-        }
-
-        return item;
-      }
+  private FetchItem doConsume(FetchItemQueue queue) {
+    if (queue == null) {
+      return null;
     }
 
-    return null;
+    FetchItem item = queue.consume(unreachableHosts);
+
+    if (item != null) {
+      readyItemCount.decrementAndGet();
+      pendingItemCount.incrementAndGet();
+    }
+
+    return item;
   }
 
-  public synchronized void finishFetchItem(String queueID, long itemID, boolean asap) {
-    final FetchItemQueue queue = queues.get(queueID);
+  public synchronized void finish(String queueId, long itemID, boolean asap) {
+    doFinish(queueId, itemID, asap);
+  }
+
+  public synchronized void finish(FetchItem item) {
+    doFinish(item.getQueueID(), item.getItemID(), false);
+  }
+
+  public synchronized void finishAsap(FetchItem item) { finish(item.getQueueID(), item.getItemID(), true); }
+
+  private void doFinish(String queueId, long itemID, boolean asap) {
+    FetchItemQueue queue = workingQueues.getMore(queueId);
+
     if (queue == null) {
-      LOG.warn("Attempting to finish item from unknown queue: " + queueID);
+      LOG.warn("Attemp to finish item from unknown queue: " + queueId);
       return;
     }
 
     if (!queue.fetchingItemExist(itemID)) {
-      LOG.warn("Attempting to finish unknown item: " + itemID);
+      LOG.warn("Attemp to finish unknown item: " + itemID);
       return;
     }
 
+    queue.finish(itemID, asap);
     pendingItemCount.decrementAndGet();
-    queue.finishFetchItem(itemID, asap);
+    finishedItemCount.incrementAndGet();
+
+    queueTimeCosts.put(queueId, queue.getAvarageTimeCost());
   }
 
-  public synchronized void finishFetchItem(FetchItem item) {
-    finishFetchItem(item.getQueueID(), item.getItemID(), false);
-  }
-
-  public synchronized void finishFetchAsap(FetchItem item) {
-    finishFetchItem(item.getQueueID(), item.getItemID(), true);
+  public synchronized String getCostReport() {
+    return workingQueues.getCostReport();
   }
 
   /**
@@ -145,14 +180,12 @@ public class FetchItemQueues {
    * 
    * @param force reload all pending fetch items immediately
    * */
-  public synchronized void reviewPendingFetchItems(boolean force) {
+  public synchronized void reviewPendingTasks(boolean force) {
     int readyCount = 0;
     int pendingCount = 0;
 
-    final Iterator<FetchItemQueue> it = queues.values().iterator();
-    while (it.hasNext()) {
-      FetchItemQueue queue = it.next();
-      queue.reviewPendingFetchItems(force);
+    for (FetchItemQueue queue : workingQueues.values()) {
+      queue.reviewPendingTasks(force);
 
       readyCount += queue.getFetchQueueSize();
       pendingCount += queue.getFetchingQueueSize();
@@ -162,101 +195,194 @@ public class FetchItemQueues {
     pendingItemCount.set(pendingCount);
   }
 
-  public synchronized FetchItem getPendingFetchItem(String queueID, long itemID) {
-    FetchItemQueue queue = getFetchItemQueue(queueID);
-
-    if (queue == null) return null;
-
-    return queue.getPendingFetchItem(itemID);
+  /**
+   * Get a pending task, the task can be in working queues or in detached queues
+   * */
+  public synchronized FetchItem getPendingTask(String queueId, long itemID) {
+    return workingQueues.getPendingTask(queueId, itemID);
   }
 
   public synchronized void dump(int limit) {
-    for (final String id : queues.keySet()) {
-      final FetchItemQueue queue = queues.get(id);
+    workingQueues.dump(limit);
+  }
+
+  public synchronized void addUnreachableHost(String host) {
+    if (unreachableHosts.contains(host)) {
+      return;
+    }
+
+    LOG.warn("Host unknown: " + host);
+    final int maxUnreachableHosts = 10000;
+    if (unreachableHosts.size() < maxUnreachableHosts) {
+      unreachableHosts.add(host);
+    }
+  }
+
+  public synchronized void reportUnreachableHosts() {
+    Set<String> unreachableDomainSet = new HashSet<>(this.unreachableHosts);
+    if (!unreachableDomainSet.isEmpty()) {
+      String report = StringUtils.join(unreachableDomainSet, '\n');
+      report = "Unreachable hosts : \n" + report;
+      LOG.info(report);
+    }
+  }
+
+  public synchronized int clearSlowestQueue() {
+    FetchItemQueue queue = getSlowestQueue();
+    if (queue == null) {
+      return 0;
+    }
+
+    workingQueues.detach(queue);
+
+    tryClearVerySlowFetchingTasks(queue, 2);
+
+    return clearReadyTasks(queue);
+  }
+
+//  /**
+//   * Slow queues do not serve any more
+//   * */
+//  private void detach(FetchItemQueue queue) {
+//    queue.detach();
+//    workingQueues.remove(queue.getId());
+//    detachedQueues.put(queue.getId(), queue);
+//  }
+
+  public synchronized int clearReadyTasks() {
+    int count = 0;
+
+    Map<Double, String> costRecorder = Maps.newTreeMap();
+    for (String id : workingQueues.keySet()) {
+      FetchItemQueue queue = workingQueues.get(id);
+      costRecorder.put(queue.getAvarageTimeCost(), queue.getId());
 
       if (queue.getFetchQueueSize() == 0) {
         continue;
       }
 
-      LOG.info("* queue: " + id);
-      queue.dump();
-
-      if (--limit < 0) {
-        break;
-      }
-    }
-  }
-
-  // empties the queues (used by timebomb and throughput threshold)
-  public synchronized int clearQueues() {
-    int count = 0;
-
-    // emptying the queues
-    for (String id : queues.keySet()) {
-      FetchItemQueue queue = queues.get(id);
-
-      if (queue.getFetchQueueSize() == 0) continue;
-
-      LOG.info("* queue: " + id + " >> dropping! ");
-      int deleted = queue.clearFetchQueue();
-      for (int i = 0; i < deleted; i++) {
-        readyItemCount.decrementAndGet();
-      }
-
-      count += deleted;
+      count += clearReadyTasks(queue);
     }
 
-    // there might also be a case where readyItemCount != 0 but number of queues
-    // == 0
-    // in which case we simply force it to 0 to avoid blocking
-    if (readyItemCount.get() != 0 && queues.size() == 0) {
-      readyItemCount.set(0);
-    }
+    reportCost(costRecorder);
 
     return count;
   }
 
+  private int tryClearVerySlowFetchingTasks(FetchItemQueue queue, int limit) {
+    int deleted = queue.tryClearVerySlowFetchingTasks(limit);
+    pendingItemCount.addAndGet(0 - deleted);
+    return deleted;
+  }
+
+  private int clearReadyTasks(FetchItemQueue queue) {
+    int deleted = queue.clearFetchQueue();
+
+    readyItemCount.addAndGet(0 - deleted);
+    if (readyItemCount.get() <= 0 && workingQueues.size() == 0) {
+      readyItemCount.set(0);
+    }
+
+    return deleted;
+  }
+
   public synchronized int getQueueCount() {
-    return queues.size();
+    return workingQueues.size();
   }
 
-  public int getReadyItemCount() {
-    return readyItemCount.get();
-  }
+  public int getReadyItemCount() { return readyItemCount.get(); }
 
-  public int getPendingItemCount() {
-    return pendingItemCount.get();
-  }
+  public int getPendingItemCount() { return pendingItemCount.get(); }
 
-  private FetchItemQueue getFetchItemQueue(String id) {
-    FetchItemQueue queue = queues.get(id);
+  public int getFinishedItemCount() {return finishedItemCount.get(); }
+
+  private FetchItemQueue getSlowestQueue() {
+    double maxCost = 0;
+    String slowestQueueId = null;
+
+    for (Map.Entry<String, Double> entry : queueTimeCosts.entrySet()) {
+      double cost = entry.getValue();
+      if (cost > maxCost) {
+        maxCost = cost;
+        slowestQueueId = entry.getKey();
+      }
+    }
+
+    if (slowestQueueId == null) {
+      return null;
+    }
+
+    queueTimeCosts.remove(slowestQueueId);
+
+    FetchItemQueue queue = workingQueues.get(slowestQueueId);
     if (queue == null) {
-      // Create a new queue
-      if (useHostSettings) {
-        // Use host specific queue settings (if defined in the host table)
-        try {
-          String hostname = id.substring(id.indexOf("://") + 3);
-          Host host = hostDb.getByHostName(hostname);
-          if (host != null) {
-            queue = new FetchItemQueue(conf,
-                           host.getInt("q_mt", maxThreads),
-                           host.getLong("q_cd", crawlDelay),
-                           host.getLong("q_mcd", minCrawlDelay), 
-                           pendingTimeout);
-          }
-        } catch (IOException e) {
-          LOG.error("Error while trying to access host settings", e);
-        }
-      }
+      return null;
+    }
 
-      if (queue == null) {
-        // Use queue defaults
-        queue = new FetchItemQueue(conf, maxThreads, crawlDelay, minCrawlDelay, pendingTimeout);
-      }
+    DecimalFormat df = new DecimalFormat("0.##");
+    LOG.warn("Slow queue : " + queue.getId()
+        + ", slow task count : " + queue.getSlowTaskCount()
+        + ", avarage cost : " + df.format(maxCost / 1000) + "s"
+    );
 
-      queues.put(id, queue);
+    return queue;
+  }
+
+  private FetchItemQueue getOrCreateFetchItemQueue(String queueId, int priority) {
+    FetchItemQueue queue = workingQueues.get(queueId);
+
+    if (queue == null) {
+      queue = createFetchItemQueue(queueId, priority);
+      workingQueues.add(queue);
     }
 
     return queue;
+  }
+
+  private FetchItemQueue createFetchItemQueue(String queueId, int priority) {
+    FetchItemQueue queue = null;
+
+    // Create a new queue
+    if (useHostSettings) {
+      // Use host specific queue settings (if defined in the host table)
+      try {
+        String hostname = queueId.substring(queueId.indexOf("://") + 3);
+        Host host = hostDb.getByHostName(hostname);
+        if (host != null) {
+          queue = new FetchItemQueue(queueId, priority,
+              host.getInt("q_mt", maxThreads),
+              host.getLong("q_cd", crawlDelay),
+              host.getLong("q_mcd", minCrawlDelay),
+              pendingTimeout);
+        }
+      } catch (IOException e) {
+        LOG.error("Error while trying to access host settings", e);
+      }
+    }
+
+    if (queue == null) {
+      // Use queue defaults
+      queue = new FetchItemQueue(queueId, priority, maxThreads, crawlDelay, minCrawlDelay, pendingTimeout);
+    }
+
+    return queue;
+  }
+
+  private void reportCost(Map<Double, String> costRecorder) {
+    StringBuilder sb = new StringBuilder();
+    DecimalFormat df = new DecimalFormat("###0.00");
+    sb.append("Queue cost report : \n");
+    int i = 0;
+    for (Map.Entry<Double, String> entry : costRecorder.entrySet()) {
+      if (i++ < 100) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        sb.append(df.format(entry.getKey()));
+        sb.append(" - ");
+        sb.append(entry.getValue());
+      }
+    }
+    LOG.info(sb.toString());
   }
 }

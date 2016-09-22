@@ -17,12 +17,6 @@
 package org.apache.nutch.parse;
 
 // JDK imports
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
@@ -33,6 +27,8 @@ import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /** Creates and caches {@link Parser} plugins. */
 public final class ParserFactory {
@@ -100,8 +96,8 @@ public final class ParserFactory {
   public Parser[] getParsers(String contentType, String url)
       throws ParserNotFound {
 
-    List<Parser> parsers = null;
-    List<Extension> parserExts = null;
+    List<Parser> parsers;
+    List<Extension> parserExts;
 
     ObjectCache objectCache = ObjectCache.get(conf);
 
@@ -118,9 +114,9 @@ public final class ParserFactory {
       throw new ParserNotFound(url, contentType);
     }
 
-    parsers = new ArrayList<Parser>(parserExts.size());
+    parsers = new ArrayList<>(parserExts.size());
     for (Extension ext : parserExts) {
-      Parser p = null;
+      Parser p;
       try {
         // check to see if we've cached this parser instance yet
         p = (Parser) objectCache.getObject(ext.getId());
@@ -132,7 +128,7 @@ public final class ParserFactory {
         parsers.add(p);
       } catch (PluginRuntimeException e) {
         if (LOG.isWarnEnabled()) {
-          LOG.warn("ParserFactory:PluginRuntimeException when "
+          LOG.warn("ParserFactory : PluginRuntimeException when "
               + "initializing parser plugin "
               + ext.getDescriptor().getPluginId() + " instance in getParsers "
               + "function: attempting to continue instantiating parsers: ", e);
@@ -233,7 +229,7 @@ public final class ParserFactory {
 
     ObjectCache objectCache = ObjectCache.get(conf);
     // First of all, tries to clean the content-type
-    String type = null;
+    String type;
     type = MimeUtil.cleanMimeType(contentType);
 
     List<Extension> extensions = (List<Extension>) objectCache.getObject(type);
@@ -269,14 +265,11 @@ public final class ParserFactory {
    *         returns null.
    */
   private List<Extension> findExtensions(String contentType) {
-
     Extension[] extensions = this.extensionPoint.getExtensions();
 
     // Look for a preferred plugin.
-    List<String> parsePluginList = this.parsePluginList
-        .getPluginList(contentType);
-    List<Extension> extensionList = matchExtensions(parsePluginList,
-        extensions, contentType);
+    List<String> parsePluginList = this.parsePluginList.getPluginList(contentType);
+    List<Extension> extensionList = matchExtensions(parsePluginList, extensions, contentType);
     if (extensionList != null) {
       return extensionList;
     }
@@ -304,8 +297,7 @@ public final class ParserFactory {
    * @return List - List of extensions to be used for this contentType. If none,
    *         returns null.
    */
-  private List<Extension> matchExtensions(List<String> plugins,
-      Extension[] extensions, String contentType) {
+  private List<Extension> matchExtensions(List<String> plugins, Extension[] extensions, String contentType) {
 
     List<Extension> extList = new ArrayList<Extension>();
     if (plugins != null) {
@@ -365,8 +357,7 @@ public final class ParserFactory {
         if ("*".equals(extensions[i].getAttribute("contentType"))) {
           extList.add(0, extensions[i]);
         } else if (extensions[i].getAttribute("contentType") != null
-            && contentType.matches(escapeContentType(extensions[i]
-                .getAttribute("contentType")))) {
+            && contentType.matches(escapeContentType(extensions[i].getAttribute("contentType")))) {
           extList.add(extensions[i]);
         }
       }

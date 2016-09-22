@@ -16,15 +16,19 @@
  ******************************************************************************/
 package org.apache.nutch.util;
 
+import com.google.common.collect.Maps;
+import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.storage.WebPage;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class TableUtil {
-
-  public static final ByteBuffer YES_VAL = ByteBuffer.wrap(new byte[] { 'y' });
 
   /**
    * Reverses a url's domain. This form is better for storing in hbase. Because
@@ -158,4 +162,79 @@ public class TableUtil {
     return (utf8 == null ? null : StringUtil.cleanField(utf8.toString()));
   }
 
+  public static String toString(CharSequence utf8, String defaultValue) {
+    return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
+  }
+
+  public static void putMark(WebPage page, CharSequence key, CharSequence value) {
+    page.getMarkers().put(key, value);
+  }
+
+  public static CharSequence getMark(WebPage page, CharSequence key) {
+    return page.getMarkers().get(key);
+  }
+
+  public static void putMetadata(WebPage page, Utf8 key, ByteBuffer value) {
+    page.getMetadata().put(key, value);
+  }
+
+  /**
+   * TODO : Why the nutch team wrap the key using Utf8?
+   * */
+  public static void putMetadata(WebPage page, String key, String value) {
+    page.getMetadata().put(new Utf8(key), value == null ? null : ByteBuffer.wrap(value.getBytes()));
+  }
+
+  public static String getMetadata(WebPage page, String key) {
+    ByteBuffer bvalue = page.getMetadata().get(new Utf8(key));
+    if (bvalue == null) {
+      return null;
+    }
+    String value = Bytes.toString(bvalue.array());
+    return value;
+  }
+
+  public static String getMetadata(WebPage page, String key, String defaultValue) {
+    String value = getMetadata(page, key);
+    return value == null ? defaultValue : value;
+  }
+
+  // But only delete when they exist. This is much faster for the underlying store
+  // The markers are on the input anyway.
+  public static void clearMetadata(WebPage page, Utf8 key) {
+    if (page.getMetadata().get(key) != null) {
+      page.getMetadata().put(key, null);
+    }
+  }
+
+  public static void clearMetadata(WebPage page, String key) {
+    if (getMetadata(page, key) != null) {
+      putMetadata(page, key, null);
+    }
+  }
+
+  // But only delete when they exist. This is much faster for the underlying store
+  // The markers are on the input anyway.
+  public static void clearTmpMetadata(WebPage page) {
+    page.getMetadata().keySet().stream()
+        .filter(key -> key.toString().startsWith(Metadata.META_TMP))
+        .forEach(key -> page.getMetadata().put(key, null));
+  }
+
+  public static Map<String, String> getMetadata(WebPage page) {
+    Map<String, String> result = Maps.newHashMap();
+
+    for (CharSequence key : page.getMetadata().keySet()) {
+      ByteBuffer bvalues = page.getMetadata().get(key);
+      if (bvalues != null) {
+        String value = Bytes.toString(bvalues.array());
+        result.put(key.toString(), value);
+
+        // String[] values = value.split("\t");
+        // System.out.println(key + " : " + value);
+      }
+    }
+
+    return result;
+  }
 }

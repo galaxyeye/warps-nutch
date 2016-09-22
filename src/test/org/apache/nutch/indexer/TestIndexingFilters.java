@@ -18,18 +18,26 @@ package org.apache.nutch.indexer;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.metadata.Metadata;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class TestIndexingFilters {
+
+  @Before
+  public void setup() {
+//    System.out.println(System.getenv("PATH"));
+//    System.out.println(System.getenv("PWD"));
+  }
 
   /**
    * Test behaviour when defined filter does not exist.
@@ -58,7 +66,7 @@ public class TestIndexingFilters {
 
   /**
    * Test behaviour when NutchDOcument is null
-   * 
+   *
    * @throws IndexingException
    */
   @Test
@@ -97,18 +105,49 @@ public class TestIndexingFilters {
     WebPage page = WebPage.newBuilder().build();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
+
     IndexDocument fdoc1 = filters1.filter(new IndexDocument(key), url, page);
 
     // add another index filter
     String class2 = "org.apache.nutch.indexer.metadata.MetadataIndexer";
-    // set content metadata
-    Metadata md = new Metadata();
-    md.add("example", "data");
+    page.getMetadata().put("example", ByteBuffer.wrap(Bytes.toBytes("data")));
     // add MetadataIndxer filter
     conf.set(IndexingFilters.INDEXINGFILTER_ORDER, class1 + " " + class2);
+    conf.set("index.metadata", "example");
     IndexingFilters filters2 = new IndexingFilters(conf);
 
     IndexDocument fdoc2 = filters2.filter(new IndexDocument(key), url, page);
+
+//    System.out.println(".....................");
+//
+//    System.out.println(conf.get("plugin.includes"));
+//
+//    System.out.println(filters1);
+//    System.out.println(filters2);
+//
+//    System.out.println(fdoc1);
+//    System.out.println(fdoc2);
+
     assertEquals(fdoc1.getFieldNames().size(), fdoc2.getFieldNames().size());
+  }
+
+  /**
+   * Test behaviour when NutchDOcument is null
+   *
+   * @throws IndexingException
+   */
+  @Test
+  public void testIndexingFilterRealWordDoc() throws IndexingException {
+    Configuration conf = NutchConfiguration.create();
+    conf.addResource("nutch-default.xml");
+    conf.addResource("crawl-tests.xml");
+
+    IndexingFilters filters = new IndexingFilters(conf);
+    WebPage page = WebPage.newBuilder().build();
+    page.setText(new Utf8("text"));
+    page.setTitle(new Utf8("title"));
+    IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
+
+    assertNull(doc);
   }
 }

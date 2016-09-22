@@ -18,6 +18,7 @@ package org.apache.nutch.fetcher.data;
 
 import java.util.Map;
 
+@Deprecated
 public class FetchStatus {
 
   private String version;

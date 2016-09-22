@@ -32,14 +32,12 @@ import static org.junit.Assert.*;
  * qualifiers as key's and value's respectively. We assert that each value entry
  * in the HashMap equals the expect field value for the document after being
  * filtered.
- * 
  */
-
 public class TestTLDIndexingFilter {
 
   @Test
   public void testBasicFields() throws Exception {
-    Map<String, String> urls = new HashMap<String, String>();
+    Map<String, String> urls = new HashMap<>();
 
     urls.put("http://www.a.com", "com");
     urls.put("http://www.b.aero", "aero");

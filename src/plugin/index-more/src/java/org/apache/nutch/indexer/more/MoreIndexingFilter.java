@@ -1,30 +1,23 @@
 package org.apache.nutch.indexer.more;
 
-import java.text.ParseException;
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.indexer.IndexingException;
+import org.apache.nutch.indexer.IndexingFilter;
+import org.apache.nutch.metadata.HttpHeaders;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.util.TimingUtil;
+import org.apache.oro.text.regex.*;
+
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 
-import org.apache.avro.util.Utf8;
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.IndexingException;
-import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.net.protocols.HttpDateFormat;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.nutch.util.MimeUtil;
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.MatchResult;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
-import org.apache.oro.text.regex.Perl5Pattern;
 // import org.apache.solr.common.util.DateUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Add (or reset) a few metaData properties as respective fields (if they are
@@ -43,8 +36,6 @@ import org.slf4j.LoggerFactory;
  */
 
 public class MoreIndexingFilter implements IndexingFilter {
-  public static final Logger LOG = LoggerFactory
-      .getLogger(MoreIndexingFilter.class);
 
   /** Get the MimeTypes resolver instance. */
   private MimeUtil MIME;
@@ -58,8 +49,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
-      throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
     addTime(doc, page, url);
     addLength(doc, page, url);
     addType(doc, page, url);
@@ -71,73 +61,33 @@ public class MoreIndexingFilter implements IndexingFilter {
   // last-modified, or, if that's not present, use fetch time.
   private IndexDocument addTime(IndexDocument doc, WebPage page, String url) {
     long time = -1;
-    CharSequence lastModified = page.getHeaders().get(
-        new Utf8(HttpHeaders.LAST_MODIFIED));
-    // String lastModified = data.getMeta(Metadata.LAST_MODIFIED);
+    CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
-      time = getTime(lastModified.toString(), url); // use as time
-      // String formlastModified = DateUtil.getThreadLocalDateFormat().format(new Date(time));
-      String formlastModified = new Date(time).toString();
-
-      // store as string
-      doc.add("lastModified", formlastModified);
+      time = TimingUtil.parseTime(lastModified.toString()); // use as time
     }
 
     if (time == -1) { // if no last-modified
       time = page.getModifiedTime(); // use Modified time
     }
 
-    // String dateString = DateUtil.getThreadLocalDateFormat().format(new Date(time));
-    String dateString = new Date(time).toString();
-
     // un-stored, indexed and un-tokenized
-    doc.add("date", dateString);
+    if (time > 0) {
+      doc.add("header_last_modified", new Date(time));
+    }
+    String dateString = DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
+    doc.add("last_modified_s", dateString);
 
     return doc;
   }
 
-  private long getTime(String date, String url) {
-    long time = -1;
-    try {
-      time = HttpDateFormat.toLong(date);
-    } catch (ParseException e) {
-      // try to parse it as date in alternative format
-      try {
-        Date parsedDate = DateUtils.parseDate(date,
-            new String[] { "EEE MMM dd HH:mm:ss yyyy",
-                "EEE MMM dd HH:mm:ss yyyy zzz", "EEE MMM dd HH:mm:ss zzz yyyy",
-                "EEE, dd MMM yyyy HH:mm:ss zzz",
-                "EEE,dd MMM yyyy HH:mm:ss zzz", "EEE, dd MMM yyyy HH:mm:sszzz",
-                "EEE, dd MMM yyyy HH:mm:ss", "EEE, dd-MMM-yy HH:mm:ss zzz",
-                "yyyy/MM/dd HH:mm:ss.SSS zzz", "yyyy/MM/dd HH:mm:ss.SSS",
-                "yyyy/MM/dd HH:mm:ss zzz", "yyyy/MM/dd", "yyyy.MM.dd HH:mm:ss",
-                "yyyy-MM-dd HH:mm", "MMM dd yyyy HH:mm:ss. zzz",
-                "MMM dd yyyy HH:mm:ss zzz", "dd.MM.yyyy HH:mm:ss zzz",
-                "dd MM yyyy HH:mm:ss zzz", "dd.MM.yyyy; HH:mm:ss",
-                "dd.MM.yyyy HH:mm:ss", "dd.MM.yyyy zzz",
-                "yyyy-MM-dd'T'HH:mm:ss'Z'" });
-        time = parsedDate.getTime();
-        // if (LOG.isWarnEnabled()) {
-        // LOG.warn(url + ": parsed date: " + date +" to:"+time);
-        // }
-      } catch (Exception e2) {
-        if (LOG.isWarnEnabled()) {
-          LOG.warn(url + ": can't parse erroneous date: " + date);
-        }
-      }
-    }
-    return time;
-  }
-
   // Add Content-Length
   private IndexDocument addLength(IndexDocument doc, WebPage page, String url) {
-    CharSequence contentLength = page.getHeaders().get(
-        new Utf8(HttpHeaders.CONTENT_LENGTH));
+    CharSequence contentLength = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_LENGTH));
     if (contentLength != null) {
       // NUTCH-1010 ContentLength not trimmed
       String trimmed = contentLength.toString().trim();
       if (!trimmed.isEmpty())
-        doc.add("contentLength", trimmed);
+        doc.add("content_length", trimmed);
     }
 
     return doc;
@@ -155,19 +105,19 @@ public class MoreIndexingFilter implements IndexingFilter {
    * done with one of the following qualifiers
    * type:application/vnd.ms-powerpoint type:application type:vnd.ms-powerpoint
    * all case insensitive. The query filter is implemented in
-   * {@link TypeQueryFilter}.
    * </p>
    * 
    * @param doc
-   * @param data
+   * @param page
    * @param url
    * @return
    */
   private IndexDocument addType(IndexDocument doc, WebPage page, String url) {
     String mimeType = null;
     CharSequence contentType = page.getContentType();
-    if (contentType == null)
+    if (contentType == null) {
       contentType = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_TYPE));
+    }
     if (contentType == null) {
       // Note by Jerome Charron on 20050415:
       // Content Type not solved by a previous plugin
@@ -190,14 +140,14 @@ public class MoreIndexingFilter implements IndexingFilter {
       return doc;
     }
 
-    doc.add("type", mimeType);
+    doc.add("mime_type", mimeType);
 
     // Check if we need to split the content type in sub parts
     if (conf.getBoolean("moreIndexingFilter.indexMimeTypeParts", true)) {
       String[] parts = getParts(mimeType);
 
       for (String part : parts) {
-        doc.add("type", part);
+        doc.add("mime_type", part);
       }
     }
 
@@ -232,8 +182,7 @@ public class MoreIndexingFilter implements IndexingFilter {
     Perl5Compiler compiler = new Perl5Compiler();
     try {
       // order here is important
-      patterns[0] = (Perl5Pattern) compiler
-          .compile("\\bfilename=['\"](.+)['\"]");
+      patterns[0] = (Perl5Pattern) compiler.compile("\\bfilename=['\"](.+)['\"]");
       patterns[1] = (Perl5Pattern) compiler.compile("\\bfilename=(\\S+)\\b");
     } catch (MalformedPatternException e) {
       // just ignore
@@ -241,17 +190,17 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   private IndexDocument resetTitle(IndexDocument doc, WebPage page, String url) {
-    CharSequence contentDisposition = page.getHeaders().get(
-        new Utf8(HttpHeaders.CONTENT_DISPOSITION));
-    if (contentDisposition == null)
+    CharSequence contentDisposition = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_DISPOSITION));
+    if (contentDisposition == null) {
       return doc;
+    }
 
     MatchResult result;
     for (int i = 0; i < patterns.length; i++) {
       if (matcher.contains(contentDisposition.toString(), patterns[i])) {
         result = matcher.getMatch();
-        doc.removeField("title");
-        doc.add("title", result.group(1));
+        doc.removeField("meta_title");
+        doc.add("meta_title", result.group(1));
         break;
       }
     }
@@ -276,4 +225,8 @@ public class MoreIndexingFilter implements IndexingFilter {
     return FIELDS;
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
+  }
 }

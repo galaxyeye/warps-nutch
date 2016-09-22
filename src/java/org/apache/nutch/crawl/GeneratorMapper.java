@@ -51,7 +51,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
   private CrawlFilters crawlFilters;
   private boolean filter;
   private boolean normalise;
-  private FetchSchedule schedule;
+  private FetchSchedule fetchSchedule;
   private ScoringFilters scoringFilters;
   private long pseudoCurrTime;
   private SelectorEntry entry = new SelectorEntry();
@@ -84,7 +84,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
     pseudoCurrTime = conf.getLong(Nutch.GENERATOR_CUR_TIME, startTime);
     topN = conf.getLong(Nutch.GENERATOR_TOP_N, Long.MAX_VALUE);
     // topN /= job.numReducerTasks();
-    schedule = FetchScheduleFactory.getFetchSchedule(conf);
+    fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
     crawlFilters = CrawlFilters.create(conf);
     keyRange = crawlFilters.getMaxReversedKeyRange();
@@ -100,7 +100,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
         "normalise", normalise,
         "maxDistance", maxDistance,
         "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
-        "schedule", schedule.getClass().getName(),
+        "fetchSchedule", fetchSchedule.getClass().getName(),
         "scoringFilters", scoringFilters.getClass().getName(),
         "crawlFilters", crawlFilters,
         "keyRange", keyRange[0] + " - " + keyRange[1],
@@ -113,6 +113,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
     String url = TableUtil.unreverseUrl(reversedUrl);
 
     // Page is injected, this is a seed url and has the highest fetch priority
+    // INJECT_MARK will be removed in DbUpdate stage
     if (Mark.INJECT_MARK.hasMark(page)) {
       entry.set(url, Float.MAX_VALUE);
       context.write(entry, page);
@@ -128,22 +129,28 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
 
       /**
        * Fetch entries are generated, empty webpage entries are created in the database(HBase)
-       * case 1. another fetcher job is fetching the generated batch, and is in progress. In this case, we should not
-       *  generate it.
-       * case 2. another fetcher job handled the generated batch, but failed, which means the pages are not fetched
+       * case 1. another fetcher job is fetching the generated batch. In this case, we should not generate it.
+       * case 2. another fetcher job handled the generated batch, but failed, which means the pages are not fetched.
        *
        * There are three ways to fetch pages that are generated but not fetched nor fetching.
        * 1. Restart a crawl with ignoreAlreadyGenerated set to be false
        * 2. Resume a FetcherJob with resume set to be true
-       * 3.
        * */
       if (ignoreAlreadyGenerated) {
         // LOG.debug("Skipping {}; already generated", url);
-        return;
+
+        // TODO : check generate time, if the generate time is too old, we generate it again
+        // TableUtil.putMetadata(page, "Nutch-GenerateTime", String.valueOf(startTime));
+        String generateTimeStr = TableUtil.getMetadata(page, Nutch.GENERATOR_GENERATE_TIME);
+        long generateTime = StringUtil.tryParseLong(generateTimeStr, -1);
+
+        if (generateTime > 0 && generateTime < TimingUtil.DAY) {
+          return;
+        }
       }
     }
 
-    // filter on distance
+    // Filter on distance
     if (maxDistance > -1) {
       CharSequence distanceUtf8 = page.getMarkers().get(Nutch.DISTANCE);
       if (distanceUtf8 != null) {
@@ -155,13 +162,13 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
       }
     }
 
-    // url filter
+    // Url filter
     if (!shouldProcess(reversedUrl)) {
       return;
     }
 
-    // check fetch schedule
-    if (!schedule.shouldFetch(url, page, pseudoCurrTime)) {
+    // Fetch schedule, timing filter
+    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       if (LOG.isDebugEnabled()) {
         // LOG.debug("Fetch later '" + url + "', fetchTime=" + page.getFetchTime() + ", curTime=" + pseudoCurrTime);
       }
@@ -174,22 +181,23 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
 
     float score = page.getScore();
     try {
+      // Typically, we use OPIC scoring filter,
       score = scoringFilters.generatorSortValue(url, page, score);
     } catch (ScoringFilterException e) {
       // ignore
     }
 
+    // Generate time, we will use this mark to decide if we re-generate this page
+    TableUtil.putMetadata(page, Nutch.GENERATOR_GENERATE_TIME, String.valueOf(startTime));
+
+    // Sort by score
     entry.set(url, score);
     context.write(entry, page);
 
     getCounter().increase(Counter.rows);
-
-    // TODO : use topN
-    if (getCounter().get(Counter.rows) > topN) {
-      stop("Mapped enough recoreds, hit topN : " + topN);
-    }
   }
 
+  // Url filter
   private boolean shouldProcess(String reversedUrl) {
     // TODO : CrawlFilter may be move to be a plugin
     // key before start key
@@ -200,8 +208,9 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
 
     // key after end key, finish the mapper
     if (!CrawlFilter.keyLessEqual(reversedUrl, keyRange[1])) {
-      stop("Complete mapper, reason : hit end key " + reversedUrl + ", upper bound : " + keyRange[1] + 
-          ", diff : " + reversedUrl.compareTo(keyRange[1]));
+      stop("Complete mapper, reason : hit end key " + reversedUrl
+          + ", upper bound : " + keyRange[1]
+          + ", diff : " + reversedUrl.compareTo(keyRange[1]));
       return false;
     }
 

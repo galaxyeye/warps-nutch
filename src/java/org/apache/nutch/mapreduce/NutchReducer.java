@@ -16,8 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.IOException;
-
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +23,8 @@ import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer<K1, V1, K2, V2> {
 
@@ -39,13 +39,13 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
-    LOG.debug("--reducer setup--");
-
     conf = context.getConfiguration();
     counter = new NutchCounter(context);
     reporter = new NutchReporter(counter);
 
-    LOG.info(StringUtil.formatParams(
+    LOG.info(StringUtil.formatParamsLine(
+        "---- reducer setup ", " ----",
+        "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),
         "reducerTasks", context.getNumReduceTasks(),
         "hostname", counter.getHostname()
@@ -74,12 +74,13 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
 
   @Override
   protected void cleanup(Context context) {
-    LOG.debug("--reducer cleanup--");
-
     reporter.stopReporter();
 
-    LOG.info(StringUtil.formatParams(
-        "finishTime", TimingUtil.format(System.currentTimeMillis()),
+    LOG.info(StringUtil.formatParamsLine(
+        "---- reducer cleanup ", " ----",
+        "className", this.getClass().getSimpleName(),
+        "startTime", TimingUtil.format(startTime),
+        "finishTime", TimingUtil.now(),
         "timeElapsed", TimingUtil.elapsedTime(startTime)
     ));
   }

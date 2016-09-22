@@ -3,7 +3,8 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.storage;  
+package org.apache.nutch.storage;
+
 @SuppressWarnings("all")
 /** WebPage is the primary data structure in Nutch representing crawl data for a given WebPage at some point in time */
 public class WebPage extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
@@ -153,6 +154,9 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase imp
   private java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> metadata;
   /** A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId. */
   private java.lang.CharSequence batchId;
+  /** Manual added to keep extracted document fields */
+  private java.util.Map<String, Object> docFields = new java.util.HashMap<>();
+
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call. 
   public java.lang.Object get(int field$) {
@@ -792,6 +796,22 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase imp
   public boolean isBatchIdDirty() {
     return isDirty(23);
   }
+
+  public java.util.Map<String, Object> getDocFields() { return docFields; }
+
+  public Object getDocField(String name) { return docFields.get(name); }
+
+  public String getDocFieldAsString(String name) {
+    Object value = docFields.get(name);
+    return value == null ? null : value.toString();
+  }
+
+  public String getDocFieldAsString(String name, String defaultValue) {
+    Object value = docFields.get(name);
+    return value == null ? defaultValue : value.toString();
+  }
+
+  public void putDocField(String name, Object value) { docFields.put(name, value); }
 
   /** Creates a new WebPage RecordBuilder */
   public static org.apache.nutch.storage.WebPage.Builder newBuilder() {

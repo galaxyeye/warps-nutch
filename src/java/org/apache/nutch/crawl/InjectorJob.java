@@ -48,8 +48,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This class takes a flat file of URLs and adds them to the of pages to be
@@ -58,9 +60,9 @@ import java.util.*;
  * metadata key separated from the corresponding value by '='. <br>
  * Note that some metadata keys are reserved : <br>
  * - <i>nutch.score</i> : allows to set a custom score for a specific URL <br>
- * - <i>nutch.fetchInterval</i> : allows to set a custom fetch interval for a
+ * - <i>nutch.fetchIntervalSec</i> : allows to set a custom fetch fetchIntervalSec for a
  * specific URL <br>
- * e.g. http://www.nutch.org/ \t nutch.score=10 \t nutch.fetchInterval=2592000
+ * e.g. http://www.nutch.org/ \t nutch.score=10 \t nutch.fetchIntervalSec=2592000
  * \t userType=open_source
  **/
 public class InjectorJob extends NutchJob implements Tool {
@@ -77,61 +79,78 @@ public class InjectorJob extends NutchJob implements Tool {
   }
 
   /** metadata key reserved for setting a custom score for a specific URL */
-  public static String nutchScoreMDName = "nutch.score";
+  public static final String NutchScoreMDName = "nutch.score";
   /**
-   * metadata key reserved for setting a custom fetchInterval for a specific URL
+   * metadata key reserved for setting a custom fetchIntervalSec for a specific URL
    */
-  public static String nutchFetchIntervalMDName = "nutch.fetchInterval";
+  public static final String NutchFetchIntervalMDName = "nutch.fetchIntervalSec";
+  // The shortest url
+  public static final String ShortestValidUrl = "ftp://t.tt";
 
   public static class UrlMapper extends Mapper<LongWritable, Text, String, WebPage> {
-    private int interval;
+    private Configuration conf;
+
+    private String crawlId;
+    /** Fetch interval in second */
+    private int fetchIntervalSec;
     private float scoreInjected;
-    private ScoringFilters scfilters;
-    private long curTime;
+    private ScoringFilters scoreFilters;
+    private long currentTime;
+
+    /** Custom page score */
+    private float customPageScore;
+    /** Custom fetch interval in second */
+    private int customFetchIntervalSec;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-      Configuration conf = context.getConfiguration();
+      conf = context.getConfiguration();
+      scoreFilters = new ScoringFilters(conf);
 
-      String crawlId = conf.get(Nutch.CRAWL_ID_KEY);
-
-      interval = context.getConfiguration().getInt("db.fetch.interval.default", 2592000);
-      scfilters = new ScoringFilters(context.getConfiguration());
-      scoreInjected = context.getConfiguration().getFloat("db.score.injected", Float.MAX_VALUE);
-      curTime = context.getConfiguration().getLong("injector.current.time", System.currentTimeMillis());
+      crawlId = conf.get(Nutch.CRAWL_ID_KEY);
+      fetchIntervalSec = getFetchIntervalSec();
+      scoreInjected = conf.getFloat("db.score.injected", Float.MAX_VALUE);
+      currentTime = conf.getLong("injector.current.time", System.currentTimeMillis());
 
       LOG.info(StringUtil.formatParams(
           "className", this.getClass().getSimpleName(),
           "crawlId", crawlId,
-          "fetchInterval", interval,
+          "fetchIntervalSec", fetchIntervalSec,
           "scoreInjected", scoreInjected,
-          "injectTime", TimingUtil.format(curTime)
+          "injectTime", TimingUtil.format(currentTime)
       ));
     }
 
-    protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
-      String url = line.toString().trim();
+    private int getFetchIntervalSec() {
+      // Fetch fetchIntervalSec, the default value is 30 days
+      // int fetchIntervalSec = conf.getInt("db.fetch.fetchIntervalSec.default", TimingUtil.MONTH);
 
-//      LOG.debug("Inject : " + url);
+      // For seeds, we re-fetch it every time we start the loop
+      int fetchInterval = TimingUtil.MINUTE;
+
+      return fetchInterval;
+    }
+
+    protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
+      String urlLine = line.toString().trim();
+
+      // LOG.debug("Inject : " + urlLine);
 
       /* Ignore line that start with # */
-      if (url.length() == 0 || url.startsWith("#")) {
+      if (urlLine.length() < ShortestValidUrl.length() || urlLine.startsWith("#")) {
         return;
       }
 
-      // if tabs : metadata that could be stored
-      // must be name=value and separated by \t
-      float customScore = -1f;
-      int customInterval = interval;
-      Map<String, String> metadata = getMetadata(url, customScore, customInterval);
+      String url = StringUtils.substringBefore(urlLine, "\t");
+
+      Map<String, String> metadata = getMetadata(urlLine);
 
       String reversedUrl = null;
       WebPage row = WebPage.newBuilder().build();
       try {
-        // remove all metadata in the url string
-        reversedUrl = TableUtil.reverseUrl(StringUtils.substringBefore(url, "\t")); // collect it
-        row.setFetchTime(curTime);
-        row.setFetchInterval(customInterval);
+        reversedUrl = TableUtil.reverseUrl(url);
+        row.setFetchTime(currentTime);
+        row.setFetchInterval(fetchIntervalSec);
       }
       catch (MalformedURLException e) {
         LOG.warn("Ignore illegal formatted url : " + url);
@@ -142,25 +161,27 @@ public class InjectorJob extends NutchJob implements Tool {
         return;
       }
 
-      // now add the metadata
-      Iterator<String> keysIter = metadata.keySet().iterator();
-      while (keysIter.hasNext()) {
-        String keymd = keysIter.next();
-        String valuemd = metadata.get(keymd);
-        row.getMetadata().put(new Utf8(keymd), ByteBuffer.wrap(valuemd.getBytes()));
+      // Add metadata to page
+      for (Map.Entry<String, String> entry : metadata.entrySet()) {
+        String k = entry.getKey();
+        String v = entry.getValue();
+
+        // TODO : @vincent It's very strange to use ByteBuffer, it causes argly code
+        // row.getMetadata().put(new Utf8(k), ByteBuffer.wrap(v.getBytes()));
+        TableUtil.putMetadata(row, k, v);
       }
 
-      if (customScore != -1) {
-        row.setScore(customScore);
+      if (customPageScore != -1f) {
+        row.setScore(customPageScore);
       }
       else {
         row.setScore(scoreInjected);
       }
 
       try {
-        scfilters.injectedScore(url, row);
+        scoreFilters.injectedScore(url, row);
       } catch (ScoringFilterException e) {
-        LOG.warn("Cannot filter injected score for url " + url + ", using default (" + e.getMessage() + ")");
+        LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
       }
 
       row.getMarkers().put(Nutch.DISTANCE, new Utf8(String.valueOf(0)));
@@ -168,17 +189,21 @@ public class InjectorJob extends NutchJob implements Tool {
 
       context.write(reversedUrl, row);
 
-      context.getCounter(Nutch.COUNTER_GROUP_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
-
       // LOG.debug("Injected : " + url);
+
+      // getCounter().updateAffectedRows(url);
+
+      context.getCounter(Nutch.COUNTER_GROUP_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
     }
 
-    private Map<String, String> getMetadata(String url, float customScore, int customInterval) {
+    private Map<String, String> getMetadata(String seedUrl) {
       Map<String, String> metadata = new TreeMap<>();
 
-      if (url.indexOf("\t") != -1) {
-        String[] splits = url.split("\t");
-        url = splits[0];
+      // if tabs : metadata that could be stored
+      // must be name=value and separated by \t
+      if (seedUrl.contains("\t")) {
+        String[] splits = seedUrl.split("\t");
+
         for (int s = 1; s < splits.length; s++) {
           // find separation between name and value
           int indexEquals = splits[s].indexOf("=");
@@ -187,22 +212,18 @@ public class InjectorJob extends NutchJob implements Tool {
             continue;
           }
 
-          String metaname = splits[s].substring(0, indexEquals);
-          String metavalue = splits[s].substring(indexEquals + 1);
-          if (metaname.equals(nutchScoreMDName)) {
-            try {
-              customScore = Float.parseFloat(metavalue);
-            } catch (NumberFormatException nfe) {
-            }
-          } else if (metaname.equals(nutchFetchIntervalMDName)) {
-            try {
-              customInterval = Integer.parseInt(metavalue);
-            } catch (NumberFormatException nfe) {
-            }
-          } else {
-            metadata.put(metaname, metavalue);
+          String name = splits[s].substring(0, indexEquals);
+          String value = splits[s].substring(indexEquals + 1);
+          if (name.equals(NutchScoreMDName)) {
+            this.customPageScore = StringUtil.tryParseFloat(value, -1f);
           }
-        }
+          else if (name.equals(NutchFetchIntervalMDName)) {
+            this.customFetchIntervalSec = StringUtil.tryParseInt(value, fetchIntervalSec);
+          }
+          else {
+            metadata.put(name, value);
+          }
+        } // for
       } // if
 
       return metadata;
@@ -237,8 +258,21 @@ public class InjectorJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
+    Configuration conf = getConf();
+
     String seedDir = NutchUtil.get(args, Nutch.ARG_SEEDDIR);
     Path input = new Path(seedDir);
+
+    if (!input.getFileSystem(conf).exists(input)) {
+      LOG.warn("Seed dir does not exit!!!");
+      return;
+    }
+
+    // TODO : local file system does not support directory while hdfs file system does
+//    if (!input.getFileSystem(conf).isFile(input)) {
+//      LOG.warn("Seed dir does not exit!!!");
+//      return;
+//    }
 
     FileInputFormat.addInputPath(currentJob, input);
     currentJob.setMapperClass(UrlMapper.class);
@@ -256,7 +290,8 @@ public class InjectorJob extends NutchJob implements Tool {
         "className", this.getClass().getSimpleName(),
         "workingDir", currentJob.getWorkingDirectory(),
         "jobName", currentJob.getJobName(),
-        "realSchema", store.getSchemaName()
+        "realSchema", store.getSchemaName(),
+        "seedDir", seedDir
     ));
 
     currentJob.waitForCompletion(true);
@@ -264,8 +299,8 @@ public class InjectorJob extends NutchJob implements Tool {
 
   public void inject(Path path, String crawlId) throws Exception {
     run(StringUtil.toArgMap(
-        Nutch.ARG_SEEDDIR, path.toString(),
-        Nutch.ARG_CRAWL, crawlId
+        Nutch.ARG_CRAWL, crawlId,
+        Nutch.ARG_SEEDDIR, path.toString()
     ));
   }
 

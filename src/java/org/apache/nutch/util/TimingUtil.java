@@ -17,12 +17,57 @@
 
 package org.apache.nutch.util;
 
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.nutch.net.protocols.HttpDateFormat;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * TODO : use apache's DateUtils, DateFormatUtils
+ * */
 public class TimingUtil {
 
+  public static final String[] GENERAL_DATE_TIME_FORMATS = new String[] {
+      "yyyy/MM/dd",
+      "yyyy.MM.dd HH:mm:ss",
+      "yyyy-MM-dd HH:mm:ss",
+      "yyyy-MM-dd hh:mm:ss",
+      "yyyy-MM-dd HH:mm",
+      "dd.MM.yyyy; HH:mm:ss",
+      "dd.MM.yyyy HH:mm:ss",
+      "EEE MMM dd HH:mm:ss yyyy",
+      "EEE MMM dd HH:mm:ss yyyy zzz",
+      "EEE MMM dd HH:mm:ss zzz yyyy",
+      "EEE, dd MMM yyyy HH:mm:ss zzz",
+      "EEE,dd MMM yyyy HH:mm:ss zzz",
+      "EEE, dd MMM yyyy HH:mm:sszzz",
+      "EEE, dd MMM yyyy HH:mm:ss",
+      "EEE, dd-MMM-yy HH:mm:ss zzz",
+      "yyyy/MM/dd HH:mm:ss.SSS zzz",
+      "yyyy/MM/dd HH:mm:ss.SSS",
+      "yyyy/MM/dd HH:mm:ss zzz",
+      "MMM dd yyyy HH:mm:ss. zzz",
+      "MMM dd yyyy HH:mm:ss zzz",
+      "dd.MM.yyyy HH:mm:ss zzz",
+      "dd MM yyyy HH:mm:ss zzz",
+      "dd.MM.yyyy zzz",
+      "yyyy-MM-dd'T'HH:mm:ss'Z'"
+  };
+
   public static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.hhmmss");
+
+  public static int MILLIS = 1;
+  public static int SECOND = 1000 * MILLIS;
+  public static int MINUTE = 60 * SECOND;
+  public static int HOUR = 60 * MINUTE;
+  public static int DAY = 24 * HOUR;
+  public static int WEEK = 7 * DAY;
+  public static int MONTH = 30 * DAY;
+  public static int YEAR = 365 * DAY;
 
   public static long[] TIME_FACTOR = { 60 * 60 * 1000, 60 * 1000, 1000 };
 
@@ -83,5 +128,20 @@ public class TimingUtil {
     }
 
     return buf.toString();
+  }
+
+  public static long parseTime(String date) {
+    long time = -1;
+    try {
+      time = HttpDateFormat.toLong(date);
+    } catch (ParseException e) {
+      try {
+        Date parsedDate = DateUtils.parseDate(date, GENERAL_DATE_TIME_FORMATS);
+        time = parsedDate.getTime();
+      } catch (Exception e2) {
+
+      }
+    }
+    return time;
   }
 }

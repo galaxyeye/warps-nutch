@@ -18,16 +18,6 @@
 package org.apache.nutch.protocol;
 
 //JDK imports
-import java.io.ByteArrayInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.zip.InflaterInputStream;
-
-
-//Hadoop imports
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -36,10 +26,16 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.VersionMismatchException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.GenericOptionsParser;
-//Nutch imports
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.zip.InflaterInputStream;
+
+//Hadoop imports
+//Nutch imports
 
 public final class Content implements Writable {
 

@@ -145,7 +145,7 @@ public class FetcherJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    // for politeness, don't permit parallel execution of a single task
+    // For politeness, don't permit parallel execution of a single task
     currentJob.setReduceSpeculativeExecution(false);
 
     Collection<WebPage.Field> fields = getFields(currentJob);

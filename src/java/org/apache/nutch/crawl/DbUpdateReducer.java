@@ -44,14 +44,14 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
 
   public static final String CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
 
-  public static enum Counter { rows, newRows, errors };
+  public enum Counter { rows, newRows, errors };
 
   private int retryMax;
   private boolean additionsAllowed;
   private int maxInterval;
-  private FetchSchedule schedule;
+  private FetchSchedule fetchSchedule;
   private ScoringFilters scoringFilters;
-  private List<ScoreDatum> inlinkedScoreData = new ArrayList<ScoreDatum>();
+  private List<ScoreDatum> inlinkedScoreData = new ArrayList<>();
   private int maxLinks;
 
   @Override
@@ -66,7 +66,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     retryMax = conf.getInt("db.fetch.retry.max", 3);
     additionsAllowed = conf.getBoolean(CRAWLDB_ADDITIONS_ALLOWED, true);
     maxInterval = conf.getInt("db.fetch.interval.max", 0);
-    schedule = FetchScheduleFactory.getFetchSchedule(conf);
+    fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
 
@@ -162,13 +162,11 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
       getCounter().increase(Counter.errors);
     }
 
-    // Clear markers
-    // But only delete when they exist. This is much faster for the underlying store
-    // The markers are on the input anyway.
-    if (page.getMetadata().get(FetcherJob.REDIRECT_DISCOVERED) != null) {
-      page.getMetadata().put(FetcherJob.REDIRECT_DISCOVERED, null);
-    }
+    // Clear temporary metadata
+    TableUtil.clearMetadata(page, FetcherJob.REDIRECT_DISCOVERED);
+    TableUtil.clearMetadata(page, Nutch.GENERATOR_GENERATE_TIME);
 
+    // Clear markers
     Mark.INJECT_MARK.removeMarkIfExist(page);
     Mark.GENERATE_MARK.removeMarkIfExist(page);
     Mark.FETCH_MARK.removeMarkIfExist(page);
@@ -176,6 +174,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
     if (parseMark != null) {
       Mark.PARSE_MARK.removeMark(page);
+      // What about INDEX_MARK?
       Mark.UPDATEDB_MARK.putMark(page, parseMark);
     }
 
@@ -187,7 +186,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
 
   private WebPage buildNewPage(String url) { // new row
     WebPage page = WebPage.newBuilder().build();
-    schedule.initializeSchedule(url, page);
+    fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 
     try {
@@ -229,6 +228,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
       long modifiedTime = page.getModifiedTime();
       long prevModifiedTime = page.getPrevModifiedTime();
       CharSequence lastModified = page.getHeaders().get(new Utf8("Last-Modified"));
+
       if (lastModified != null) {
         try {
           modifiedTime = HttpDateFormat.toLong(lastModified.toString());
@@ -238,13 +238,16 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
         }
       }
 
-      schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
+//      TableUtil.putMetadata(page, "Nutch-First-Fectch-Time", String.valueOf(fetchTime));
+//      TableUtil.putMetadata(page, "Nutch-Last-Modified-Time", String.valueOf(modifiedTime));
+
+      fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
       if (maxInterval < page.getFetchInterval()) {
-        schedule.forceRefetch(url, page, false);
+        fetchSchedule.forceRefetch(url, page, false);
       }
       break;
     case CrawlStatus.STATUS_RETRY:
-      schedule.setPageRetrySchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
+      fetchSchedule.setPageRetrySchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
       if (page.getRetriesSinceFetch() < retryMax) {
         page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
       } else {
@@ -252,7 +255,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
       }
       break;
     case CrawlStatus.STATUS_GONE:
-      schedule.setPageGoneSchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
+      fetchSchedule.setPageGoneSchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
       break;
     }
   }

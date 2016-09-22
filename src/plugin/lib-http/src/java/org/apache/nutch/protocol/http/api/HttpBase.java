@@ -17,6 +17,7 @@
 package org.apache.nutch.protocol.http.api;
 
 // JDK imports
+
 import crawlercommons.robots.BaseRobotRules;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.math.NumberUtils;
@@ -29,6 +30,7 @@ import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.net.proxy.ProxyPool;
 import org.apache.nutch.net.proxy.ProxyPoolFactory;
 import org.apache.nutch.protocol.*;
+import org.apache.nutch.storage.ProtocolStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.DeflateUtils;
 import org.apache.nutch.util.GZIPUtils;
@@ -37,11 +39,10 @@ import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.ConnectException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -96,11 +97,11 @@ public abstract class HttpBase implements Protocol {
   /** The "Accept" request header value. */
   protected String accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 
-  /** The default logger */
+  /** The default LOG */
   private final static Logger LOGGER = LoggerFactory.getLogger(HttpBase.class);
 
-  /** The specified logger */
-  private Logger logger = LOGGER;
+  /** The specified LOG */
+  private Logger LOG = LOGGER;
 
   /** The nutch configuration */
   private Configuration conf = null;
@@ -128,9 +129,9 @@ public abstract class HttpBase implements Protocol {
   }
 
   /** Creates a new instance of HttpBase */
-  public HttpBase(Logger logger) {
-    if (logger != null) {
-      this.logger = logger;
+  public HttpBase(Logger LOG) {
+    if (LOG != null) {
+      this.LOG = LOG;
     }
     robots = new HttpRobotRulesParser();
   }
@@ -207,18 +208,18 @@ public abstract class HttpBase implements Protocol {
         "TLS_KRB5_WITH_3DES_EDE_CBC_MD5", "TLS_KRB5_WITH_DES_CBC_SHA",
         "TLS_KRB5_WITH_DES_CBC_MD5");
 
-    tlsPreferredProtocols = new HashSet<String>(Arrays.asList(protocols));
-    tlsPreferredCipherSuites = new HashSet<String>(Arrays.asList(ciphers));
+    tlsPreferredProtocols = new HashSet<>(Arrays.asList(protocols));
+    tlsPreferredCipherSuites = new HashSet<>(Arrays.asList(ciphers));
 
-    logger.info(StringUtil.formatParams(
-        "fetcher.fetch.mode", fetchMode,
-        "http.proxy.host", proxyHost,
-        "http.proxy.port", proxyPort,
-        "http.timeout", timeout,
-        "http.content.limit", maxContent,
-        "http.agent", userAgent,
-        "http.accept.language", acceptLanguage,
-        "http.accept", accept
+    LOG.info(StringUtil.formatParamsLine(
+        "fetchMode", fetchMode,
+        "proxyHost", proxyHost,
+        "proxyPort", proxyPort,
+        "httpTimeout", timeout,
+        "maxContent", maxContent,
+        "userAgent", userAgent,
+        "httpAcceptLanguage", acceptLanguage,
+        "httpAccept", accept
     ));
   }
 
@@ -235,18 +236,18 @@ public abstract class HttpBase implements Protocol {
       long startTime = System.currentTimeMillis();
 
       int retry = 0;
+      Throwable lastThrowable = null;
       while (response == null && retry < this.fetchMaxRetry) {
         try {
           if (retry > 0) {
-            logger.debug("fetch {}, retry : {}", url, retry);
+            LOG.debug("Fetch {}, retry : {}", url, retry);
           }
 
           response = getResponse(u, page, false);
-        } catch (NoProxyException | SocketException | SocketTimeoutException | EOFException e) {
+        } catch (Throwable e) {
           ++retry;
           response = null;
-          logger.warn("{}, retry : {}", e, retry);
-        } finally {
+          lastThrowable = e;
         }
       }
 
@@ -254,9 +255,18 @@ public abstract class HttpBase implements Protocol {
       int elapsedTime = (int) (System.currentTimeMillis() - startTime);
 
       if (response == null) {
-        String e = "failed to fetch : " + url;
-        logger.error(e);
-        return new ProtocolOutput(null, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, e));
+        ProtocolStatus protocolStatus = null;
+        if (lastThrowable instanceof ConnectException) {
+          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.CONNECTION_TIMED_OUT, "retry : " + retry);
+        }
+        else if (lastThrowable instanceof UnknownHostException) {
+          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.UNKNOWN_HOST);
+        }
+        else {
+          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, lastThrowable.toString() + ", retry : " + retry);
+        }
+
+        return new ProtocolOutput(null, protocolStatus);
       }
 
       if (this.responseTime) {
@@ -304,36 +314,29 @@ public abstract class HttpBase implements Protocol {
           protocolStatusCode = ProtocolStatusUtils.MOVED;
         }
         // handle this in the higher layer.
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            protocolStatusCode, u));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(protocolStatusCode, u));
       } else if (code == 400) { // bad request, mark as GONE
-        if (logger.isTraceEnabled()) {
-          logger.trace("400 Bad request: " + u);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("400 Bad request: " + u);
         }
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            ProtocolStatusCodes.GONE, u));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.GONE, u));
       } else if (code == 401) { // requires authorization, but no valid auth
                                 // provided.
-        if (logger.isTraceEnabled()) {
-          logger.trace("401 Authentication Required");
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("401 Authentication Required");
         }
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            ProtocolStatusCodes.ACCESS_DENIED, "Authentication required: "
-                + url));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.ACCESS_DENIED, "Authentication required: " + url));
       } else if (code == 404) {
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            ProtocolStatusCodes.NOTFOUND, u));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.NOTFOUND, u));
       } else if (code == 410) { // permanently GONE
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            ProtocolStatusCodes.GONE, "Http: " + code + " url=" + u));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.GONE, "Http: " + code + " url=" + u));
       } else {
-        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(
-            ProtocolStatusCodes.EXCEPTION, "Http code=" + code + ", url=" + u));
+        return new ProtocolOutput(c, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, "Http code=" + code + ", url=" + u));
       }
-    } catch (Throwable e) {
-      logger.error("Failed with the following error: ", e);
-      return new ProtocolOutput(null, ProtocolStatusUtils.makeStatus(
-          ProtocolStatusCodes.EXCEPTION, e.toString()));
+    }
+    catch (Throwable e) {
+      // LOG.error("Failed to get response : ", e);
+      return new ProtocolOutput(null, ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, e.toString()));
     }
   }
 
@@ -476,8 +479,7 @@ public abstract class HttpBase implements Protocol {
       LOGGER.trace("inflating....");
     }
 
-    byte[] content = DeflateUtils
-        .inflateBestEffort(compressed, getMaxContent());
+    byte[] content = DeflateUtils.inflateBestEffort(compressed, getMaxContent());
 
     if (content == null)
       throw new IOException("inflateBestEffort returned null");

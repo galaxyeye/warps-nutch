@@ -125,8 +125,7 @@ import java.net.MalformedURLException;
  */
 public class SuffixURLFilter implements URLFilter {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(SuffixURLFilter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SuffixURLFilter.class);
 
   // read in attribute "file" of this plugin.
   private String attributeFile = null;
@@ -178,7 +177,6 @@ public class SuffixURLFilter implements URLFilter {
   }
 
   public void readConfiguration(Reader reader) throws IOException {
-
     // handle missing config file
     if (reader == null) {
       if (LOG.isWarnEnabled()) {
