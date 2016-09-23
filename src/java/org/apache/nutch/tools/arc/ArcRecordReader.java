@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Arc files are essentially tars of gzips. Each record in an arc file is a
  * compressed gzip. Multiple records are concatenated together to form a
- * complete arc. For more information on the arc file format see {@link http
+ * halt arc. For more information on the arc file format see {@link http
  * ://www.archive.org/web/researcher/ArcFileFormat.php}.
  * </p>
  * 

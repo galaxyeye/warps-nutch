@@ -56,7 +56,7 @@ public interface ParseStatusCodes {
    */
   public static final short FAILED_INVALID_FORMAT = 203;
   /**
-   * Parsing failed. Other related parts of the content are needed to complete
+   * Parsing failed. Other related parts of the content are needed to halt
    * parsing. The list of URLs to missing parts may be provided in arguments.
    * The SimpleFetcher may decide to fetch these parts at once, then put them into
    * Content.metadata, and supply them for re-parsing.

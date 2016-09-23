@@ -53,7 +53,7 @@ public class TestAPI {
   // public static void after() throws Exception {
   // if (!server.stop(false)) {
   // for (int i = 1; i < 11; i++) {
-  // System.err.println("Waiting for jobs to complete - " + i + "s");
+  // System.err.println("Waiting for jobs to halt - " + i + "s");
   // try {
   // Thread.sleep(1000);
   // } catch (Exception e) {};

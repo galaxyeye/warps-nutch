@@ -191,8 +191,7 @@ public class CollectionManager extends Configured {
    */
   public void save() throws IOException {
     try {
-      final FileOutputStream fos = new FileOutputStream(new File(
-          configfile.getFile()));
+      final FileOutputStream fos = new FileOutputStream(new File(configfile.getFile()));
       final Document doc = new DocumentImpl();
       final Element collections = doc
           .createElement(Subcollection.TAG_COLLECTIONS);

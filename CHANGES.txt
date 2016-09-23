@@ -842,7 +842,7 @@ Release 1.1 - 2010-06-06
 
 * NUTCH-767 Update Tika to v0.5 for the MimeType detection (Julien Nioche via ab)
 
-* NUTCH-769 Fetcher to skip queues for URLS getting repeated exceptions
+* NUTCH-769 Fetcher to skip fetchMonitor for URLS getting repeated exceptions
   (Julien Nioche via ab)
 
 * NUTCH-768 - Upgrade Nutch 1.0 to use Hadoop 0.20.1, also upgrades Xerces to 

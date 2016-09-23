@@ -277,7 +277,7 @@ public class TestGenerator extends AbstractNutchTest {
   private void generateFetchlist(int numResults, Configuration config,
       boolean filter) throws Exception {
     // generate batch
-    GeneratorJob g = new GeneratorJob();
+    GenerateJob g = new GenerateJob();
     g.setConf(config);
     String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), System.currentTimeMillis(), filter, false);
     if (batchId == null)

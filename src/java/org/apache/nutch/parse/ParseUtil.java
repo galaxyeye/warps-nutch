@@ -25,7 +25,7 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.fetcher.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
@@ -296,10 +296,10 @@ public class ParseUtil {
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
 
-    TableUtil.putMetadata(page, FetcherJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    TableUtil.putMetadata(page, FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
 
     if (newUrl == null || newUrl.equals(url)) {
-      String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetcherJob.PERM_REFRESH_TIME);
+      String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetchJob.PERM_REFRESH_TIME);
 
       if (reprUrl == null) {
         LOG.warn("Null repr url for " + url);

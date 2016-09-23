@@ -1,8 +1,5 @@
 package org.apache.nutch.fetcher;
 
-/**
- * TODO : use just enum FetchMode {NATIVE, PROXY, CROWDSOURCING};
- * */
 public enum FetchMode {
   UNKNOWN("unknown"), NATIVE("native"), PROXY("proxy"), CROWDSOURCING("crowdsourcing");
 

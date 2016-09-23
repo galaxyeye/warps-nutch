@@ -24,8 +24,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
+import org.apache.nutch.fetcher.service.FetchServer;
 import org.apache.nutch.service.impl.PortManager;
-import org.apache.nutch.fetcher.server.FetcherServer;
 import org.apache.nutch.storage.local.model.ServerInstance;
 
 import com.google.common.collect.Maps;
@@ -37,7 +37,7 @@ public class PortResource extends AbstractResource {
 
   static {
     portManagers.put(ServerInstance.Type.FetcherServer.name(), 
-        new PortManager(ServerInstance.Type.FetcherServer, FetcherServer.BASE_PORT, FetcherServer.MAX_PORT));
+        new PortManager(ServerInstance.Type.FetcherServer, FetchServer.BASE_PORT, FetchServer.MAX_PORT));
   }
 
   @GET

@@ -551,7 +551,7 @@ public class HttpResponse implements Response {
               continue;
             }
         }
-        return line.length(); // else complete
+        return line.length(); // else halt
       default:
         line.append((char) c);
       }

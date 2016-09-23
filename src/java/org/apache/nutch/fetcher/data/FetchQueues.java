@@ -1,6 +1,6 @@
 package org.apache.nutch.fetcher.data;
 
-import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.fetcher.FetchMonitor;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -8,17 +8,21 @@ import java.util.*;
 /**
  * Created by vincent on 16-9-22.
  */
-public class FetchItemPriorityQueue {
+public class FetchQueues {
 
-  public static final Logger LOG = FetcherJob.LOG;
+  public static final Logger LOG = FetchMonitor.LOG;
 
-  private final Map<String, FetchItemQueue> workingQueues = new HashMap<>();
-  private final Map<String, FetchItemQueue> detachedQueues = new HashMap<>();
-  private final PriorityQueue<FetchItemQueue> priorityWorkingQueues = new PriorityQueue<>();
+  public static final String QUEUE_MODE_HOST = "byHost";
+  public static final String QUEUE_MODE_DOMAIN = "byDomain";
+  public static final String QUEUE_MODE_IP = "byIP";
+
+  private final Map<String, FetchQueue> workingQueues = new HashMap<>();
+  private final Map<String, FetchQueue> detachedQueues = new HashMap<>();
+  private final PriorityQueue<FetchQueue> priorityWorkingQueues = new PriorityQueue<>();
 
   private int nextQueuePosition = 0;
 
-  public boolean add(FetchItemQueue queue) {
+  public boolean add(FetchQueue queue) {
     if (queue == null) {
       return false;
     }
@@ -29,16 +33,16 @@ public class FetchItemPriorityQueue {
     return true;
   }
 
-  public FetchItemQueue get(String queueId) {
+  public FetchQueue get(String queueId) {
     return get(queueId, false);
   }
 
-  public FetchItemQueue getMore(String queueId) {
+  public FetchQueue getMore(String queueId) {
     return get(queueId, true);
   }
 
-  private FetchItemQueue get(String queueId, boolean includeDetached) {
-    FetchItemQueue queue = null;
+  private FetchQueue get(String queueId, boolean includeDetached) {
+    FetchQueue queue = null;
 
     if (queueId != null) {
       queue = workingQueues.get(queueId);
@@ -51,35 +55,35 @@ public class FetchItemPriorityQueue {
     return queue;
   }
 
-  public FetchItemQueue peek() {
+  public FetchQueue peek() {
     return priorityWorkingQueues.peek();
   }
 
-  public FetchItemQueue getOrPeek(String queueId) {
-    FetchItemQueue queue = get(queueId);
+  public FetchQueue getOrPeek(String queueId) {
+    FetchQueue queue = get(queueId);
 
     if (queue == null) {
-      queue = allocateTopPriorityFetchItemQueue();
-      if (queue != null && workingQueues.size() > 5) {
-        LOG.info(String.format(
-            "Fetch task queue is allocated. readyTasks : %s, fetchingTasks : %s, queueId : %s",
-            queue.getFetchQueueSize(),
-            queue.getFetchingQueueSize(),
-            queue.getId()
-        ));
+      queue = allocateTopPriorityFetchQueue();
+      if (LOG.isTraceEnabled()) {
+        if (queue != null && workingQueues.size() > 5) {
+          LOG.trace(String.format("Fetch queue allocated, readyCount : %s, pendingCount : %s, queueId : %s",
+              queue.readyCount(), queue.pendingCount(), queue.getId()));
+        }
       }
     }
 
     return queue;
   }
 
-  public Iterator<FetchItemQueue> iterator() {
+  public Iterator<FetchQueue> iterator() {
     return workingQueues.values().iterator();
   }
 
   public int size() {
     return workingQueues.size();
   }
+
+  public boolean isEmpty() { return workingQueues.isEmpty(); }
 
   public void clear() {
     workingQueues.clear();
@@ -89,10 +93,11 @@ public class FetchItemPriorityQueue {
   /**
    * Get a pending task, the task can be in working queues or in detached queues
    * */
-  public FetchItem getPendingTask(String queueId, long itemId) {
-    FetchItemQueue queue = get(queueId, true);
+  public FetchTask getPendingTask(String queueId, int itemId) {
+    FetchQueue queue = getMore(queueId);
 
     if (queue == null) {
+      LOG.warn("Failed to find queue in fetch queues for {}", queueId);
       return null;
     }
 
@@ -103,14 +108,14 @@ public class FetchItemPriorityQueue {
     return workingQueues.keySet();
   }
 
-  public Collection<FetchItemQueue> values() {
+  public Collection<FetchQueue> values() {
     return workingQueues.values();
   }
 
   /**
-   * Slow queues do not serve any more
+   * Detached queues do not serve any more
    * */
-  public void detach(FetchItemQueue queue) {
+  public void detach(FetchQueue queue) {
     queue.detach();
     workingQueues.remove(queue.getId());
     detachedQueues.put(queue.getId(), queue);
@@ -118,7 +123,7 @@ public class FetchItemPriorityQueue {
 
   public String getCostReport() {
     StringBuilder sb = new StringBuilder();
-    workingQueues.values().stream().filter(FetchItemQueue::isSlow).forEach(queue -> {
+    workingQueues.values().stream().filter(FetchQueue::isSlow).limit(50).forEach(queue -> {
       sb.append(queue.getCostReport());
       sb.append('\n');
     });
@@ -133,9 +138,9 @@ public class FetchItemPriorityQueue {
       if (i++ > limit) {
         break;
       }
-      FetchItemQueue queue = workingQueues.get(id);
+      FetchQueue queue = workingQueues.get(id);
 
-      if (queue.getFetchQueueSize() > 0 || queue.getFetchingQueueSize() > 0) {
+      if (queue.readyCount() > 0 || queue.pendingCount() > 0) {
         LOG.info(i + "...........Working Fetch Queue..............");
         queue.dump();
       }
@@ -147,39 +152,34 @@ public class FetchItemPriorityQueue {
       if (i++ > limit) {
         break;
       }
-      FetchItemQueue queue = detachedQueues.get(id);
-      if (queue.getFetchingQueueSize() > 0) {
+      FetchQueue queue = detachedQueues.get(id);
+      if (queue.pendingCount() > 0) {
         LOG.info(i + "...........Detached Fetch Queue..............");
         queue.dump();
       }
     }
   }
 
-  private FetchItemQueue allocateTopPriorityFetchItemQueue() {
-    if (priorityWorkingQueues.isEmpty() && !workingQueues.isEmpty()) {
-      priorityWorkingQueues.addAll(workingQueues.values());
+  private FetchQueue allocateTopPriorityFetchQueue() {
+    if (priorityWorkingQueues.isEmpty()) {
+      workingQueues.values().stream().filter(FetchQueue::hasTasks).forEach(priorityWorkingQueues::add);
     }
 
-    FetchItemQueue queue = priorityWorkingQueues.poll();
-    if (queue == null) {
-      LOG.error("Failed to poll a fetch item queue unexpected");
-      return null;
-    }
-
-    return workingQueues.get(queue.getId());
+    FetchQueue queue = priorityWorkingQueues.poll();
+    return queue == null ? null : workingQueues.get(queue.getId());
   }
 
-  private FetchItemQueue allocateNextFetchItemQueue() {
+  private FetchQueue allocateNextFetchItemQueue() {
     return allocateNextFetchItemQueue(0);
   }
 
   /**
    * TODO : priority is not implemented
    * */
-  private FetchItemQueue allocateNextFetchItemQueue(int priority) {
-    FetchItemQueue queue = null;
+  private FetchQueue allocateNextFetchItemQueue(int priority) {
+    FetchQueue queue = null;
 
-    Iterator<FetchItemQueue> it = workingQueues.values().iterator();
+    Iterator<FetchQueue> it = workingQueues.values().iterator();
 
     // Skip n items
     int i = 0;
@@ -188,11 +188,11 @@ public class FetchItemPriorityQueue {
     }
 
     // Find the first non-empty queue
-    while (queue != null && queue.getFetchQueueSize() <= 0 && it.hasNext()) {
+    while (queue != null && queue.readyCount() <= 0 && it.hasNext()) {
       queue = it.next();
     }
 
-    if (queue != null && queue.getFetchQueueSize() <= 0) {
+    if (queue != null && queue.readyCount() <= 0) {
       queue = null;
     }
 

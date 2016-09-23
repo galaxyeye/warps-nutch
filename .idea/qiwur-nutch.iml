@@ -26,6 +26,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/parse-html/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/test" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/parse-metatags/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/subcollection/src/java" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />

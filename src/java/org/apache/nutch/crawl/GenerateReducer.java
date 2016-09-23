@@ -17,8 +17,8 @@
 package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
-import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
-import org.apache.nutch.fetcher.FetcherMapper;
+import org.apache.nutch.crawl.GenerateJob.SelectorEntry;
+import org.apache.nutch.fetcher.FetchMapper;
 import org.apache.nutch.mapreduce.NutchReducer;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
@@ -38,12 +38,12 @@ import java.util.Map;
  * Reduce class for generate
  * 
  * The #reduce() method write a random integer to all generated URLs. This
- * random number is then used by {@link FetcherMapper}.
+ * random number is then used by {@link FetchMapper}.
  * 
  */
-public class GeneratorReducer extends NutchReducer<SelectorEntry, WebPage, String, WebPage> {
+public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String, WebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(GeneratorReducer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(GenerateReducer.class);
 
   private enum Counter { rows, hostCountTooLarge, malformedUrl };
 

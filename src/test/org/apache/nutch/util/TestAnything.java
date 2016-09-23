@@ -81,20 +81,6 @@ public class TestAnything {
   }
 
   @Test
-  public void testDecimalFormat() {
-    DecimalFormat df = new DecimalFormat("0.0##");
-    System.out.println(df.format(.5678));
-    System.out.println(df.format(6.5));
-    System.out.println(df.format(56.5678));
-    System.out.println(df.format(123456.5678));
-
-    System.out.println(df.format(.0));
-    System.out.println(df.format(6.00));
-    System.out.println(df.format(56.0000));
-    System.out.println(df.format(123456.00001));
-  }
-
-  @Test
   public void normalizeUrlLists() throws IOException {
     String filename = "/home/vincent/Tmp/novel-list.txt";
     List<String> lines = Files.readAllLines(Paths.get(filename));

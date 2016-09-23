@@ -4,6 +4,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Test;
 
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +16,7 @@ import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZO
 /**
  * Created by vincent on 16-7-20.
  */
-public class TestDateFormat {
+public class TestFormat {
 
   private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -54,4 +55,28 @@ public class TestDateFormat {
       e.printStackTrace();
     }
   }
+
+  @Test
+  public void testDecimalFormat() {
+    DecimalFormat df = new DecimalFormat("0.0##");
+    System.out.println(df.format(.5678));
+    System.out.println(df.format(6.5));
+    System.out.println(df.format(56.5678));
+    System.out.println(df.format(123456.5678));
+
+    System.out.println(df.format(.0));
+    System.out.println(df.format(6.00));
+    System.out.println(df.format(56.0000));
+    System.out.println(df.format(123456.00001));
+  }
+
+  @Test
+  public void testStringFormat() {
+    System.out.println(String.format("%1$,20d", -3123));
+    System.out.println(String.format("%1$9d", -31));
+    System.out.println(String.format("%1$-9d", -31));
+    System.out.println(String.format("%1$(9d", -31));
+    System.out.println(String.format("%1$#9x", 5689));
+  }
+
 }

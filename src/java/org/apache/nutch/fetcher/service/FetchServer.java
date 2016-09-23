@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.fetcher.server;
+package org.apache.nutch.fetcher.service;
 
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
@@ -34,13 +34,13 @@ import java.util.Set;
 import java.util.logging.Level;
 
 /**
- * FetcherServer is responsible to schedule fetch tasks
+ * FetchServer is responsible to schedule fetch tasks
  * */
-public class FetcherServer extends Application {
+public class FetchServer extends Application {
 
   public static final String FETCHER_SERVER = "FETCHER_SERVER";
 
-  public static final Logger LOG = LoggerFactory.getLogger(FetcherServer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(FetchServer.class);
 
   public static final int BASE_PORT = 21000;
 
@@ -61,7 +61,7 @@ public class FetcherServer extends Application {
   /**
    * Public constructor which accepts the port we wish to run the server on
    */
-  public FetcherServer(Configuration conf, int port) {
+  public FetchServer(Configuration conf, int port) {
     this.conf = conf;
     this.port = port;
 
@@ -86,14 +86,14 @@ public class FetcherServer extends Application {
   public Set<Class<?>> getClasses() {
     Set<Class<?>> resources = Sets.newHashSet();
 
-    resources.add(FetcherResource.class);
+    resources.add(FetchResource.class);
 
     return resources;
   }
 
-  public static FetcherServer startServer(Configuration conf, int port) {
+  public static FetchServer startServer(Configuration conf, int port) {
     if (!isRunning(port)) {
-      FetcherServer server = new FetcherServer(conf, port);
+      FetchServer server = new FetchServer(conf, port);
       server.start();
 
       return server;
@@ -102,7 +102,7 @@ public class FetcherServer extends Application {
     return null;
   }
 
-  public static FetcherServer startInDaemonThread(final Configuration conf, final int port) {
+  public static FetchServer startInDaemonThread(final Configuration conf, final int port) {
     if (isRunning(port)) {
       return null;
     }
@@ -115,7 +115,7 @@ public class FetcherServer extends Application {
   }
 
   private static class FetcherServerThread extends Thread {
-    private FetcherServer server;
+    private FetchServer server;
     private final Configuration conf;
     private final int port;
 
@@ -129,7 +129,7 @@ public class FetcherServer extends Application {
       server = startServer(conf, port);
     }
 
-    public FetcherServer getServer() {
+    public FetchServer getServer() {
       return server;
     }
   }
@@ -157,10 +157,10 @@ public class FetcherServer extends Application {
    */
   public void start() {
     if (isRunning()) {
-      LOG.info("FetcherServer is already running");
+      LOG.info("FetchServer is already running");
     }
 
-    LOG.info("Starting FetcherServer on port: {} with logging level: {} ...", port, logLevel);
+    LOG.info("Starting FetchServer on port: {} with logging level: {} ...", port, logLevel);
 
     try {
       component.start();
@@ -168,7 +168,7 @@ public class FetcherServer extends Application {
       throw new IllegalStateException("Cannot start server!", e);
     }
 
-    LOG.info("Started FetcherServer on port {}", port);
+    LOG.info("Started FetchServer on port {}", port);
     startTime = System.currentTimeMillis();
 
     // We use an Internet ip rather than an Intranet ip
@@ -213,11 +213,11 @@ public class FetcherServer extends Application {
       return false;
     }
 
-    LOG.info("Stopping FetcherServer on port {}...", port);
+    LOG.info("Stopping FetchServer on port {}...", port);
     try {
       component.stop();
 
-      LOG.info("Stopped FetcherServer on port {}", port);
+      LOG.info("Stopped FetchServer on port {}", port);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot stop nutch server", e);
     }

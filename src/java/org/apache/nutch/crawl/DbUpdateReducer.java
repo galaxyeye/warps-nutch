@@ -18,7 +18,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.fetcher.FetchJob;
 import org.apache.nutch.mapreduce.NutchReducer;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
@@ -163,7 +163,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     }
 
     // Clear temporary metadata
-    TableUtil.clearMetadata(page, FetcherJob.REDIRECT_DISCOVERED);
+    TableUtil.clearMetadata(page, FetchJob.REDIRECT_DISCOVERED);
     TableUtil.clearMetadata(page, Nutch.GENERATOR_GENERATE_TIME);
 
     // Clear markers

@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.GenerateJob;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
@@ -96,7 +97,7 @@ public final class URLNormalizers {
   public static final String SCOPE_DEFAULT = "default";
   /** Scope used by {@link org.apache.nutch.crawl.URLPartitioner}. */
   public static final String SCOPE_PARTITION = "partition";
-  /** Scope used by {@link org.apache.nutch.crawl.GeneratorJob}. */
+  /** Scope used by {@link GenerateJob}. */
   public static final String SCOPE_GENERATE_HOST_COUNT = "generate_host_count";
   public static final String SCOPE_INJECT = "inject";
   public static final String SCOPE_FETCHER = "fetcher";

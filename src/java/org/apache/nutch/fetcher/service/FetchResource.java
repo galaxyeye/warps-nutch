@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.fetcher.server;
+package org.apache.nutch.fetcher.service;
 
 import com.google.common.collect.Lists;
-import org.apache.nutch.fetcher.FetchManager;
-import org.apache.nutch.fetcher.FetchManagerPool;
-import org.apache.nutch.fetcher.FetcherJob;
-import org.apache.nutch.fetcher.data.FetchItem;
-import org.apache.nutch.fetcher.data.FetchResult;
+import org.apache.nutch.fetcher.FetchJob;
+import org.apache.nutch.fetcher.FetchScheduler;
+import org.apache.nutch.fetcher.FetchSchedulers;
+import org.apache.nutch.fetcher.data.FetchTask;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
 import org.slf4j.Logger;
@@ -30,24 +29,25 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Map.Entry;
 
 @Path(value = "/fetch")
 @Produces({ MediaType.APPLICATION_JSON })
-public class FetcherResource {
+public class FetchResource {
 
-  public static final Logger LOG = FetcherJob.LOG;
+  public static final Logger LOG = FetchJob.LOG;
 
   public final static int MAX_TASKS_PER_SCHEDULE = 100;
 
-  private final FetchManagerPool fetchManagerPool = FetchManagerPool.getInstance();
+  private final FetchSchedulers fetchSchedulers = FetchSchedulers.getInstance();
 
-  public FetcherResource() {
+  public FetchResource() {
   }
 
   @GET
   @Path("/schedule/{count}")
-  public List<FetchItem.Key> getFetchItems(@PathParam("count") int count) {
-    List<FetchItem.Key> keys = Lists.newArrayList();
+  public List<FetchTask.Key> getFetchItems(@PathParam("count") int count) {
+    List<FetchTask.Key> keys = Lists.newArrayList();
 
     if (count < 0) {
       LOG.debug("Invalid count " + count);
@@ -58,20 +58,20 @@ public class FetcherResource {
       count = MAX_TASKS_PER_SCHEDULE;
     }
 
-    return fetchManagerPool.randomFetchItems(count);
+    return fetchSchedulers.randomFetchItems(count);
   }
 
 //  @PUT
 //  @Path("/inject/{url}")
-//  public List<FetchItem.Key> addFetchItem(@PathParam("url") String item) {
-//    List<FetchItem.Key> keys = Lists.newArrayList();
+//  public List<FetchTask.Key> addFetchItem(@PathParam("url") String item) {
+//    List<FetchTask.Key> keys = Lists.newArrayList();
 //
 //    if (count < 0) {
 //      LOG.debug("Invalid count " + count);
 //      return keys;
 //    }
 //
-//    fetchManagerPool.get();
+//    fetchSchedulers.get();
 //
 //    return keys;
 //  }
@@ -89,7 +89,7 @@ public class FetcherResource {
   @Produces("text/html; charset='UTF-8'")
   public String finishFetchItem(@javax.ws.rs.core.Context HttpHeaders httpHeaders, byte[] content) {
     Metadata customHeaders = new SpellCheckedMetadata();
-    for (java.util.Map.Entry<String, List<String>> entry : httpHeaders.getRequestHeaders().entrySet()) {
+    for (Entry<String, List<String>> entry : httpHeaders.getRequestHeaders().entrySet()) {
       String name = entry.getKey().toLowerCase();
 
       // Q- means meta-data from satellite
@@ -110,8 +110,8 @@ public class FetcherResource {
 //    LOG.debug("headers-2 : {}", customHeaders);
 
     FetchResult fetchResult = new FetchResult(customHeaders, content);
-    FetchManager fetchManager = fetchManagerPool.get(fetchResult.getJobId());
-    fetchManager.produceFetchResut(fetchResult);
+    FetchScheduler fetchScheduler = fetchSchedulers.get(fetchResult.getJobId());
+    fetchScheduler.produce(fetchResult);
 
     return "success";
   }

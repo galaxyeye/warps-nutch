@@ -40,9 +40,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-public class DbUpdaterJob extends NutchJob implements Tool {
+public class DbUpdateJob extends NutchJob implements Tool {
 
-  public static final Logger LOG = LoggerFactory.getLogger(DbUpdaterJob.class);
+  public static final Logger LOG = LoggerFactory.getLogger(DbUpdateJob.class);
 
   private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
 
@@ -65,11 +65,11 @@ public class DbUpdaterJob extends NutchJob implements Tool {
 
   private String batchId = Nutch.ALL_BATCH_ID_STR;
 
-  public DbUpdaterJob() {
+  public DbUpdateJob() {
 
   }
 
-  public DbUpdaterJob(Configuration conf) {
+  public DbUpdateJob(Configuration conf) {
     setConf(conf);
   }
 
@@ -133,7 +133,7 @@ public class DbUpdaterJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    String usage = "Usage: DbUpdaterJob (<batchId> | -all) [-crawlId <id>] "
+    String usage = "Usage: DbUpdateJob (<batchId> | -all) [-crawlId <id>] "
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
         + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n";
 
@@ -182,7 +182,7 @@ public class DbUpdaterJob extends NutchJob implements Tool {
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    int res = ToolRunner.run(NutchConfiguration.create(), new DbUpdaterJob(), args);
+    int res = ToolRunner.run(NutchConfiguration.create(), new DbUpdateJob(), args);
     System.exit(res);
   }
 

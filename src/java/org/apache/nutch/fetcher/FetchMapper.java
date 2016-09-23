@@ -1,7 +1,7 @@
 package org.apache.nutch.fetcher;
 
 import org.apache.hadoop.io.IntWritable;
-import org.apache.nutch.crawl.GeneratorJob;
+import org.apache.nutch.crawl.GenerateJob;
 import org.apache.nutch.fetcher.data.FetchEntry;
 import org.apache.nutch.mapreduce.NutchMapper;
 import org.apache.nutch.metadata.Nutch;
@@ -18,7 +18,7 @@ import java.util.Random;
  * Mapper class for SimpleFetcher.
  * </p>
  * <p>
- * This class reads the random integer written by {@link GeneratorJob} as its
+ * This class reads the random integer written by {@link GenerateJob} as its
  * key while outputting the actual key and value arguments through a
  * {@link FetchEntry} instance.
  * </p>
@@ -26,11 +26,11 @@ import java.util.Random;
  * This approach (combined with the use of PartitionUrlByHost makes
  * sure that SimpleFetcher is still polite while also randomizing the key order. If
  * one host has a huge number of URLs in your table while other hosts have
- * not, {@link FetcherReducer} will not be stuck on one host but process URLs
+ * not, {@link FetchReducer} will not be stuck on one host but process URLs
  * from other hosts as well.
  * </p>
  */
-public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, FetchEntry> {
+public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, FetchEntry> {
 
   public enum Counter { rows, notGenerated, alreadyFetched };
 
@@ -51,7 +51,7 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
     limit = conf.getInt(Nutch.ARG_LIMIT, -1);
     limit = limit < 2 * numTasks ? limit : limit/numTasks;
 
-    resume = conf.getBoolean(FetcherJob.RESUME_KEY, false);
+    resume = conf.getBoolean(FetchJob.RESUME_KEY, false);
 
     getCounter().register(Counter.class);
 
@@ -83,7 +83,7 @@ public class FetcherMapper extends NutchMapper<String, WebPage, IntWritable, Fet
 
     /**
      * Resume the batch, but ignore rows that are already fetched.
-     * If FetcherJob runs again but no resume flag set, the pages already fetched should be fetched again.
+     * If FetchJob runs again but no resume flag set, the pages already fetched should be fetched again.
      *
      * NOTE : Nutch removes marks only in DbUpdatejob, include INJECT_MARK, GENERATE_MARK, FETCH_MARK, PARSE_MARK,
      * so a page row can have multiple marks.

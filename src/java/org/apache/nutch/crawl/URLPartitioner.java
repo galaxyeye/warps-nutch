@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
+import org.apache.nutch.crawl.GenerateJob.SelectorEntry;
 import org.apache.nutch.fetcher.data.FetchEntry;
 import org.apache.nutch.net.URLNormalizers;
 import org.apache.nutch.storage.WebPage;
@@ -103,7 +103,7 @@ public class URLPartitioner implements Configurable {
           InetAddress address = InetAddress.getByName(url.getHost());
           hashCode = address.getHostAddress().hashCode();
         } catch (UnknownHostException e) {
-          GeneratorJob.LOG.info("Couldn't find IP for host: " + url.getHost());
+          GenerateJob.LOG.info("Couldn't find IP for host: " + url.getHost());
         }
       }
     }

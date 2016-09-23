@@ -60,7 +60,7 @@ public class TestInjector extends AbstractNutchTest {
     }
     CrawlTestUtil.generateSeedList(fs, urlPath, urls);
 
-    InjectorJob injector = new InjectorJob();
+    InjectJob injector = new InjectJob();
     injector.setConf(conf);
     injector.inject(urlPath, "test");
 

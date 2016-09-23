@@ -65,9 +65,9 @@ import java.util.TreeMap;
  * e.g. http://www.nutch.org/ \t nutch.score=10 \t nutch.fetchIntervalSec=2592000
  * \t userType=open_source
  **/
-public class InjectorJob extends NutchJob implements Tool {
+public class InjectJob extends NutchJob implements Tool {
 
-  public static final Logger LOG = LoggerFactory.getLogger(InjectorJob.class);
+  public static final Logger LOG = LoggerFactory.getLogger(InjectJob.class);
 
   private static final Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
 
@@ -230,10 +230,10 @@ public class InjectorJob extends NutchJob implements Tool {
     }
   }
 
-  public InjectorJob() {
+  public InjectJob() {
   }
 
-  public InjectorJob(Configuration conf) {
+  public InjectJob(Configuration conf) {
     setConf(conf);
   }
 
@@ -312,7 +312,7 @@ public class InjectorJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    System.err.println("Usage: InjectorJob <url_dir> [-crawlId <id>] [-fetchMode <native|crowdsourcing|proxy>]");
+    System.err.println("Usage: InjectJob <url_dir> [-crawlId <id>] [-fetchMode <native|crowdsourcing|proxy>]");
   }
 
   @Override
@@ -344,14 +344,14 @@ public class InjectorJob extends NutchJob implements Tool {
       inject(args[0], crawlId);
       return 0;
     } catch (Exception e) {
-      LOG.error("InjectorJob: " + StringUtil.stringifyException(e));
+      LOG.error("InjectJob: " + StringUtil.stringifyException(e));
       return -1;
     }
   }
 
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
-    int res = ToolRunner.run(NutchConfiguration.create(), new InjectorJob(), args);
+    int res = ToolRunner.run(NutchConfiguration.create(), new InjectJob(), args);
     System.exit(res);
   }
 }

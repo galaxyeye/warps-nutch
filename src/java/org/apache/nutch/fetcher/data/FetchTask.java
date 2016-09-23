@@ -1,6 +1,6 @@
 package org.apache.nutch.fetcher.data;
 
-import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.fetcher.FetchJob;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -8,32 +8,41 @@ import org.slf4j.Logger;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.apache.nutch.fetcher.data.FetchQueues.QUEUE_MODE_DOMAIN;
+import static org.apache.nutch.fetcher.data.FetchQueues.QUEUE_MODE_IP;
 
 /**
  * This class described the item to be fetched.
  */
-public class FetchItem {
-  public static final Logger LOG = FetcherJob.LOG;
+public class FetchTask implements Comparable<FetchTask> {
+  public static final Logger LOG = FetchJob.LOG;
 
   /**
    * The initial value is the current timestamp in second, to make it 
    * an unique id in the current host
    * */
-  private static AtomicLong nextFetchItemId = new AtomicLong(System.currentTimeMillis() / 1000);
+  private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
-  public class Key {
+  public class Key implements Comparable<Key> {
 
     Key(int jobID, String queueID, String url) {
       this.jobID = jobID;
       this.queueID = queueID;
+      this.itemID = nextId();
       this.url = url;
     }
 
     public int jobID;
     public String queueID;
-    public long itemID = nextId();
+    public int itemID;
     public String url;
+
+    @Override
+    public int compareTo(Key key) {
+      return itemID - key.itemID;
+    }
   }
 
   Key key;
@@ -41,7 +50,7 @@ public class FetchItem {
   URL u;
   long pendingStartTime = -1;
 
-  public FetchItem(int jobID, String url, WebPage page, URL u, String queueID) {
+  public FetchTask(int jobID, String url, WebPage page, URL u, String queueID) {
     this.page = page;
     this.key = new Key(jobID, queueID, url);
     this.u = u;
@@ -59,7 +68,7 @@ public class FetchItem {
     return key.queueID;
   }
 
-  public long getItemID() {
+  public int getItemID() {
     return key.itemID;
   }
 
@@ -88,7 +97,7 @@ public class FetchItem {
    * argument, either as a protocol + hostname pair, protocol + IP
    * address pair or protocol+domain pair.
    */
-  public static FetchItem create(int jobID, String url, WebPage page, String queueMode) {
+  public static FetchTask create(int jobID, String url, WebPage page, String queueMode) {
     final URL u = getUrl(url);
 
     if (u == null) {
@@ -99,7 +108,7 @@ public class FetchItem {
     final String host = getHost(u, queueMode).toLowerCase();
     final String queueID = proto + "://" + host;
 
-    return new FetchItem(jobID, url, page, u, queueID);
+    return new FetchTask(jobID, url, page, u, queueID);
   }
 
   /**
@@ -120,17 +129,17 @@ public class FetchItem {
 
   /**
    * Generate an unique numeric id for the fetch item
-   * 
+   *
    * fetch item id is used to easy item searching
-   * 
+   *
    * */
-  public long nextId() {
-    return nextFetchItemId.incrementAndGet();
+  private int nextId() {
+    return instanceSequence.incrementAndGet();
   }
 
   protected static String getHost(URL url, String queueMode) {
     String host;
-    if (FetchItemQueues.QUEUE_MODE_IP.equalsIgnoreCase(queueMode)) {
+    if (QUEUE_MODE_IP.equalsIgnoreCase(queueMode)) {
       try {
         final InetAddress addr = InetAddress.getByName(url.getHost());
         host = addr.getHostAddress();
@@ -140,7 +149,7 @@ public class FetchItem {
         return null;
       }
     }
-    else if (FetchItemQueues.QUEUE_MODE_DOMAIN.equalsIgnoreCase(queueMode)){
+    else if (QUEUE_MODE_DOMAIN.equalsIgnoreCase(queueMode)){
       host = URLUtil.getDomainName(url);
       if (host == null) {
         LOG.warn("Unknown domain for url: " + url.toString() + ", using URL string as key");
@@ -160,8 +169,12 @@ public class FetchItem {
 
   @Override
   public String toString() {
-    return "FetchItem [queueID=" + key.queueID + ", id=" + key.itemID + ", url=" + key.url + ", u=" + u
+    return "FetchTask [queueID=" + key.queueID + ", id=" + key.itemID + ", url=" + key.url + ", u=" + u
         + ", page=" + page + "]";
   }
 
+  @Override
+  public int compareTo(FetchTask fetchTask) {
+    return fetchTask == null ? -1 : getKey().compareTo(fetchTask.getKey());
+  }
 }

@@ -18,8 +18,8 @@ package org.apache.nutch.fetcher;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.GeneratorJob;
-import org.apache.nutch.crawl.InjectorJob;
+import org.apache.nutch.crawl.GenerateJob;
+import org.apache.nutch.crawl.InjectJob;
 import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.storage.Mark;
@@ -85,18 +85,18 @@ public class TestFetcher extends AbstractNutchTest {
     CrawlTestUtil.generateSeedList(fs, urlPath, urls);
 
     // inject
-    InjectorJob injector = new InjectorJob(conf);
+    InjectJob injector = new InjectJob(conf);
     injector.inject(urlPath, crawlId);
 
     // generate
     long time = System.currentTimeMillis();
-    GeneratorJob g = new GeneratorJob(conf);
+    GenerateJob g = new GenerateJob(conf);
     String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), time, false, false);
 
     // fetch
     time = System.currentTimeMillis();
-    conf.setBoolean(FetcherJob.PARSE_KEY, true);
-    FetcherJob fetcher = new FetcherJob(conf);
+    conf.setBoolean(FetchJob.PARSE_KEY, true);
+    FetchJob fetcher = new FetchJob(conf);
     fetcher.fetch(crawlId, "native", batchId, 1, false, -1);
 
     time = System.currentTimeMillis() - time;
@@ -143,8 +143,8 @@ public class TestFetcher extends AbstractNutchTest {
     conf.set("http.agent.name", "");
 
     try {
-      conf.setBoolean(FetcherJob.PARSE_KEY, true);
-      FetcherJob fetcher = new FetcherJob(conf);
+      conf.setBoolean(FetchJob.PARSE_KEY, true);
+      FetchJob fetcher = new FetchJob(conf);
       fetcher.checkConfiguration(fetcher.getConf());
     } catch (IllegalArgumentException iae) {
       String message = iae.getMessage();

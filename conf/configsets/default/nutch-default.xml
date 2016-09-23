@@ -666,7 +666,7 @@
 <property>
   <name>fetcher.queue.mode</name>
   <value>byHost</value>
-  <description>Determines how the URLs are placed into queues. 
+  <description>Determines how the URLs are placed into fetchMonitor.
    Allowed values are 'byHost', 'byDomain' and 'byIP'.
    The value would usually correspond to that of 'partition.url.mode'.
   </description>
@@ -703,7 +703,7 @@
   <value>-1</value>
   <description>This is the number of minutes allocated to the fetching.
   Once this value is reached, any remaining entry from the input URL list is skipped 
-  and all active queues are emptied. The default value of -1 deactivates the time limit.
+  and all active fetchMonitor are emptied. The default value of -1 deactivates the time limit.
   </description>
 </property>
 
@@ -744,7 +744,7 @@
 <property>
   <name>fetcher.queue.depth.multiplier</name>
   <value>50</value>
-  <description>(EXPERT)The fetcher buffers the incoming URLs into queues based on the [host|domain|IP]
+  <description>(EXPERT)The fetcher buffers the incoming URLs into fetchMonitor based on the [host|domain|IP]
   (see param fetcher.queue.mode). The depth of the queue is the number of threads times the value of this parameter.
   A large value requires more memory but can improve the performance of the fetch when the order of the URLS in the fetch list
   is not optimal.

@@ -50,9 +50,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class GeneratorJob extends NutchJob implements Tool {
+public class GenerateJob extends NutchJob implements Tool {
 
-  public static final Logger LOG = LoggerFactory.getLogger(GeneratorJob.class);
+  public static final Logger LOG = LoggerFactory.getLogger(GenerateJob.class);
 
   private static final Set<WebPage.Field> FIELDS = new HashSet<>();
 
@@ -64,10 +64,10 @@ public class GeneratorJob extends NutchJob implements Tool {
     FIELDS.add(WebPage.Field.METADATA);
   }
 
-  public GeneratorJob() {
+  public GenerateJob() {
   }
 
-  public GeneratorJob(Configuration conf) {
+  public GenerateJob(Configuration conf) {
     setConf(conf);
   }
 
@@ -135,8 +135,8 @@ public class GeneratorJob extends NutchJob implements Tool {
     Query<String, WebPage> query = initQuery(store);
 
     GoraMapper.initMapperJob(currentJob, query, store, SelectorEntry.class,
-        WebPage.class, GeneratorMapper.class, SelectorEntryPartitioner.class, true);
-    StorageUtils.initReducerJob(currentJob, GeneratorReducer.class);
+        WebPage.class, GenerateMapper.class, SelectorEntryPartitioner.class, true);
+    StorageUtils.initReducerJob(currentJob, GenerateReducer.class);
 
     LOG.info(StringUtil.formatParams(
         "className", this.getClass().getSimpleName(),
@@ -229,7 +229,7 @@ public class GeneratorJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    System.out.println("Usage: GeneratorJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
+    System.out.println("Usage: GenerateJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
         "[-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
     System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
     System.out.println("    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");");
@@ -307,7 +307,7 @@ public class GeneratorJob extends NutchJob implements Tool {
   public static void main(String args[]) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    int res = ToolRunner.run(NutchConfiguration.create(), new GeneratorJob(), args);
+    int res = ToolRunner.run(NutchConfiguration.create(), new GenerateJob(), args);
 
     System.exit(res);
   }

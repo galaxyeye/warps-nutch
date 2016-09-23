@@ -45,9 +45,9 @@ import java.util.Map;
 /**
  * Generic indexer which relies on the plugins implementing IndexWriter
  **/
-public class IndexingJob extends NutchJob implements Tool {
+public class IndexJob extends NutchJob implements Tool {
 
-  public static Logger LOG = LoggerFactory.getLogger(IndexingJob.class);
+  public static Logger LOG = LoggerFactory.getLogger(IndexJob.class);
 
   public static final String RESUME_KEY = "fetcher.job.resume";
   public static final String PARSE_KEY = "fetcher.parse";
@@ -218,7 +218,7 @@ public class IndexingJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    String usage = "Usage: IndexingJob (<batchId> | -all | -reindex) [-crawlId <id>] "
+    String usage = "Usage: IndexJob (<batchId> | -all | -reindex) [-crawlId <id>] "
         + "\n \t \t   [-resume] [-threads N] [-limit limit] [-numTasks N]\n"
         + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
@@ -285,7 +285,7 @@ public class IndexingJob extends NutchJob implements Tool {
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    final int res = ToolRunner.run(NutchConfiguration.create(), new IndexingJob(), args);
+    final int res = ToolRunner.run(NutchConfiguration.create(), new IndexJob(), args);
     System.exit(res);
   }
 }

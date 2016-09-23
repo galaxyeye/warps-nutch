@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexField;
+import org.apache.nutch.indexer.IndexJob;
 import org.apache.nutch.indexer.IndexWriter;
-import org.apache.nutch.indexer.IndexingJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TimingUtil;
@@ -294,8 +294,8 @@ public class SolrIndexWriter implements IndexWriter {
     }
 
     batchSize = conf.getInt(SolrConstants.COMMIT_SIZE, 200);
-    delete = conf.getBoolean(IndexingJob.INDEXER_DELETE, false);
-    String paramString = conf.get(IndexingJob.INDEXER_PARAMS);
+    delete = conf.getBoolean(IndexJob.INDEXER_DELETE, false);
+    String paramString = conf.get(IndexJob.INDEXER_PARAMS);
 
     solrMapping = SolrMappingReader.getInstance(conf);
     // parse optional params

@@ -23,7 +23,7 @@ import java.net.MalformedURLException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
+import org.apache.nutch.crawl.GenerateJob.SelectorEntry;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.fetcher.data.FetchEntry;

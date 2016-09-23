@@ -49,6 +49,12 @@
   </property>
 
   <property>
+    <name>fetcher.timelimit.mins</name>
+    <value>60</value>
+    <description>The feeder does not feed any fetch tasks any more if time exceed</description>
+  </property>
+
+  <property>
     <name>fetcher.throughput.threshold.pages</name>
     <value>1</value>
     <description>The threshold of minimum pages per second. If the fetcher

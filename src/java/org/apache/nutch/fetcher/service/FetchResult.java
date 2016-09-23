@@ -1,9 +1,12 @@
-package org.apache.nutch.fetcher.data;
+package org.apache.nutch.fetcher.service;
 
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.util.StringUtil;
 
+/**
+ *
+ * */
 public class FetchResult implements HttpHeaders {
 
   private Metadata headers;

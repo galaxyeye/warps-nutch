@@ -16,7 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import org.apache.nutch.crawl.GeneratorJob.SelectorEntry;
+import org.apache.nutch.crawl.GenerateJob.SelectorEntry;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchMapper;
@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
-public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
+public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(GeneratorMapper.class);
+  public static final Logger LOG = LoggerFactory.getLogger(GenerateMapper.class);
 
   private enum Counter {
     rows, rowsAfterFinished, rowsInjected, rowsBeforeStart, rowsNotInRange, pagesAlreadyGenerated,
@@ -134,7 +134,7 @@ public class GeneratorMapper extends NutchMapper<String, WebPage, SelectorEntry,
        *
        * There are three ways to fetch pages that are generated but not fetched nor fetching.
        * 1. Restart a crawl with ignoreAlreadyGenerated set to be false
-       * 2. Resume a FetcherJob with resume set to be true
+       * 2. Resume a FetchJob with resume set to be true
        * */
       if (ignoreAlreadyGenerated) {
         // LOG.debug("Skipping {}; already generated", url);

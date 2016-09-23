@@ -1,17 +1,15 @@
 package org.apache.nutch.fetcher;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.fetcher.data.FetchItem;
-import org.apache.nutch.fetcher.data.FetchItemQueues;
-import org.apache.nutch.fetcher.data.FetchResult;
-import org.apache.nutch.fetcher.indexer.IndexManager;
+import org.apache.nutch.fetcher.data.FetchTask;
+import org.apache.nutch.fetcher.indexer.JITIndexer;
+import org.apache.nutch.fetcher.service.FetchResult;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
@@ -36,16 +34,29 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FetchManager extends Configured {
+public class FetchScheduler extends Configured {
 
-  static private final Logger LOG = FetcherJob.LOG;
+  private final Logger LOG = FetchJob.LOG;
+
+  class Status {
+    Status(float pagesThroughputRate, float bytesThroughputRate, int readyFetchItems, int pendingFetchItems) {
+      this.pagesThroughputRate = pagesThroughputRate;
+      this.bytesThroughputRate = bytesThroughputRate;
+      this.readyFetchItems = readyFetchItems;
+      this.pendingFetchItems = pendingFetchItems;
+    }
+
+    float pagesThroughputRate;
+    float bytesThroughputRate;
+    int readyFetchItems;
+    int pendingFetchItems;
+  }
 
   enum Counter {
     pages, bytes, errors, finishedTasks, expiredQueues, unexpectedErrors,
@@ -54,13 +65,17 @@ public class FetchManager extends Configured {
     waitingFetchThreadCount, activeFetchThreadCount
   }
 
-  private Integer id;
+  static final int QUEUE_REMAINDER_LIMIT = 5;
 
-  @SuppressWarnings("rawtypes")
+  private static AtomicInteger processLevelObjectId = new AtomicInteger(0);
+
+  private final int id;
+
   private final Context context;
+  private NutchCounter counter;
 
-  private FetchItemQueues fetchItemQueues;// all fetch items are contained in several queues
-  private List<FetchResult> fetchResultQueue = Collections.synchronizedList(new LinkedList<>());
+  private FetchMonitor fetchMonitor;// all fetch items are contained in several queues
+  private Queue<FetchResult> fetchResultQueue = new ConcurrentLinkedQueue<>();
 
   /**
    * Our own Hardware bandwidth in Mbytes, if exceed the limit, slows down the task scheduling.
@@ -79,16 +94,24 @@ public class FetchManager extends Configured {
   private final ParseUtil parseUtil;
   private final boolean skipTruncated;
 
-  private final AtomicDouble avePageLength = new AtomicDouble(0.0);
+  /** Feeder threads */
+  private final int maxFeedPerThread;
+  private final Set<FeederThread> feederThreads = new ConcurrentSkipListSet<>();
 
-  private final int fetchThreadCount;
+  /** Fetch threads */
+  private final int initFetchThreadCount;
   private final int maxThreadsPerQueue;
 
-  private final Set<FetchThread> fetchThreads = Sets.newHashSet();
+  private final Set<FetchThread> activeFetchThreads = new ConcurrentSkipListSet<>();
+  private final Set<FetchThread> retiredFetchThreads = new ConcurrentSkipListSet<>();
+  private final Set<FetchThread> idleFetchThreads = new ConcurrentSkipListSet<>();
   private final AtomicInteger activeFetchThreadCount = new AtomicInteger(0);
   private final AtomicInteger idleFetchThreadCount = new AtomicInteger(0);
 
-  // timer
+  /** Indexer */
+  private JITIndexer JITIndexer;
+
+  // Timer
   private final long startTime = System.currentTimeMillis(); // start time of fetcher run
   private final AtomicLong lastTaskStartTime = new AtomicLong(startTime);
   private final AtomicLong lastTaskFinishTime = new AtomicLong(startTime);
@@ -97,218 +120,161 @@ public class FetchManager extends Configured {
   private final AtomicLong totalBytes = new AtomicLong(0);        // total fetched bytes
   private final AtomicInteger totalPages = new AtomicInteger(0);  // total fetched pages
   private final AtomicInteger fetchErrors = new AtomicInteger(0); // total fetch fetchErrors
-  /**
-   * fetch speed counted by totalPages per second
-   */
-  private float pagesThroughputRate = 0;
-  /**
-   * fetch speed counted by total totalBytes per second
-   */
-  private float bytesThroughputRate = 0;
+
+  private final AtomicDouble avePageLength = new AtomicDouble(0.0);
 
   private String reprUrl; // choosed representative url
 
-  private IndexManager indexManager;
-
-  private NutchCounter counter;
-
   @SuppressWarnings("rawtypes")
-  FetchManager(int id, IndexManager indexManager, NutchCounter counter, Context context) throws IOException {
+  FetchScheduler(NutchCounter counter, Context context) throws IOException {
     Configuration conf = context.getConfiguration();
     setConf(conf);
 
-    this.id = id;
-    this.context = context;
+    this.id = processLevelObjectId.incrementAndGet();
     this.counter = counter;
+    this.context = context;
 
     this.bandwidth = 1024 * 1024 * conf.getInt("fetcher.net.bandwidth.m", Integer.MAX_VALUE);
-    this.fetchThreadCount = conf.getInt("fetcher.threads.fetch", 10);
+    this.initFetchThreadCount = conf.getInt("fetcher.threads.fetch", 10);
     this.maxThreadsPerQueue = conf.getInt("fetcher.threads.per.queue", 1);
+    this.maxFeedPerThread = conf.getInt("fetcher.queue.depth.multiplier", 100);
 
     this.urlFilters = new URLFilters(conf);
     this.normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_FETCHER);
-    this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
 
+    this.fetchMonitor = new FetchMonitor(conf);
+
+    // index manager
+    boolean indexJIT = conf.getBoolean(Nutch.INDEX_JUST_IN_TIME, false);
+    this.JITIndexer = indexJIT ? new JITIndexer(conf) : null;
+
+    this.parse = indexJIT || conf.getBoolean(FetchJob.PARSE_KEY, false);
+    this.parseUtil = parse ? new ParseUtil(getConf()) : null;
+    this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
+    this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
-    this.indexManager = indexManager;
-    this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
-    this.parse = indexManager != null || conf.getBoolean(FetcherJob.PARSE_KEY, false);
-    this.parseUtil = parse ? new ParseUtil(getConf()) : null;
-
-    this.fetchItemQueues = new FetchItemQueues(conf);
-
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(StringUtil.formatParams(
         "id", id,
+
         "bandwidth", bandwidth,
+        "initFetchThreadCount", initFetchThreadCount,
+        "maxThreadsPerQueue", maxThreadsPerQueue,
+        "maxFeedPerThread", maxFeedPerThread,
+
+        "skipTruncated", skipTruncated,
+        "parse", parse,
         "storingContent", storingContent,
         "ignoreExternalLinks", ignoreExternalLinks,
-        "parse", parse,
-        "index", indexManager != null
+
+        "indexJIT", indexJIT
     ));
   }
 
-  Integer getId() {
-    return id;
+  int getId() { return id; }
+
+  String name() { return "FetchScheduler-" + id; }
+
+  int getBandwidth() { return this.bandwidth; }
+
+  FetchMonitor getFetchMonitor() {
+    return fetchMonitor;
   }
 
-  String name() {
-    return "FetchManager-" + id;
-  }
-
-  int getBandwidth() {
-    return this.bandwidth;
-  }
-
-  void registerFetchThread(FetchThread fetchThread) {
-    fetchThreads.add(fetchThread);
-    activeFetchThreadCount.incrementAndGet();
-  }
-
-  void unregisterFetchThread(FetchThread fetchThread) {
-    fetchThreads.remove(fetchThread);
-    activeFetchThreadCount.decrementAndGet();
-  }
-
-  void registerIdleThread(FetchThread thread) {
-    idleFetchThreadCount.incrementAndGet();
-  }
-
-  void unregisterIdleThread(FetchThread thread) {
-    idleFetchThreadCount.decrementAndGet();
-  }
-
-  int getQueueCount() {
-    return fetchItemQueues.getQueueCount();
-  }
-
-  int getReadyItemCount() {
-    return fetchItemQueues.getReadyItemCount();
-  }
-
-  int getPendingItemCount() {
-    return fetchItemQueues.getPendingItemCount();
-  }
-
-  int getFinishedItemCount() {
-    return fetchItemQueues.getFinishedItemCount();
-  }
-
-  FetchItemQueues getFetchItemQueues() {
-    return fetchItemQueues;
-  }
-
-  long getLastTaskStartTime() {
-    return lastTaskStartTime.get();
+  JITIndexer getJITIndexer() {
+    return JITIndexer;
   }
 
   long getLastTaskFinishTime() {
     return lastTaskFinishTime.get();
   }
 
-  void reportSlowHosts() {
-    String report = fetchItemQueues.getCostReport();
-    if (report.length() < 10) {
-      LOG.info(fetchItemQueues.getCostReport());
-    }
+  int getActiveFetchThreadCount() { return activeFetchThreadCount.get(); }
+
+  int getFeedLimit() {
+    return initFetchThreadCount * maxFeedPerThread;
   }
 
-  /**
-   * Instantaneous speed
-   *
-   * @return instantaneous speed
-   */
-  float getPagesThroughputRate() {
-    return pagesThroughputRate;
+  boolean indexJIT() { return JITIndexer != null; }
+
+  void registerFeederThread(FeederThread feederThread) {
+    feederThreads.add(feederThread);
   }
 
-  float getBytesThroughput() {
-    return bytesThroughputRate;
+  void unregisterFeederThread(FeederThread feederThread) {
+    feederThreads.remove(feederThread);
   }
 
-  int getActiveFetchThreadCount() {
-    return activeFetchThreadCount.get();
+  void registerFetchThread(FetchThread fetchThread) {
+    activeFetchThreads.add(fetchThread);
+    activeFetchThreadCount.incrementAndGet();
   }
 
-  IndexManager getIndexManager() {
-    return indexManager;
+  void unregisterFetchThread(FetchThread fetchThread) {
+    activeFetchThreads.remove(fetchThread);
+    activeFetchThreadCount.decrementAndGet();
+
+    retiredFetchThreads.add(fetchThread);
   }
 
-  void startFetchThreads(QueueFeederThread queueFeederThread, int threadCount, Context context) {
-    for (int i = 0; i < threadCount; i++) {
-      FetchThread fetchThread = new FetchThread(queueFeederThread, this, context);
-      fetchThread.start();
-    }
+  void registerIdleThread(FetchThread thread) {
+    idleFetchThreads.add(thread);
+    idleFetchThreadCount.incrementAndGet();
   }
 
-  public void produceFetchResut(FetchResult result) {
+  void unregisterIdleThread(FetchThread thread) {
+    idleFetchThreads.remove(thread);
+    idleFetchThreadCount.decrementAndGet();
+  }
+
+  public void produce(FetchResult result) {
     fetchResultQueue.add(result);
   }
 
-  List<FetchItem> consumeFetchItems(int number) {
-    return consumeFetchItems(null, number);
+  List<FetchTask> schedule(int number) {
+    return schedule(null, number);
+  }
+
+  /**
+   * Multiple threaded
+   * */
+  FetchTask schedule(String queueId) {
+    List<FetchTask> fetchTasks = schedule(queueId, 1);
+    return fetchTasks.isEmpty() ? null : fetchTasks.iterator().next();
   }
 
   /**
    * Consume a fetch item and try to download the target web page
-   * TODO : add FetchQueues.consumeFetchItems to make locking inside loop
    */
-  List<FetchItem> consumeFetchItems(String queueId, int number) {
-    List<FetchItem> fetchItems = Lists.newArrayList();
+  List<FetchTask> schedule(String queueId, int number) {
+    List<FetchTask> fetchTasks = Lists.newArrayList();
     if (number <= 0) {
       LOG.warn("Required no fetch item");
-      return fetchItems;
+      return fetchTasks;
     }
 
-    if (getPendingItemCount() * avePageLength.get() * 8 > 30 * this.getBandwidth()) {
+    if (fetchMonitor.pendingItemCount() * avePageLength.get() * 8 > 30 * this.getBandwidth()) {
       LOG.info("Bandwidth exhausted, slows down scheduling");
-      return fetchItems;
+      return fetchTasks;
     }
 
     while (number-- > 0) {
-      FetchItem fetchItem = fetchItemQueues.consume(queueId);
-      if (fetchItem != null) fetchItems.add(fetchItem);
+      FetchTask fetchTask = fetchMonitor.consume(queueId);
+      if (fetchTask != null) fetchTasks.add(fetchTask);
     }
 
-    if (!fetchItems.isEmpty()) {
+    if (!fetchTasks.isEmpty()) {
       lastTaskStartTime.set(System.currentTimeMillis());
     }
 
-    return fetchItems;
-  }
-
-  /**
-   * Multiple threaded
-   * */
-  FetchItem consumeFetchItem(String queueId) {
-    List<FetchItem> fetchItems = consumeFetchItems(queueId, 1);
-    return fetchItems.isEmpty() ? null : fetchItems.iterator().next();
-  }
-
-  /**
-   * Multiple threaded
-   * */
-  FetchResult consumeFetchResut() {
-    try {
-      return fetchResultQueue.remove(0);
-    } catch (IndexOutOfBoundsException e) {
-    }
-
-    return null;
-  }
-
-  /**
-   * Thread safe
-   * */
-  FetchItem getPendingFetchItem(String queueID, long itemID) {
-    return fetchItemQueues.getPendingTask(queueID, itemID);
+    return fetchTasks;
   }
 
   /**
    * Finish the fetch item anyway, even if it's failed to download the target page
    */
-  void finishFetchItem(FetchItem fetchItem) {
-    fetchItemQueues.finish(fetchItem);
+  void finishUnchecked(FetchTask fetchTask) {
+    fetchMonitor.finish(fetchTask);
     lastTaskFinishTime.set(System.currentTimeMillis());
   }
 
@@ -317,54 +283,91 @@ public class FetchManager extends Configured {
    *
    * Multiple threaded, non-synchronized class member variables are not allowed inside this method.
    */
-  void finishFetchItem(String queueID, long itemID, ProtocolOutput output) {
-    FetchItem fetchItem = fetchItemQueues.getPendingTask(queueID, itemID);
+  void finish(String queueID, int itemID, ProtocolOutput output) {
+    FetchTask fetchTask = fetchMonitor.getPendingTask(queueID, itemID);
 
-    if (fetchItem == null) {
-      LOG.error("Failed to finish fetch item {} - {}", queueID, itemID);
+    if (fetchTask == null) {
+      LOG.error("Failed to finish task [{} - {}]", queueID, itemID);
 
       return;
     }
 
     try {
-      doFinishFetchTask(fetchItem, output);
+      doFinishFetchTask(fetchTask, output);
     } catch (final Throwable t) {
-      LOG.error("Unexpected error for " + fetchItem.getUrl(), t);
+      LOG.error("Unexpected error for " + fetchTask.getUrl(), t);
 
-      fetchItemQueues.finish(fetchItem);
-      this.fetchErrors.incrementAndGet();
+      fetchMonitor.finish(fetchTask);
+      fetchErrors.incrementAndGet();
 
       try {
-        output(fetchItem, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
+        output(fetchTask, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
       } catch (IOException | InterruptedException e) {
         LOG.error("Unexpected fetcher exception {}", e);
       } finally {
-        fetchItemQueues.finish(fetchItem);
+        fetchMonitor.finish(fetchTask);
       }
     } finally {
       lastTaskFinishTime.set(System.currentTimeMillis());
     }
   }
 
-  void reviewPendingTasks(boolean force) {
-    fetchItemQueues.reviewPendingTasks(force);
+  /**
+   * Multiple threaded
+   * */
+  FetchResult pollFetchResut() {
+    return fetchResultQueue.remove();
   }
 
-  /** Clear all fetch item queues */
-  int clearReadyTasks() { return fetchItemQueues.clearReadyTasks(); }
+  boolean isFeederAlive() { return !feederThreads.isEmpty(); }
 
-  /** Clear slowest fetch queue */
-  int clearSlowestFetchQueue() {
-    return fetchItemQueues.clearSlowestQueue();
+  boolean isMissionComplete() {
+    return !isFeederAlive()
+        && fetchMonitor.readyItemCount() == 0
+        && fetchMonitor.pendingItemCount() == 0;
+  }
+
+  void cleanup() {
+    LOG.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    LOG.info(">>>>>>>>[Final Status]>>>>>>");
+
+    feederThreads.forEach(FeederThread::halt);
+    waitUtilEmpty(feederThreads, 10 * 1000);
+
+    activeFetchThreads.forEach(FetchThread::halt);
+    waitUtilEmpty(activeFetchThreads, 10 * 1000);
+
+    retiredFetchThreads.forEach(FetchThread::report);
+
+    if (JITIndexer != null) {
+      JITIndexer.cleanup();
+    }
+
+    LOG.info("[Final]" + context.getStatus());
+    fetchMonitor.report();
+    LOG.info("<<<<<[End Final Status]<<<<<");
+    LOG.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+
+    fetchMonitor.cleanup();
+  }
+
+  /**
+   * Collection must be thread safe
+   * */
+  private void waitUtilEmpty(Collection collection, long timeout) {
+    try {
+      while (!collection.isEmpty()) {
+        Thread.sleep(1000);
+      }
+    } catch (final Exception ignored) {}
   }
 
   /**
    * Wait for a while and report task status
    *
    * @param reportInterval Report interval
-   * @param context
    */
-  void waitAndReport(int reportInterval, Context context) throws IOException {
+  Status waitAndReport(int reportInterval) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
     long bytesLastSec = totalBytes.get();
@@ -374,11 +377,11 @@ public class FetchManager extends Configured {
     } catch (InterruptedException ignored) {
     }
 
-    pagesThroughputRate = (totalPages.get() - pagesLastSec) / reportInterval;
-    bytesThroughputRate = (totalBytes.get() - bytesLastSec) / reportInterval;
+    float pagesThroughputRate = (totalPages.get() - pagesLastSec) / reportInterval;
+    float bytesThroughputRate = (totalBytes.get() - bytesLastSec) / reportInterval;
 
-    int readyFetchItems = getReadyItemCount();
-    int pendingFetchItems = getPendingItemCount();
+    int readyFetchItems = fetchMonitor.readyItemCount();
+    int pendingFetchItems = fetchMonitor.pendingItemCount();
 
     counter.setValue(Counter.activeFetchThreadCount, activeFetchThreadCount.get());
     counter.setValue(Counter.waitingFetchThreadCount, idleFetchThreadCount.get());
@@ -387,10 +390,16 @@ public class FetchManager extends Configured {
     counter.setValue(Counter.pagesThroughput, Math.round(pagesThroughputRate));
     counter.setValue(Counter.bytesThroughput, Math.round(bytesThroughputRate));
 
-    reportAndLogStatus(context, pagesThroughputRate, bytesThroughputRate, readyFetchItems, pendingFetchItems);
+    String statusString = getStatusString(pagesThroughputRate, bytesThroughputRate, readyFetchItems, pendingFetchItems);
+
+    /** status string shows in yarn admin ui */
+    context.setStatus(statusString);
+    LOG.info(statusString);
+
+    return new Status(pagesThroughputRate, bytesThroughputRate, readyFetchItems, pendingFetchItems);
   }
 
-  private void reportAndLogStatus(Context context, float pagesThroughput,
+  private String getStatusString(float pagesThroughput,
                                   float bytesThroughput, int readyFetchItems, int pendingFetchItems) throws IOException {
     final DecimalFormat df = new DecimalFormat("0.0");
 
@@ -414,22 +423,19 @@ public class FetchManager extends Configured {
 
     status.append(readyFetchItems).append(" ready ");
     status.append(pendingFetchItems).append(" pending ");
-    status.append("URLs in ").append(getQueueCount()).append(" queues");
+    status.append("URLs in ").append(fetchMonitor.getQueueCount()).append(" queues");
 
-    String statusString = status.toString();
-    /** status string shows in yarn admin ui */
-    context.setStatus(statusString);
-    LOG.info(statusString);
+    return status.toString();
   }
 
-  void adjustFetchResourceByTargetBandwidth(QueueFeederThread queueFeederThread) {
+  void adjustFetchResourceByTargetBandwidth() {
     Configuration conf = getConf();
 
     int targetBandwidth = conf.getInt("fetcher.bandwidth.target", -1) * 1000;
-    int maxNumThreads = conf.getInt("fetcher.maxNum.threads", fetchThreadCount);
-    if (maxNumThreads < fetchThreadCount) {
-      LOG.info("fetcher.maxNum.threads can't be < than " + fetchThreadCount + " : using " + fetchThreadCount + " instead");
-      maxNumThreads = fetchThreadCount;
+    int maxNumThreads = conf.getInt("fetcher.maxNum.threads", initFetchThreadCount);
+    if (maxNumThreads < initFetchThreadCount) {
+      LOG.info("fetcher.maxNum.threads can't be < than " + initFetchThreadCount + " : using " + initFetchThreadCount + " instead");
+      maxNumThreads = initFetchThreadCount;
     }
 
     int bandwidthTargetCheckEveryNSecs = conf.getInt("fetcher.bandwidth.target.check.everyNSecs", 30);
@@ -461,7 +467,7 @@ public class FetchManager extends Configured {
         if (bpsSinceLastCheck < targetBandwidth && averageBdwPerThread > 0) {
           // check whether it is worth doing e.g. more queues than threads
 
-          if ((getQueueCount() * maxThreadsPerQueue) > activeFetchThreadCount.get()) {
+          if ((fetchMonitor.getQueueCount() * maxThreadsPerQueue) > activeFetchThreadCount.get()) {
             long remainingBdw = targetBandwidth - bpsSinceLastCheck;
             int additionalThreads = Math.round(remainingBdw / averageBdwPerThread);
             int availableThreads = maxNumThreads - activeFetchThreadCount.get();
@@ -475,7 +481,7 @@ public class FetchManager extends Configured {
                 + additionalThreads + " new threads");
             // activate new threads
 
-            startFetchThreads(queueFeederThread, additionalThreads, context);
+            startFetchThreads(additionalThreads, context);
           }
         } else if (bpsSinceLastCheck > targetBandwidth && averageBdwPerThread > 0) {
           // if the bandwidth we're using is greater then the expected
@@ -487,13 +493,13 @@ public class FetchManager extends Configured {
               + " kbps). \t=> excessThreads = " + excessThreads);
 
           // keep at least one
-          if (excessThreads >= fetchThreads.size()) {
+          if (excessThreads >= activeFetchThreads.size()) {
             excessThreads = 0;
           }
 
           // de-activates threads
           for (int i = 0; i < excessThreads; i++) {
-            FetchThread thread = fetchThreads.iterator().next();
+            FetchThread thread = activeFetchThreads.iterator().next();
             thread.halt();
           }
         }
@@ -501,63 +507,56 @@ public class FetchManager extends Configured {
     }
   }
 
-  /**
-   * Dump fetch items
-   */
-  void dumpFetchItems(int limit) {
-    fetchItemQueues.dump(limit);
-  }
-
-  /**
-   * Dump fetch items
-   */
-  void reportUnreachableHosts() {
-    fetchItemQueues.reportUnreachableHosts();
+  private void startFetchThreads(int threadCount, Context context) {
+    for (int i = 0; i < threadCount; i++) {
+      FetchThread fetchThread = new FetchThread(this, context);
+      fetchThread.start();
+    }
   }
 
   /**
    * Dump fetch threads
    * */
-  synchronized void dumpFetchThreads() {
-    for (FetchThread fetchThread : fetchThreads) {
-      if (fetchThread.isAlive()) {
-        StackTraceElement[] stack = fetchThread.getStackTrace();
-        StringBuilder sb = new StringBuilder();
-        sb.append(fetchThread.getName());
-        sb.append(" -> ");
-        sb.append(fetchThread.reprUrl());
-        sb.append(", Stack :\n");
-        for (StackTraceElement s : stack) {
-          sb.append(s.toString()).append('\n');
-        }
+  void dumpFetchThreads() {
+    LOG.debug("There are " + activeFetchThreads.size() + " active fetch threads and " + idleFetchThreads.size() + " idle ones");
 
-        LOG.debug(sb.toString());
+    activeFetchThreads.stream().filter(Thread::isAlive).forEach(fetchThread -> {
+      StackTraceElement[] stack = fetchThread.getStackTrace();
+      StringBuilder sb = new StringBuilder();
+      sb.append(fetchThread.getName());
+      sb.append(" -> ");
+      sb.append(fetchThread.reprUrl());
+      sb.append(", Stack :\n");
+      for (StackTraceElement s : stack) {
+        sb.append(s.toString()).append('\n');
       }
-    }
+
+      LOG.debug(sb.toString());
+    });
   }
 
-  private void doFinishFetchTask(FetchItem fetchItem, ProtocolOutput output) throws IOException, InterruptedException, URLFilterException {
+  private void doFinishFetchTask(FetchTask fetchTask, ProtocolOutput output) throws IOException, InterruptedException, URLFilterException {
     final ProtocolStatus status = output.getStatus();
     final Content content = output.getContent();
 
     // unblock queue
-    fetchItemQueues.finish(fetchItem);
+    fetchMonitor.finish(fetchTask);
 
     int length = 0;
     if (content != null && content.getContent() != null) {
       length = content.getContent().length;
     }
 
-    updateStatus(fetchItem.getUrl(), length);
+    updateStatus(fetchTask.getUrl(), length);
 
     switch (status.getCode()) {
       case ProtocolStatusCodes.WOULDBLOCK:
         // retry ?
-        fetchItemQueues.produce(fetchItem);
+        fetchMonitor.produce(fetchTask);
         break;
 
       case ProtocolStatusCodes.SUCCESS:        // got a page
-        output(fetchItem, content, status, CrawlStatus.STATUS_FETCHED);
+        output(fetchTask, content, status, CrawlStatus.STATUS_FETCHED);
         break;
 
       case ProtocolStatusCodes.MOVED:         // redirect
@@ -572,37 +571,37 @@ public class FetchManager extends Configured {
           temp = true;
         }
         final String newUrl = ProtocolStatusUtils.getMessage(status);
-        handleRedirect(fetchItem.getUrl(), newUrl, temp, FetcherJob.PROTOCOL_REDIR, fetchItem.getPage());
-        output(fetchItem, content, status, code);
+        handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage());
+        output(fetchTask, content, status, code);
         break;
 
       case ProtocolStatusCodes.CONNECTION_TIMED_OUT:
       case ProtocolStatusCodes.UNKNOWN_HOST:
-        String domain = URLUtil.getDomainName(fetchItem.getUrl());
-        fetchItemQueues.addUnreachableHost(domain);
-        output(fetchItem, null, status, CrawlStatus.STATUS_GONE);
+        String domain = URLUtil.getDomainName(fetchTask.getUrl());
+        fetchMonitor.addUnreachableHost(domain);
+        output(fetchTask, null, status, CrawlStatus.STATUS_GONE);
         break;
       case ProtocolStatusCodes.EXCEPTION:
-        logFetchFailure(fetchItem.getUrl(), ProtocolStatusUtils.getMessage(status));
+        logFetchFailure(ProtocolStatusUtils.getMessage(status));
 
       /* FALLTHROUGH */
       case ProtocolStatusCodes.RETRY:          // retry
       case ProtocolStatusCodes.BLOCKED:
-        output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
+        output(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
         break;
 
       case ProtocolStatusCodes.GONE:           // gone
       case ProtocolStatusCodes.NOTFOUND:
       case ProtocolStatusCodes.ACCESS_DENIED:
       case ProtocolStatusCodes.ROBOTS_DENIED:
-        output(fetchItem, null, status, CrawlStatus.STATUS_GONE);
+        output(fetchTask, null, status, CrawlStatus.STATUS_GONE);
         break;
       case ProtocolStatusCodes.NOTMODIFIED:
-        output(fetchItem, null, status, CrawlStatus.STATUS_NOTMODIFIED);
+        output(fetchTask, null, status, CrawlStatus.STATUS_NOTMODIFIED);
         break;
       default:
         LOG.warn("Unknown ProtocolStatus: " + status.getCode());
-        output(fetchItem, null, status, CrawlStatus.STATUS_RETRY);
+        output(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
     } // switch
   }
 
@@ -624,7 +623,7 @@ public class FetchManager extends Configured {
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
-    page.getMetadata().put(FetcherJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    page.getMetadata().put(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
     reprUrl = URLUtil.chooseRepr(reprUrl, newUrl, temp);
     if (reprUrl == null) {
       LOG.warn("reprUrl==null");
@@ -642,10 +641,10 @@ public class FetchManager extends Configured {
    * Multiple threaded
    */
   @SuppressWarnings("unchecked")
-  private void output(FetchItem fetchItem, Content content, ProtocolStatus pstatus, byte status)
+  private void output(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
-    String url = fetchItem.getUrl();
-    WebPage page = fetchItem.getPage();
+    String url = fetchTask.getUrl();
+    WebPage page = fetchTask.getPage();
 
     FetchUtil.setStatus(page, status, pstatus);
     FetchUtil.setContent(page, content);
@@ -662,8 +661,8 @@ public class FetchManager extends Configured {
 
         Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
         // JIT Index
-        if (indexManager != null && parseMark != null) {
-          indexManager.produce(fetchItem);
+        if (JITIndexer != null && parseMark != null) {
+          JITIndexer.produce(fetchTask);
         }
       }
     }
@@ -692,7 +691,7 @@ public class FetchManager extends Configured {
     totalBytes.addAndGet(bytesInPage);
   }
 
-  private void logFetchFailure(String url, String message) {
+  private void logFetchFailure(String message) {
     // LOG.warn("Failed to fetch " + url);
 
     if (!message.isEmpty()) {

@@ -19,11 +19,11 @@ package org.apache.nutch.service.impl;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.nutch.crawl.DbUpdaterJob;
-import org.apache.nutch.crawl.GeneratorJob;
-import org.apache.nutch.crawl.InjectorJob;
-import org.apache.nutch.fetcher.FetcherJob;
-import org.apache.nutch.indexer.IndexingJob;
+import org.apache.nutch.crawl.DbUpdateJob;
+import org.apache.nutch.crawl.GenerateJob;
+import org.apache.nutch.crawl.InjectJob;
+import org.apache.nutch.fetcher.FetchJob;
+import org.apache.nutch.indexer.IndexJob;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.mapreduce.WebTableReader;
 import org.apache.nutch.parse.ParserChecker;
@@ -37,12 +37,12 @@ public class JobFactory {
 
   static {
     typeToClass = Maps.newHashMap();
-    typeToClass.put(JobType.FETCH, FetcherJob.class);
-    typeToClass.put(JobType.GENERATE, GeneratorJob.class);
-    typeToClass.put(JobType.INDEX, IndexingJob.class);
-    typeToClass.put(JobType.INJECT, InjectorJob.class);
+    typeToClass.put(JobType.FETCH, FetchJob.class);
+    typeToClass.put(JobType.GENERATE, GenerateJob.class);
+    typeToClass.put(JobType.INDEX, IndexJob.class);
+    typeToClass.put(JobType.INJECT, InjectJob.class);
     typeToClass.put(JobType.PARSE, ParserJob.class);
-    typeToClass.put(JobType.UPDATEDB, DbUpdaterJob.class);
+    typeToClass.put(JobType.UPDATEDB, DbUpdateJob.class);
     typeToClass.put(JobType.READDB, WebTableReader.class);
     typeToClass.put(JobType.PARSECHECKER, ParserChecker.class);
   }

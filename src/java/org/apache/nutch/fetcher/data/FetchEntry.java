@@ -27,6 +27,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * Fetch Entry for MapReduce
+ * */
 public class FetchEntry extends Configured implements Writable {
 
   private String key;

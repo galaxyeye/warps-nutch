@@ -46,9 +46,9 @@ import java.util.Map;
 /**
  * Fetch job
  */
-public class FetcherJob extends NutchJob implements Tool {
+public class FetchJob extends NutchJob implements Tool {
 
-  public static final Logger LOG = LoggerFactory.getLogger(FetcherJob.class);
+  public static final Logger LOG = LoggerFactory.getLogger(FetchJob.class);
 
   public static final String PROTOCOL_REDIR = "protocol";
   public static final int PERM_REFRESH_TIME = 5;
@@ -68,11 +68,11 @@ public class FetcherJob extends NutchJob implements Tool {
   private int numTasks = 2;
   private String batchId = Nutch.ALL_BATCH_ID_STR;
 
-  public FetcherJob() {
+  public FetchJob() {
 
   }
 
-  public FetcherJob(Configuration conf) {
+  public FetchJob(Configuration conf) {
     setConf(conf);
   }
 
@@ -151,9 +151,9 @@ public class FetcherJob extends NutchJob implements Tool {
     Collection<WebPage.Field> fields = getFields(currentJob);
     MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, IntWritable.class,
-        FetchEntry.class, FetcherMapper.class, FetchEntryPartitioner.class,
+        FetchEntry.class, FetchMapper.class, FetchEntryPartitioner.class,
         batchIdFilter, false);
-    StorageUtils.initReducerJob(currentJob, FetcherReducer.class);
+    StorageUtils.initReducerJob(currentJob, FetchReducer.class);
 
     // or we can use "mapreduce.job.reduces" directly?
     currentJob.setNumReduceTasks(numTasks);
@@ -227,7 +227,7 @@ public class FetcherJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    String usage = "Usage: FetcherJob (<batchId> | -all) [-crawlId <id>] [-threads N] "
+    String usage = "Usage: FetchJob (<batchId> | -all) [-crawlId <id>] [-threads N] "
         + "\n \t \t  [-resume] [-numTasks N]\n"
         + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
@@ -315,7 +315,7 @@ public class FetcherJob extends NutchJob implements Tool {
       NutchServer.startInDaemonThread(conf);
     }
 
-    int res = ToolRunner.run(conf, new FetcherJob(), args);
+    int res = ToolRunner.run(conf, new FetchJob(), args);
     System.exit(res);
   }
 }
