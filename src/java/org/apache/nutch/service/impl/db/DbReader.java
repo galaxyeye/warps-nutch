@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.util.Set;
 
-/**
- * @deprecated use org.qiwur.scent.hbase instead
- * */
 public class DbReader {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);
@@ -47,7 +44,7 @@ public class DbReader {
     conf = new Configuration(conf);
     if (crawlId != null) {
       LOG.debug("Crawl Id : " + crawlId);
-      conf.set(Nutch.CRAWL_ID_KEY, crawlId);
+      conf.set(Nutch.PARAM_CRAWL_ID, crawlId);
     }
 
     try {

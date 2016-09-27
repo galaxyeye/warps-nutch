@@ -21,8 +21,9 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.nutch.crawl.GenerateJob.SelectorEntry;
-import org.apache.nutch.fetcher.data.FetchEntry;
+import org.apache.nutch.mapreduce.GenerateJob;
+import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
+import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.net.URLNormalizers;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.TableUtil;
@@ -119,7 +120,7 @@ public class URLPartitioner implements Configurable {
 
     @Override
     public int getPartition(SelectorEntry selectorEntry, WebPage page, int numReduces) {
-      return partitioner.getPartition(selectorEntry.url, numReduces);
+      return partitioner.getPartition(selectorEntry.getUrl(), numReduces);
     }
 
     @Override

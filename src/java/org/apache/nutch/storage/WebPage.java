@@ -154,8 +154,8 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase imp
   private java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> metadata;
   /** A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId. */
   private java.lang.CharSequence batchId;
-  /** Manual added to keep extracted document fields */
-  private java.util.Map<String, Object> docFields = new java.util.HashMap<>();
+  /** Manual added to keep extracted document fields, this field is non-persistentable */
+  private java.util.Map<String, Object> programVariables = new java.util.HashMap<>();
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call. 
@@ -797,21 +797,21 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase imp
     return isDirty(23);
   }
 
-  public java.util.Map<String, Object> getDocFields() { return docFields; }
+  public java.util.Map<String, Object> getProgramVariables() { return programVariables; }
 
-  public Object getDocField(String name) { return docFields.get(name); }
+  public Object getVariable(String name) { return programVariables.get(name); }
 
-  public String getDocFieldAsString(String name) {
-    Object value = docFields.get(name);
+  public String getVariableAsString(String name) {
+    Object value = programVariables.get(name);
     return value == null ? null : value.toString();
   }
 
-  public String getDocFieldAsString(String name, String defaultValue) {
-    Object value = docFields.get(name);
+  public String getVariableAsString(String name, String defaultValue) {
+    Object value = programVariables.get(name);
     return value == null ? defaultValue : value.toString();
   }
 
-  public void putDocField(String name, Object value) { docFields.put(name, value); }
+  public void setVariable(String name, Object value) { programVariables.put(name, value); }
 
   /** Creates a new WebPage RecordBuilder */
   public static org.apache.nutch.storage.WebPage.Builder newBuilder() {

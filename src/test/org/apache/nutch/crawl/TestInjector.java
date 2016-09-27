@@ -19,6 +19,7 @@ package org.apache.nutch.crawl;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.mapreduce.InjectJob;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;

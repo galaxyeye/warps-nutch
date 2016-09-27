@@ -69,7 +69,7 @@ public class JobManagerImpl implements JobManager {
     conf = fixCrawlFilterRules(conf);
 
     if (jobConfig.getCrawlId() != null) {
-      conf.set(Nutch.CRAWL_ID_KEY, jobConfig.getCrawlId());
+      conf.set(Nutch.PARAM_CRAWL_ID, jobConfig.getCrawlId());
     }
 
     NutchJob nutchJob = createNutchJob(jobConfig, conf);

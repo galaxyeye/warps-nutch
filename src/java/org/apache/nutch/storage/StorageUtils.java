@@ -56,7 +56,7 @@ public class StorageUtils {
       Configuration conf, Class<K> keyClass, Class<V> persistentClass)
       throws ClassNotFoundException, GoraException {
 
-    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "");
+    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID, "");
     String schemaPrefix = "";
     if (!crawlId.isEmpty()) {
       schemaPrefix = crawlId + "_";

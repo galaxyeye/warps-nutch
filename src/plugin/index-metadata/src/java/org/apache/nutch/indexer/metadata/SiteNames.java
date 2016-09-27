@@ -33,8 +33,7 @@ public class SiteNames implements Configurable {
   }
 
   public String getSiteName(String domain) {
-    String name = siteNames.get(domain);
-    return name == null ? "" : name;
+    return siteNames.get(domain);
   }
 
   public int count() { return siteNames.size(); }

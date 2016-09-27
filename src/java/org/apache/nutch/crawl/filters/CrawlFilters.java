@@ -21,18 +21,19 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.filters.CrawlFilter.PageType;
 import org.apache.nutch.net.RegexURLFilter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -216,6 +217,12 @@ public class CrawlFilters extends Configured {
   public boolean isDetailUrl(String url) {
     if (url == null) return false;
 
+    PageType pageType = sniffPageCategory(url);
+
+    if (pageType == PageType.DETAIL) {
+      return true;
+    }
+
     for (CrawlFilter filter : crawlFilters) {
       if (filter.isDetailUrl(url)) {
         return true;
@@ -228,6 +235,12 @@ public class CrawlFilters extends Configured {
   public boolean isIndexUrl(String url) {
     if (url == null) return false;
 
+    PageType pageType = sniffPageCategory(url);
+
+    if (pageType == PageType.INDEX) {
+      return true;
+    }
+
     for (CrawlFilter filter : crawlFilters) {
       if (filter.isIndexUrl(url)) {
         return true;
@@ -237,16 +250,18 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
-  public PageType getPageType(String url) {
-    if (isIndexUrl(url)) {
+  public PageType sniffPageCategory(String url) {
+    String category = StringUtil.sniffPageCategory(url);
+
+    if (category.equalsIgnoreCase("index")) {
       return PageType.INDEX;
     }
-    else if (isDetailUrl(url)) {
+
+    if (category.equalsIgnoreCase("detail")) {
       return PageType.DETAIL;
     }
-    else {
-      return PageType.ANY;
-    }
+
+    return PageType.ANY;
   }
 
   public List<CrawlFilter> getCrawlFilters() {
@@ -281,8 +296,8 @@ public class CrawlFilters extends Configured {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = NutchConfiguration.create();
-    String json = FileUtils.readFileToString(new File("/tmp/crawl_filters.json"));
-    conf.set(CRAWL_FILTER_RULES, json);
+    byte[] json = Files.readAllBytes(Paths.get("/tmp/crawl_filters.json"));
+    conf.set(CRAWL_FILTER_RULES, new String(json));
 
     String url = "http://item.yhd.com/item/12342134134.html";
 

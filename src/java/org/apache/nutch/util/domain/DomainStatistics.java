@@ -91,7 +91,7 @@ public class DomainStatistics extends Configured implements Tool {
         numOfReducers = Integer.parseInt(args[i + 1]);
         i++;
       } else if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[i + 1]);
+        getConf().set(Nutch.PARAM_CRAWL_ID, args[i + 1]);
         i++;
       }
     }

@@ -22,7 +22,6 @@ import com.kohlschutter.boilerpipe.document.TextDocument;
 import com.kohlschutter.boilerpipe.extractors.ChineseNewsExtractor;
 import com.kohlschutter.boilerpipe.sax.BoilerpipeSAXInput;
 import org.apache.avro.util.Utf8;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.crawl.filters.CrawlFilters;
@@ -33,7 +32,7 @@ import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -88,7 +89,7 @@ public class HtmlParser implements Parser {
     this.regexExtractor = new RegexExtractor(conf);
     this.encodingDetector = new EncodingDetector(conf);
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "className", this.getClass().getSimpleName(),
         "parserImpl", parserImpl,
         "defaultCharEncoding", defaultCharEncoding,
@@ -106,7 +107,6 @@ public class HtmlParser implements Parser {
 
     InputSource input = getContentAsInputSource(page);
     String encoding = encodingDetector.sniffEncoding(page);
-    // System.out.println("******************************" + encoding + "**********************");
     setEncoding(page, encoding);
     input.setEncoding(encoding);
     docRoot = doParse(input);
@@ -127,7 +127,7 @@ public class HtmlParser implements Parser {
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
-    String textContent = page.getDocFieldAsString(Nutch.DOC_FIELD_TEXT_CONTENT);
+    String textContent = page.getVariableAsString(Nutch.DOC_FIELD_TEXT_CONTENT);
 
     getOutlinks(url, baseURL, textContent);
 
@@ -207,7 +207,7 @@ public class HtmlParser implements Parser {
   }
 
   private void setEncoding(WebPage page, String encoding) {
-    page.putDocField("encoding", encoding);
+    page.setVariable("encoding", encoding);
     TableUtil.putMetadata(page, Nutch.ORIGINAL_CHAR_ENCODING, encoding);
     TableUtil.putMetadata(page, Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
@@ -243,10 +243,10 @@ public class HtmlParser implements Parser {
       extractor.process(doc);
 
       page.setTitle(doc.getPageTitle());
-      page.putDocField(Nutch.DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
-      page.putDocField(Nutch.DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+      page.setVariable(Nutch.DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
+      page.setVariable(Nutch.DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
 
-      doc.getFields().entrySet().stream().forEach(entry -> page.putDocField(entry.getKey(), entry.getValue()));
+      doc.getFields().entrySet().stream().forEach(entry -> page.setVariable(entry.getKey(), entry.getValue()));
     } catch (BoilerpipeProcessingException |SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
     }
@@ -335,7 +335,8 @@ public class HtmlParser implements Parser {
     in.readFully(bytes);
 
     Configuration conf = NutchConfiguration.create();
-    String rules = FileUtils.readFileToString(new File(args[1]));
+
+    String rules = new String(Files.readAllBytes(Paths.get(args[1])));
     conf.set(CrawlFilters.CRAWL_FILTER_RULES, rules);
 
     HtmlParser parser = new HtmlParser();
@@ -345,6 +346,7 @@ public class HtmlParser implements Parser {
     page.setContent(ByteBuffer.wrap(bytes));
     page.setContentType(new Utf8("text/html"));
     Parse parse = parser.getParse(url, page);
+
     System.out.println("title: " + parse.getTitle());
     System.out.println("text: " + parse.getText());
     System.out.println("outlinks: " + Arrays.toString(parse.getOutlinks()));

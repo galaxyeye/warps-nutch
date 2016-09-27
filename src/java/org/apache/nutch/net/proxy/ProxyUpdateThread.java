@@ -1,12 +1,11 @@
 package org.apache.nutch.net.proxy;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.util.NetUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 
 public class ProxyUpdateThread extends Thread {
@@ -72,10 +71,11 @@ public class ProxyUpdateThread extends Thread {
     String url = "http://" + host + ":" + port + "/proxy/download";
 
     try {
-      String hostname = FileUtils.readFileToString(new File("/etc/hostname")).trim();
+      String hostname = NetUtil.getHostname();
 
       // update only if this is not the master
       if (!hostname.equals(host)) {
+        // TODO : avoid using system command
         String cmd = "wget " + url + " -O " + ProxyPool.ProxyListFile + " > /dev/null 2>&1";
         Process p = Runtime.getRuntime().exec(cmd);
       }

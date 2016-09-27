@@ -6,6 +6,22 @@
       <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/protocol/Content.java" />
       <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/host/HostInjectorJob.java" />
       <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/NutchCounter.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/protocol/ProtocolOutput.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/service/impl/JobManagerImpl.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/ParserMapper.java" />
+      <file url="file://$PROJECT_DIR$/src/plugin/parse-html/src/java/org/apache/nutch/parse/html/HtmlParser.java" />
+      <file url="file://$PROJECT_DIR$/src/plugin/parse-html/src/java/org/apache/nutch/parse/html/DOMContentUtils.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/samples/SimpleParser.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/FetchUtil.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
+      <file url="file://$PROJECT_DIR$/src/plugin/parse-tika/src/java/org/apache/nutch/parse/tika/TikaParser.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/filters/CrawlFilter.java" />
+      <file url="file://$PROJECT_DIR$/src/java/org/apache/nutch/util/NetUtil.java" />
+      <file url="file://$PROJECT_DIR$/src/plugin/lib-http/src/java/org/apache/nutch/protocol/http/api/HttpBase.java" />
+      <file url="file://$PROJECT_DIR$/src/plugin/index-metadata/src/java/org/apache/nutch/indexer/metadata/SiteNames.java" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>

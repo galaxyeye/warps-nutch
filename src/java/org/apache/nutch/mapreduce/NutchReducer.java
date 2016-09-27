@@ -19,7 +19,8 @@ package org.apache.nutch.mapreduce;
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.StringUtil;
+import org.apache.hadoop.util.StringUtils;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
     counter = new NutchCounter(context);
     reporter = new NutchReporter(counter);
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "---- reducer setup ", " ----",
         "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),
@@ -59,7 +60,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
 
       doRun(context);
     } catch (Throwable e) {
-      LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error(StringUtils.stringifyException(e));
     }
     finally {
       cleanup(context);
@@ -76,7 +77,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
   protected void cleanup(Context context) {
     reporter.stopReporter();
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "---- reducer cleanup ", " ----",
         "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),

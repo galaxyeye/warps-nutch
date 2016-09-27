@@ -140,15 +140,9 @@ public class DomainURLFilter implements URLFilter {
     }
 
     if (attributeFile != null) {
-      if (LOG.isInfoEnabled()) {
-        LOG.info("Attribute \"file\" is defined for plugin " + pluginName
-            + " as " + attributeFile);
-      }
+      LOG.info("Attribute \"file\" is defined for plugin " + pluginName + " as " + attributeFile);
     } else {
-      if (LOG.isWarnEnabled()) {
-        LOG.warn("Attribute \"file\" is not defined in plugin.xml for plugin "
-            + pluginName);
-      }
+      LOG.warn("Attribute \"file\" is not defined in plugin.xml for plugin " + pluginName);
     }
 
     // domain file and attribute "file" take precedence if defined

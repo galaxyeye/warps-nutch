@@ -23,6 +23,7 @@ import org.apache.nutch.net.protocols.HttpDateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -60,15 +61,6 @@ public class TimingUtil {
   public static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.hhmmss");
 
-  public static int MILLIS = 1;
-  public static int SECOND = 1000 * MILLIS;
-  public static int MINUTE = 60 * SECOND;
-  public static int HOUR = 60 * MINUTE;
-  public static int DAY = 24 * HOUR;
-  public static int WEEK = 7 * DAY;
-  public static int MONTH = 30 * DAY;
-  public static int YEAR = 365 * DAY;
-
   public static long[] TIME_FACTOR = { 60 * 60 * 1000, 60 * 1000, 1000 };
 
   public static String format(long time) {
@@ -81,6 +73,14 @@ public class TimingUtil {
 
   public static String now() {
     return DateFormat.format(System.currentTimeMillis());
+  }
+
+  public static String solrCompatibleFormat(long time) {
+    return DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
+  }
+
+  public static String solrCompatibleFormat(Date date) {
+    return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
   }
 
   public static String now(String format) {

@@ -28,6 +28,10 @@ public interface Nutch {
 
   ByteBuffer YES_VAL = ByteBuffer.wrap(new byte[] { 'y' });
 
+  String YES_STRING = "y";
+
+  Utf8 YES_UTF8 = new Utf8(YES_STRING);
+
   String ORIGINAL_CHAR_ENCODING = "OriginalCharEncoding";
 
   String CHAR_ENCODING_FOR_CONVERSION = "CharEncodingForConversion";
@@ -37,10 +41,6 @@ public interface Nutch {
   String BATCH_NAME_KEY = "nutch.batch.name";
 
   String SCORE_KEY = "nutch.crawl.score";
-
-  String GENERATE_TIME_KEY = "_ngt_";
-
-  Text WRITABLE_GENERATE_TIME_KEY = new Text(GENERATE_TIME_KEY);
 
   String PROTO_STATUS_KEY = "_pst_";
 
@@ -75,11 +75,12 @@ public interface Nutch {
 
   Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
 
-  String CRAWL_ID_KEY = "storage.crawl.id";
-
-  String FETCH_MODE_KEY = "fetcher.fetch.mode";
-
   Utf8 DISTANCE = new Utf8("dist");
+
+  int FETCH_PRIORITY_SEED = 1;
+  int FETCH_PRIORITY_INDEX_PAGE = 100;
+  int FETCH_PRIORITY_DEFAULT = 1000;
+  int FETCH_PRIORITY_DETAIL_PAGE = 1000;
 
   /**
    * All arguments from command line
@@ -117,7 +118,7 @@ public interface Nutch {
   String ARG_LIMIT = "limit";
 
   /**
-   * Injector Relative Argments
+   * Injector Relative
    * */
   /** Whitespace-separated list of seed URLs. */
   String ARG_SEEDLIST = "seed";
@@ -125,13 +126,13 @@ public interface Nutch {
   String ARG_SEEDDIR = "seedDir";
 
   /**
-   * SimpleFetcher Relative Argments
+   * Fetcher Relative
    * */
   /** Fetch mode. */
   String ARG_FETCH_MODE = "fetchMode";
 
   /**
-   * Generator Relative Argments
+   * Generator Relative
    * */
   /** Generate topN scoring URLs. */
   String ARG_TOPN = "topN";
@@ -142,22 +143,13 @@ public interface Nutch {
   /** Index immediately once the content is fetched. */
   String ARG_INDEX = "index";
   /** Solr URL. */
-  String ARG_SOLR = "solr";
+  String ARG_SOLR_URL = "solrUrl";
   /** ZooKeeper. */
   String ARG_ZK = "zk";
   /** Solr Collection. */
   String ARG_COLLECTION = "collection";
   /** Reindex. */
   String ARG_REINDEX = "reindex";
-
-  /**
-   * Indexing
-   * */
-  String INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
-  String SOLR_PREFIX = "solr.";
-  String SOLR_SERVER_URL = SOLR_PREFIX + "server.url";
-  String SOLR_ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
-  String SOLR_COLLECTION = SOLR_PREFIX + "collection";
 
   /**
    * Status / result message.
@@ -172,9 +164,9 @@ public interface Nutch {
   /** Counters. */
   String STAT_COUNTERS = "counters";
 
-  String COUNTER_GROUP_STATUS = "Runtime Status";
+  String STAT_RUNTIME_STATUS = "Runtime Status";
 
-  String INFECTED_ROWS = "injectedRows";
+  String STAT_INFECTED_ROWS = "injectedRows";
 
   /**
    * UI
@@ -182,26 +174,58 @@ public interface Nutch {
   String UI_CRAWL_ID = "qiwu.ui.crawl.id";
 
   /**
-   * Generator
+   * Parameters
    * */
-  String GENERATOR_GENERATE_TIME = "generate.generate.time";
-  String GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
-  String GENERATOR_MIN_SCORE = "generate.min.score";
-  String GENERATOR_FILTER = "generate.filter";
-  String GENERATOR_NORMALISE = "generate.normalise";
+  String PARAM_NUTCH_TMP_DIR = "nutch.tmp.dir";
+  String PARAM_NUTCH_OUTPUT_DIR = "nutch.output.dir";
+  String PARAM_CRAWL_ID = "storage.crawl.id";
+  String PARAM_FETCH_MODE = "fetcher.fetch.mode";
+  String PARAM_FETCH_PRIORITY = "fetcher.fetch.priority";
+  String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
+  String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
+  String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
+  String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
+  String PARAM_NUTCH_UNREACHABLE_HOSTS_FILE = "nutch.unreachable.hosts.file";
+
+  /**
+   * Fetch parameters
+   * */
+  String PARAM_FETCH_MAPPER_LIMIT = "fetch.mapper.limit";
+  String PARAM_RESUME = "fetch.job.resume";
+  String PARAM_PARSE = "fetcher.parse";
+  String PARAM_THREADS = "fetcher.threads.fetch";
+
+  /**
+   * Dbupdate parameters
+   * */
+  String PARAM_DBUPDATE_JUST_IN_TIME = "fetcher.dbupdate.just.in.time";
+
+  /**
+   * Indexing parameters
+   * */
+  String PARAM_INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
+  String PARAM_SOLR_SERVER_URL = "solr.server.url";
+  String PARAM_SOLR_ZK = "solr.zookeeper.hosts";
+  String PARAM_SOLR_COLLECTION = "solr.collection";
+
+  /**
+   * Generator parameters
+   * */
+  String PARAM_GENERATE_TIME = "generate.generate.time";
+  String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
+  String PARAM_GENERATOR_MIN_SCORE = "generate.min.score";
+  String PARAM_GENERATE_FILTER = "generate.filter";
+  String PARAM_GENERATE_NORMALISE = "generate.normalise";
   // The maximum number of urls in a single fetchlist
-  String GENERATOR_MAX_COUNT = "generate.max.count";
-  String GENERATOR_MAX_DISTANCE = "generate.max.distance";
-  String GENERATOR_COUNT_MODE = "generate.count.mode";
-  String GENERATOR_COUNT_VALUE_DOMAIN = "domain";
-  String GENERATOR_COUNT_VALUE_HOST = "host";
-  String GENERATOR_COUNT_VALUE_IP = "ip";
-  String GENERATOR_TOP_N = "generate.topN";
-  String GENERATOR_CUR_TIME = "generate.curr.time";
-  String GENERATOR_DELAY = "crawl.gen.delay";
-  String GENERATOR_RANDOM_SEED = "generate.partition.seed";
-  String GENERATOR_BATCH_ID = "generate.batch.id";
-  String GENERATOR_IGNORE_GENERATED = "generator.ignore.generated";
+  String PARAM_GENERATOR_MAX_COUNT = "generate.max.count";
+  String PARAM_GENERATOR_MAX_DISTANCE = "generate.max.distance";
+  String PARAM_GENERATOR_COUNT_MODE = "generate.count.mode";
+  String PARAM_GENERATOR_TOP_N = "generate.topN";
+  String PARAM_GENERATOR_CUR_TIME = "generate.curr.time";
+  String PARAM_GENERATOR_DELAY = "crawl.gen.delay";
+  String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
+  String PARAM_GENERATOR_BATCH_ID = "generate.batch.id";
+  String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
 
   /**
    * Document fields
@@ -213,11 +237,27 @@ public interface Nutch {
   String DOC_FIELD_PAGE_CATEGORY = "page_category";
 
   /**
+   * Program keys
+   * */
+  String GENERATE_TIME_KEY = "_ngt_";
+  Text WRITABLE_GENERATE_TIME_KEY = new Text(GENERATE_TIME_KEY);
+
+  /**
+   * Variable values
+   * */
+  String GENERATE_COUNT_VALUE_DOMAIN = "domain";
+  String GENERATE_COUNT_VALUE_HOST = "host";
+  String GENERATE_COUNT_VALUE_IP = "ip";
+
+  /**
    * Master service
    * */
   String DEFAULT_MASTER_HOSTNAME = "master";
   int DEFAULT_MASTER_PORT = 8182;
 
-  String NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
-  String NUTCH_LOCAL_COMMAND_FILE = NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
+  String PATH_NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
+  String PATH_NUTCH_OUTPUT_DIR = PATH_NUTCH_TMP_DIR;
+  String PATH_UNREACHABLE_HOSTS = PATH_NUTCH_OUTPUT_DIR + "/unreachable-hosts.txt";
+  String PATH_LOCAL_COMMAND = PATH_NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
+  String PATH_LAST_BATCH_ID = PATH_NUTCH_TMP_DIR + "/last-batch-id";
 }

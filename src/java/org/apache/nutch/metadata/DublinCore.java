@@ -34,7 +34,7 @@ public interface DublinCore {
    * controlled vocabulary (for example, the list of Internet Media Types [MIME]
    * defining computer media formats).
    */
-  public static final String FORMAT = "format";
+  String FORMAT = "format";
 
   /**
    * Recommended best practice is to identify the resource by means of a string
@@ -43,12 +43,12 @@ public interface DublinCore {
    * (including the Uniform Resource Locator (URL)), the Digital Object
    * Identifier (DOI) and the International Standard Book Number (ISBN).
    */
-  public static final String IDENTIFIER = "identifier";
+  String IDENTIFIER = "identifier";
 
   /**
    * Date on which the resource was changed.
    */
-  public static final String MODIFIED = "modified";
+  String MODIFIED = "modified";
 
   /**
    * An entity responsible for making contributions to the content of the
@@ -56,7 +56,7 @@ public interface DublinCore {
    * service. Typically, the name of a Contributor should be used to indicate
    * the entity.
    */
-  public static final String CONTRIBUTOR = "contributor";
+  String CONTRIBUTOR = "contributor";
 
   /**
    * The extent or scope of the content of the resource. Coverage will typically
@@ -68,14 +68,14 @@ public interface DublinCore {
    * periods be used in preference to numeric identifiers such as sets of
    * coordinates or date ranges.
    */
-  public static final String COVERAGE = "coverage";
+  String COVERAGE = "coverage";
 
   /**
    * An entity primarily responsible for making the content of the resource.
    * Examples of a Creator include a person, an organisation, or a service.
    * Typically, the name of a Creator should be used to indicate the entity.
    */
-  public static final String CREATOR = "creator";
+  String CREATOR = "creator";
 
   /**
    * A date associated with an event in the life cycle of the resource.
@@ -83,14 +83,14 @@ public interface DublinCore {
    * resource. Recommended best practice for encoding the date value is defined
    * in a profile of ISO 8601 [W3CDTF] and follows the YYYY-MM-DD format.
    */
-  public static final String DATE = "date";
+  String DATE = "date";
 
   /**
    * An account of the content of the resource. Description may include but is
    * not limited to: an abstract, table of contents, reference to a graphical
    * representation of content or a free-text account of the content.
    */
-  public static final String DESCRIPTION = "description";
+  String DESCRIPTION = "description";
 
   /**
    * A language of the intellectual content of the resource. Recommended best
@@ -99,21 +99,21 @@ public interface DublinCore {
    * subtags. Examples include "en" or "eng" for English, "akk" for Akkadian,
    * and "en-GB" for English used in the United Kingdom.
    */
-  public static final String LANGUAGE = "language";
+  String LANGUAGE = "language";
 
   /**
    * An entity responsible for making the resource available. Examples of a
    * Publisher include a person, an organisation, or a service. Typically, the
    * name of a Publisher should be used to indicate the entity.
    */
-  public static final String PUBLISHER = "publisher";
+  String PUBLISHER = "publisher";
 
   /**
    * A reference to a related resource. Recommended best practice is to
    * reference the resource by means of a string or number conforming to a
    * formal identification system.
    */
-  public static final String RELATION = "relation";
+  String RELATION = "relation";
 
   /**
    * Information about rights held in and over the resource. Typically, a Rights
@@ -124,7 +124,7 @@ public interface DublinCore {
    * made about the status of these and other rights with respect to the
    * resource.
    */
-  public static final String RIGHTS = "rights";
+  String RIGHTS = "rights";
 
   /**
    * A reference to a resource from which the present resource is derived. The
@@ -132,7 +132,7 @@ public interface DublinCore {
    * part. Recommended best practice is to reference the resource by means of a
    * string or number conforming to a formal identification system.
    */
-  public static final String SOURCE = "source";
+  String SOURCE = "source";
 
   /**
    * The topic of the content of the resource. Typically, a Subject will be
@@ -140,13 +140,13 @@ public interface DublinCore {
    * topic of the resource. Recommended best practice is to select a value from
    * a controlled vocabulary or formal classification scheme.
    */
-  public static final String SUBJECT = "subject";
+  String SUBJECT = "subject";
 
   /**
    * A name given to the resource. Typically, a Title will be a name by which
    * the resource is formally known.
    */
-  public static final String TITLE = "title";
+  String TITLE = "title";
 
   /**
    * The nature or genre of the content of the resource. Type includes terms
@@ -156,6 +156,5 @@ public interface DublinCore {
    * the physical or digital manifestation of the resource, use the Format
    * element.
    */
-  public static final String TYPE = "type";
-
+  String TYPE = "type";
 }

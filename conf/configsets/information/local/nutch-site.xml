@@ -34,7 +34,7 @@
   <!-- fetcher -->
   <property>
     <name>fetcher.fetch.mode</name>
-    <value>native</value>
+    <value>NATIVE</value>
     <description>native, proxy and crowdsourcing</description>
   </property>
 
@@ -119,8 +119,8 @@
   </property>
 
   <property>
-    <name>mapred.task.timeout.mins</name>
-    <value>10</value>
+    <name>mapred.task.timeout</name>
+    <value>10m</value>
     <description>fetch thread will exit if no any fetch item for
       mapred.task.timeout minutes</description>
   </property>
@@ -190,7 +190,7 @@
 
   <property>
     <name>solr.commit.size</name>
-    <value>100</value>
+    <value>500</value>
     <description>solr collection</description>
   </property>
 

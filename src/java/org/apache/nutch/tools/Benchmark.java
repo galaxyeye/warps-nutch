@@ -23,15 +23,15 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.crawl.DbUpdateJob;
-import org.apache.nutch.crawl.GenerateJob;
-import org.apache.nutch.crawl.InjectJob;
-import org.apache.nutch.fetcher.FetchJob;
-import org.apache.nutch.fetcher.FetchMode;
-import org.apache.nutch.mapreduce.NutchUtil;
+import org.apache.nutch.mapreduce.DbUpdateJob;
+import org.apache.nutch.mapreduce.GenerateJob;
+import org.apache.nutch.mapreduce.InjectJob;
+import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.fetch.FetchMode;
+import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.mapreduce.WebTableReader;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.parse.ParserJob;
+import org.apache.nutch.mapreduce.ParserJob;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,7 +152,7 @@ public class Benchmark extends Configured implements Tool {
     int maxPerHost = Integer.MAX_VALUE;
     for (int i = 0; i < args.length; i++) {
       if (args[i].equals("-crawlId")) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+        getConf().set(Nutch.PARAM_CRAWL_ID, args[++i]);
       } else if (args[i].equals("-seeds")) {
         seeds = Integer.parseInt(args[++i]);
       } else if (args[i].equals("-threads")) {
@@ -185,8 +185,8 @@ public class Benchmark extends Configured implements Tool {
       conf.set("plugin.includes", plugins);
     }
 
-    conf.setInt(Nutch.GENERATOR_MAX_COUNT, maxPerHost);
-    conf.set(Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST);    
+    conf.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, maxPerHost);
+    conf.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
   }
 
   public BenchmarkResults benchmark(int seeds, int depth, int threads,
@@ -196,7 +196,7 @@ public class Benchmark extends Configured implements Tool {
     Job job = Job.getInstance(getConf());
 
     Configuration conf = job.getConfiguration();
-    String crawlId = conf.get(Nutch.CRAWL_ID_KEY, "test");
+    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID, "test");
 
     FileSystem fs = FileSystem.get(conf);
     Path dir = new Path(getConf().get("hadoop.tmp.dir"), "bench-"
@@ -247,7 +247,7 @@ public class Benchmark extends Configured implements Tool {
       boolean isParsing = getConf().getBoolean("fetcher.parse", false);
       start = System.currentTimeMillis();
 
-      fetcher.fetch("", FetchMode.NATIVE.value(), batchId, threads, false, -1); // fetch it
+      fetcher.fetch("", FetchMode.NATIVE.name(), batchId, threads, false, -1); // fetch it
       delta = System.currentTimeMillis() - start;
       res.addTiming("fetch", i + "", delta);
       if (!isParsing) {

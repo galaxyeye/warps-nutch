@@ -92,7 +92,7 @@ if [ "$NUTCH_IDENT_STRING" = "" ]; then
 fi
 
 # get tmp directory
-if [ "$NUTCH_TMP_DIR" = "" ]; then
+if [ "$PATH_NUTCH_TMP_DIR" = "" ]; then
   export NUTCH_TMP_DIR="/tmp/nutch-$USER"
 fi
 mkdir -p "$NUTCH_TMP_DIR"

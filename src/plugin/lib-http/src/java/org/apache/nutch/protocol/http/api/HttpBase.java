@@ -23,8 +23,9 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.fetcher.FetchMode;
+import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.net.proxy.ProxyPool;
@@ -32,10 +33,7 @@ import org.apache.nutch.net.proxy.ProxyPoolFactory;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.DeflateUtils;
-import org.apache.nutch.util.GZIPUtils;
-import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,10 +137,10 @@ public abstract class HttpBase implements Protocol {
   // Inherited Javadoc
   public void setConf(Configuration conf) {
     this.conf = conf;
-    this.fetchMode = FetchMode.fromString(conf.get("fetcher.fetch.mode", "native"));
+    this.fetchMode = conf.getEnum(Nutch.PARAM_FETCH_MODE, FetchMode.NATIVE);
     this.proxyHost = conf.get("http.proxy.host");
     this.proxyPort = conf.getInt("http.proxy.port", 8080);
-    this.useProxyPool = FetchMode.PROXY.equals(conf.get("fetcher.fetch.mode"));
+    this.useProxyPool = (FetchMode.PROXY == this.fetchMode);
     if (this.useProxyPool) {
       this.proxyPool = new ProxyPoolFactory(conf).getProxyPool();
     }
@@ -211,7 +209,7 @@ public abstract class HttpBase implements Protocol {
     tlsPreferredProtocols = new HashSet<>(Arrays.asList(protocols));
     tlsPreferredCipherSuites = new HashSet<>(Arrays.asList(ciphers));
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "fetchMode", fetchMode,
         "proxyHost", proxyHost,
         "proxyPort", proxyPort,

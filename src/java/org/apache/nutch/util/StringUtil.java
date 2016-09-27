@@ -22,12 +22,7 @@ import org.apache.commons.lang3.Validate;
 
 import java.awt.event.KeyEvent;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,6 +49,8 @@ public final class StringUtil {
   public static final String[] padding = { "", " ", "  ", "   ", "    ", "     ", "      ", "       ", "        ",
       "         ", "          " };
 
+  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
+
   public static final Comparator<String> LongerFirstComparator = new Comparator<String>() {
     public int compare(String s, String s2) {
       int result = Integer.compare(s2.length(), s.length());
@@ -68,45 +65,6 @@ public final class StringUtil {
       return LongerFirstComparator.compare(s2, s);
     }
   };
-
-  /**
-   * Join a collection of strings by a seperator
-   * 
-   * @param strings
-   *          collection of string objects
-   * @param sep
-   *          string to place between strings
-   * @return joined string
-   */
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static String join(Collection strings, String sep) {
-    return join(strings.iterator(), sep);
-  }
-
-  /**
-   * Join a collection of strings by a seperator
-   * 
-   * @param strings
-   *          iterator of string objects
-   * @param sep
-   *          string to place between strings
-   * @return joined string
-   */
-  public static String join(Iterator<String> strings, String sep) {
-    if (!strings.hasNext())
-      return "";
-
-    String start = strings.next().toString();
-    if (!strings.hasNext()) // only one, avoid builder
-      return start;
-
-    StringBuilder sb = new StringBuilder(64).append(start);
-    while (strings.hasNext()) {
-      sb.append(sep);
-      sb.append(strings.next());
-    }
-    return sb.toString();
-  }
 
   /**
    * Returns space padding
@@ -716,7 +674,7 @@ public final class StringUtil {
     return org.apache.hadoop.util.StringUtils.stringifyException(e);
   }
 
-  private static int charToNibble(char c) {
+  public static int charToNibble(char c) {
     if (c >= '0' && c <= '9') {
       return c - '0';
     } else if (c >= 'a' && c <= 'f') {
@@ -728,86 +686,38 @@ public final class StringUtil {
     }
   }
 
+  public static String sniffPageCategory(String url) {
+    String pageCategory = "";
 
-  /**
-   * Convert K/V pairs array into a map.
-   *
-   * @param params A K/V pairs array, the length of the array must be a even number
-   *                null key or null value pair is ignored
-   * @return A map contains all non-null key/values
-   * */
-  public static final Map<String, Object> toArgMap(Object... params) {
-    HashMap<String, Object> results = new LinkedHashMap<>();
-
-    if (params == null || params.length < 2) {
-      return results;
+    if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = "detail";
+    }
+    else if (StringUtils.countMatches(url, "/") <= 3) {
+      // http://t.tt/12345678
+      pageCategory = "index";
+    }
+    else if (url.contains("index")) {
+      pageCategory = "index";
     }
 
-    if (params.length % 2 != 0) {
-      throw new RuntimeException("expected name/value pairs");
-    }
-
-    for (int i = 0; i < params.length; i += 2) {
-      if (params[i] != null && params[i + 1] != null) {
-        results.put(String.valueOf(params[i]), params[i + 1]);
-      }
-    }
-
-    return results;
+    return pageCategory;
   }
 
-  public static String formatParams(Object... args) {
-    return formatParamsMap(toArgMap(args));
-  }
+  public static String sniffPageCategory(String url, double _char, double _a) {
+    String pageCategory = "";
 
-  public static String formatParamsLine(Object... args) {
-    return formatParamsMapToLine(toArgMap(args));
-  }
+    if (_a < 1) _a = 1;
 
-  public static String formatParamsMap(Map<String, Object> params) {
-    if (params.isEmpty()) {
-      return "";
+    if (_char/_a < 15) {
+      pageCategory = "index";
+    }
+    else if (_char > 1200) {
+      pageCategory = "detail";
+    }
+    else {
+      return sniffPageCategory(url);
     }
 
-    StringBuilder sb = new StringBuilder();
-
-    sb.append('\n');
-    sb.append(String.format("%20sParams Table%-25s\n", "----------", "----------"));
-    sb.append(String.format("%25s   %-25s\n", "Name", "Value"));
-    int i = 0;
-    for (Map.Entry<String, Object> arg : params.entrySet()) {
-      if (i++ > 0) {
-        sb.append("\n");
-      }
-
-      sb.append(String.format("%25s", arg.getKey()));
-      sb.append(" : ");
-      sb.append(arg.getValue());
-    }
-
-    sb.append('\n');
-
-    return sb.toString();
-  }
-
-  public static String formatParamsMapToLine(Map<String, Object> params) {
-    if (params.isEmpty()) {
-      return "";
-    }
-
-    StringBuilder sb = new StringBuilder();
-
-    int i = 0;
-    for (Map.Entry<String, Object> arg : params.entrySet()) {
-      if (i++ > 0) {
-        sb.append(", ");
-      }
-
-      sb.append(arg.getKey());
-      sb.append(" : ");
-      sb.append(arg.getValue());
-    }
-
-    return sb.toString();
+    return pageCategory;
   }
 }

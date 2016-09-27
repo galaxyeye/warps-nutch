@@ -17,14 +17,14 @@
 
 package org.apache.nutch.util;
 
+import org.apache.nutch.util.domain.DomainSuffix;
+import org.apache.nutch.util.domain.DomainSuffixes;
+
 import java.net.IDN;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.regex.Pattern;
-
-import org.apache.nutch.util.domain.DomainSuffix;
-import org.apache.nutch.util.domain.DomainSuffixes;
 
 /** Utility class for URL analysis */
 public class URLUtil {
@@ -128,6 +128,17 @@ public class URLUtil {
    */
   public static String getDomainName(String url) throws MalformedURLException {
     return getDomainName(new URL(url));
+  }
+
+  public static String getDomainName(String url, String defaultDomain) {
+    String host = null;
+
+    try {
+      // if (queueMode == "byDomain") {}
+      host = URLUtil.getDomainName(url);
+    } catch (MalformedURLException ignored) {}
+
+    return host == null ? defaultDomain : host;
   }
 
   /**

@@ -19,7 +19,7 @@ package org.apache.nutch.mapreduce;
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
     counter = new NutchCounter(context);
     reporter = new NutchReporter(counter);
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "---- mapper setup ", " ----",
         "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),
@@ -75,7 +75,7 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
   protected void cleanup(Context context) {
     reporter.stopReporter();
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "---- mapper cleanup ", " ----",
         "className", this.getClass().getSimpleName(),
         "startTime", TimingUtil.format(startTime),

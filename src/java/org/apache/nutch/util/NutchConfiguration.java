@@ -4,7 +4,7 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License.  You may obtain a getConf of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -17,14 +17,16 @@
 
 package org.apache.nutch.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Map.Entry;
-import java.util.Properties;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -32,10 +34,69 @@ import java.util.UUID;
  * resources.
  */
 public class NutchConfiguration {
+
   public static final String UUID_KEY = "nutch.conf.uuid";
 
-  private NutchConfiguration() {
-  } // singleton
+  /**
+   * Create a {@link Configuration} for Nutch. This will load the standard Nutch
+   * resources, <code>nutch-default.xml</code> and <code>nutch-site.xml</code>
+   * overrides.
+   */
+  public static Configuration create() {
+    Configuration conf = new Configuration();
+
+    setUUID(conf);
+    addNutchResources(conf);
+
+    return conf;
+  }
+
+  /**
+   * Get a unsigned integer, if the configured value is negative, return the default value
+   * @param name The property name
+   * @param defaultValue The default value return if the configured value is negative
+   * @return a positive integer
+   * */
+  public static Integer getUint(Configuration conf, String name, Integer defaultValue) {
+    Integer value = conf.getInt(name, defaultValue);
+    if (value < 0) {
+      value = defaultValue;
+    }
+    return value;
+  }
+
+  /**
+   * Get a unsigned long integer, if the configured value is negative, return the default value
+   * @param name The property name
+   * @param defaultValue The default value return if the configured value is negative
+   * @return a positive long integer
+   * */
+  public static Long getUlong(Configuration conf, String name, Long defaultValue) {
+    Long value = conf.getLong(name, defaultValue);
+    if (value < 0) {
+      value = defaultValue;
+    }
+    return value;
+  }
+
+  public static void setIfNotNull(Configuration conf, String name, String value) {
+    if (name != null && value != null) {
+      conf.set(name, value);
+    }
+  }
+
+  public static void setIfNotEmpty(Configuration conf, String name, String value) {
+    if (StringUtils.isNoneEmpty(name) && StringUtils.isNoneEmpty(value)) {
+      conf.set(name, value);
+    }
+  }
+
+  public static Path getPath(Configuration conf, String name, Path defaultValue) throws IOException {
+    String value = conf.get(name);
+    Path path = (value != null) ? Paths.get(value) : defaultValue;
+    Files.createDirectories(path.getParent());
+    return path;
+  }
 
   /*
    * Configuration.hashCode() doesn't return values that correspond to a unique
@@ -51,70 +112,27 @@ public class NutchConfiguration {
    * Retrieve a Nutch UUID of this configuration object, or null if the
    * configuration was created elsewhere.
    * 
-   * @param conf
-   *          configuration instance
    * @return uuid or null
    */
   public static String getUUID(Configuration conf) {
     return conf.get(UUID_KEY);
   }
 
-  /**
-   * Create a {@link Configuration} for Nutch. This will load the standard Nutch
-   * resources, <code>nutch-default.xml</code> and <code>nutch-site.xml</code>
-   * overrides.
-   */
-  public static Configuration create() {
-    Configuration conf = new Configuration();
-    setUUID(conf);
-    addNutchResources(conf);
-    return conf;
-  }
-
-  /**
-   * Create a {@link Configuration} from supplied properties.
-   * 
-   * @param addNutchResources
-   *          if true, then first <code>nutch-default.xml</code>, and then
-   *          <code>nutch-site.xml</code> will be loaded prior to applying the
-   *          properties. Otherwise these resources won't be used.
-   * @param nutchProperties
-   *          a set of properties to define (or override)
-   */
-  public static Configuration create(boolean addNutchResources, Properties nutchProperties) {
-    Configuration conf = new Configuration();
-    setUUID(conf);
-
-    if (addNutchResources) {
-      addNutchResources(conf);
-    }
-
-    for (Entry<Object, Object> e : nutchProperties.entrySet()) {
-      conf.set(e.getKey().toString(), e.getValue().toString());
-    }
-
-    return conf;
-  }
-
-  public static void addClassPath(String s) throws Exception {
-    File f = new File(s);
-    URL u = f.toURL();
+  public void addClassPath(String s) throws Exception {
+    Path path = Paths.get(s);
+    URL u = path.toUri().toURL();
     URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-    Class urlClass = URLClassLoader.class;
-    Method method = urlClass.getDeclaredMethod("addURL", new Class[]{URL.class});
+    Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
     method.setAccessible(true);
-    method.invoke(urlClassLoader, new Object[]{u});
+    method.invoke(urlClassLoader, u);
   }
 
   /**
    * Add the standard Nutch resources to {@link Configuration}.
    * 
-   * @param conf
-   *          Configuration object to which configuration is to be added.
    */
-  private static Configuration addNutchResources(Configuration conf) {
+  private static void addNutchResources(Configuration conf) {
     conf.addResource("nutch-default.xml");
     conf.addResource("nutch-site.xml");
-    return conf;
   }
 }

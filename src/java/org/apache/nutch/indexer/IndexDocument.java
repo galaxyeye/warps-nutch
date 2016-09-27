@@ -77,6 +77,33 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
     }
   }
 
+  public void addIfNotEmpty(String name, String value) {
+    if (value == null || value.isEmpty()) {
+      return;
+    }
+
+    IndexField field = fields.get(name);
+    if (field == null) {
+      field = new IndexField(value);
+      fields.put(name, field);
+    } else {
+      field.add(value);
+    }
+  }
+
+  public void addIfNotNull(String name, Object value) {
+    if (value == null) {
+      return;
+    }
+    IndexField field = fields.get(name);
+    if (field == null) {
+      field = new IndexField(value);
+      fields.put(name, field);
+    } else {
+      field.add(value);
+    }
+  }
+
   public void add(String name, Object value) {
     IndexField field = fields.get(name);
     if (field == null) {

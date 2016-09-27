@@ -1,20 +1,20 @@
 package org.apache.nutch.util;
 
 import org.apache.avro.util.Utf8;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.parse.ParserMapper;
+import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class NetUtil {
 
@@ -95,7 +95,7 @@ public class NetUtil {
 
   public static String getHostname() {
     try {
-      return FileUtils.readFileToString(new File("/etc/hostname"), "utf-8").trim();
+      return Files.readAllLines(Paths.get("/etc/hostname")).get(0);
     } catch (IOException e) {
       return null;
     }

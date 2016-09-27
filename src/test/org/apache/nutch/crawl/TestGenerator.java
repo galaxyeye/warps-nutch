@@ -17,7 +17,8 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.mapreduce.NutchUtil;
+import org.apache.nutch.mapreduce.GenerateJob;
+import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
@@ -145,8 +146,8 @@ public class TestGenerator extends AbstractNutchTest {
     webPageStore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 1);
-    myConfiguration.set(Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_HOST);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 1);
+    myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
@@ -155,7 +156,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(1, fetchList.size());
 
     myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 2);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
@@ -164,7 +165,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(3, fetchList.size()); // 3 as 2 + 1 skipped (already generated)
 
     myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 3);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
@@ -197,8 +198,8 @@ public class TestGenerator extends AbstractNutchTest {
     webPageStore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 1);
-    myConfiguration.set(Nutch.GENERATOR_COUNT_MODE, Nutch.GENERATOR_COUNT_VALUE_DOMAIN);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 1);
+    myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_DOMAIN);
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
@@ -208,7 +209,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(1, fetchList.size());
 
     myConfiguration = new Configuration(myConfiguration);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 2);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
@@ -217,7 +218,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(3, fetchList.size()); // 2 + 1 skipped (already generated)
 
     myConfiguration = new Configuration(myConfiguration);
-    myConfiguration.setInt(Nutch.GENERATOR_MAX_COUNT, 3);
+    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_COUNT, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);

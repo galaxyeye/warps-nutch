@@ -40,8 +40,10 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
    * Nutch metadata
    * */
   /** Fetch time history, comma seperated fetch timestamp */
-  public static String META_FETCH_TIME_HISTORY = "META-NUTCH-FETCH-TIME-HISTORY";
-  public static String META_TMP = "META-TMP-";
+  public static final String META_FETCH_TIME_HISTORY = "META-NUTCH-FETCH-TIME-HISTORY";
+  public static final String META_TMP = "META-TMP-";
+  public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
+  public static final String META_IS_SEED = "META-IS-SEED";
 
   /**
    * A map of all metadata attributes.

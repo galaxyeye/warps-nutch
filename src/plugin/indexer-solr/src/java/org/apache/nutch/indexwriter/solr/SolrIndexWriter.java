@@ -21,10 +21,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexField;
-import org.apache.nutch.indexer.IndexJob;
+import org.apache.nutch.mapreduce.IndexJob;
 import org.apache.nutch.indexer.IndexWriter;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -142,6 +142,8 @@ public class SolrIndexWriter implements IndexWriter {
         }
 
         String key = solrMapping.mapKeyIfExists(e.getKey());
+
+        // We do not allow keys unmapped
 //        if (key == null) {
 //          key = e.getKey();
 //        }
@@ -172,6 +174,10 @@ public class SolrIndexWriter implements IndexWriter {
 
   @Override
   public void commit() throws IOException {
+    if (inputDocs.isEmpty()) {
+      return;
+    }
+
     push();
     try {
       for (SolrClient solrClient : solrClients) {
@@ -202,9 +208,9 @@ public class SolrIndexWriter implements IndexWriter {
           solrClient.request(req);
         }
 
-        if (LOG.isDebugEnabled()) {
-          debug(req);
-        }
+//        if (LOG.isDebugEnabled()) {
+//          debug(req);
+//        }
       } catch (SolrServerException e) {
         LOG.error(e.getMessage());
       }
@@ -276,12 +282,12 @@ public class SolrIndexWriter implements IndexWriter {
   public void setConf(Configuration conf) {
     this.conf = conf;
 
-    System.out.println("Solr url : " + conf.get(Nutch.SOLR_SERVER_URL));
+    System.out.println("Solr url : " + conf.get(Nutch.PARAM_SOLR_SERVER_URL));
 
     // serverURL = conf.get(SolrConstants.SERVER_URL);
-    serverURL = conf.get(Nutch.SOLR_SERVER_URL);
+    serverURL = conf.get(Nutch.PARAM_SOLR_SERVER_URL);
     // zkHosts = conf.get(SolrConstants.ZOOKEEPER_HOSTS);
-    zkHosts = conf.get(Nutch.SOLR_ZOOKEEPER_HOSTS);
+    zkHosts = conf.get(Nutch.PARAM_SOLR_ZK);
 
     // dateFormat = DateFormat.getDateInstance(DateFormat.DEFAULT, Locale.ENGLISH);
 
@@ -311,7 +317,7 @@ public class SolrIndexWriter implements IndexWriter {
       }
     }
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "className", this.getClass().getSimpleName(),
         "batchSize", batchSize,
         "delete", delete,

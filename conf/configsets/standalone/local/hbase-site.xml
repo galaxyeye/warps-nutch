@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+/**
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+
+<configuration>
+    <property >
+        <name>hbase.tmp.dir</name>
+        <value>${java.io.tmpdir}/hbase-${user.name}-standalone</value>
+        <description>Temporary directory on the local filesystem.
+            Change this setting to point to a location more permanent
+            than '/tmp', the usual resolve for java.io.tmpdir, as the
+            '/tmp' directory is cleared on machine restart.</description>
+    </property>
+    <property>
+        <name>hbase.zookeeper.property.dataDir</name>
+        <value>/home/testuser/zookeeper</value>
+    </property>
+    <property >
+        <name>hbase.master.port</name>
+        <value>17000</value>
+        <description>The port the HBase Master should bind to.</description>
+    </property>
+    <property>
+        <name>hbase.master.info.port</name>
+        <value>17010</value>
+        <description>The port for the HBase Master web UI.
+            Set to -1 if you do not want a UI instance run.</description>
+    </property>
+    <property>
+        <name>hbase.regionserver.port</name>
+        <value>17020</value>
+        <description>The port the HBase RegionServer binds to.</description>
+    </property>
+    <property>
+        <name>hbase.regionserver.info.port</name>
+        <value>17030</value>
+        <description>The port for the HBase RegionServer web UI
+            Set to -1 if you do not want the RegionServer UI to run.</description>
+    </property>
+    <property>
+        <name>hbase.zookeeper.peerport</name>
+        <value>2988</value>
+        <description>Port used by ZooKeeper peers to talk to each other.
+            See http://hadoop.apache.org/zookeeper/docs/r3.1.1/zookeeperStarted.html#sc_RunningReplicatedZooKeeper
+            for more information.</description>
+    </property>
+    <property>
+        <name>hbase.zookeeper.leaderport</name>
+        <value>3988</value>
+        <description>Port used by ZooKeeper for leader election.
+            See http://hadoop.apache.org/zookeeper/docs/r3.1.1/zookeeperStarted.html#sc_RunningReplicatedZooKeeper
+            for more information.</description>
+    </property>
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>2281</value>
+        <description>Property from ZooKeeper's config zoo.cfg.
+            The port at which the clients will connect.</description>
+    </property>
+    <property>
+        <name>hbase.rest.port</name>
+        <value>8180</value>
+        <description>The port for the HBase REST server.</description>
+    </property>
+    <property>
+        <name>hbase.status.multicast.address.port</name>
+        <value>17100</value>
+        <description>
+            Multicast port to use for the status publication by multicast.
+        </description>
+    </property>
+
+</configuration>

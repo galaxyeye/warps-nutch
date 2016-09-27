@@ -17,13 +17,13 @@
 
 package org.apache.nutch.metadata;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.NutchWritable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * This is a simple decorator that adds metadata to any Writable-s that can be

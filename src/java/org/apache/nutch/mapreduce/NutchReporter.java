@@ -16,17 +16,17 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class NutchReporter extends Thread {
 
-  private Logger LOG;
+  public static final Logger LOG = LoggerFactory.getLogger(NutchReporter.class);
 
   @SuppressWarnings("rawtypes")
   protected final TaskInputOutputContext context;
@@ -34,8 +34,6 @@ public class NutchReporter extends Thread {
   private NutchCounter counter;
 
   protected final Configuration conf;
-
-  private final String name;
 
   private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -49,12 +47,11 @@ public class NutchReporter extends Thread {
     this.conf = context.getConfiguration();
     this.reportIntervalMillis = 1000 * conf.getInt("nutch.counter.report.interval.sec", 10);
 
-    name = "NutchReporter-" + counter.id();
-
     String jobName = context.getJobName();
     jobName = StringUtils.substringBeforeLast(jobName, "-");
     jobName = jobName.replaceAll("(\\[.+\\])", "");
-    this.LOG = LoggerFactory.getLogger(name + "-" + jobName);
+
+    final String name = "Reporter-" + jobName + "-" + counter.id();
 
     setName(name);
     setDaemon(true);
@@ -66,7 +63,7 @@ public class NutchReporter extends Thread {
    * Set report interval in seconds
    * @param intervalSec report interval in second
    * */
-  public void setreportIntervalMillis(int intervalSec) {
+  public void setReportInterval(int intervalSec) {
     this.reportIntervalMillis = 1000 * intervalSec;
   }
 
@@ -91,7 +88,7 @@ public class NutchReporter extends Thread {
 
   @Override
   public void run() {
-    LOG.debug("Report thread started");
+    LOG.info("Report thread started");
 
     do {
       try {
@@ -102,7 +99,7 @@ public class NutchReporter extends Thread {
     }
     while (running.get());
 
-    LOG.debug("Report thread stopped");
+    LOG.info("Report thread stopped");
   } // run
 
   private void report() {

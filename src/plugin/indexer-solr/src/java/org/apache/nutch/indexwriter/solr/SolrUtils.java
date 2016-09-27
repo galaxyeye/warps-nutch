@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.Params;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -63,7 +63,7 @@ public class SolrUtils {
       }
     }
 
-    LOG.info(StringUtil.formatParamsLine(
+    LOG.info(Params.formatAsLine(
         "className", SolrUtils.class.getSimpleName(),
         "urls", StringUtils.join(urls, ", "),
         "zkHostString", StringUtils.join(zkHostString, ", "),

@@ -42,7 +42,6 @@ function printUsage() {
   echo " parsechecker   check the parser for a given url"
   echo " indexchecker   check the indexing filters for a given url"
   echo " plugin 	load a plugin and run one of its classes main()"
-  echo " webapp         run a local Nutch web application"
   echo " junit         	runs the given JUnit test"
   echo " or"
   echo " CLASSNAME 	run the class named CLASSNAME"
@@ -133,19 +132,19 @@ if [ "$COMMAND" = "crawl" ] ; then
 elif [ "$COMMAND" = "master" ] ; then
   CLASS=org.apache.nutch.service.NutchServer
 elif [ "$COMMAND" = "inject" ] ; then
-  CLASS=org.apache.nutch.crawl.InjectJob
+  CLASS=org.apache.nutch.mapreduce.InjectJob
 elif [ "$COMMAND" = "hostinject" ] ; then
-  CLASS=org.apache.nutch.host.HostInjectorJob
+  CLASS=org.apache.nutch.mapreduce.HostInjectorJob
 elif [ "$COMMAND" = "generate" ] ; then
-  CLASS=org.apache.nutch.crawl.GenerateJob
+  CLASS=org.apache.nutch.mapreduce.GenerateJob
 elif [ "$COMMAND" = "fetch" ] ; then
-  CLASS=org.apache.nutch.fetcher.FetchJob
+  CLASS=org.apache.nutch.mapreduce.FetchJob
 elif [ "$COMMAND" = "parse" ] ; then
-  CLASS=org.apache.nutch.parse.ParserJob
+  CLASS=org.apache.nutch.mapreduce.ParserJob
 elif [ "$COMMAND" = "updatedb" ] ; then
-  CLASS=org.apache.nutch.crawl.DbUpdateJob
+  CLASS=org.apache.nutch.mapreduce.DbUpdateJob
 elif [ "$COMMAND" = "updatehostdb" ] ; then
-  CLASS=org.apache.nutch.host.HostDbUpdateJob
+  CLASS=org.apache.nutch.mapreduce.HostDbUpdateJob
 elif [ "$COMMAND" = "readdb" ] ; then
   CLASS=org.apache.nutch.crawl.WebTableReader
 elif [ "$COMMAND" = "readhostdb" ] ; then
@@ -153,24 +152,22 @@ elif [ "$COMMAND" = "readhostdb" ] ; then
 elif [ "$COMMAND" = "elasticindex" ] ; then
   CLASS=org.apache.nutch.indexer.elastic.ElasticIndexerJob
 elif [ "$COMMAND" = "solrindex" ] ; then
-  CLASS="org.apache.nutch.indexer.IndexJob"
+  CLASS="org.apache.nutch.mapreduce.IndexJob"
 elif [ "$COMMAND" = "index" ] ; then
-  CLASS=org.apache.nutch.indexer.IndexingJob
+  CLASS=org.apache.nutch.mapreduce.IndexingJob
 elif [ "$COMMAND" = "solrdedup" ] ; then
-  CLASS=org.apache.nutch.indexer.solr.SolrDeleteDuplicates
+  CLASS=org.apache.nutch.mapreduce.solr.SolrDeleteDuplicates
 elif [ "$COMMAND" = "solrclean" ] ; then
-  CLASS="org.apache.nutch.indexer.CleaningJob -Dsolr.server.url=$2 $1"
+  CLASS="org.apache.nutch.mapreduce.CleaningJob -Dsolr.server.url=$2 $1"
   shift; shift
 elif [ "$COMMAND" = "clean" ] ; then
-  CLASS=org.apache.nutch.indexer.CleaningJob
+  CLASS=org.apache.nutch.mapreduce.CleaningJob
 elif [ "$COMMAND" = "parsechecker" ] ; then
-  CLASS=org.apache.nutch.parse.ParserChecker
+  CLASS=org.apache.nutch.mapreduce.ParserCheckJob
 elif [ "$COMMAND" = "indexchecker" ] ; then
-  CLASS=org.apache.nutch.indexer.IndexingFiltersChecker
+  CLASS=org.apache.nutch.mapreduce.IndexingFiltersCheckJob
 elif [ "$COMMAND" = "plugin" ] ; then
   CLASS=org.apache.nutch.plugin.PluginRepository
-elif [ "$COMMAND" = "webapp" ] ; then
-  CLASS=org.apache.nutch.webui.NutchUiServer
 elif [ "$COMMAND" = "junit" ] ; then
   CLASSPATH="$CLASSPATH:$NUTCH_HOME/test/classes/"
   CLASS=org.junit.runner.JUnitCore
@@ -182,6 +179,7 @@ PID="$NUTCH_PID_DIR/nutch-$HBASE_IDENT_STRING-$COMMAND.pid"
 # export NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-$COMMAND-$HOSTNAME
 NUTCH_LOG_PREFIX=nutch-$NUTCH_IDENT_STRING-all-$HOSTNAME
 NUTCH_LOGFILE=$NUTCH_LOG_PREFIX.log
+NUTCH_LOGREPORT=$NUTCH_LOG_PREFIX.report.log
 NUTCH_LOGOUT=$NUTCH_LOG_PREFIX.out
 
 # distribute mode
@@ -201,11 +199,13 @@ fi
 
 # local mode
 loglog="${NUTCH_LOG_DIR}/${NUTCH_LOGFILE}"
+logreport="${NUTCH_LOG_DIR}/${NUTCH_LOGREPORT}"
 logout="${NUTCH_LOG_DIR}/${NUTCH_LOGOUT}"
-logcmd="${NUTCH_TMP_DIR}/last-cmd-name"
+logcmd="${PATH_NUTCH_TMP_DIR}/last-cmd-name"
 
 NUTCH_OPTS=($NUTCH_OPTS -Dhadoop.log.dir=$NUTCH_LOG_DIR)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dhadoop.log.file=$NUTCH_LOGFILE)
+NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dhadoop.log.report.file=$NUTCH_LOGREPORT)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.home.dir=$NUTCH_HOME)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.tmp.dir=$NUTCH_TMP_DIR)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dnutch.id.str=$NUTCH_IDENT_STRING)

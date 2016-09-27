@@ -26,44 +26,44 @@ package org.apache.nutch.metadata;
  * @author J&eacute;r&ocirc;me Charron
  */
 public interface HttpHeaders {
-  public final static String TRANSFER_ENCODING = "Transfer-Encoding";
+  String TRANSFER_ENCODING = "Transfer-Encoding";
 
-  public final static String CONTENT_ENCODING = "Content-Encoding";
+  String CONTENT_ENCODING = "Content-Encoding";
 
-  public final static String CONTENT_LANGUAGE = "Content-Language";
+  String CONTENT_LANGUAGE = "Content-Language";
 
-  public final static String CONTENT_LENGTH = "Content-Length";
+  String CONTENT_LENGTH = "Content-Length";
 
-  public final static String CONTENT_LOCATION = "Content-Location";
+  String CONTENT_LOCATION = "Content-Location";
 
   public static final String CONTENT_DISPOSITION = "Content-Disposition";
 
-  public final static String CONTENT_MD5 = "Content-MD5";
+  String CONTENT_MD5 = "Content-MD5";
 
-  public final static String CONTENT_TYPE = "Content-Type";
+  String CONTENT_TYPE = "Content-Type";
 
-  public final static String LAST_MODIFIED = "Last-Modified";
+  String LAST_MODIFIED = "Last-Modified";
   
-  public final static String LOCATION = "Location";
+  String LOCATION = "Location";
 
-  // For satellite information
-  public final static String Q_VERSION = "Q-Version";
+  // For warps-satellite information
+  String Q_VERSION = "Q-Version";
 
-  public final static String Q_USERNAME = "Q-Username";
+  String Q_USERNAME = "Q-Username";
 
-  public final static String Q_PASSWORD = "Q-Password";
+  String Q_PASSWORD = "Q-Password";
 
-  public final static String Q_JOB_ID = "Q-Job-Id";
+  String Q_JOB_ID = "Q-Job-Id";
 
-  public final static String Q_QUEUE_ID = "Q-Queue-Id";
+  String Q_QUEUE_ID = "Q-Queue-Id";
 
-  public final static String Q_ITEM_ID = "Q-Item-Id";
+  String Q_ITEM_ID = "Q-Item-Id";
 
-  public final static String Q_RESPONSE_TIME = "Q-Response-Time";
+  String Q_RESPONSE_TIME = "Q-Response-Time";
 
-  public final static String Q_STATUS_CODE = "Q-Status-Code";
+  String Q_STATUS_CODE = "Q-Status-Code";
 
-  public final static String Q_CHECKSUM = "Q-Checksum";
+  String Q_CHECKSUM = "Q-Checksum";
 
-  public final static String Q_URL = "Q-Url";
+  String Q_URL = "Q-Url";
 }

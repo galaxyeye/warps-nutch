@@ -16,18 +16,13 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.Partitioner;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Comparator;
-
-import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.WritableComparator;
-import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.mapreduce.Partitioner;
 
 /**
  * A writable comparable container for an url with score. Provides a
@@ -38,14 +33,14 @@ import org.apache.hadoop.mapreduce.Partitioner;
 public final class UrlWithScore implements WritableComparable<UrlWithScore> {
   private static final Comparator<UrlWithScore> comp = new UrlScoreComparator();
 
-  private Text url;
+  private Text reversedUrl;
   private FloatWritable score;
 
   /**
    * Creates instance with empty url and zero score.
    */
   public UrlWithScore() {
-    url = new Text();
+    reversedUrl = new Text();
     score = new FloatWritable();
   }
 
@@ -56,7 +51,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
    * @param score
    */
   public UrlWithScore(Text url, FloatWritable score) {
-    this.url = url;
+    this.reversedUrl = url;
     this.score = score;
   }
 
@@ -67,32 +62,32 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
    * @param score
    */
   public UrlWithScore(String url, float score) {
-    this.url = new Text(url);
+    this.reversedUrl = new Text(url);
     this.score = new FloatWritable(score);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    url.write(out);
+    reversedUrl.write(out);
     score.write(out);
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    url.readFields(in);
+    reversedUrl.readFields(in);
     score.readFields(in);
   }
 
-  public Text getUrl() {
-    return url;
+  public Text getReversedUrl() {
+    return reversedUrl;
   }
 
-  public void setUrl(Text url) {
-    this.url = url;
+  public void setReversedUrl(Text reversedUrl) {
+    this.reversedUrl = reversedUrl;
   }
 
   public void setUrl(String url) {
-    this.url.set(url);
+    this.reversedUrl.set(url);
   }
 
   public FloatWritable getScore() {
@@ -114,7 +109,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
 
   @Override
   public String toString() {
-    return "UrlWithScore [url=" + url + ", score=" + score + "]";
+    return "UrlWithScore [url=" + reversedUrl + ", score=" + score + "]";
   }
 
   /**
@@ -124,7 +119,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
       Partitioner<UrlWithScore, NutchWritable> {
     @Override
     public int getPartition(UrlWithScore key, NutchWritable val, int reduces) {
-      return (key.url.hashCode() & Integer.MAX_VALUE) % reduces;
+      return (key.reversedUrl.hashCode() & Integer.MAX_VALUE) % reduces;
     }
   }
 
@@ -139,7 +134,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
 
     @Override
     public int compare(UrlWithScore o1, UrlWithScore o2) {
-      int cmp = o1.getUrl().compareTo(o2.getUrl());
+      int cmp = o1.getReversedUrl().compareTo(o2.getReversedUrl());
       if (cmp != 0) {
         return cmp;
       }
@@ -175,7 +170,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
 
       @Override
       public int compare(UrlWithScore o1, UrlWithScore o2) {
-        return o1.getUrl().compareTo(o2.getUrl());
+        return o1.getReversedUrl().compareTo(o2.getReversedUrl());
       }
 
       @Override

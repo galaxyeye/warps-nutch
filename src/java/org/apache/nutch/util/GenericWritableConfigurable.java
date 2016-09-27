@@ -16,13 +16,13 @@
  */
 package org.apache.nutch.util;
 
-import java.io.DataInput;
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.GenericWritable;
 import org.apache.hadoop.io.Writable;
+
+import java.io.DataInput;
+import java.io.IOException;
 
 /**
  * A generic Writable wrapper that can inject Configuration to
@@ -56,5 +56,4 @@ public abstract class GenericWritableConfigurable extends GenericWritable
       ((Configurable) w).setConf(conf);
     w.readFields(in);
   }
-
 }

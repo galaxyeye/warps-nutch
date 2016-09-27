@@ -73,7 +73,6 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-
    <extension point="org.apache.nutch.parse.Parser"
               id="org.apache.nutch.parse.tika"
               name="TikaParser">

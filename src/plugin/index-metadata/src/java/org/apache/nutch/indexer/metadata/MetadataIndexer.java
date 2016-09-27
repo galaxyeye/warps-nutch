@@ -21,9 +21,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.TimingUtil;
 import org.apache.nutch.util.URLUtil;
 
 import java.net.MalformedURLException;
@@ -56,14 +56,19 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
-    addTime(doc, url, page);
+    try {
+      addTime(doc, url, page);
 
-    addHost(doc, url, page);
+      addHost(doc, url, page);
 
-    // Metadata-indexer does not meet all our requirement
-    addGeneralMetadata(doc, url, page);
+      // Metadata-indexer does not meet all our requirement
+      addGeneralMetadata(doc, url, page);
 
-    addPageMetadata(doc, url, page);
+      addPageMetadata(doc, url, page);
+    }
+    catch (IndexingException e) {
+      LOG.error(e.toString());
+    }
 
     return doc;
   }
@@ -71,28 +76,22 @@ public class MetadataIndexer implements IndexingFilter {
   private void addHost(IndexDocument doc, String url, WebPage page) throws IndexingException {
     String reprUrl = TableUtil.toString(page.getReprUrl());
     String reprUrlString = reprUrl != null ? reprUrl : null;
-    String urlString = url;
 
-    String host;
     try {
       URL u;
       if (reprUrlString != null) {
         u = new URL(reprUrlString);
       } else {
-        u = new URL(urlString);
+        u = new URL(url);
       }
 
       String domain = URLUtil.getDomainName(u);
 
       doc.add("domain", domain);
-      doc.add("site_name", siteNames.getSiteName(domain));
-      doc.add("resource_category", resourceCategory.getCategory(domain));
-      doc.add("url", reprUrlString == null ? urlString : reprUrlString);
-
-      host = u.getHost();
-      if (host != null) {
-        doc.add("host", host);
-      }
+      doc.add("url", reprUrlString == null ? url : reprUrlString);
+      doc.addIfNotNull("site_name", siteNames.getSiteName(domain));
+      doc.addIfNotNull("resource_category", resourceCategory.getCategory(domain));
+      doc.addIfNotNull("host", u.getHost());
     } catch (MalformedURLException e) {
       throw new IndexingException(e);
     }
@@ -100,28 +99,16 @@ public class MetadataIndexer implements IndexingFilter {
 
   private void addTime(IndexDocument doc, String url, WebPage page) {
     Date crawlTime = new Date(page.getFetchTime());
+    String crawlTimeStr = TimingUtil.solrCompatibleFormat(crawlTime);
     Date indexTime = new Date();
-    Date firstCrawlTime = crawlTime;
+    Date firstCrawlTime = TableUtil.getFirstCrawlTime(page, crawlTime);
+    String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, crawlTimeStr);
 
-    String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
-    if (fetchTimeHistory != null) {
-      String[] times = fetchTimeHistory.split(",");
-      firstCrawlTime = new Date(Long.parseLong(times[0]));
-      doc.add("first_crawl_time", firstCrawlTime);
-    }
-
+    doc.add("first_crawl_time", firstCrawlTime);
     doc.add("last_crawl_time", crawlTime);
     doc.add("first_index_time", indexTime);
     doc.add("last_index_time", indexTime);
     doc.add("fetch_time_history", fetchTimeHistory);
-
-//    if (LOG.isDebugEnabled()) {
-//      String report = DateTimeFormatter.ISO_INSTANT.format(crawlTime.toInstant());
-//      report += ",\t" + DateTimeFormatter.ISO_INSTANT.format(indexTime.toInstant());
-//      report += ",\t" + DateTimeFormatter.ISO_INSTANT.format(firstCrawlTime.toInstant());
-//
-//      LOG.debug(report);
-//    }
   }
 
   private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {
@@ -131,7 +118,7 @@ public class MetadataIndexer implements IndexingFilter {
       // return doc;
     }
 
-    // doc.add("encoding", page.getDocFieldAsString("encoding", ""));
+    // doc.add("encoding", page.getVariableAsString("encoding", ""));
 
     // get content type
     doc.add("content_type", contentType);
@@ -167,7 +154,7 @@ public class MetadataIndexer implements IndexingFilter {
     siteNames = new SiteNames(conf);
     resourceCategory = new ResourceCategory(conf);
 
-//    LOG.info(StringUtil.formatParamsLine(
+//    LOG.info(StringUtil.formatAsLine(
 //        "className", this.getClass().getSimpleName(),
 //        "siteNames", siteNames.count(),
 //        "resourceCategory", resourceCategory.count()

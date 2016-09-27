@@ -16,10 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.host;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.gora.query.Query;
@@ -37,6 +33,10 @@ import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Scans the web table and create host entries for each unique host.
@@ -121,7 +121,7 @@ public class HostDbUpdateJob implements Tool {
       if ("-linkDb".equals(args[i])) {
         linkDb = true;
       } else if ("-crawlId".equals(args[i])) {
-        getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+        getConf().set(Nutch.PARAM_CRAWL_ID, args[++i]);
       } else {
         throw new IllegalArgumentException("unrecognized arg " + args[i]
             + " usage: (-linkDb) (-crawlId <crawlId>)");

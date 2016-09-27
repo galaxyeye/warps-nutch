@@ -26,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-import org.apache.nutch.crawl.filters.CrawlFilter.PageType;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.util.NetUtil;
@@ -44,7 +43,19 @@ public class NutchCounter {
   public Logger LOG;
 
   // Default Counters
-  public enum Counter { totalPages, indexPages, detailPages }
+  public enum Counter {
+    totalPages,
+    indexPages,
+    detailPages,
+
+    status_fetched,
+    status_redir_temp,
+    status_redir_perm,
+    status_notmodified,
+    status_retry,
+    status_unfetched,
+    status_gone
+  }
 
   private static AtomicInteger counterSequence = new AtomicInteger(0);
 
@@ -61,7 +72,7 @@ public class NutchCounter {
 
   private String hostname;
 
-  private final String counterGroup = Nutch.COUNTER_GROUP_STATUS;
+  private final String counterGroup = Nutch.STAT_RUNTIME_STATUS;
 
   // Thread safe for read
   private AtomicInteger countersCount = new AtomicInteger(0);
@@ -134,11 +145,11 @@ public class NutchCounter {
 
   public void updateAffectedRows(String url) throws IOException {
     // Counters
-    PageType pageType = crawlFilters.getPageType(url);
-    if (pageType.equals(PageType.DETAIL)) {
+
+    if (crawlFilters.isDetailUrl(url)) {
       increase(getIndex(Counter.detailPages));
     }
-    else if (pageType.equals(PageType.INDEX)) {
+    else if (crawlFilters.isIndexUrl(url)) {
       increase(getIndex(Counter.indexPages));
     }
 
@@ -169,7 +180,10 @@ public class NutchCounter {
         int value = nativeCounters.get(i).get();
 
         if (value != 0) {
-          sb.append(name).append(" : ").append(value).append('\t');
+          if (i > 0) {
+            sb.append(", ");
+          }
+          sb.append(name).append(" : ").append(value);
         }        
       }
     }
@@ -214,7 +228,10 @@ public class NutchCounter {
   }
 
   protected void increase(int index, int value) {
-    if (!validate(index)) return;
+    if (!validate(index)) {
+      LOG.warn("Failed to increase unknown counter at position " + index);
+      return;
+    }
 
     globalCounters.get(index).addAndGet(value);
     nativeCounters.get(index).addAndGet(value);

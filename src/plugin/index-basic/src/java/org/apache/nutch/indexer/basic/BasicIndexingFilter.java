@@ -24,10 +24,10 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.regex.Pattern;
 
 // import org.apache.solr.common.util.DateUtil;
 
@@ -42,7 +42,6 @@ import java.util.regex.Pattern;
 public class BasicIndexingFilter implements IndexingFilter {
 
   private static int MAX_CONTENT_LENGTH;
-  private static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
 
   private Configuration conf;
 
@@ -80,7 +79,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addDocFields(IndexDocument doc, String url, WebPage page) {
-    page.getDocFields().entrySet().stream()
+    page.getProgramVariables().entrySet().stream()
         .filter(entry -> entry.getValue().toString().length() < MAX_CONTENT_LENGTH)
         .forEach(entry -> doc.add(entry.getKey(), entry.getValue()));
   }
@@ -95,7 +94,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   private String sniffPageCategory(IndexDocument doc, String url, WebPage page) {
     String pageCategory = "";
 
-    String textContent = (String)page.getDocField(Nutch.DOC_FIELD_TEXT_CONTENT);
+    String textContent = (String)page.getVariable(Nutch.DOC_FIELD_TEXT_CONTENT);
     if (textContent == null) {
       return pageCategory;
     }
@@ -114,7 +113,7 @@ public class BasicIndexingFilter implements IndexingFilter {
     else if (_char > 1000) {
       pageCategory = "detail";
     }
-    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
+    else if (StringUtil.DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
       pageCategory = "detail";
     }
     else if (StringUtils.countMatches(url, "/") <= 3) {
@@ -136,7 +135,7 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     MAX_CONTENT_LENGTH = conf.getInt("indexer.max.content.length", 10 * 10000);
 
-//    LOG.info(StringUtil.formatParamsLine(
+//    LOG.info(StringUtil.formatAsLine(
 //        "className", this.getClass().getSimpleName(),
 //        "MAX_CONTENT_LENGTH", MAX_CONTENT_LENGTH
 //    ));

@@ -3,15 +3,13 @@ package org.apache.nutch.util;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.mapreduce.NutchUtil;
 import org.apache.nutch.service.model.request.SeedUrl;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,14 +65,6 @@ public class TestAnything {
   }
 
   @Test
-  public void testInteger() {
-    Configuration conf = NutchConfiguration.create();
-    long fetchJobTimeout = 60 * 1000 * NutchUtil.getUint(conf, "fetcher.timelimit.mins", Integer.MAX_VALUE / 60 / 1000 / 10);
-    System.out.println(conf.get("fetcher.timelimit.mins"));
-    System.out.println(fetchJobTimeout);
-  }
-
-  @Test
   public void testSystem() {
     String username = System.getenv("USER");
     System.out.println(username);
@@ -103,7 +93,7 @@ public class TestAnything {
     Files.write(Paths.get("/tmp/regex-urlfilter.txt"), StringUtils.join(regexes, "\n").getBytes());
 
     System.out.println(urls.size());
-    System.out.println(StringUtils.join(urls));
+    System.out.println(StringUtils.join(urls, ","));
   }
 
   @Test
@@ -116,6 +106,11 @@ public class TestAnything {
     ints.put(5, "5");
 
     System.out.println(ints.keySet().iterator().next());
+  }
+
+  @Test
+  public void testTime() {
+    System.out.println(Duration.ofMinutes(60).toMillis());
   }
 
   @Test

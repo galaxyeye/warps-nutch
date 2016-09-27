@@ -24,7 +24,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
-import org.apache.nutch.fetcher.service.FetchServer;
+import org.apache.nutch.fetch.service.FetchServer;
 import org.apache.nutch.service.impl.PortManager;
 import org.apache.nutch.storage.local.model.ServerInstance;
 

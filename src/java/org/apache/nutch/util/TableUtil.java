@@ -26,7 +26,10 @@ import org.apache.nutch.storage.WebPage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.Map;
+
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_PRIORITY;
 
 public class TableUtil {
 
@@ -166,6 +169,56 @@ public class TableUtil {
     return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
   }
 
+  /**
+   * TODO : use a standalone field for page
+   * */
+  public static void setPriority(WebPage page, int priority) {
+    TableUtil.putMetadata(page, PARAM_FETCH_PRIORITY, String.valueOf(priority));
+  }
+
+  public static void setPriorityIfAbsent(WebPage page, int priority) {
+    String s = TableUtil.getMetadata(page, PARAM_FETCH_PRIORITY);
+    if (s == null) {
+      setPriority(page, priority);
+    }
+  }
+
+  public static int getPriority(WebPage page, int defaultPriority) {
+    String s = TableUtil.getMetadata(page, PARAM_FETCH_PRIORITY);
+    return StringUtil.tryParseInt(s, defaultPriority);
+  }
+
+  public static String getFetchTimeHistory(WebPage page, String defaultValue) {
+    String s = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
+    return s == null ? defaultValue : s;
+  }
+
+  public static void putFetchTimeHistory(WebPage page, long fetchTime) {
+    String date = TimingUtil.solrCompatibleFormat(fetchTime);
+    String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
+    if (fetchTimeHistory == null) {
+      fetchTimeHistory = date;
+    }
+    else {
+      fetchTimeHistory += ",";
+      fetchTimeHistory += date;
+    }
+
+    TableUtil.putMetadata(page, Metadata.META_FETCH_TIME_HISTORY, fetchTimeHistory);
+  }
+
+  public static Date getFirstCrawlTime(WebPage page, Date defaultValue) {
+    Date firstCrawlTime = null;
+
+    String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
+    if (!fetchTimeHistory.isEmpty()) {
+      String[] times = fetchTimeHistory.split(",");
+      firstCrawlTime = new Date(TimingUtil.parseTime(times[0]));
+    }
+
+    return firstCrawlTime == null ? defaultValue : firstCrawlTime;
+  }
+
   public static void putMark(WebPage page, CharSequence key, CharSequence value) {
     page.getMarkers().put(key, value);
   }
@@ -181,6 +234,15 @@ public class TableUtil {
   /**
    * TODO : Why the nutch team wrap the key using Utf8?
    * */
+  public static void putAllMetadata(WebPage page, Map<String, String> metadata) {
+    for (Map.Entry<String, String> entry : metadata.entrySet()) {
+      String k = entry.getKey();
+      String v = entry.getValue();
+
+      putMetadata(page, k, v);
+    }
+  }
+
   public static void putMetadata(WebPage page, String key, String value) {
     page.getMetadata().put(new Utf8(key), value == null ? null : ByteBuffer.wrap(value.getBytes()));
   }

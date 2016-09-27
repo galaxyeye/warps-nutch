@@ -26,6 +26,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.NutchUtil;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
@@ -34,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+
+import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
 
 public abstract class NutchJob extends Configured {
 
@@ -52,6 +56,7 @@ public abstract class NutchJob extends Configured {
   protected void setup(Map<String, Object> args) throws Exception {
     LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");
     LOG.info("Job started at " + TimingUtil.format(startTime));
+    getConf().set(Nutch.PARAM_NUTCH_JOB_NAME, getJobName());
 
     synchronized (status) {
       status.put("startTime", TimingUtil.format(startTime));
@@ -60,11 +65,10 @@ public abstract class NutchJob extends Configured {
 
   protected void cleanup(Map<String, Object> args) {
     try {
-
       updateStatus();
       updateResults();
 
-      LOG.info(StringUtil.formatParams(results));
+      Params.of(results).withLogger(LOG).info();
       LOG.info("Affected rows : " + affectedRows);
     }
     catch (Throwable e) {
@@ -107,7 +111,7 @@ public abstract class NutchJob extends Configured {
   }
 
   protected MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
-    if (batchId.equals(Nutch.ALL_CRAWL_ID.toString())) {
+    if (batchId == null || batchId.equals(ALL_BATCH_ID_STR)) {
       return null;
     }
 
@@ -181,7 +185,7 @@ public abstract class NutchJob extends Configured {
         status.putAll(NutchUtil.recordJobStatus(currentJob));
       }
 
-      long totalPages = getCounterValue(Nutch.COUNTER_GROUP_STATUS, NutchCounter.Counter.totalPages.name());
+      long totalPages = getCounterValue(Nutch.STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name());
       affectedRows = totalPages;
     } catch (Throwable e) {
       LOG.warn(e.toString());
@@ -194,7 +198,7 @@ public abstract class NutchJob extends Configured {
     String finishTime = TimingUtil.format(System.currentTimeMillis());
     String timeElapsed = TimingUtil.elapsedTime(startTime);
 
-    results.putAll(StringUtil.toArgMap(
+    results.putAll(Params.toArgMap(
         "startTime", TimingUtil.format(startTime),
         "finishTime", finishTime,
         "timeElapsed", timeElapsed

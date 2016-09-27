@@ -42,6 +42,7 @@ import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -207,7 +208,7 @@ public class WebTableReader extends NutchJob implements Tool {
       LOG.info("WebTable statistics start");
     }
 
-    run(StringUtil.toArgMap(Nutch.ARG_SORT, sort));
+    run(Params.toArgMap(Nutch.ARG_SORT, sort));
 
     LOG.info("Statistics for WebTable: ");
     for (Entry<String, Object> e : results.entrySet()) {
@@ -496,7 +497,7 @@ public class WebTableReader extends NutchJob implements Tool {
         } else if (args[i].equals("-regex")) {
           regex = args[++i];
         } else if (args[i].equals("-crawlId")) {
-          getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+          getConf().set(Nutch.PARAM_CRAWL_ID, args[++i]);
         }
       }
       if (op == null) {
