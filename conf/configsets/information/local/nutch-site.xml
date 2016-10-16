@@ -20,7 +20,7 @@
   <!-- plugin -->
   <property>
     <name>plugin.includes</name>
-    <value>protocol-(http|crowd)|urlfilter-(domain|prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+    <value>protocol-(http|crowd)|urlfilter-(prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
     <description>Regular expression naming plugin directory names to
       include.  Any plugin not matching this expression is excluded.
       In any case you need at least include the nutch-extensionpoints plugin. By
@@ -49,6 +49,11 @@
   </property>
 
   <property>
+    <name>fetcher.debug.urls</name>
+    <value>true</value>
+  </property>
+
+  <property>
     <name>fetcher.timelimit.mins</name>
     <value>60</value>
     <description>The feeder does not feed any fetch tasks any more if time exceed</description>
@@ -66,6 +71,12 @@
       fetcher.timelimit.mins is hard to determine. The default value of -1
       disables this check.
     </description>
+  </property>
+
+  <property>
+    <name>fetcher.pending.queue.check.time</name>
+    <value>2m</value>
+    <description>Check pending queue to see if any tasks is hang</description>
   </property>
 
   <property>
@@ -107,22 +118,19 @@
 
   <property>
     <name>http.agent.name</name>
-    <value>Warp Speed Knowledge Engine</value>
+    <value>Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20121202 Firefox/17.0 Iceweasel/17.0.1</value>
     <description></description>
   </property>
 
   <property>
     <name>http.timeout</name>
-    <value>300000</value>
-    <description>we have a very long time out setting, it's for a reason
-    </description>
+    <value>10000</value>
   </property>
 
   <property>
     <name>mapred.task.timeout</name>
     <value>10m</value>
-    <description>fetch thread will exit if no any fetch item for
-      mapred.task.timeout minutes</description>
+    <description>fetch thread will exit if no any fetch item for mapred.task.timeout minutes</description>
   </property>
 
   <property>
@@ -148,6 +156,11 @@
   </property>
 
   <property>
+    <name>parser.ignore.detail.page.outlinks</name>
+    <value>true</value>
+  </property>
+
+  <property>
     <name>db.fetch.interval.default</name>
     <value>25920000</value>
   </property>
@@ -166,6 +179,11 @@
   <property>
     <name>db.ignore.internal.links</name>
     <value>false</value>
+  </property>
+
+  <property>
+    <name>db.update.max.outlinks</name>
+    <value>10</value>
   </property>
 
   <!-- Parsing -->
@@ -192,6 +210,11 @@
     <name>solr.commit.size</name>
     <value>500</value>
     <description>solr collection</description>
+  </property>
+
+  <property>
+    <name>indexer.ignore.empty.pages</name>
+    <value>true</value>
   </property>
 
   <!-- Scoring -->

@@ -201,7 +201,7 @@ fi
 loglog="${NUTCH_LOG_DIR}/${NUTCH_LOGFILE}"
 logreport="${NUTCH_LOG_DIR}/${NUTCH_LOGREPORT}"
 logout="${NUTCH_LOG_DIR}/${NUTCH_LOGOUT}"
-logcmd="${PATH_NUTCH_TMP_DIR}/last-cmd-name"
+logcmd="${NUTCH_TMP_DIR}/last-cmd-name"
 
 NUTCH_OPTS=($NUTCH_OPTS -Dhadoop.log.dir=$NUTCH_LOG_DIR)
 NUTCH_OPTS=("${NUTCH_OPTS[@]}" -Dhadoop.log.file=$NUTCH_LOGFILE)
@@ -218,7 +218,7 @@ check_before_start() {
     mkdir -p "$NUTCH_PID_DIR"
     if [ -f $PID ]; then
       if kill -0 `cat $PID` > /dev/null 2>&1; then
-        echo $COMMAND running as process `cat $PID`.  Stop it first.
+        echo $COMMAND running as process `cat $PID`. Stop it first.
         exit 1
       fi
     fi

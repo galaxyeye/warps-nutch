@@ -19,39 +19,53 @@ package org.apache.nutch.mapreduce;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
+import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * TODO : use metrics module, for example, http://metrics.dropwizard.io
+ * */
 public class NutchReporter extends Thread {
 
-  public static final Logger LOG = LoggerFactory.getLogger(NutchReporter.class);
+  private static final Logger LOG_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class + "Add");
+  private static final Logger LOG_NON_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class);
+  public static Logger LOG = LoggerFactory.getLogger(NutchReporter.class);
+
+  public static Logger chooseLog(boolean additive) {
+    // LOG = additive ? LOG_ADDITIVITY : LOG_NON_ADDITIVITY;
+    return LOG;
+  }
 
   @SuppressWarnings("rawtypes")
   protected final TaskInputOutputContext context;
 
-  private NutchCounter counter;
-
   protected final Configuration conf;
+
+  private final NutchCounter counter;
+
+  private final String jobName;
 
   private final AtomicBoolean running = new AtomicBoolean(false);
 
   private final AtomicBoolean silent = new AtomicBoolean(false);
 
   private int reportIntervalMillis;
-  
+
   public NutchReporter(NutchCounter counter) {
     this.counter = counter;
     this.context = counter.getContext();
     this.conf = context.getConfiguration();
     this.reportIntervalMillis = 1000 * conf.getInt("nutch.counter.report.interval.sec", 10);
 
-    String jobName = context.getJobName();
-    jobName = StringUtils.substringBeforeLast(jobName, "-");
-    jobName = jobName.replaceAll("(\\[.+\\])", "");
+    this.jobName = context.getJobName();
 
-    final String name = "Reporter-" + jobName + "-" + counter.id();
+    String simpleJobName = StringUtils.substringBeforeLast(jobName, "-");
+    simpleJobName = simpleJobName.replaceAll("(\\[.+\\])", "");
+
+    final String name = "Reporter-" + simpleJobName + "-" + counter.id();
 
     setName(name);
     setDaemon(true);
@@ -83,23 +97,32 @@ public class NutchReporter extends Thread {
 
     silent.set(false);
 
-    report();
+    try {
+      join();
+    } catch (InterruptedException e) {
+      LOG.error(e.toString());
+    }
   }
 
   @Override
   public void run() {
-    LOG.info("Report thread started");
+    LOG.info("\n\n\n");
+    String outerBorder = StringUtils.repeat('-', 100);
+    String innerBorder = StringUtils.repeat('.', 100);
+    LOG.info(outerBorder);
+    LOG.info(innerBorder);
+    LOG.info("== Report thread started [ " + TimingUtil.now() + " ] [ " + jobName + " ] ==");
 
     do {
       try {
         sleep(reportIntervalMillis);
-      } catch (InterruptedException e) {}
+      } catch (InterruptedException ignored) {}
 
       report();
     }
     while (running.get());
 
-    LOG.info("Report thread stopped");
+    LOG.info("Report thread stopped [ " + TimingUtil.now() + " ]");
   } // run
 
   private void report() {

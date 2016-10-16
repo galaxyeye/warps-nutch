@@ -1,16 +1,15 @@
 package org.apache.nutch.fetch;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.fetch.service.FetchResult;
-import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.protocol.ProtocolNotFound;
 import org.apache.nutch.protocol.ProtocolOutput;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -24,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * This class picks items from queues and fetches the pages.
@@ -42,7 +42,8 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
     FetchTask task;
   }
 
-  public static final Logger LOG = FetchJob.LOG;
+  private final Logger LOG = FetchMonitor.LOG;
+  public static final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
 
   private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
@@ -83,6 +84,15 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
 
   public void halt() { halted.set(true); }
 
+  public void exitAndJoin() {
+    halted.set(true);
+    try {
+      join();
+    } catch (InterruptedException e) {
+      LOG.error(e.toString());
+    }
+  }
+
   public boolean isHalted() { return halted.get(); }
 
   @Override
@@ -118,13 +128,18 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
   }
 
   public void report() {
-    StringBuilder sb = new StringBuilder();
-    // sb.append("\n---------------------------\n");
-    sb.append(String.format("Thread #%d served %d tasks for %d hosts : \n", getId(), taskCount, servedHosts.size()));
-    sb.append(StringUtils.join(servedHosts, "\n"));
-    sb.append("\n");
+    String report = String.format("Thread #%d served %d tasks for %d hosts : \n", getId(), taskCount, servedHosts.size());
+    report += "\n";
 
-    LOG.info(sb.toString());
+    String availableHosts = servedHosts.stream()
+        .map(TableUtil::reverseHost).sorted().map(TableUtil::unreverseHost)
+        .map(host -> String.format("%1$40s", host))
+        .collect(Collectors.joining("\n"));
+
+    report += availableHosts;
+    report += "\n";
+
+    REPORT_LOG.info(report);
   }
 
   private void sleepAndRecord() {

@@ -11,11 +11,7 @@ import java.util.*;
  */
 public class FetchQueues {
 
-  public static final Logger LOG = FetchMonitor.LOG;
-
-  public static final String QUEUE_MODE_HOST = "byHost";
-  public static final String QUEUE_MODE_DOMAIN = "byDomain";
-  public static final String QUEUE_MODE_IP = "byIP";
+  public final Logger LOG = FetchMonitor.LOG;
 
   private final Map<String, FetchQueue> workingQueues = new HashMap<>();
   private final Map<String, FetchQueue> detachedQueues = new HashMap<>();
@@ -125,7 +121,7 @@ public class FetchQueues {
   public String getCostReport() {
     StringBuilder sb = new StringBuilder();
     workingQueues.values().stream()
-        .sorted(Comparator.comparing(FetchQueue::avarageTimeCost).reversed())
+        .sorted(Comparator.comparing(FetchQueue::averageTimeCost).reversed())
         .limit(50)
         .forEach(queue -> sb.append(queue.getCostReport()).append('\n'));
     return sb.toString();

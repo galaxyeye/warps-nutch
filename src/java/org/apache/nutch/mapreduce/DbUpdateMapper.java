@@ -30,11 +30,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+
 public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, NutchWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper.class);
 
-  public enum Counter { rows, rowsMapped, newRowsMapped, errors, notFetched, urlFiltered, outlinkCount }
+  public enum Counter { rowsMapped, newRowsMapped, notFetched, urlFiltered }
 
   private Configuration conf;
 
@@ -56,7 +58,7 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
    * */
   @Override
   public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
-    getCounter().increase(Counter.rows);
+    getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
 

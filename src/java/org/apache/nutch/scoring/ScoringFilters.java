@@ -28,6 +28,8 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.ObjectCache;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Creates and caches {@link ScoringFilter} implementing plugins.
@@ -36,16 +38,16 @@ import java.util.*;
  */
 public class ScoringFilters extends Configured implements ScoringFilter {
 
-  private ScoringFilter[] filters;
+  private ScoringFilter[] scoringFilters;
 
   public ScoringFilters(Configuration conf) {
     super(conf);
 
     ObjectCache objectCache = ObjectCache.get(conf);
     String order = conf.get("scoring.filter.order");
-    this.filters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
+    this.scoringFilters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
 
-    if (this.filters == null) {
+    if (this.scoringFilters == null) {
       String[] orderedFilters = null;
       if (order != null && !order.trim().equals("")) {
         orderedFilters = order.split("\\s+");
@@ -80,14 +82,18 @@ public class ScoringFilters extends Configured implements ScoringFilter {
         throw new RuntimeException(e);
       }
 
-      this.filters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
+      this.scoringFilters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
     }
+  }
+
+  public List<String> getScoringFilterNames() {
+    return Stream.of(scoringFilters).map(f -> f.getClass().getSimpleName()).collect(Collectors.toList());
   }
 
   /** Calculate a sort value for Generate. */
   @Override
   public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       initSort = filter.generatorSortValue(url, row, initSort);
     }
     return initSort;
@@ -96,7 +102,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   /** Calculate a new initial score, used when adding newly discovered pages. */
   @Override
   public void initialScore(String url, WebPage row) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       filter.initialScore(url, row);
     }
   }
@@ -104,7 +110,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   /** Calculate a new initial score, used when injecting new pages. */
   @Override
   public void injectedScore(String url, WebPage row) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       filter.injectedScore(url, row);
     }
   }
@@ -112,21 +118,21 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row,
                                         Collection<ScoreDatum> scoreData, int allCount) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
     }
   }
 
   @Override
   public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }
   }
 
   @Override
   public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) throws ScoringFilterException {
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       initScore = filter.indexerScore(url, doc, row, initScore);
     }
     return initScore;
@@ -135,7 +141,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   @Override
   public Collection<WebPage.Field> getFields() {
     Set<WebPage.Field> fields = new HashSet<>();
-    for (ScoringFilter filter : filters) {
+    for (ScoringFilter filter : scoringFilters) {
       Collection<WebPage.Field> pluginFields = filter.getFields();
       if (pluginFields != null) {
         fields.addAll(pluginFields);

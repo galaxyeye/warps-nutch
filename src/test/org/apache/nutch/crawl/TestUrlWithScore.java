@@ -16,19 +16,16 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import org.apache.hadoop.io.RawComparator;
 import org.apache.nutch.crawl.UrlWithScore.UrlOnlyPartitioner;
 import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator;
 import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator.UrlOnlyComparator;
+import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
+
+import java.io.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests {@link UrlWithScore} with serialization, partitioning and sorting.
@@ -38,8 +35,8 @@ public class TestUrlWithScore {
   @Test
   public void testSerialization() throws IOException {
     // create a key and test basic functionality
-    UrlWithScore keyOut = new UrlWithScore("http://example.org/", 1f);
-    assertEquals("http://example.org/", keyOut.getReversedUrl().toString());
+    UrlWithScore keyOut = new UrlWithScore(TableUtil.reverseUrl("http://example.org/"), 1f);
+    assertEquals(TableUtil.reverseUrl("http://example.org/"), keyOut.getReversedUrl().toString());
     assertEquals(1f, keyOut.getScore().get(), 0.001);
 
     // write to out
@@ -63,11 +60,11 @@ public class TestUrlWithScore {
   public void testPartitioner() throws IOException {
     UrlOnlyPartitioner part = new UrlOnlyPartitioner();
 
-    UrlWithScore k1 = new UrlWithScore("http://example.org/1", 1f);
-    UrlWithScore k2 = new UrlWithScore("http://example.org/1", 2f);
-    UrlWithScore k3 = new UrlWithScore("http://example.org/2", 1f);
-    UrlWithScore k4 = new UrlWithScore("http://example.org/2", 2f);
-    UrlWithScore k5 = new UrlWithScore("http://example.org/2", 3f);
+    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     int numReduces = 7;
 
@@ -86,11 +83,11 @@ public class TestUrlWithScore {
   public void testUrlOnlySorting() throws IOException {
     UrlOnlyComparator comp = new UrlOnlyComparator();
 
-    UrlWithScore k1 = new UrlWithScore("http://example.org/1", 1f);
-    UrlWithScore k2 = new UrlWithScore("http://example.org/1", 2f);
-    UrlWithScore k3 = new UrlWithScore("http://example.org/2", 1f);
-    UrlWithScore k4 = new UrlWithScore("http://example.org/2", 2f);
-    UrlWithScore k5 = new UrlWithScore("http://example.org/2", 3f);
+    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     // k1 should be equal to k2
     assertEquals(0, compareBothRegularAndRaw(comp, k1, k2));
@@ -111,11 +108,11 @@ public class TestUrlWithScore {
   public void testUrlScoreSorting() throws IOException {
     UrlScoreComparator comp = new UrlScoreComparator();
 
-    UrlWithScore k1 = new UrlWithScore("http://example.org/1", 1f);
-    UrlWithScore k2 = new UrlWithScore("http://example.org/1", 2f);
-    UrlWithScore k3 = new UrlWithScore("http://example.org/2", 1f);
-    UrlWithScore k4 = new UrlWithScore("http://example.org/2", 2f);
-    UrlWithScore k5 = new UrlWithScore("http://example.org/2", 3f);
+    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     // k1 is after k2, because score is lower
     assertEquals(1, comp.compare(k1, k2));
@@ -180,5 +177,4 @@ public class TestUrlWithScore {
     out.close();
     return bytes;
   }
-
 }

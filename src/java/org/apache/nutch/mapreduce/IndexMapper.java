@@ -40,7 +40,7 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
     getCounter().register(Counter.class);
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
-    batchId = conf.get(PARAM_GENERATOR_BATCH_ID, ALL_BATCH_ID_STR);
+    batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
     reindex = conf.getBoolean(ARG_REINDEX, false);
     limit = conf.getInt(ARG_LIMIT, -1);
 

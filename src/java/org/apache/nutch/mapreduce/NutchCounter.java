@@ -38,23 +38,36 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * TODO : use metrics module, for example, http://metrics.dropwizard.io
+ * */
 public class NutchCounter {
 
   public Logger LOG;
 
   // Default Counters
   public enum Counter {
+    rows,
+
+    errors,
+    scoringErrors,
+
     totalPages,
     indexPages,
     detailPages,
 
-    status_fetched,
-    status_redir_temp,
-    status_redir_perm,
-    status_notmodified,
-    status_retry,
-    status_unfetched,
-    status_gone
+    inlinks,
+    outlinks,
+
+    tooDeepPages,
+
+    stFetched,
+    stRedirTemp,
+    stRedirPerm,
+    stNotmodified,
+    stRetry,
+    stUnfetched,
+    stGone
   }
 
   private static AtomicInteger counterSequence = new AtomicInteger(0);
@@ -127,20 +140,33 @@ public class NutchCounter {
     return context;
   }
 
+  /**
+   * TODO : Check thread safety
+   * */
   public void increase(Enum<?> counter) {
-    increase(counter.ordinal());
+    increase(getIndex(counter));
   }
 
+  /**
+   * TODO : Check thread safety
+   * */
   public void increase(Enum<?> counter, int value) {
-    increase(counter.ordinal(), value);
+    increase(getIndex(counter), value);
   }
 
+  /**
+   * TODO : Check thread safety
+   * */
   public void setValue(Enum<?> counter, int value) {
-    setValue(counter.ordinal(), value);
+    setValue(getIndex(counter), value);
   }
 
-  public int getIndex(Counter counter) {
-    return countersCount.get() - Counter.values().length + counter.ordinal();
+  public int getIndex(Enum<?> counter) {
+    if (counter instanceof Counter) {
+      return countersCount.get() - Counter.values().length + counter.ordinal();
+    }
+
+    return counter.ordinal();
   }
 
   public void updateAffectedRows(String url) throws IOException {
@@ -167,12 +193,13 @@ public class NutchCounter {
   }
 
   public int get(Enum<?> counter) {
-    return get(counter.ordinal());
+    return get(getIndex(counter));
   }
 
   public String getStatusString(String... names) {
     StringBuilder sb = new StringBuilder();
 
+    int nonZeroCounter = 0;
     for (int i = 0; i < countersCount.get(); ++i) {
       String name = counterNames.get(i);
 
@@ -180,7 +207,7 @@ public class NutchCounter {
         int value = nativeCounters.get(i).get();
 
         if (value != 0) {
-          if (i > 0) {
+          if (nonZeroCounter++ > 0) {
             sb.append(", ");
           }
           sb.append(name).append(" : ").append(value);
@@ -202,7 +229,7 @@ public class NutchCounter {
       LOG.info(getStatusString());
     }
     else {
-      LOG.info("nothing counted");
+      LOG.info("Nothing counted");
     }
   }
 
@@ -219,7 +246,9 @@ public class NutchCounter {
   }
 
   protected void increase(int index) {
-    if (!validate(index)) return;
+    if (!validate(index)) {
+      return;
+    }
 
     globalCounters.get(index).incrementAndGet();
     nativeCounters.get(index).incrementAndGet();
@@ -244,7 +273,9 @@ public class NutchCounter {
   }
 
   protected void setValue(int index, int value) {
-    if (!validate(index)) return;
+    if (!validate(index)) {
+      return;
+    }
 
     globalCounters.get(index).set(value);
     nativeCounters.get(index).set(value);
@@ -254,15 +285,17 @@ public class NutchCounter {
 
   protected void register(Collection<String> counters) {
     if (countersCount.get() != 0) {
-      LOG.warn("already registered");
+      LOG.warn("Already registered");
       return;
     }
 
-    ArrayList<String> newCounters = Lists.newArrayList();
-    newCounters.addAll(counters);
-    newCounters.addAll(EnumUtils.getEnumMap(Counter.class).keySet());
+    ArrayList<String> allCounters = Lists.newArrayList();
+    // User defined counters go first
+    allCounters.addAll(counters);
+    // Default counters go next
+    allCounters.addAll(EnumUtils.getEnumMap(Counter.class).keySet());
 
-    registerCounters(newCounters);
+    registerCounters(allCounters);
   }
 
   private void registerCounters(ArrayList<String> names) {

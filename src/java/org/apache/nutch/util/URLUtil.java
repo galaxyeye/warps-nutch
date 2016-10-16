@@ -19,24 +19,32 @@ package org.apache.nutch.util;
 
 import org.apache.nutch.util.domain.DomainSuffix;
 import org.apache.nutch.util.domain.DomainSuffixes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.net.IDN;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.regex.Pattern;
 
 /** Utility class for URL analysis */
 public class URLUtil {
 
+  public static final Logger LOG = LoggerFactory.getLogger(URLUtil.class);
+
+  public static String DUMMY_HOST_NAME = "example.com";
+
+  /**
+   * @see URLUtil
+   */
+  public enum HostGroupMode {
+    BY_IP, BY_DOMAIN, BY_HOST
+  }
+
   /**
    * Resolve relative URL-s and fix a java.net.URL error in handling of URLs
    * with pure query targets.
-   * 
-   * @param base
-   *          base url
-   * @param target
-   *          target url (may be relative)
+   *
+   * @param base   base url
+   * @param target target url (may be relative)
    * @return resolved absolute url.
    * @throws MalformedURLException
    */
@@ -62,9 +70,10 @@ public class URLUtil {
     return new URL(base, target);
   }
 
-  /** Handle the case in RFC3986 section 5.4.1 example 7, and similar. */
-  static URL fixPureQueryTargets(URL base, String target)
-      throws MalformedURLException {
+  /**
+   * Handle the case in RFC3986 section 5.4.1 example 7, and similar.
+   */
+  static URL fixPureQueryTargets(URL base, String target) throws MalformedURLException {
     if (!target.startsWith("?"))
       return new URL(base, target);
 
@@ -81,8 +90,73 @@ public class URLUtil {
     return new URL(base, target);
   }
 
-  private static Pattern IP_PATTERN = Pattern
-      .compile("(\\d{1,3}\\.){3}(\\d{1,3})");
+  private static Pattern IP_PATTERN = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
+
+  public static URL getUrl(String url) {
+    URL u = null;
+
+    try {
+      u = new URL(url);
+    }
+    catch (final MalformedURLException e) {
+      LOG.warn("Failed to parse url, " + e.toString());
+      return null;
+    }
+    catch (final Exception e) {
+      LOG.warn("Failed to parse url : " + url);
+      return null;
+    }
+
+    return u;
+  }
+
+  public static String getHost(String url, HostGroupMode hostGroupMode) {
+    return getHost(getUrl(url), hostGroupMode);
+  }
+
+  public static String getHost(String url, String defaultHost, HostGroupMode hostGroupMode) {
+    String host = getHost(url, hostGroupMode);
+    return host == null ? defaultHost : host;
+  }
+
+  public static String getHost(URL url, String defaultHost, HostGroupMode hostGroupMode) {
+    String host = getHost(url, hostGroupMode);
+    return host == null ? defaultHost : host;
+  }
+
+  public static String getHost(URL url, HostGroupMode hostGroupMode) {
+    if (url == null) {
+      return null;
+    }
+
+    String host;
+    if (hostGroupMode == HostGroupMode.BY_IP) {
+      try {
+        final InetAddress addr = InetAddress.getByName(url.getHost());
+        host = addr.getHostAddress();
+      } catch (final UnknownHostException e) {
+        // unable to resolve it, so don't fall back to host name
+        LOG.warn("Unable to resolve: " + url.getHost() + ", skipping.");
+        return null;
+      }
+    }
+    else if (hostGroupMode == HostGroupMode.BY_DOMAIN){
+      host = URLUtil.getDomainName(url);
+      if (host == null) {
+        LOG.warn("Unknown domain for url: " + url.toString() + ", using URL string as key");
+        host = url.toExternalForm();
+      }
+    }
+    else {
+      host = url.getHost();
+      if (host == null) {
+        LOG.warn("Unknown host for url: " + url.toString() + ", using URL string as key");
+        host = url.toExternalForm();
+      }
+    }
+
+    return host;
+  }
 
   /**
    * Returns the domain name of the url. The domain name of a url is the
@@ -127,6 +201,9 @@ public class URLUtil {
    * @throws MalformedURLException
    */
   public static String getDomainName(String url) throws MalformedURLException {
+    if (url == null) {
+      return null;
+    }
     return getDomainName(new URL(url));
   }
 
@@ -134,7 +211,6 @@ public class URLUtil {
     String host = null;
 
     try {
-      // if (queueMode == "byDomain") {}
       host = URLUtil.getDomainName(url);
     } catch (MalformedURLException ignored) {}
 
@@ -296,7 +372,6 @@ public class URLUtil {
    * @return String The representative url.
    */
   public static String chooseRepr(String src, String dst, boolean temp) {
-
     // validate both are well formed urls
     URL srcUrl;
     URL dstUrl;
@@ -397,7 +472,7 @@ public class URLUtil {
    *          The url to check.
    * @return String The hostname for the url.
    */
-  public static String getHost(String url) {
+  public static String getHostName(String url) {
     try {
       return new URL(url).getHost().toLowerCase();
     } catch (MalformedURLException e) {
@@ -491,4 +566,5 @@ public class URLUtil {
       ex.printStackTrace();
     }
   }
+
 }

@@ -6,7 +6,7 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SignatureComparator;
-import org.apache.nutch.mapreduce.DbUpdateReducer;
+import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.metadata.Nutch;
@@ -22,6 +22,7 @@ import org.apache.nutch.util.TableUtil;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Created by vincent on 16-9-25.
@@ -29,13 +30,14 @@ import java.util.List;
  */
 public class ReduceDatumBuilder {
 
-  private NutchCounter counter;
-  private int retryMax;
-  private int maxInterval;
-  private FetchSchedule fetchSchedule;
-  private ScoringFilters scoringFilters;
-  private List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
-  private Params params;
+  private final NutchCounter counter;
+  private final int retryMax;
+  private final int maxInterval;
+  private final FetchSchedule fetchSchedule;
+  private final ScoringFilters scoringFilters;
+  private final CrawlFilters crawlFilters;
+  private final List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
+  private final Params params;
 
   public ReduceDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -44,12 +46,13 @@ public class ReduceDatumBuilder {
     maxInterval = conf.getInt("db.fetch.interval.max", 0);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
+    crawlFilters = CrawlFilters.create(conf);
 
     params = Params.of(
         "retryMax", retryMax,
         "maxInterval", maxInterval,
-        "fetchSchedule", fetchSchedule,
-        "scoringFilters", scoringFilters
+        "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
+        "scoringFilters", Stream.of(scoringFilters.getScoringFilterNames())
     );
   }
 
@@ -69,6 +72,16 @@ public class ReduceDatumBuilder {
     updateStatusCounter(page);
   }
 
+  public void updateRowWithoutScoring(String url, WebPage page) {
+    if (Mark.FETCH_MARK.hasMark(page)) {
+      processStatus(url, page);
+    }
+
+    updateMetadata(page);
+
+    updateStatusCounter(page);
+  }
+
   public WebPage createNewRow(String url) {
     WebPage page = WebPage.newBuilder().build();
     fetchSchedule.initializeSchedule(url, page);
@@ -78,7 +91,7 @@ public class ReduceDatumBuilder {
       scoringFilters.initialScore(url, page);
     } catch (ScoringFilterException e) {
       page.setScore(0.0f);
-      counter.increase(DbUpdateReducer.Counter.errors);
+      counter.increase(NutchCounter.Counter.errors);
     }
 
     return page;
@@ -130,7 +143,7 @@ public class ReduceDatumBuilder {
       scoringFilters.initialScore(url, page);
     } catch (ScoringFilterException e) {
       page.setScore(0.0f);
-      counter.increase(DbUpdateReducer.Counter.errors);
+      counter.increase(NutchCounter.Counter.errors);
     }
   }
 
@@ -186,15 +199,23 @@ public class ReduceDatumBuilder {
             modifiedTime = HttpDateFormat.toLong(lastModified.toString());
             prevModifiedTime = page.getModifiedTime();
           } catch (Exception e) {
-            counter.increase(DbUpdateReducer.Counter.errors);
+            counter.increase(NutchCounter.Counter.errors);
           }
         }
 
-//      TableUtil.putMetadata(page, "Nutch-First-Fectch-Time", String.valueOf(fetchTime));
-//      TableUtil.putMetadata(page, "Nutch-Last-Modified-Time", String.valueOf(modifiedTime));
-
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
-        if (maxInterval < page.getFetchInterval()) {
+
+        /**
+         * @vincent
+         * TODO : this is a temporary feature, all detail pages should be fetched only once
+         * */
+        if (crawlFilters.isDetailUrl(url)) {
+          // Never fetch detail again
+          page.setFetchInterval(Integer.MAX_VALUE);
+          page.setFetchTime(Long.MAX_VALUE);
+          // TableUtil.putMetadata(page, "GENERATE_DO_NOT_GENERATE", "true");
+        }
+        else if (maxInterval < page.getFetchInterval()) {
           fetchSchedule.forceRefetch(url, page, false);
         }
         break;
@@ -217,25 +238,25 @@ public class ReduceDatumBuilder {
 
     switch (status) {
       case CrawlStatus.STATUS_FETCHED:
-        counter.increase(NutchCounter.Counter.status_fetched);
+        counter.increase(NutchCounter.Counter.stFetched);
         break;
       case CrawlStatus.STATUS_REDIR_TEMP:
-        counter.increase(NutchCounter.Counter.status_redir_temp);
+        counter.increase(NutchCounter.Counter.stRedirTemp);
         break;
       case CrawlStatus.STATUS_REDIR_PERM:
-        counter.increase(NutchCounter.Counter.status_redir_perm);
+        counter.increase(NutchCounter.Counter.stRedirPerm);
         break;
       case CrawlStatus.STATUS_NOTMODIFIED:
-        counter.increase(NutchCounter.Counter.status_notmodified);
+        counter.increase(NutchCounter.Counter.stNotmodified);
         break;
       case CrawlStatus.STATUS_RETRY:
-        counter.increase(NutchCounter.Counter.status_retry);
+        counter.increase(NutchCounter.Counter.stRetry);
         break;
       case CrawlStatus.STATUS_UNFETCHED:
-        counter.increase(NutchCounter.Counter.status_unfetched);
+        counter.increase(NutchCounter.Counter.stUnfetched);
         break;
       case CrawlStatus.STATUS_GONE:
-        counter.increase(NutchCounter.Counter.status_gone);
+        counter.increase(NutchCounter.Counter.stGone);
         break;
       default:
         break;

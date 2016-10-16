@@ -38,8 +38,6 @@ public interface Nutch {
 
   String SIGNATURE_KEY = "nutch.content.digest";
 
-  String BATCH_NAME_KEY = "nutch.batch.name";
-
   String SCORE_KEY = "nutch.crawl.score";
 
   String PROTO_STATUS_KEY = "_pst_";
@@ -77,10 +75,10 @@ public interface Nutch {
 
   Utf8 DISTANCE = new Utf8("dist");
 
-  int FETCH_PRIORITY_SEED = 1;
-  int FETCH_PRIORITY_INDEX_PAGE = 100;
-  int FETCH_PRIORITY_DEFAULT = 1000;
-  int FETCH_PRIORITY_DETAIL_PAGE = 1000;
+  int FETCH_PRIORITY_DEFAULT = 1;
+  int FETCH_PRIORITY_INDEX_PAGE = 1;
+  int FETCH_PRIORITY_DETAIL_PAGE = 10000;
+  int FETCH_PRIORITY_SEED = 10 * 10000;
 
   /**
    * All arguments from command line
@@ -90,6 +88,8 @@ public interface Nutch {
   String ARG_CRAWL = "crawl";
   /** Batch id to select. */
   String ARG_BATCH = "batch";
+  /** Re-generate. */
+  String ARG_REGENERATE = "reGenerate";
   /** Resume previously aborted op. */
   String ARG_RESUME = "resume";
   /** Force processing even if there are locks or inconsistencies. */
@@ -138,6 +138,11 @@ public interface Nutch {
   String ARG_TOPN = "topN";
 
   /**
+   * Reparse
+   * */
+  String ARG_REPARSE = "reparse";
+
+  /**
    * Indexer Relative Arguments
    * */
   /** Index immediately once the content is fetched. */
@@ -178,6 +183,7 @@ public interface Nutch {
    * */
   String PARAM_NUTCH_TMP_DIR = "nutch.tmp.dir";
   String PARAM_NUTCH_OUTPUT_DIR = "nutch.output.dir";
+  String PARAM_NUTCH_REPORT_DIR = "nutch.report.dir";
   String PARAM_CRAWL_ID = "storage.crawl.id";
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
   String PARAM_FETCH_PRIORITY = "fetcher.fetch.priority";
@@ -187,12 +193,15 @@ public interface Nutch {
   String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
   String PARAM_NUTCH_UNREACHABLE_HOSTS_FILE = "nutch.unreachable.hosts.file";
 
+  String PARAM_BATCH_ID = "nutch.batch.name";
+  String PARAM_PARSE = "parser.parse";
+  String PARAM_REPARSE = "parser.reparse";
+
   /**
    * Fetch parameters
    * */
   String PARAM_FETCH_MAPPER_LIMIT = "fetch.mapper.limit";
   String PARAM_RESUME = "fetch.job.resume";
-  String PARAM_PARSE = "fetcher.parse";
   String PARAM_THREADS = "fetcher.threads.fetch";
 
   /**
@@ -214,17 +223,17 @@ public interface Nutch {
   String PARAM_GENERATE_TIME = "generate.generate.time";
   String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
   String PARAM_GENERATOR_MIN_SCORE = "generate.min.score";
+  String PARAM_GENERATE_REGENERATE = "generate.re.generate";
   String PARAM_GENERATE_FILTER = "generate.filter";
   String PARAM_GENERATE_NORMALISE = "generate.normalise";
   // The maximum number of urls in a single fetchlist
-  String PARAM_GENERATOR_MAX_COUNT = "generate.max.count";
+  String PARAM_GENERATOR_MAX_TASKS_PER_HOST = "generate.max.tasks.per.host";
   String PARAM_GENERATOR_MAX_DISTANCE = "generate.max.distance";
   String PARAM_GENERATOR_COUNT_MODE = "generate.count.mode";
   String PARAM_GENERATOR_TOP_N = "generate.topN";
   String PARAM_GENERATOR_CUR_TIME = "generate.curr.time";
   String PARAM_GENERATOR_DELAY = "crawl.gen.delay";
   String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
-  String PARAM_GENERATOR_BATCH_ID = "generate.batch.id";
   String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
 
   /**
@@ -257,6 +266,7 @@ public interface Nutch {
 
   String PATH_NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
   String PATH_NUTCH_OUTPUT_DIR = PATH_NUTCH_TMP_DIR;
+  String PATH_NUTCH_REPORT_DIR = PATH_NUTCH_OUTPUT_DIR + "/report";
   String PATH_UNREACHABLE_HOSTS = PATH_NUTCH_OUTPUT_DIR + "/unreachable-hosts.txt";
   String PATH_LOCAL_COMMAND = PATH_NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
   String PATH_LAST_BATCH_ID = PATH_NUTCH_TMP_DIR + "/last-batch-id";

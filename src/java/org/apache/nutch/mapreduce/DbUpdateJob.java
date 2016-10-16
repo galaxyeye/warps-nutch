@@ -67,7 +67,6 @@ public class DbUpdateJob extends NutchJob implements Tool {
   private String batchId = ALL_BATCH_ID_STR;
 
   public DbUpdateJob() {
-
   }
 
   public DbUpdateJob(Configuration conf) {
@@ -85,7 +84,7 @@ public class DbUpdateJob extends NutchJob implements Tool {
 
     batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
 
-    conf.set(BATCH_NAME_KEY, batchId);
+    conf.set(PARAM_BATCH_ID, batchId);
     conf.set(PARAM_CRAWL_ID, crawlId);
 
     LOG.info(Params.format(

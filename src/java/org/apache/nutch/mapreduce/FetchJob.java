@@ -26,16 +26,15 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.fetch.FetchMode;
+import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.ProtocolFactory;
-import org.apache.nutch.service.NutchServer;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ import static org.apache.nutch.metadata.Nutch.*;
  * */
 public class FetchJob extends NutchJob implements Tool {
 
-  public static final Logger LOG = LoggerFactory.getLogger(FetchJob.class);
+  private static final Logger LOG = FetchMonitor.LOG;
 
   public static final String PROTOCOL_REDIR = "protocol";
   public static final int PERM_REFRESH_TIME = 5;
@@ -111,7 +110,7 @@ public class FetchJob extends NutchJob implements Tool {
     /** Set re-computed config variables */
     NutchConfiguration.setIfNotNull(conf, PARAM_CRAWL_ID, crawlId);
     conf.setEnum(PARAM_FETCH_MODE, fetchMode);
-    NutchConfiguration.setIfNotNull(conf, PARAM_GENERATOR_BATCH_ID, batchId);
+    NutchConfiguration.setIfNotNull(conf, PARAM_BATCH_ID, batchId);
 
     conf.setInt(PARAM_THREADS, threads);
     conf.setBoolean(PARAM_RESUME, resume);
@@ -245,8 +244,6 @@ public class FetchJob extends NutchJob implements Tool {
       return -1;
     }
 
-    Configuration conf = getConf();
-
     String batchId = args[0];
     if (!batchId.equals("-all") && batchId.startsWith("-")) {
       printUsage();
@@ -299,11 +296,6 @@ public class FetchJob extends NutchJob implements Tool {
     LOG.info("---------------------------------------------------\n\n");
 
     Configuration conf = NutchConfiguration.create();
-    FetchMode fetchMode = conf.getEnum(PARAM_FETCH_MODE, FetchMode.NATIVE);
-    if (fetchMode == FetchMode.CROWDSOURCING) {
-      NutchServer.startInDaemonThread(conf);
-    }
-
     int res = ToolRunner.run(conf, new FetchJob(), args);
     System.exit(res);
   }

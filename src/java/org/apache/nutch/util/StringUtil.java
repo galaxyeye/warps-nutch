@@ -49,7 +49,16 @@ public final class StringUtil {
   public static final String[] padding = { "", " ", "  ", "   ", "    ", "     ", "      ", "       ", "        ",
       "         ", "          " };
 
-  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
+  /**
+   * TODO : configurable
+   * */
+  public static Pattern INDEX_PAGE_URL_PATTERN = Pattern.compile(".+(index|tags).+");
+
+  public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
+
+  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
+
+  public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|video).+");
 
   public static final Comparator<String> LongerFirstComparator = new Comparator<String>() {
     public int compare(String s, String s2) {
@@ -674,6 +683,15 @@ public final class StringUtil {
     return org.apache.hadoop.util.StringUtils.stringifyException(e);
   }
 
+  public static String reverse(String s) {
+    if (s == null || s.isEmpty()) {
+      return s;
+    }
+
+    StringBuilder sb = new StringBuilder(s);
+    return sb.reverse().toString();
+  }
+
   public static int charToNibble(char c) {
     if (c >= '0' && c <= '9') {
       return c - '0';
@@ -686,38 +704,4 @@ public final class StringUtil {
     }
   }
 
-  public static String sniffPageCategory(String url) {
-    String pageCategory = "";
-
-    if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = "detail";
-    }
-    else if (StringUtils.countMatches(url, "/") <= 3) {
-      // http://t.tt/12345678
-      pageCategory = "index";
-    }
-    else if (url.contains("index")) {
-      pageCategory = "index";
-    }
-
-    return pageCategory;
-  }
-
-  public static String sniffPageCategory(String url, double _char, double _a) {
-    String pageCategory = "";
-
-    if (_a < 1) _a = 1;
-
-    if (_char/_a < 15) {
-      pageCategory = "index";
-    }
-    else if (_char > 1200) {
-      pageCategory = "detail";
-    }
-    else {
-      return sniffPageCategory(url);
-    }
-
-    return pageCategory;
-  }
 }

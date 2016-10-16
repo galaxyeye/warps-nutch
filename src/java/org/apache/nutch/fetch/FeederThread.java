@@ -3,7 +3,7 @@ package org.apache.nutch.fetch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
-import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * items are consumed by FetcherThread-s.
  */
 public class FeederThread extends Thread implements Comparable<FeederThread> {
-  public static final Logger LOG = FetchJob.LOG;
+  private final Logger LOG = FetchMonitor.LOG;
+  public static final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
 
   private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
@@ -68,6 +69,15 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     halted.set(true);
   }
 
+  public void exitAndJoin() {
+    halted.set(true);
+    try {
+      join();
+    } catch (InterruptedException e) {
+      LOG.error(e.toString());
+    }
+  }
+
   public boolean isHalted() {
     return halted.get();
   }
@@ -80,7 +90,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     int timeLimitCount = 0;
 
     try {
-      TasksMonitor fetchMonitor = taskScheduler.getTasksMonitor();
+      TasksMonitor tasksMonitor = taskScheduler.getTasksMonitor();
 
       while (!isHalted() && hasMore) {
         long now = System.currentTimeMillis();
@@ -99,7 +109,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
           continue;
         } // if
 
-        int feedCapacity = feedLimit - fetchMonitor.readyItemCount() - fetchMonitor.pendingItemCount();
+        int feedCapacity = feedLimit - tasksMonitor.readyItemCount() - tasksMonitor.pendingItemCount();
         if (feedCapacity <= 0) {
           // fetchMonitor are full - spin-wait until they have some free space
 
@@ -113,7 +123,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
         while (feedCapacity > 0 && currentIter.hasNext()) {
           FetchEntry entry = currentIter.next();
           final String url = TableUtil.unreverseUrl(entry.getKey());
-          fetchMonitor.produce(context.getJobId(), url, entry.getWebPage());
+          tasksMonitor.produce(context.getJobId(), url, entry.getWebPage());
           feedCapacity--;
           feededCount++;
         }
@@ -135,7 +145,12 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
       LOG.error("QueueFeeder error reading input, record " + feededCount, e);
     }
 
-    LOG.info("Feeder finished. Total " + feededCount + " records. Hit by time limit : " + timeLimitCount);
+    LOG.info("Feeder finished. Total " + feededCount + " records.");
+    REPORT_LOG.info("Feeded total " + feededCount + " records.");
+
+    if (timeLimitCount > 0) {
+      LOG.info("Hit by time limit : " + timeLimitCount);
+    }
 
     // context.getCounter(Nutch.STAT_RUNTIME_STATUS, "HitByTimeLimit-QueueFeeder").increment(timeLimitCount);
 

@@ -20,6 +20,7 @@ import com.google.common.collect.Maps;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 
@@ -29,7 +30,8 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 
-import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_PRIORITY;
+import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
+import static org.apache.nutch.metadata.Nutch.*;
 
 public class TableUtil {
 
@@ -167,6 +169,31 @@ public class TableUtil {
 
   public static String toString(CharSequence utf8, String defaultValue) {
     return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
+  }
+
+  public static boolean isSeed(WebPage page) {
+    String isSeed = getMetadata(page, META_IS_SEED);
+    return isSeed != null;
+  }
+
+  /**
+   * basically, if a page looks more like a detail page,
+   * the page should be fetched with higher priority
+   * @author vincent
+   * */
+  public static int calculatePriority(String url, WebPage page, CrawlFilters crawlFilters) {
+    int priority = FETCH_PRIORITY_DEFAULT;
+
+    if (isSeed(page)) {
+      priority = FETCH_PRIORITY_SEED;
+    }
+    else if (crawlFilters.isDetailUrl(url)) {
+      priority = FETCH_PRIORITY_DETAIL_PAGE;
+    }
+
+    setPriorityIfAbsent(page, priority);
+
+    return priority;
   }
 
   /**

@@ -17,17 +17,18 @@
 
 package org.apache.nutch.indexer.basic;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.StringUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
+
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_PAGE_CATEGORY;
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 
 // import org.apache.solr.common.util.DateUtil;
 
@@ -85,16 +86,16 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(Nutch.DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page));
+    doc.add(DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page));
   }
 
   /**
    * TODO : do it inside boilerpipe
    * */
-  private String sniffPageCategory(IndexDocument doc, String url, WebPage page) {
-    String pageCategory = "";
+  private CrawlFilter.PageCategory sniffPageCategory(IndexDocument doc, String url, WebPage page) {
+    CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
 
-    String textContent = (String)page.getVariable(Nutch.DOC_FIELD_TEXT_CONTENT);
+    String textContent = (String)page.getVariable(DOC_FIELD_TEXT_CONTENT);
     if (textContent == null) {
       return pageCategory;
     }
@@ -107,21 +108,11 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     if (textContent.isEmpty()) {
       if (_a > 30) {
-        pageCategory = "index";
+        pageCategory = CrawlFilter.PageCategory.INDEX;
       }
     }
-    else if (_char > 1000) {
-      pageCategory = "detail";
-    }
-    else if (StringUtil.DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = "detail";
-    }
-    else if (StringUtils.countMatches(url, "/") <= 3) {
-      // http://t.tt/12345678
-      pageCategory = "index";
-    }
-    else if (url.contains("index")) {
-      pageCategory = "index";
+    else {
+      return CrawlFilter.sniffPageCategory(url, _char, _a);
     }
 
     return pageCategory;

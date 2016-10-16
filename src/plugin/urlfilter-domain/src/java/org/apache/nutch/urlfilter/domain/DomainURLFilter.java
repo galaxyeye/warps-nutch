@@ -16,23 +16,20 @@
  */
 package org.apache.nutch.urlfilter.domain;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.URLFilter;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.PluginRepository;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
 import org.apache.nutch.util.domain.DomainSuffix;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -124,8 +121,7 @@ public class DomainURLFilter implements URLFilter {
 
     // get the extensions for domain urlfilter
     String pluginName = "urlfilter-domain";
-    Extension[] extensions = PluginRepository.get(conf)
-        .getExtensionPoint(URLFilter.class.getName()).getExtensions();
+    Extension[] extensions = PluginRepository.get(conf).getExtensionPoint(URLFilter.class.getName()).getExtensions();
     for (int i = 0; i < extensions.length; i++) {
       Extension extension = extensions[i];
       if (extension.getDescriptor().getPluginId().equals(pluginName)) {
@@ -165,7 +161,7 @@ public class DomainURLFilter implements URLFilter {
       }
       readConfiguration(reader);
     } catch (IOException e) {
-      LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error(StringUtil.stringifyException(e));
     }
   }
 
@@ -174,21 +170,18 @@ public class DomainURLFilter implements URLFilter {
   }
 
   public String filter(String url) {
-
     try {
-
       // match for suffix, domain, and host in that order. more general will
       // override more specific
       String domain = URLUtil.getDomainName(url).toLowerCase().trim();
-      String host = URLUtil.getHost(url);
+      String host = URLUtil.getHostName(url);
       String suffix = null;
       DomainSuffix domainSuffix = URLUtil.getDomainSuffix(url);
       if (domainSuffix != null) {
         suffix = domainSuffix.getDomain();
       }
 
-      if (domainSet.contains(suffix) || domainSet.contains(domain)
-          || domainSet.contains(host)) {
+      if (domainSet.contains(suffix) || domainSet.contains(domain) || domainSet.contains(host)) {
         return url;
       }
 

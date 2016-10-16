@@ -3,6 +3,7 @@ package org.apache.nutch.fetch.data;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.nutch.util.URLUtil;
@@ -19,7 +20,8 @@ import java.util.*;
  * It also keeps track of requests in progress and elapsed time between requests.
  */
 public class FetchQueue implements Comparable<FetchQueue> {
-  public static final Logger LOG = FetchQueues.LOG;
+
+  private static final Logger LOG = FetchMonitor.LOG;
 
   /** Queue id */
   private final String id;
@@ -187,25 +189,31 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   public boolean isSlow() { return isSlow(1); }
 
-  public boolean isSlow(int costInSec) { return avarageTimeCost() > costInSec; }
+  public boolean isSlow(int costInSec) { return averageTimeCost() > costInSec; }
 
   /**
    * Avarage cost in seconds
    * */
-  public double avarageTimeCost() {
+  public double averageTimeCost() {
     return totalFetchTime / 1000.0 / totalFinishedTasks;
   }
 
   /**
    * Throught rate in seconds
    * */
-  public double avarageThroughputRate() {
+  public double averageThroughputRate() {
     return totalFinishedTasks / (totalFetchTime / 1000.0);
   }
 
   public void detach() { this.detached = true; }
 
   public boolean isDetached() { return this.detached; }
+
+  public void clearAndDetach() {
+    clearReadyQueue();
+    clearPendingQueue();
+    detach();
+  }
 
   /**
    * Retune the queue to avoid hung tasks, pending tasks are push to ready queue so they can be re-fetched
@@ -215,16 +223,7 @@ public class FetchQueue implements Comparable<FetchQueue> {
    *
    * @param force If force is true, reload all pending fetch items immediately, otherwise, reload only exceeds pendingTimeout
    * */
-  public void retune(Set<String> unreachableHosts, boolean force) {
-    if (unreachableHosts.contains(getHost())) {
-      LOG.info("Remove queue for host unreachable : " + getId());
-      readyTasks.clear();
-      pendingTasks.clear();
-      detach();
-
-      return;
-    }
-
+  public void retune(boolean force) {
     long now = System.currentTimeMillis();
 
     final List<FetchTask> readyList = Lists.newArrayList();
@@ -262,13 +261,19 @@ public class FetchQueue implements Comparable<FetchQueue> {
   }
 
   public String getCostReport() {
-    return String.format("%1$40s -> avaTimeCost : %2$.2fs/p, avaThoPut : %3$.2fp/s",
-        id, avarageTimeCost(), avarageThroughputRate());
+    return String.format("%1$40s -> aveTimeCost : %2$.2fs/p, avaThoPut : %3$.2fp/s",
+        id, averageTimeCost(), averageThroughputRate());
   }
 
   public int clearReadyQueue() {
     int count = readyTasks.size();
     readyTasks.clear();
+    return count;
+  }
+
+  public int clearPendingQueue() {
+    int count = pendingTasks.size();
+    pendingTasks.clear();
     return count;
   }
 
@@ -311,8 +316,8 @@ public class FetchQueue implements Comparable<FetchQueue> {
         "minCrawlDelay(s)", df.format(minCrawlDelay / 1000),
         "now", TimingUtil.now(),
         "nextFetchTime", TimingUtil.format(nextFetchTime),
-        "aveTimeCost(s)", df.format(avarageTimeCost()),
-        "aveThoRate(s)", df.format(avarageThroughputRate()),
+        "aveTimeCost(s)", df.format(averageTimeCost()),
+        "aveThoRate(s)", df.format(averageThroughputRate()),
         "readyTasks", readyTasks.size(),
         "pendingTasks", pendingTasks.size(),
         "detached", detached

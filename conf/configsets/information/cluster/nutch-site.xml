@@ -40,6 +40,11 @@
     </property>
 
     <property>
+        <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
+        <value>true</value>
+    </property>
+
+    <property>
         <name>fetcher.threads.per.queue</name>
         <value>1</value>
     </property>
@@ -122,8 +127,7 @@
 
     <property>
         <name>http.timeout</name>
-        <value>300000</value>
-        <description>we have a very long time out setting, it's for a reason</description>
+        <value>10000</value>
     </property>
 
     <property>

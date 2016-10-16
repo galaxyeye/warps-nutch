@@ -33,12 +33,16 @@ import org.apache.nutch.net.proxy.ProxyPoolFactory;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.*;
+import org.apache.nutch.util.DeflateUtils;
+import org.apache.nutch.util.GZIPUtils;
+import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -253,15 +257,18 @@ public abstract class HttpBase implements Protocol {
       int elapsedTime = (int) (System.currentTimeMillis() - startTime);
 
       if (response == null) {
-        ProtocolStatus protocolStatus = null;
+        ProtocolStatus protocolStatus;
         if (lastThrowable instanceof ConnectException) {
+          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.CONNECTION_TIMED_OUT, "retry : " + retry);
+        }
+        else if (lastThrowable instanceof SocketTimeoutException) {
           protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.CONNECTION_TIMED_OUT, "retry : " + retry);
         }
         else if (lastThrowable instanceof UnknownHostException) {
           protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.UNKNOWN_HOST);
         }
         else {
-          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, lastThrowable.toString() + ", retry : " + retry);
+          protocolStatus = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, lastThrowable + ", retry : " + retry);
         }
 
         return new ProtocolOutput(null, protocolStatus);

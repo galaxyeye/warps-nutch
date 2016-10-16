@@ -16,6 +16,11 @@
  ******************************************************************************/
 package org.apache.nutch.scoring;
 
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -23,18 +28,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.hbase.util.Bytes;
-
 public class ScoreDatum implements Writable {
 
   private float score;
   private String url;
   private String anchor;
   private int distance;
-  private Map<String, byte[]> metaData = new HashMap<String, byte[]>();
+  private Map<String, byte[]> metaData = new HashMap<>();
 
   public ScoreDatum() {
   }

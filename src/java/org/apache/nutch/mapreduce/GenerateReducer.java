@@ -16,21 +16,23 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.Multiset;
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
@@ -38,20 +40,21 @@ import static org.apache.nutch.metadata.Nutch.*;
  * 
  * The #reduce() method write a random integer to all generated URLs. This
  * random number is then used by {@link FetchMapper}.
- * 
  */
 public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String, WebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(GenerateReducer.class);
+  public static final Logger LOG = GenerateJob.LOG;
 
-  private enum Counter { rows, hostCountTooLarge, malformedUrl };
+  private enum Counter { hosts, hostCountTooLarge, malformedUrl }
 
-  protected static long count = 0;
   private long limit;
-  private long maxCount;
-  private boolean byDomain = false;
-  private Map<String, Integer> hostCountMap = new HashMap<>(); // TODO : better name?
+  private long maxCountPerHost;
+  private URLUtil.HostGroupMode hostGroupMode;
+  private Multiset<String> hostNames = LinkedHashMultiset.create();
   private String batchId;
+  private NutchMetrics nutchMetrics;
+
+  private long count = 0;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -59,42 +62,53 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     getCounter().register(Counter.class);
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
-    batchId = conf.get(PARAM_GENERATOR_BATCH_ID, ALL_BATCH_ID_STR);
+    batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
 
     // Generate top N links only
     limit = conf.getLong(PARAM_GENERATOR_TOP_N, Long.MAX_VALUE);
     limit /= context.getNumReduceTasks();
 
-    maxCount = conf.getLong(PARAM_GENERATOR_MAX_COUNT, -2);
-    String countMode = conf.get(PARAM_GENERATOR_COUNT_MODE, GENERATE_COUNT_VALUE_HOST);
-    if (countMode.equals(GENERATE_COUNT_VALUE_DOMAIN)) {
-      byDomain = true;
-    }
+    maxCountPerHost = conf.getLong(PARAM_GENERATOR_MAX_TASKS_PER_HOST, 10000);
+    hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
+    nutchMetrics = new NutchMetrics(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "batchId", batchId,
         "limit", limit,
-        "maxCount", maxCount, 
-        "byDomain", byDomain
+        "maxCountPerHost", maxCountPerHost,
+        "hostGroupMode", hostGroupMode
     ));
   }
 
   @Override
-  protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context) throws IOException, InterruptedException {
+  protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context)
+      throws IOException, InterruptedException {
+    getCounter().increase(rows);
+
     if (LOG.isTraceEnabled()) {
-      LOG.trace("generate reduce " + key.url);
+      LOG.trace("Generate reduce " + key.url);
+    }
+
+    String url = key.url;
+
+    String host = URLUtil.getHost(url, hostGroupMode);
+    if (host == null) {
+      getCounter().increase(Counter.malformedUrl);
+      return;
     }
 
     for (WebPage page : values) {
       if (count >= limit) {
         stop("Enough pages generated, quit");
-        return;
+        break;
       }
 
-      if (maxCount > 0) {
-        countHosts(key.url);
+      addGeneratedHosts(host);
+      if (maxCountPerHost > 0 && hostNames.count(host) > maxCountPerHost) {
+        getCounter().increase(Counter.hostCountTooLarge);
+        break;
       }
 
       Mark.INJECT_MARK.removeMarkIfExist(page);
@@ -104,7 +118,6 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       try {
         context.write(TableUtil.reverseUrl(key.url), page);
 
-        getCounter().increase(Counter.rows);
         getCounter().updateAffectedRows(key.url);
       } catch (MalformedURLException e) {
         getCounter().increase(Counter.malformedUrl);
@@ -115,20 +128,27 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     } // for
   }
 
-  private void countHosts(String url) throws MalformedURLException {
-    String hostordomain = byDomain ? URLUtil.getDomainName(url) : URLUtil.getHost(url);
+  @Override
+  protected void cleanup(Context context) {
+    try {
+      LOG.info("Generated total " + hostNames.elementSet().size() + " hosts/domains");
+      nutchMetrics.reportGeneratedHosts(hostNames.elementSet(), context.getJobName());
+    }
+    catch (Throwable e) {
+      LOG.error(StringUtil.stringifyException(e));
+    }
+    finally {
+      super.cleanup(context);
+    }
+  }
 
-    Integer hostCount = hostCountMap.get(hostordomain);
-    if (hostCount == null) {
-      hostCountMap.put(hostordomain, 0);
-      hostCount = 0;
+  private void addGeneratedHosts(String host) throws MalformedURLException {
+    if (host == null) {
+      return;
     }
 
-    if (hostCount >= maxCount) {
-      getCounter().increase(Counter.hostCountTooLarge);
-      return; // should stop?
-    }
+    hostNames.add(host);
 
-    hostCountMap.put(hostordomain, hostCount + 1);
+    getCounter().setValue(Counter.hosts, hostNames.entrySet().size());
   }
 }

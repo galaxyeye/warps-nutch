@@ -32,6 +32,7 @@ import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.net.URLNormalizers;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  * @author mattmann
  * @author J&eacute;r&ocirc;me Charron
  * @author S&eacute;bastien Le Callonnec
- */
+ * */
 public class ParseUtil {
 
   /* our log stream */
@@ -73,9 +74,8 @@ public class ParseUtil {
   private final ExecutorService executorService;
 
   /**
-   * 
    * @param conf
-   */
+   * */
   public ParseUtil(Configuration conf) {
     this.conf = conf;
     parserFactory = new ParserFactory(conf);
@@ -100,12 +100,10 @@ public class ParseUtil {
    * returned. If the parse is unsuccessful, a message is logged to the
    * <code>WARNING</code> level, and an empty parse is returned.
    * 
-   * @throws ParserNotFound
-   *           If there is no suitable parser found.
    * @throws ParseException
    *           If there is an error parsing.
    */
-  public Parse parse(String url, WebPage page) throws ParserNotFound, ParseException {
+  public Parse parse(String url, WebPage page) throws ParseException {
     Parser[] parsers;
 
     String contentType = TableUtil.toString(page.getContentType());
@@ -113,9 +111,7 @@ public class ParseUtil {
     parsers = this.parserFactory.getParsers(contentType, url);
 
     for (int i = 0; i < parsers.length; i++) {
-      if (LOG.isDebugEnabled()) {
-        // LOG.debug("Parsing [" + url + "] with [" + parsers[i] + "]");
-      }
+      // LOG.debug("Parsing [" + url + "] with [" + parsers[i] + "]");
       Parse parse;
 
       if (maxParseTime != -1) {
@@ -154,11 +150,11 @@ public class ParseUtil {
    * Parses given web page and stores parsed content within page. Puts a
    * meta-redirect to outlinks.
    * 
-   * @param key
+   * @param reverseUrl
    * @param page
    */
-  public Parse process(String key, WebPage page) {
-    String url = TableUtil.unreverseUrl(key);
+  public Parse process(String reverseUrl, WebPage page) {
+    String url = TableUtil.unreverseUrl(reverseUrl);
     byte status = page.getStatus().byteValue();
     if (status != CrawlStatus.STATUS_FETCHED) {
       if (LOG.isDebugEnabled()) {
@@ -271,7 +267,7 @@ public class ParseUtil {
 
   private void processRedirect(String url, WebPage page, org.apache.nutch.storage.ParseStatus pstatus) {
     String newUrl = ParseStatusUtils.getMessage(pstatus);
-    int refreshTime = Integer.parseInt(ParseStatusUtils.getArg(pstatus, 1));
+    int refreshTime = StringUtil.tryParseInt(ParseStatusUtils.getArg(pstatus, 1), 0);
     try {
       newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
       if (newUrl == null) {
@@ -298,12 +294,11 @@ public class ParseUtil {
 
     TableUtil.putMetadata(page, FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
 
-    if (newUrl == null || newUrl.equals(url)) {
+    if (newUrl.equals(url)) {
       String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetchJob.PERM_REFRESH_TIME);
 
       if (reprUrl == null) {
         LOG.warn("Null repr url for " + url);
-        return;
       } else {
         page.setReprUrl(new Utf8(reprUrl));
       }

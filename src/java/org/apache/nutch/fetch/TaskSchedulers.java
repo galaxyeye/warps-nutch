@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 /**
  * TaskSchedulers is shared by all Nutch Fetch Jobs
@@ -46,8 +47,8 @@ public class TaskSchedulers {
     return this.name;
   }
 
-  public synchronized TaskScheduler create(NutchCounter counter, NutchContext context) throws IOException {
-    TaskScheduler taskScheduler = new TaskScheduler(counter, context);
+  public synchronized TaskScheduler create(FetchMonitor fetchMonitor, NutchCounter counter, NutchContext context) throws IOException {
+    TaskScheduler taskScheduler = new TaskScheduler(fetchMonitor, counter, context);
     put(taskScheduler);
     return taskScheduler;
   }
@@ -62,7 +63,20 @@ public class TaskSchedulers {
     LOG.info("status : " + __toString());
   }
 
+  public synchronized List<Integer> schedulerIds() {
+    return fetchSchedulerIds.stream().collect(Collectors.toList());
+  }
+
   public synchronized TaskScheduler get(int id) {
+    return fetchSchedulers.get(id);
+  }
+
+  public synchronized TaskScheduler peek() {
+    Integer id = fetchSchedulerIds.peek();
+    if (id == null) {
+      return null;
+    }
+
     return fetchSchedulers.get(id);
   }
 
@@ -104,7 +118,7 @@ public class TaskSchedulers {
         keys.add(item.getKey());
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e.toString());
     }
 
@@ -120,10 +134,11 @@ public class TaskSchedulers {
 
   private String __toString() {
     StringBuilder sb = new StringBuilder();
+    sb.append("Job IDs : ")
+        .append(StringUtils.join(fetchSchedulerIds, ", "))
+        .append("\tQueue Size : ")
+        .append(fetchSchedulers.size());
 
-    sb.append("Job IDs : " + StringUtils.join(fetchSchedulerIds, ", "));
-    sb.append("\tQueue Size : " + fetchSchedulers.size());
-
-    return sb.toString();    
+    return sb.toString();
   }
 }

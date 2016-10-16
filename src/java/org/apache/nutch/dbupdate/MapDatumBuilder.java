@@ -4,7 +4,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.crawl.filters.CrawlFilters;
-import org.apache.nutch.mapreduce.DbUpdateMapper;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
@@ -52,14 +51,14 @@ public class MapDatumBuilder {
   // There are no more than 200 outlinks in a page generally
   private final List<Pair<UrlWithScore, WebPageWritable>> newRows = new ArrayList<>(200);
 
-  private String batchId;
+  private final String batchId;
 
-  private boolean normalize;
-  private boolean filter;
-  private URLNormalizers normalizers;
-  private URLFilters urlFilters;
-  private CrawlFilters crawlFilters;
-  private boolean pageRankEnabled = false;
+  private final boolean normalize;
+  private final boolean filter;
+  private final URLNormalizers normalizers;
+  private final URLFilters urlFilters;
+  private final CrawlFilters crawlFilters;
+  private final boolean pageRankEnabled = false;
 
   public MapDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -68,17 +67,12 @@ public class MapDatumBuilder {
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
 
     scoringFilters = new ScoringFilters(conf);
-    batchId = conf.get(BATCH_NAME_KEY, ALL_BATCH_ID_STR);
+    batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
     normalize = conf.getBoolean(URL_NORMALIZING, true);
     filter = conf.getBoolean(URL_FILTERING, true);
 
-    if (normalize) {
-      normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
-    }
-
-    if (filter) {
-      urlFilters = new URLFilters(conf);
-    }
+    normalizers = normalize ? new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK) : null;
+    urlFilters = filter ? new URLFilters(conf) : null;
 
     crawlFilters = CrawlFilters.create(conf);
 
@@ -108,12 +102,9 @@ public class MapDatumBuilder {
     return url;
   }
 
-  /**
-   * Map sort by score,
-   * */
   public Pair<UrlWithScore, WebPageWritable> buildDatum(String url, String reversedUrl, WebPage page) {
-    float score = calculatePageScore(url, page);
-    calculatePriority(url, page);
+    int priority = TableUtil.calculatePriority(url, page, crawlFilters);
+    float score = calculatePageScore(url, priority, page);
     WebPageWritable pageWritable = new WebPageWritable(conf, page);
     return Pair.of(new UrlWithScore(reversedUrl, score), pageWritable);
   }
@@ -127,19 +118,26 @@ public class MapDatumBuilder {
     newRows.clear();
     scoreData.clear();
 
+    // Do not dive too deep
+    final int depth = getWebDepth(page);
+    final int maxWebDepth = 3;
+    if (depth > maxWebDepth) {
+      counter.increase(NutchCounter.Counter.tooDeepPages);
+      return newRows;
+    }
+
     Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
     if (outlinks == null || outlinks.isEmpty()) {
       return newRows;
     }
 
-    final int depth = getWebDepth(page);
     outlinks.entrySet().forEach(e -> scoreData.add(createScoreDatum(e.getKey(), e.getValue(), depth)));
 
     // TODO : Outlink filtering (i.e. "only keep the first n outlinks")
     try {
       scoringFilters.distributeScoreToOutlinks(url, page, scoreData, outlinks.size());
     } catch (ScoringFilterException e) {
-      counter.increase(DbUpdateMapper.Counter.errors);
+      counter.increase(NutchCounter.Counter.scoringErrors);
       LOG.warn("Distributing score failed for URL: " + url + " exception:" + StringUtil.stringifyException(e));
     }
 
@@ -154,14 +152,14 @@ public class MapDatumBuilder {
 
       try {
         String reversedUrl = TableUtil.reverseUrl(scoreDatum.getUrl());
-        newRows.add(buildDatum(reversedUrl, url, page));
+        newRows.add(buildDatum(url, reversedUrl, page));
       } catch (MalformedURLException e) {
-        counter.increase(DbUpdateMapper.Counter.errors);
+        counter.increase(NutchCounter.Counter.errors);
         LOG.warn(e.toString());
       }
     }
 
-    counter.increase(DbUpdateMapper.Counter.outlinkCount, outlinkCount);
+    counter.increase(NutchCounter.Counter.outlinks, outlinkCount);
 
     return newRows;
   }
@@ -184,25 +182,7 @@ public class MapDatumBuilder {
   /**
    * TODO : We calculate page score mainly in reduer
    * */
-  private float calculatePageScore(String url, WebPage page) {
-    return 0.0f;
-  }
-
-  /**
-   * basically, if a page looks more like a detail page,
-   * the page should be fetched with higher priority
-   * @author vincent
-   * */
-  private void calculatePriority(String url, WebPage page) {
-    if (crawlFilters.isDetailUrl(url)) {
-      TableUtil.setPriorityIfAbsent(page, FETCH_PRIORITY_DETAIL_PAGE);
-    }
-
-    String pageCategory = StringUtil.sniffPageCategory(url);
-    if (pageCategory.equalsIgnoreCase("detail")) {
-      TableUtil.setPriorityIfAbsent(page, FETCH_PRIORITY_DETAIL_PAGE);
-    }
-
-    TableUtil.setPriorityIfAbsent(page, FETCH_PRIORITY_DEFAULT);
+  private float calculatePageScore(String url, int priority, WebPage page) {
+    return priority * 1.0f;
   }
 }

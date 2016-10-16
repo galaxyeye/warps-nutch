@@ -93,6 +93,7 @@ public class SeedBuilder {
       return row;
     }
 
+    row.setVariable("url", url);
     row.setVariable("reversedUrl", reversedUrl);
 
     // Add metadata to page

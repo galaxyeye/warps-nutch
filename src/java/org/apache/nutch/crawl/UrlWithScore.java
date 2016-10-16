@@ -47,47 +47,33 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
   /**
    * Creates instance with provided writables.
    * 
-   * @param url
+   * @param reversedUrl
    * @param score
    */
-  public UrlWithScore(Text url, FloatWritable score) {
-    this.reversedUrl = url;
+  public UrlWithScore(Text reversedUrl, FloatWritable score) {
+    this.reversedUrl = reversedUrl;
     this.score = score;
   }
 
   /**
    * Creates instance with provided non-writable types.
    * 
-   * @param url
+   * @param reversedUrl
    * @param score
    */
-  public UrlWithScore(String url, float score) {
-    this.reversedUrl = new Text(url);
+  public UrlWithScore(String reversedUrl, float score) {
+    this.reversedUrl = new Text(reversedUrl);
     this.score = new FloatWritable(score);
   }
 
-  @Override
-  public void write(DataOutput out) throws IOException {
-    reversedUrl.write(out);
-    score.write(out);
-  }
-
-  @Override
-  public void readFields(DataInput in) throws IOException {
-    reversedUrl.readFields(in);
-    score.readFields(in);
-  }
-
-  public Text getReversedUrl() {
-    return reversedUrl;
-  }
+  public Text getReversedUrl() { return reversedUrl; }
 
   public void setReversedUrl(Text reversedUrl) {
     this.reversedUrl = reversedUrl;
   }
 
-  public void setUrl(String url) {
-    this.reversedUrl.set(url);
+  public void setReversedUrl(String reversedUrl) {
+    this.reversedUrl.set(reversedUrl);
   }
 
   public FloatWritable getScore() {
@@ -100,6 +86,18 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
 
   public void setScore(float score) {
     this.score.set(score);
+  }
+
+  @Override
+  public void write(DataOutput out) throws IOException {
+    reversedUrl.write(out);
+    score.write(out);
+  }
+
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    reversedUrl.readFields(in);
+    score.readFields(in);
   }
 
   @Override
@@ -164,8 +162,7 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
     /**
      * Compares by {url}.
      */
-    public static final class UrlOnlyComparator implements
-        RawComparator<UrlWithScore> {
+    public static final class UrlOnlyComparator implements RawComparator<UrlWithScore> {
       private final WritableComparator textComp = new Text.Comparator();
 
       @Override

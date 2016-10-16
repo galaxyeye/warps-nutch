@@ -29,6 +29,14 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/parse-metatags/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/subcollection/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/parse-tika/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/protocol-http/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -32,13 +32,15 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+
 public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, String, WebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateReducer.class);
 
   public static final String CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
 
-  public enum Counter { rows, newRows, errors };
+  public enum Counter { newRows };
 
   private ReduceDatumBuilder datumBuilder;
   private boolean additionsAllowed;
@@ -76,7 +78,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
 
   private void doReduce(UrlWithScore key, Iterable<NutchWritable> values, Context context)
       throws IOException, InterruptedException {
-    getCounter().increase(Counter.rows);
+    getCounter().increase(rows);
 
     String reversedUrl = key.getReversedUrl().toString();
     String url = TableUtil.unreverseUrl(reversedUrl);

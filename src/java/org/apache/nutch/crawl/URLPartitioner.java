@@ -38,17 +38,12 @@ import java.net.UnknownHostException;
 
 /**
  * Partition urls by host, domain name or IP depending on the value of the
- * parameter 'partition.url.mode' which can be 'byHost', 'byDomain' or 'byIP'
+ * parameter 'partition.url.mode' which can be 'BY_HOST', 'byDomain' or 'byIP'
  */
 public class URLPartitioner implements Configurable {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(URLPartitioner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(URLPartitioner.class);
 
   public static final String PARTITION_MODE_KEY = "partition.url.mode";
-
-  public static final String PARTITION_MODE_HOST = "byHost";
-  public static final String PARTITION_MODE_DOMAIN = "byDomain";
-  public static final String PARTITION_MODE_IP = "byIP";
 
   public static final String PARTITION_URL_SEED = "partition.url.seed";
 
@@ -56,7 +51,7 @@ public class URLPartitioner implements Configurable {
 
   private int seed;
   private URLNormalizers normalizers;
-  private String mode = PARTITION_MODE_HOST;
+  private URLUtil.HostGroupMode hostGroupMode = URLUtil.HostGroupMode.BY_HOST;
 
   @Override
   public Configuration getConf() {
@@ -67,13 +62,7 @@ public class URLPartitioner implements Configurable {
   public void setConf(Configuration conf) {
     this.conf = conf;
     seed = conf.getInt(PARTITION_URL_SEED, 0);
-    mode = conf.get(PARTITION_MODE_KEY, PARTITION_MODE_HOST);
-    // check that the mode is known
-    if (!mode.equals(PARTITION_MODE_IP) && !mode.equals(PARTITION_MODE_DOMAIN)
-        && !mode.equals(PARTITION_MODE_HOST)) {
-      LOG.error("Unknown partition mode : " + mode + " - forcing to byHost");
-      mode = PARTITION_MODE_HOST;
-    }
+    hostGroupMode = conf.getEnum(PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_PARTITION);
   }
 
@@ -95,9 +84,9 @@ public class URLPartitioner implements Configurable {
     }
 
     if (url != null) {
-      if (mode.equals(PARTITION_MODE_HOST)) {
+      if (hostGroupMode == URLUtil.HostGroupMode.BY_HOST) {
         hashCode = url.getHost().hashCode();
-      } else if (mode.equals(PARTITION_MODE_DOMAIN)) {
+      } else if (hostGroupMode == URLUtil.HostGroupMode.BY_DOMAIN) {
         hashCode = URLUtil.getDomainName(url).hashCode();
       } else { // MODE IP
         try {

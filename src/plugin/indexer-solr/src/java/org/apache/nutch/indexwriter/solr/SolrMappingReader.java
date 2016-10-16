@@ -38,11 +38,34 @@ import java.util.List;
 import java.util.Map;
 
 public class SolrMappingReader {
+
   public static Logger LOG = LoggerFactory.getLogger(SolrMappingReader.class);
+
+  /**
+   * We do not map a name to another for solr
+   * */
+  public class MappingField {
+    public MappingField(String name, String type, boolean indexed, boolean stored, boolean required, boolean multiValued) {
+      this.name = name;
+      this.mappedName = name;
+      this.type = type;
+      this.indexed = indexed;
+      this.stored = stored;
+      this.required = required;
+      this.multiValued = multiValued;
+    }
+    public String name;
+    public String mappedName;
+    public String type;
+    public boolean indexed;
+    public boolean stored;
+    public boolean required;
+    public boolean multiValued;
+  }
 
   private Configuration conf;
 
-  private Map<String, String> keyMap = new HashMap<>();
+  private Map<String, MappingField> keyMap = new HashMap<>();
   private String uniqueKey = "id";
 
   public static synchronized SolrMappingReader getInstance(Configuration conf) {
@@ -78,11 +101,22 @@ public class SolrMappingReader {
         for (int i = 0; i < fieldList.getLength(); i++) {
           Element element = (Element) fieldList.item(i);
 
-          String source = element.getAttribute("name");
-          String dest = source;
+          String name = element.getAttribute("name");
+          String type = element.getAttribute("type");
+          String indexed = element.getAttribute("indexed");
+          String stored = element.getAttribute("stored");
+          String required = element.getAttribute("required");
+          String multiValued = element.getAttribute("multiValued");
 
-          solrFields.add(dest);
-          keyMap.put(source, dest);
+          boolean bIndexed = indexed != null && indexed.equalsIgnoreCase("true");
+          boolean bStored = stored != null && stored.equalsIgnoreCase("true");
+          boolean bRequired = required != null && required.equalsIgnoreCase("true");
+          boolean bMultiValued = multiValued != null && multiValued.equalsIgnoreCase("true");
+
+          MappingField mappingFiled = new MappingField(name, type, bIndexed, bStored, bRequired, bMultiValued);
+
+          solrFields.add(name);
+          keyMap.put(name, mappingFiled);
         }
       }
 
@@ -102,21 +136,21 @@ public class SolrMappingReader {
     }
   }
 
-  public Map<String, String> getKeyMap() {
+  public Map<String, MappingField> getKeyMap() {
     return keyMap;
-  }
-
-  public String mapKey(String key) throws IOException {
-    if (keyMap.containsKey(key)) {
-      key = keyMap.get(key);
-    }
-    return key;
   }
 
   public String mapKeyIfExists(String key) throws IOException {
     if (keyMap.containsKey(key)) {
-      return keyMap.get(key);
+      return key;
     }
     return null;
+  }
+
+  public boolean isMultiValued(String key) throws IOException {
+    if (keyMap.containsKey(key)) {
+      return keyMap.get(key).multiValued;
+    }
+    return false;
   }
 }

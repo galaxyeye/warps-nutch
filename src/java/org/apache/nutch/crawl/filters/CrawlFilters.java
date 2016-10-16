@@ -23,11 +23,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.crawl.filters.CrawlFilter.PageType;
+import org.apache.nutch.crawl.filters.CrawlFilter.PageCategory;
 import org.apache.nutch.net.RegexURLFilter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.ObjectCache;
-import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
@@ -217,9 +216,9 @@ public class CrawlFilters extends Configured {
   public boolean isDetailUrl(String url) {
     if (url == null) return false;
 
-    PageType pageType = sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
-    if (pageType == PageType.DETAIL) {
+    if (pageType == PageCategory.DETAIL) {
       return true;
     }
 
@@ -232,12 +231,48 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
+  public boolean isMediaUrl(String url) {
+    if (url == null) return false;
+
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+
+    if (pageType == PageCategory.MEDIA) {
+      return true;
+    }
+
+    for (CrawlFilter filter : crawlFilters) {
+      if (filter.isMediaUrl(url)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean isSearchUrl(String url) {
+    if (url == null) return false;
+
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+
+    if (pageType == PageCategory.SEARCH) {
+      return true;
+    }
+
+    for (CrawlFilter filter : crawlFilters) {
+      if (filter.isSearchUrl(url)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public boolean isIndexUrl(String url) {
     if (url == null) return false;
 
-    PageType pageType = sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
-    if (pageType == PageType.INDEX) {
+    if (pageType == PageCategory.INDEX) {
       return true;
     }
 
@@ -248,20 +283,6 @@ public class CrawlFilters extends Configured {
     }
 
     return false;
-  }
-
-  public PageType sniffPageCategory(String url) {
-    String category = StringUtil.sniffPageCategory(url);
-
-    if (category.equalsIgnoreCase("index")) {
-      return PageType.INDEX;
-    }
-
-    if (category.equalsIgnoreCase("detail")) {
-      return PageType.DETAIL;
-    }
-
-    return PageType.ANY;
   }
 
   public List<CrawlFilter> getCrawlFilters() {
@@ -279,18 +300,6 @@ public class CrawlFilters extends Configured {
 
   @Override
   public String toString() {
-//    StringBuilder sb = new StringBuilder();
-//    sb.append("{\n[");
-//
-//    for (CrawlFilter crawlFilter : crawlFilters) {
-//      sb.append("\n\t");
-//      sb.append(crawlFilter);
-//      sb.append(',');
-//    }
-//    sb.append("\n]\n}");
-//
-//    return sb.toString();
-
     return toJson();
   }
 

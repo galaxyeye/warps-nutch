@@ -562,7 +562,7 @@
 
 <property>
   <name>generate.count.mode</name>
-  <value>host</value>
+  <value>BY_HOST</value>
   <description>Determines how the URLs are counted for generator.max.count.
   Default value is 'host' but can be 'domain'. Note that we do not count 
   per IP in the new version of the Generator.
@@ -583,8 +583,8 @@
 <!-- urlpartitioner properties -->
 <property>
   <name>partition.url.mode</name>
-  <value>byHost</value>
-  <description>Determines how to partition URLs. Default value is 'byHost', 
+  <value>BY_HOST</value>
+  <description>Determines how to partition URLs. Default value is 'BY_HOST',
   also takes 'byDomain' or 'byIP'. 
   </description>
 </property>
@@ -664,9 +664,9 @@
 
 <property>
   <name>fetcher.queue.mode</name>
-  <value>byHost</value>
+  <value>BY_HOST</value>
   <description>Determines how the URLs are placed into fetchMonitor.
-   Allowed values are 'byHost', 'byDomain' and 'byIP'.
+   Allowed values are 'BY_HOST', 'byDomain' and 'byIP'.
    The value would usually correspond to that of 'partition.url.mode'.
   </description>
 </property>

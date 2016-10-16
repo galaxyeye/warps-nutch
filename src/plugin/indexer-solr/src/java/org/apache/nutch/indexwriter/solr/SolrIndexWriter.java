@@ -143,16 +143,21 @@ public class SolrIndexWriter implements IndexWriter {
 
         String key = solrMapping.mapKeyIfExists(e.getKey());
 
-        // We do not allow keys unmapped
-//        if (key == null) {
-//          key = e.getKey();
-//        }
+        if (key == null) {
+          continue;
+        }
 
-        if (key != null) {
+        Boolean isMultiValued = solrMapping.isMultiValued(e.getKey());
+        if (!isMultiValued) {
+          if (inputDoc.getField(key) == null) {
+            inputDoc.addField(key, val2, e.getValue().getWeight());
+          }
+        }
+        else {
           inputDoc.addField(key, val2, e.getValue().getWeight());
         }
-      }
-    }
+      } // for
+    } // for
 
     inputDoc.setDocumentBoost(doc.getWeight());
     inputDocs.add(inputDoc);

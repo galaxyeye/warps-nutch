@@ -116,10 +116,8 @@ public class HttpResponse implements Response {
         sockHost = proxy.host();
         sockPort = proxy.port();
 
-        String message = String.format(
-            "proxy : %s, available : %d, retired : %d, url : %s", proxy
-                .ipPort(), http.proxyPool().size(), http.proxyPool()
-                .retiredSize(), url);
+        String message = String.format("proxy : %s, available : %d, retired : %d, url : %s",
+            proxy.ipPort(), http.proxyPool().size(), http.proxyPool().retiredSize(), url);
 
         Http.LOG.debug(message);
       }
@@ -134,38 +132,30 @@ public class HttpResponse implements Response {
       socket.connect(sockAddr, http.getTimeout());
 
       if (scheme == Scheme.HTTPS) {
-        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory
-            .getDefault();
-        SSLSocket sslsocket = (SSLSocket) factory.createSocket(socket,
-            sockHost, sockPort, true);
+        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        SSLSocket sslsocket = (SSLSocket) factory.createSocket(socket, sockHost, sockPort, true);
         sslsocket.setUseClientMode(true);
 
         // Get the protocols and ciphers supported by this JVM
-        Set<String> protocols = new HashSet<String>(Arrays.asList(sslsocket
-            .getSupportedProtocols()));
-        Set<String> ciphers = new HashSet<String>(Arrays.asList(sslsocket
-            .getSupportedCipherSuites()));
+        Set<String> protocols = new HashSet<>(Arrays.asList(sslsocket.getSupportedProtocols()));
+        Set<String> ciphers = new HashSet<>(Arrays.asList(sslsocket.getSupportedCipherSuites()));
 
         // Intersect with preferred protocols and ciphers
         protocols.retainAll(http.getTlsPreferredProtocols());
         ciphers.retainAll(http.getTlsPreferredCipherSuites());
 
-        sslsocket.setEnabledProtocols(protocols.toArray(new String[protocols
-            .size()]));
-        sslsocket.setEnabledCipherSuites(ciphers.toArray(new String[ciphers
-            .size()]));
+        sslsocket.setEnabledProtocols(protocols.toArray(new String[protocols.size()]));
+        sslsocket.setEnabledCipherSuites(ciphers.toArray(new String[ciphers.size()]));
 
         sslsocket.startHandshake();
         socket = sslsocket;
       }
 
       conf = http.getConf();
-      if (sockAddr != null
-          && conf.getBoolean("store.ip.address", false) == true) {
+      if (conf.getBoolean("store.ip.address", false)) {
         String ipString = sockAddr.getAddress().getHostAddress(); // get the ip
                                                                   // address
-        page.getMetadata().put(new Utf8("_ip_"),
-            ByteBuffer.wrap(ipString.getBytes()));
+        page.getMetadata().put(new Utf8("_ip_"), ByteBuffer.wrap(ipString.getBytes()));
       }
 
       // make request
@@ -221,7 +211,7 @@ public class HttpResponse implements Response {
       // the socket is not connected, or the socket input has been shutdown
       // using shutdownInput()
 
-      PushbackInputStream in = 
+      PushbackInputStream in =
           new PushbackInputStream(new BufferedInputStream(socket.getInputStream(), Http.BUFFER_SIZE), Http.BUFFER_SIZE);
 
       StringBuffer line = new StringBuffer();
@@ -361,7 +351,6 @@ public class HttpResponse implements Response {
    * @throws HttpException
    * @throws IOException
    */
-  @SuppressWarnings("unused")
   private void readChunkedContent(PushbackInputStream in, StringBuffer line)
       throws HttpException, IOException {
     boolean doneChunks = false;
@@ -557,5 +546,4 @@ public class HttpResponse implements Response {
     in.unread(value);
     return value;
   }
-
 }

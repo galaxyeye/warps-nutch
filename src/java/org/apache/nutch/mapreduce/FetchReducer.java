@@ -23,13 +23,10 @@ import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 
 class FetchReducer extends NutchReducer<IntWritable, FetchEntry, String, WebPage> {
-
-  public static final Logger LOG = FetchJob.LOG;
 
   private String jobName;
   private FetchMonitor fetchMonitor;

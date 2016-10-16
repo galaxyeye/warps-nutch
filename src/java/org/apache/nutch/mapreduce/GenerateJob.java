@@ -28,14 +28,10 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.crawl.URLPartitioner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.NutchUtil;
-import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +85,7 @@ public class GenerateJob extends NutchJob implements Tool {
 
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
     String batchId = params.get(ARG_BATCH, NutchUtil.generateBatchId());
+    boolean reGenerate = params.getBoolean(ARG_REGENERATE, false);
     long topN = params.getLong(ARG_TOPN, Long.MAX_VALUE);
     boolean filter = params.getBoolean(ARG_FILTER, true);
     boolean norm = params.getBoolean(ARG_NORMALIZE, true);
@@ -96,23 +93,16 @@ public class GenerateJob extends NutchJob implements Tool {
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
 
     conf.set(PARAM_CRAWL_ID, crawlId);
-    conf.set(PARAM_GENERATOR_BATCH_ID, batchId);
+    conf.set(PARAM_BATCH_ID, batchId);
     conf.setLong(GENERATE_TIME_KEY, startTime); // seems not used, (or pseudoCurrTime used?)
     conf.setLong(PARAM_GENERATOR_CUR_TIME, pseudoCurrTime);
     conf.setLong(PARAM_GENERATOR_TOP_N, topN);
+    conf.setBoolean(PARAM_GENERATE_REGENERATE, reGenerate);
     conf.setBoolean(PARAM_GENERATE_FILTER, filter);
     conf.setBoolean(PARAM_GENERATE_NORMALISE, norm);
 
-    String countMode = conf.get(PARAM_GENERATOR_COUNT_MODE, GENERATE_COUNT_VALUE_HOST);
-    if (GENERATE_COUNT_VALUE_HOST.equalsIgnoreCase(countMode)) {
-      conf.set(PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST);
-    } else if (GENERATE_COUNT_VALUE_DOMAIN.equalsIgnoreCase(countMode)) {
-      conf.set(PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_DOMAIN);
-    } else {
-      LOG.warn("Unknown generator.max.count mode '" + countMode + "', using default : " + GENERATE_COUNT_VALUE_HOST);
-      conf.set(PARAM_GENERATOR_COUNT_MODE, GENERATE_COUNT_VALUE_HOST);
-      conf.set(PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST);
-    }
+    URLUtil.HostGroupMode hostGroupMode = conf.getEnum(PARAM_GENERATOR_COUNT_MODE, URLUtil.HostGroupMode.BY_HOST);
+    conf.setEnum(PARTITION_MODE_KEY, hostGroupMode);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -122,12 +112,13 @@ public class GenerateJob extends NutchJob implements Tool {
         "norm", norm,
         "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
         "topN", topN,
-        "domainMode", countMode,
-        PARTITION_MODE_KEY, URLPartitioner.PARTITION_MODE_HOST,
+        "reGenerate", reGenerate,
+        PARAM_GENERATOR_COUNT_MODE, hostGroupMode,
+        PARTITION_MODE_KEY, hostGroupMode,
         "nutchTmpDir", nutchTmpDir
     ));
 
-    Files.write(Paths.get(PATH_LAST_BATCH_ID), batchId.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+    Files.write(Paths.get(PATH_LAST_BATCH_ID), (batchId + "\n").getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
   }
 
   @Override
@@ -240,7 +231,7 @@ public class GenerateJob extends NutchJob implements Tool {
 
   private void printUsage() {
     System.out.println("Usage: GenerateJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
-        "[-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
+        "[-reGen] [-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
     System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
     System.out.println("    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");");
     System.out.println("    -batchId <id>     - the batch id ");
@@ -259,15 +250,16 @@ public class GenerateJob extends NutchJob implements Tool {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    * */
-  public String generate(long topN, String crawlId, String batchId, long pseudoCurrTime, boolean filter, boolean norm) throws Exception {
+  public String generate(long topN, String crawlId, String batchId, boolean reGenerate, long pseudoCurrTime, boolean filter, boolean norm) throws Exception {
     run(Params.toArgMap(
         ARG_TOPN, topN,
         ARG_CRAWL, crawlId,
         ARG_BATCH, batchId,
+        ARG_REGENERATE, reGenerate,
         ARG_CURTIME, pseudoCurrTime, ARG_FILTER, filter,
         ARG_NORMALIZE, norm));
 
-    return getConf().get(PARAM_GENERATOR_BATCH_ID);
+    return getConf().get(PARAM_BATCH_ID);
   }
 
   public int run(String[] args) throws Exception {
@@ -281,6 +273,7 @@ public class GenerateJob extends NutchJob implements Tool {
     String crawlId = conf.get(PARAM_CRAWL_ID, "");
 
     long pseudoCurrTime = System.currentTimeMillis();
+    boolean reGenerate = false;
     long topN = Long.MAX_VALUE;
     boolean filter = true;
     boolean norm = true;
@@ -291,6 +284,8 @@ public class GenerateJob extends NutchJob implements Tool {
         crawlId = args[++i];
       } else if ("-batchId".equals(args[i])) {
         batchId = args[++i];
+      } else if ("-reGen".equals(args[i])) {
+        reGenerate = true;
       } else if ("-topN".equals(args[i])) {
         topN = Long.parseLong(args[++i]);
       } else if ("-noFilter".equals(args[i])) {
@@ -307,7 +302,7 @@ public class GenerateJob extends NutchJob implements Tool {
     }
 
     try {
-      return (generate(topN, crawlId, batchId, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
+      return (generate(topN, crawlId, batchId, reGenerate, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
     } catch (Exception e) {
       LOG.error(StringUtils.stringifyException(e));
       return -1;

@@ -1,23 +1,19 @@
 package org.apache.nutch.fetch.data;
 
-import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
-import java.net.InetAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.apache.nutch.fetch.data.FetchQueues.QUEUE_MODE_DOMAIN;
-import static org.apache.nutch.fetch.data.FetchQueues.QUEUE_MODE_IP;
 
 /**
  * This class described the item to be fetched.
  */
 public class FetchTask implements Comparable<FetchTask> {
-  public static final Logger LOG = FetchJob.LOG;
+
+  private static final Logger LOG = FetchMonitor.LOG;
 
   /**
    * The initial value is the current timestamp in second, to make it 
@@ -93,38 +89,27 @@ public class FetchTask implements Comparable<FetchTask> {
   }
 
   /** 
-   * Create an item. Queue id will be created based on <code>queueMode</code>
+   * Create an item. Queue id will be created based on <code>hostGroupMode</code>
    * argument, either as a protocol + hostname pair, protocol + IP
    * address pair or protocol+domain pair.
    */
-  public static FetchTask create(int jobID, String url, WebPage page, String queueMode) {
-    final URL u = getUrl(url);
+  public static FetchTask create(int jobID, String url, WebPage page, URLUtil.HostGroupMode hostGroupMode) {
+    final URL u = URLUtil.getUrl(url);
 
     if (u == null) {
       return null;
     }
 
-    final String proto = u.getProtocol().toLowerCase();
-    final String host = getHost(u, queueMode).toLowerCase();
-    final String queueID = proto + "://" + host;
+    final String proto = u.getProtocol();
+    final String host = URLUtil.getHost(u, hostGroupMode);
 
-    return new FetchTask(jobID, url, page, u, queueID);
-  }
-
-  /**
-   * TODO : is there a common util tool?
-   * */
-  protected static URL getUrl(String url) {
-    URL u = null;
-
-    try {
-      u = new URL(url);
-    } catch (final Exception e) {
-      LOG.warn("Cannot parse url: " + url, e);
+    if (proto == null || host == null) {
       return null;
     }
 
-    return u;
+    final String queueID = proto.toLowerCase() + "://" + host.toLowerCase();
+
+    return new FetchTask(jobID, url, page, u, queueID);
   }
 
   /**
@@ -135,36 +120,6 @@ public class FetchTask implements Comparable<FetchTask> {
    * */
   private int nextId() {
     return instanceSequence.incrementAndGet();
-  }
-
-  protected static String getHost(URL url, String queueMode) {
-    String host;
-    if (QUEUE_MODE_IP.equalsIgnoreCase(queueMode)) {
-      try {
-        final InetAddress addr = InetAddress.getByName(url.getHost());
-        host = addr.getHostAddress();
-      } catch (final UnknownHostException e) {
-        // unable to resolve it, so don't fall back to host name
-        LOG.warn("Unable to resolve: " + url.getHost() + ", skipping.");
-        return null;
-      }
-    }
-    else if (QUEUE_MODE_DOMAIN.equalsIgnoreCase(queueMode)){
-      host = URLUtil.getDomainName(url);
-      if (host == null) {
-        LOG.warn("Unknown domain for url: " + url.toString() + ", using URL string as key");
-        host = url.toExternalForm();
-      }
-    }
-    else {
-      host = url.getHost();
-      if (host == null) {
-        LOG.warn("Unknown host for url: " + url.toString() + ", using URL string as key");
-        host = url.toExternalForm();
-      }
-    }
-
-    return host;
   }
 
   @Override

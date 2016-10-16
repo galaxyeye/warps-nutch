@@ -3,7 +3,7 @@ package org.apache.nutch.fetch.indexer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
@@ -14,6 +14,7 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -21,15 +22,17 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Created by vincent on 16-8-23.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class JITIndexer {
 
-  public static final Logger LOG = FetchJob.LOG;
+  public static final Logger LOG = FetchMonitor.LOG;
 
   private Configuration conf;
 
   private int batchSize = 2500;
   private int indexThreadCount;
+  private int minimalContentLenght;
 
   private final Set<IndexThread> activeIndexThreads = new ConcurrentSkipListSet<>();
   private final BlockingQueue<FetchTask> indexTasks = Queues.newLinkedBlockingQueue(batchSize);
@@ -42,6 +45,7 @@ public class JITIndexer {
 
     this.batchSize = conf.getInt("indexer.index.batch.size", this.batchSize);
     this.indexThreadCount = conf.getInt("indexer.index.thread.count", 1);
+    this.minimalContentLenght = conf.getInt("indexer.minimal.content.length", 1000);
 
     indexWriters = new IndexWriters(conf);
     indexWriters.open(conf);
@@ -61,14 +65,26 @@ public class JITIndexer {
    * Add fetch item to index indexTasks
    * Thread safe
    * */
-  public void produce(FetchTask item) {
-    ParseStatus pstatus = item.getPage().getParseStatus();
+  public void produce(FetchTask fetchTask) {
+    WebPage page = fetchTask.getPage();
+    if (page == null) {
+      LOG.warn("Invalid FetchTask to index, ignore it");
+      return;
+    }
+
+    ParseStatus pstatus = page.getParseStatus();
     if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
       // getCounter().increase(IndexMapper.Counter.unmatchStatus);
       return; // filter urls not parsed
     }
 
-    indexTasks.add(item);
+    ByteBuffer content = page.getContent();
+    if (minimalContentLenght > 0 && content.array().length < minimalContentLenght) {
+      // TODO : add a counter to report this case
+      return;
+    }
+
+    indexTasks.add(fetchTask);
   }
 
   /**
@@ -103,7 +119,7 @@ public class JITIndexer {
   }
 
   /**
-   * thread safety
+   * Thread safe
    * */
   public void index(FetchTask fetchTask) {
     try {
@@ -111,16 +127,17 @@ public class JITIndexer {
       String key = TableUtil.reverseUrl(url);
       WebPage page = fetchTask.getPage();
 
-      if (page != null) {
-        IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
-        if (doc != null) {
+      IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
+      if (doc != null) {
+        String textContent = doc.getFieldValueAsString("text_content");
+        if (textContent != null && textContent.length() > minimalContentLenght) {
           synchronized (indexWriters) {
             indexWriters.write(doc);
           }
-        } // if
+        }
       } // if
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.error(e.toString());
     }
   }

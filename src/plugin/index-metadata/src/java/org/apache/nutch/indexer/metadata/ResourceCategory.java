@@ -25,7 +25,6 @@ public class ResourceCategory implements Configurable {
   private Map<String, String> resourceCategories = new LinkedHashMap<>();
 
   public ResourceCategory() {
-
   }
 
   public ResourceCategory(Configuration conf) {

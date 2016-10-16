@@ -18,9 +18,9 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
@@ -29,41 +29,46 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.Params;
-import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(GenerateMapper.class);
+  public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
-    rows, rowsAfterFinished, rowsInjected, rowsIsSeed, rowsBeforeStart, rowsNotInRange, pagesAlreadyGenerated,
+    malformedUrl, rowsInjected, rowsIsSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable, pagesAlreadyGenerated,
     pagesTooFarAway, rowsNormalisedToNull, rowsFiltered, pagesFetchLater
-  };
+  }
 
-  private URLFilters filters;
-  private URLNormalizers normalizers;
-  private CrawlFilters crawlFilters;
+  private NutchMetrics nutchMetrics;
+  private final Set<String> unreachableHosts = new HashSet<>();
+  private final SelectorEntry entry = new SelectorEntry();
+
+  private URLUtil.HostGroupMode hostGroupMode;
   private boolean filter;
   private boolean normalise;
-  private FetchSchedule fetchSchedule;
+  private URLFilters urlFilters;
+  private URLNormalizers urlNormalizers;
   private ScoringFilters scoringFilters;
+  private CrawlFilters crawlFilters;
+  private FetchSchedule fetchSchedule;
   private long pseudoCurrTime;
-  private SelectorEntry entry = new SelectorEntry();
   private long topN;
   private int maxDistance;
   private String[] keyRange;
+  private boolean reGenerate = false;
   private boolean ignoreGenerated = true;
 
   @Override
@@ -74,17 +79,20 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
     String fetchMode = conf.get(PARAM_FETCH_MODE);
-    ignoreGenerated = conf.getBoolean(PARAM_IGNORE_GENERATED, false);
+    hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
+    reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
+    ignoreGenerated = !reGenerate || conf.getBoolean(PARAM_IGNORE_GENERATED, false);
+
+    this.nutchMetrics = new NutchMetrics(conf);
+    boolean ignoreUnreachableHosts = conf.getBoolean("generator.ignore.unreachable.hosts", true);
+    if (ignoreUnreachableHosts) {
+      nutchMetrics.loadUnreachableHosts(unreachableHosts);
+    }
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
-    if (filter) {
-      filters = new URLFilters(conf);
-    }
-
+    urlFilters = filter ? new URLFilters(conf) : null;
     normalise = conf.getBoolean(PARAM_GENERATE_NORMALISE, true);
-    if (normalise) {
-      normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_GENERATE_HOST_COUNT);
-    }
+    urlNormalizers = normalise ? new URLNormalizers(conf, URLNormalizers.SCOPE_GENERATE_HOST_COUNT) : null;
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime);
@@ -99,6 +107,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "fetchMode", fetchMode,
+        "hostGroupMode", hostGroupMode,
         "filter", filter,
         "topN", topN,
         "normalise", normalise,
@@ -108,25 +117,45 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "scoringFilters", scoringFilters.getClass().getName(),
         "crawlFilters", crawlFilters,
         "keyRange", keyRange[0] + " - " + keyRange[1],
-        "ignoreGenerated", ignoreGenerated
+        "ignoreGenerated", ignoreGenerated,
+        "ignoreUnreachableHosts", ignoreUnreachableHosts,
+        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
+        "unreachableHosts", unreachableHosts.size()
     ));
   }
 
   @Override
   public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
+    getCounter().increase(rows);
+
+//    if (LOG.isDebugEnabled()) {
+//      LOG.debug(reversedUrl);
+//      return;
+//    }
+
     String url = TableUtil.unreverseUrl(reversedUrl);
 
+    // Host
+    String host = URLUtil.getHost(url, hostGroupMode);
+
+    if (host == null) {
+      getCounter().increase(Counter.malformedUrl);
+      return;
+    }
+
+    if (unreachableHosts.contains(host)) {
+      getCounter().increase(Counter.rowsHostUnreachable);
+      return;
+    }
+
     /**
-     * [Temporary Strategy] Now we crawl seed every time we start, AdaptiveScheduler is just works
+     * We crawl seed every time we start, AdaptiveScheduler is just works
      * */
     String isSeed = TableUtil.getMetadata(page, META_IS_SEED);
     if (isSeed != null) {
       entry.set(url, Float.MAX_VALUE);
-      context.write(entry, page);
-
-      // LOG.debug("Generate injected url : " + url);
+      output(url, entry, page, context);
       getCounter().increase(Counter.rowsIsSeed);
-
       return;
     }
 
@@ -134,11 +163,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     // INJECT_MARK will be removed in DbUpdate stage
     if (Mark.INJECT_MARK.hasMark(page)) {
       entry.set(url, Float.MAX_VALUE);
-      context.write(entry, page);
-
-      // LOG.debug("Generate injected url : " + url);
+      output(url, entry, page, context);
       getCounter().increase(Counter.rowsInjected);
-
       return;
     }
 
@@ -164,7 +190,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
           return;
         }
       }
-    }
+    } // if
 
     // Filter on distance
     if (maxDistance > -1) {
@@ -179,7 +205,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     // Url filter
-    if (!shouldProcess(reversedUrl)) {
+    if (!shouldProcess(url, reversedUrl)) {
       return;
     }
 
@@ -197,33 +223,45 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     float score = page.getScore();
     try {
-      // Typically, we use OPIC scoring filter,
+      // Typically, we use OPIC scoring filter
+      // TODO : use a better scoring filter for information monitoring @vincent
       score = scoringFilters.generatorSortValue(url, page, score);
     } catch (ScoringFilterException e) {
       // ignore
     }
+
+    // Detail pages comes first
+    if (crawlFilters.isDetailUrl(url)) {
+      score = Float.MAX_VALUE;
+    }
+
     // Sort by score
     entry.set(url, score);
 
-//    if () {
+    output(url, entry, page, context);
+  }
+
+//  private boolean shouldFetch(String url, WebPage page, long currTime) {
+//    boolean should = false;
 //
-//    }
+//
+//
+//    should = fetchSchedule.shouldFetch(url, page, pseudoCurrTime);
+//
+//    return should;
+//  }
 
-//    String pageCategory = StringUtil.sniffPageCategory(url, 1, 1);
-//    if (pageCategory.equalsIgnoreCase("index")) {
-//      score *= 100;
-//    }
-
+  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     // Generate time, we will use this mark to decide if we re-generate this page
-    TableUtil.putMetadata(page, Nutch.PARAM_GENERATE_TIME, String.valueOf(startTime));
+    TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
 
     context.write(entry, page);
 
-    getCounter().increase(Counter.rows);
+    getCounter().updateAffectedRows(url);
   }
 
   // Url filter
-  private boolean shouldProcess(String reversedUrl) {
+  private boolean shouldProcess(String url, String reversedUrl) {
     // TODO : CrawlFilter may be move to be a plugin
     // key before start key
     if (!CrawlFilter.keyGreaterEqual(reversedUrl, keyRange[0])) {
@@ -245,12 +283,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return false;
     }
 
-    String url = TableUtil.unreverseUrl(reversedUrl);
-
     // If filtering is on don't generate URLs that don't pass URLFilters
     try {
       if (normalise) {
-        url = normalizers.normalize(url, URLNormalizers.SCOPE_GENERATE_HOST_COUNT);
+        url = urlNormalizers.normalize(url, URLNormalizers.SCOPE_GENERATE_HOST_COUNT);
       }
 
       if (url == null) {
@@ -258,7 +294,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         return false;
       }
 
-      if (filter && filters.filter(url) == null) {
+      if (filter && urlFilters.filter(url) == null) {
+        getCounter().increase(Counter.rowsFiltered);
         return false;
       }
     } catch (URLFilterException | MalformedURLException e) {

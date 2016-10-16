@@ -93,8 +93,9 @@ public class URLFilters {
   /** Run all defined urlFilters. Assume logical AND. */
   public String filter(String urlString) throws URLFilterException {
     for (int i = 0; i < this.urlFilters.length; i++) {
-      if (urlString == null)
+      if (urlString == null) {
         return null;
+      }
       urlString = this.urlFilters[i].filter(urlString);
 
     }
@@ -104,7 +105,7 @@ public class URLFilters {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    Arrays.stream(this.urlFilters).forEach(indexWriter -> sb.append(indexWriter.getClass().getSimpleName()).append(", "));
+    Arrays.stream(this.urlFilters).forEach(f -> sb.append(f.getClass().getSimpleName()).append(", "));
     return sb.toString();
   }
 }

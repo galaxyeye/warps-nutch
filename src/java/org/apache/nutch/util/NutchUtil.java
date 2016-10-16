@@ -18,26 +18,17 @@ package org.apache.nutch.util;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.JobConfig;
-import org.mortbay.log.Log;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Random;
-
-import static org.apache.nutch.metadata.Nutch.PATH_NUTCH_OUTPUT_DIR;
-import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_OUTPUT_DIR;
 
 public class NutchUtil {
 
@@ -130,23 +121,4 @@ public class NutchUtil {
     return host == null ? defaultHost : host;
   }
 
-  public static void writeReport(Path reportFile, String report) {
-    try {
-      Files.createDirectories(reportFile.getParent());
-      Files.write(reportFile, report.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-      Log.info("Report written to " + reportFile.toAbsolutePath());
-    } catch (IOException e) {
-      Log.warn("Failed to write report : " + e.toString());
-    }
-  }
-
-  public static void writeReport(String report, String fileSuffix, Configuration conf) {
-    try {
-      Path outputDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
-      Path reportFile = Paths.get(outputDir.toAbsolutePath().toString(), "report" + fileSuffix);
-      writeReport(reportFile, report);
-    } catch (IOException e) {
-      Log.warn("Failed to write report : " + e.toString());
-    }
-  }
 }

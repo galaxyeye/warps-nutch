@@ -3,7 +3,6 @@ package org.apache.nutch.mapreduce;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.Mark;
@@ -17,11 +16,15 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
+import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
+
 public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> {
 
   public static final Logger LOG = ParserJob.LOG;
 
-  public enum Counter { notFetchedPages, alreadyParsedPages, truncatedPages, notParsed, parseSuccess, parseFailed };
+  public enum Counter { notFetchedPages, alreadyParsedPages, truncatedPages, notParsed, parseSuccess, parseFailed }
 
   private ParseUtil parseUtil;
   private boolean resume;
@@ -37,10 +40,10 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
     Configuration conf = context.getConfiguration();
     getCounter().register(Counter.class);
 
-    batchId = new Utf8(conf.get(Nutch.PARAM_GENERATOR_BATCH_ID, Nutch.ALL_BATCH_ID_STR));
+    batchId = new Utf8(conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR));
     parseUtil = new ParseUtil(conf);
     resume = conf.getBoolean(ParserJob.RESUME_KEY, false);
-    reparse = batchId.equals(ParserJob.REPARSE);
+    reparse = conf.getBoolean(ParserJob.REPARSE_KEY, false);
     force = conf.getBoolean(ParserJob.FORCE_KEY, false);
     skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
 
@@ -54,26 +57,26 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
   }
 
   @Override
-  public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
-    String url = TableUtil.unreverseUrl(key);
+  public void map(String reverseUrl, WebPage page, Context context) throws IOException, InterruptedException {
+    getCounter().increase(rows);
 
-    if (!shouldProcess(key, url, page)) {
+    String url = TableUtil.unreverseUrl(reverseUrl);
+
+    if (!shouldProcess(url, page)) {
       return;
     }
 
-    Parse parse = parseUtil.process(key, page);
+    Parse parse = parseUtil.process(reverseUrl, page);
+
+    // if where is FETCH_MARK set, we also have PARSE_MARK set after the parse
 
     ParseStatus pstatus = page.getParseStatus();
 
-    // LOG.info("page status : " + ParseStatusCodes.majorCodes[pstatus.getMajorCode()]);
-
-    // LOG.info("outlinks : " + parse.getOutlinks().length);
-
     countParseStatus(pstatus);
-
+    getCounter().increase(NutchCounter.Counter.outlinks, parse.getOutlinks().length);
     getCounter().updateAffectedRows(url);
 
-    context.write(key, page);
+    context.write(reverseUrl, page);
   }
 
   // 0 : "notparsed", 1 : "success", 2 : "failed"
@@ -85,15 +88,15 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
     Counter counter = Counter.parseSuccess;
 
     switch (pstatus.getMajorCode()) {
-      case 0 : counter = Counter.notParsed;
-      case 1 : counter = Counter.parseSuccess;
-      default : counter = Counter.parseFailed;
+      case 0 : counter = Counter.notParsed; break;
+      case 1 : counter = Counter.parseSuccess; break;
+      default : counter = Counter.parseFailed; break;
     }
 
     getCounter().increase(counter);
   }
-  
-  private boolean shouldProcess(String key, String url, WebPage page) {
+
+  private boolean shouldProcess(String url, WebPage page) {
     if (!reparse && !Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.notFetchedPages);
 

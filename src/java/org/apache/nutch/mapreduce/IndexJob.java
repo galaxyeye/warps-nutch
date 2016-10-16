@@ -113,7 +113,7 @@ public class IndexJob extends NutchJob implements Tool {
      * */
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.setInt(THREADS_KEY, threads);
-    conf.set(PARAM_GENERATOR_BATCH_ID, batchId);
+    conf.set(PARAM_BATCH_ID, batchId);
     conf.setInt(ARG_LIMIT, limit);
     conf.setBoolean(ARG_REINDEX, reindex);
 

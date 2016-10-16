@@ -133,8 +133,20 @@ public class MetadataIndexer implements IndexingFilter {
       String k = metatag.getValue();
       String metadata = TableUtil.getMetadata(page, metatag.getKey());
 
-      if (metadata != null) {
-        Arrays.stream(metadata.split("\t")).forEach(v -> doc.add(k, v));
+      if (k != null && metadata != null) {
+        k = k.trim();
+        metadata = metadata.trim();
+
+        if (!k.isEmpty() && !metadata.isEmpty()) {
+          final String finalK = k;
+
+          if (finalK.equalsIgnoreCase("meta_description")) {
+            Arrays.stream(metadata.split("\t")).forEach(v -> doc.addIfAbsent(finalK, v));
+          }
+          else {
+            Arrays.stream(metadata.split("\t")).forEach(v -> doc.add(finalK, v));
+          }
+        }
       }
     }
 

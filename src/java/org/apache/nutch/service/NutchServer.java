@@ -21,16 +21,15 @@ import com.google.common.collect.Sets;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.service.impl.JobFactory;
-import org.apache.nutch.service.impl.JobWorkerPoolExecutor;
+import org.apache.nutch.client.NutchClient;
 import org.apache.nutch.service.impl.ConfManagerImpl;
+import org.apache.nutch.service.impl.JobFactory;
 import org.apache.nutch.service.impl.JobManagerImpl;
+import org.apache.nutch.service.impl.JobWorkerPoolExecutor;
 import org.apache.nutch.service.misc.ErrorStatusService;
 import org.apache.nutch.service.model.response.JobInfo;
 import org.apache.nutch.service.model.response.JobInfo.State;
 import org.apache.nutch.service.resources.*;
-import org.apache.nutch.client.NutchClient;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.local.SpringConfiguration;
 import org.apache.nutch.storage.local.model.ServerInstance;
 import org.apache.nutch.storage.local.service.BrowserInstanceService;
@@ -54,6 +53,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+
+import static org.apache.nutch.metadata.Nutch.DEFAULT_MASTER_HOSTNAME;
+import static org.apache.nutch.metadata.Nutch.DEFAULT_MASTER_PORT;
 
 public class NutchServer extends Application {
   public static final String NUTCH_SERVER = "NUTCH_SERVER";
@@ -188,8 +190,9 @@ public class NutchServer extends Application {
    * @return true if a server instance is running.
    */
   public static boolean isRunning() {
-    if (running.get())
+    if (running.get()) {
       return true;
+    }
 
     return NetUtil.testNetwork("127.0.0.1", port);
   }
@@ -215,8 +218,8 @@ public class NutchServer extends Application {
     startTime = System.currentTimeMillis();
 
     // use a intenet hostname/domain/ip to enable internet access by a satellite
-    String master = conf.get("nutch.master.domain", Nutch.DEFAULT_MASTER_HOSTNAME);
-    int port = conf.getInt("nutch.server.port", Nutch.DEFAULT_MASTER_PORT);
+    String master = conf.get("nutch.master.domain", DEFAULT_MASTER_HOSTNAME);
+    int port = conf.getInt("nutch.server.port", DEFAULT_MASTER_PORT);
     registerFectchServerInstance(master, port, conf);
   }
 
@@ -228,7 +231,7 @@ public class NutchServer extends Application {
    *          nutch master port   
    */
   public void registerFectchServerInstance(String host, int port, Configuration conf) {
-    NutchClient client = new NutchClient(conf, host, Nutch.DEFAULT_MASTER_PORT);
+    NutchClient client = new NutchClient(conf, host, DEFAULT_MASTER_PORT);
     client.register(new ServerInstance(null, port, ServerInstance.Type.NutchServer));
   }
 

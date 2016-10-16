@@ -19,6 +19,7 @@ package org.apache.nutch.crawl.filters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.net.RegexURLFilter;
@@ -28,20 +29,67 @@ import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
 import java.io.IOException;
+import java.util.Objects;
+
+import static org.apache.nutch.util.StringUtil.*;
 
 public class CrawlFilter extends Configured {
 
   public static final Logger LOG = CrawlFilters.LOG;
 
-  public static final String CRAWL_FILTER_FILTER = "crawl.filter.filter";
-  public static final String CRAWL_FILTER_NORMALISE = "crawl.filter.normalise";
+  public static PageCategory sniffPageCategory(String url) {
+    Objects.requireNonNull(url);
 
-  public enum PageType {
-    INDEX, DETAIL, ANY;
-  };
+    PageCategory pageCategory = PageCategory.ANY;
+
+    url = url.toLowerCase();
+
+    if (StringUtils.countMatches(url, "/") <= 3) {
+      // http://t.tt/12345678
+      pageCategory = PageCategory.INDEX;
+    }
+    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.DETAIL;
+    }
+    else if (SEARCH_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.SEARCH;
+    }
+    else if (MEDIA_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.MEDIA;
+    }
+    else if (INDEX_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.INDEX;
+    }
+
+    return pageCategory;
+  }
+
+  public static PageCategory sniffPageCategory(String url, double _char, double _a) {
+    PageCategory pageCategory;
+
+    if (_a < 1) {
+      _a = 1;
+    }
+
+    if (_char/_a < 15) {
+      pageCategory = PageCategory.INDEX;
+    }
+    else if (_char > 1200) {
+      pageCategory = PageCategory.DETAIL;
+    }
+    else {
+      return sniffPageCategory(url);
+    }
+
+    return pageCategory;
+  }
+
+  public enum PageCategory {
+    INDEX, DETAIL, SEARCH, MEDIA, ANY
+  }
 
   @Expose
-  private PageType pageType = PageType.ANY;
+  private PageCategory pageCategory = PageCategory.ANY;
   @Expose
   private String urlRegexRule;
   @Expose
@@ -203,19 +251,27 @@ public class CrawlFilter extends Configured {
   }
 
   public boolean isDetailUrl(String url) {
-    return pageType.equals(PageType.DETAIL) && testUrlSatisfied(url);
+    return (pageCategory == PageCategory.DETAIL) && testUrlSatisfied(url);
+  }
+
+  public boolean isSearchUrl(String url) {
+    return (pageCategory == PageCategory.SEARCH) && testUrlSatisfied(url);
+  }
+
+  public boolean isMediaUrl(String url) {
+    return (pageCategory == PageCategory.MEDIA) && testUrlSatisfied(url);
   }
 
   public boolean isIndexUrl(String url) {
-    return pageType.equals(PageType.INDEX) && testUrlSatisfied(url);
+    return pageCategory.equals(PageCategory.INDEX) && testUrlSatisfied(url);
   }
 
-  public PageType getPageType() {
-    return pageType;
+  public PageCategory getPageType() {
+    return pageCategory;
   }
 
-  public void setPageType(PageType pageType) {
-    this.pageType = pageType;
+  public void setPageType(PageCategory pageCategory) {
+    this.pageCategory = pageCategory;
   }
 
   public String getUrlFilter() {
@@ -272,23 +328,6 @@ public class CrawlFilter extends Configured {
 //        .disableHtmlEscaping()
         .excludeFieldsWithoutExposeAnnotation().create();
     return gson.toJson(this);
-
-//    StringBuilder sb = new StringBuilder();
-//
-//    sb.append("{");
-////    sb.append("\n\turlfilter : " + filter);
-////    sb.append("\n\turlnormalise : " + normalise);
-//    sb.append("\n\n\tpageType : " + pageType);
-//    sb.append("\n\turlRegexRule : " + urlRegexRule);
-//    if (textFilter != null) {
-//      sb.append("\n\n\ttextFilter : " + textFilter.toString());
-//    }
-//    if (blockFilter != null) {
-//      sb.append("\n\n\tblockFilter : " + blockFilter.toString());
-//    }
-//    sb.append("\n}\n");
-//
-//    return sb.toString();
   }
 
   public static void main(String[] args) throws Exception {

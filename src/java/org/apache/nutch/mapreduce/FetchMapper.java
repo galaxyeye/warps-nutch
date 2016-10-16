@@ -5,20 +5,17 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
 
@@ -41,15 +38,15 @@ import static org.apache.nutch.metadata.Nutch.*;
  */
 public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, FetchEntry> {
 
-  public enum Counter { rows, pages, notGenerated, alreadyFetched, hostsUnreachable };
+  public enum Counter { notGenerated, alreadyFetched, hostsUnreachable };
 
   private boolean resume;
   private int limit = -1;
   private int count = 0;
 
   private Random random = new Random();
-  private Path unreachableHostsPath = Paths.get(PATH_UNREACHABLE_HOSTS);
   private Set<String> unreachableHosts = new HashSet<>();
+  private NutchMetrics nutchMetrics;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -66,12 +63,12 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     limit = limit < 2 * numTasks ? limit : limit/numTasks;
 
     resume = conf.getBoolean(PARAM_RESUME, false);
+    this.nutchMetrics = new NutchMetrics(conf);
 
-    unreachableHostsPath = NutchConfiguration.getPath(conf, PARAM_NUTCH_UNREACHABLE_HOSTS_FILE, Paths.get(PATH_UNREACHABLE_HOSTS));
+    // unreachableHostsPath = NutchConfiguration.getPath(conf, PARAM_NUTCH_UNREACHABLE_HOSTS_FILE, Paths.get(PATH_UNREACHABLE_HOSTS));
     boolean ignoreUnreachableHosts = conf.getBoolean("fetcher.fetch.mapper.ignore.unreachable.hosts", true);
-    if (!ignoreUnreachableHosts) {
-      Files.write(unreachableHostsPath, "".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-      unreachableHosts.addAll(Files.readAllLines(unreachableHostsPath));
+    if (ignoreUnreachableHosts) {
+      nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
 
     LOG.info(Params.format(
@@ -82,7 +79,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
         "numTasks", numTasks,
         "limit", limit,
         "ignoreUnreachableHosts", ignoreUnreachableHosts,
-        "unreachableHostsPath", unreachableHostsPath,
+        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
         "unreachableHosts", unreachableHosts.size()
     ));
   }
@@ -93,7 +90,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
    * */
   @Override
   protected void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
-    getCounter().increase(Counter.rows);
+    getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(key);
 
@@ -128,7 +125,6 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
 
     context.write(new IntWritable(random.nextInt(65536)), new FetchEntry(conf, key, page));
 
-    getCounter().increase(Counter.pages);
     getCounter().updateAffectedRows(url);
 
     // LOG.debug("SimpleFetcher mapper : " + key);

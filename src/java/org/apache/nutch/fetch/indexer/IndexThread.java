@@ -49,7 +49,7 @@ public class IndexThread extends Thread implements Comparable<IndexThread> {
     while (!isHalted()) {
       try {
         FetchTask item = JITIndexer.consume();
-        if (item != null) {
+        if (item != null && item.getPage() != null) {
           JITIndexer.index(item);
         }
       }

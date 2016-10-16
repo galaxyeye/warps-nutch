@@ -16,6 +16,12 @@
  */
 package org.apache.nutch.tools;
 
+import org.apache.commons.cli.*;
+import org.apache.hadoop.util.StringUtils;
+import org.apache.nutch.util.URLUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -25,18 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.util.URLUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A simple tool that will spin up multiple threads to resolve urls to ip
@@ -70,7 +64,7 @@ public class ResolveUrls {
     public void run() {
 
       numTotal.incrementAndGet();
-      String host = URLUtil.getHost(url);
+      String host = URLUtil.getHostName(url);
       long start = System.currentTimeMillis();
       try {
         // get the address by name and if no error is thrown then it

@@ -52,6 +52,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import static org.apache.nutch.metadata.Nutch.CACHING_FORBIDDEN_CONTENT;
+import static org.apache.nutch.metadata.Nutch.CACHING_FORBIDDEN_KEY;
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
+
 public class HtmlParser implements Parser {
 
   public static final Logger LOG = LoggerFactory.getLogger("org.apache.nutch.parse.html");
@@ -64,6 +68,7 @@ public class HtmlParser implements Parser {
 
   private String parserImpl;
   private CrawlFilters crawlFilters;
+  private boolean ignoreDetailPageOutlinks;
   private String defaultCharEncoding;
   private Configuration conf;
   private RegexExtractor regexExtractor;
@@ -84,8 +89,9 @@ public class HtmlParser implements Parser {
     this.parserImpl = getConf().get("parser.html.impl", "neko");
     this.defaultCharEncoding = getConf().get("parser.character.encoding.default", "windows-1252");
     this.domContentUtils = new DOMContentUtils(conf);
-    this.cachingPolicy = getConf().get("parser.caching.forbidden.policy", Nutch.CACHING_FORBIDDEN_CONTENT);
+    this.cachingPolicy = getConf().get("parser.caching.forbidden.policy", CACHING_FORBIDDEN_CONTENT);
     this.crawlFilters = CrawlFilters.create(conf);
+    this.ignoreDetailPageOutlinks = getConf().getBoolean("parser.ignore.detail.page.outlinks", true);
     this.regexExtractor = new RegexExtractor(conf);
     this.encodingDetector = new EncodingDetector(conf);
 
@@ -127,7 +133,7 @@ public class HtmlParser implements Parser {
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
-    String textContent = page.getVariableAsString(Nutch.DOC_FIELD_TEXT_CONTENT);
+    String textContent = page.getVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
     getOutlinks(url, baseURL, textContent);
 
@@ -136,8 +142,8 @@ public class HtmlParser implements Parser {
     parse = htmlParseFilters.filter(url, page, parse, metaTags, docRoot);
 
     if (metaTags.getNoCache()) {
-      // not okay to cache
-      TableUtil.putMetadata(page, Nutch.CACHING_FORBIDDEN_KEY, cachingPolicy);
+      // Not okay to cache
+      TableUtil.putMetadata(page, CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
     return parse;
@@ -184,7 +190,23 @@ public class HtmlParser implements Parser {
   }
 
   private void getOutlinks(String url, URL base, String text) {
-    if (text.isEmpty()) {
+    if (text == null || text.isEmpty()) {
+      return;
+    }
+
+    /**
+     * @vincent : We collect detail pages from index pages
+     * TODO : This is a temporary solution, and should be configurated
+     * */
+    if (crawlFilters.isDetailUrl(url)) {
+      return;
+    }
+
+    /**
+     * @vincent : We ignore all search links
+     * TODO : This is a temporary solution, and should be configurated
+     * */
+    if (crawlFilters.isSearchUrl(url)) {
       return;
     }
 
@@ -243,7 +265,7 @@ public class HtmlParser implements Parser {
       extractor.process(doc);
 
       page.setTitle(doc.getPageTitle());
-      page.setVariable(Nutch.DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
+      page.setVariable(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
       page.setVariable(Nutch.DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
 
       doc.getFields().entrySet().stream().forEach(entry -> page.setVariable(entry.getKey(), entry.getValue()));

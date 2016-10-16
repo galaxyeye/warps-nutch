@@ -146,6 +146,15 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
     return field.getValues();
   }
 
+  public String getFieldValueAsString(String name) {
+    IndexField field = fields.get(name);
+    if (field == null || field.getValues().isEmpty()) {
+      return null;
+    }
+
+    return field.getValues().iterator().next().toString();
+  }
+
   /** Iterate over all fields. */
   public Iterator<Entry<String, IndexField>> iterator() {
     return fields.entrySet().iterator();
@@ -248,6 +257,10 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
      * @return The indexed document, or null if skipped by index indexingFilters.
      */
     public IndexDocument build(String key, WebPage page) {
+      if (key == null || page == null) {
+        return null;
+      }
+
       IndexDocument doc = new IndexDocument(key);
 
       String url = doc.getUrl();

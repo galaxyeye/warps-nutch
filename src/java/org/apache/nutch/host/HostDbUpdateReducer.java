@@ -16,10 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.host;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Set;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.hadoop.io.Text;
@@ -28,6 +24,10 @@ import org.apache.nutch.storage.Host;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Histogram;
 import org.apache.nutch.util.URLUtil;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Set;
 
 /**
  * Combines all WebPages with the same host key to create a Host object, with
@@ -61,14 +61,14 @@ public class HostDbUpdateReducer extends
         if (page.getInlinks() != null) {
           Set<CharSequence> inlinks = page.getInlinks().keySet();
           for (CharSequence inlink : inlinks) {
-            String host = URLUtil.getHost(inlink.toString());
+            String host = URLUtil.getHostName(inlink.toString());
             inlinkCount.add(host);
           }
         }
         if (page.getOutlinks() != null) {
           Set<CharSequence> outlinks = page.getOutlinks().keySet();
           for (CharSequence outlink : outlinks) {
-            String host = URLUtil.getHost(outlink.toString());
+            String host = URLUtil.getHostName(outlink.toString());
             outlinkCount.add(host);
           }
         }

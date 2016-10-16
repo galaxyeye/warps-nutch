@@ -23,6 +23,7 @@ import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
@@ -38,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 
 import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
+import static org.apache.nutch.metadata.Nutch.STAT_RUNTIME_STATUS;
 
 public abstract class NutchJob extends Configured {
 
@@ -72,7 +74,7 @@ public abstract class NutchJob extends Configured {
       LOG.info("Affected rows : " + affectedRows);
     }
     catch (Throwable e) {
-      LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error(StringUtils.stringifyException(e));
     }
   }
 
@@ -185,7 +187,7 @@ public abstract class NutchJob extends Configured {
         status.putAll(NutchUtil.recordJobStatus(currentJob));
       }
 
-      long totalPages = getCounterValue(Nutch.STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name());
+      long totalPages = getCounterValue(STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name());
       affectedRows = totalPages;
     } catch (Throwable e) {
       LOG.warn(e.toString());

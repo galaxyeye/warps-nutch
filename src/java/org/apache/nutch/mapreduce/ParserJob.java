@@ -46,6 +46,7 @@ public class ParserJob extends NutchJob implements Tool {
 
   public static final String RESUME_KEY = "parse.job.resume";
   public static final String FORCE_KEY = "parse.job.force";
+  public static final String REPARSE_KEY = "parse.job.reparse";
   public static final String SKIP_TRUNCATED = "parser.skip.truncated";
   public static final Utf8 REPARSE = new Utf8("-reparse");
 
@@ -109,13 +110,16 @@ public class ParserJob extends NutchJob implements Tool {
     String fetchMode = conf.get(PARAM_FETCH_MODE);
 
     batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
+    Boolean reparse = batchId.equalsIgnoreCase("-reparse");
+    batchId = reparse ? "-all" : batchId;
     Boolean resume = params.getBoolean(ARG_RESUME, false);
     Boolean force = params.getBoolean(ARG_FORCE, false);
 
     getConf().set(PARAM_CRAWL_ID, crawlId);
-    getConf().set(PARAM_GENERATOR_BATCH_ID, batchId);
+    getConf().set(PARAM_BATCH_ID, batchId);
     getConf().setBoolean(RESUME_KEY, resume);
     getConf().setBoolean(FORCE_KEY, force);
+    getConf().setBoolean(REPARSE_KEY, reparse);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -123,7 +127,8 @@ public class ParserJob extends NutchJob implements Tool {
         "batchId", batchId,
         "fetchMode", fetchMode,
         "resume", resume,
-        "force", force
+        "force", force,
+        "reparse", reparse
     ));
   }
 
@@ -154,11 +159,13 @@ public class ParserJob extends NutchJob implements Tool {
 
   private void printUsage() {
     System.err
-        .println("Usage: ParserJob (<batchId> | -all) [-crawlId <id>] [-resume] [-force]");
+        .println("Usage: ParserJob (<batchId> | -all | -reparse) [-crawlId <id>] [-resume] [-force]");
     System.err
         .println("    <batchId>     - symbolic batch ID created by Generator");
     System.err
         .println("    -all          - consider pages from all crawl jobs");
+    System.err
+        .println("    -reparse      - reparse pages from all crawl jobs");
     System.err
         .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
     System.err
@@ -176,7 +183,7 @@ public class ParserJob extends NutchJob implements Tool {
     Configuration conf = getConf();
 
     String batchId = args[0];
-    if (!batchId.equals("-all") && batchId.startsWith("-")) {
+    if (!batchId.equals("-all") && !batchId.equals("-reparse") && batchId.startsWith("-")) {
       printUsage();
       return -1;
     }

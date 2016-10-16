@@ -10,7 +10,9 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.NutchContext;
+import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.crawl.UrlWithScore;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.fetch.data.FetchTask;
@@ -29,6 +31,7 @@ import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ProtocolStatus;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 
@@ -38,11 +41,12 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,7 +56,7 @@ import static org.apache.nutch.metadata.Nutch.*;
 public class TaskScheduler extends Configured {
 
   private final Logger LOG = FetchMonitor.LOG;
-  private final Logger REPORT_LOG = NutchReporter.LOG;
+  public static final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
 
   public class Status {
     Status(float pagesThroughputRate, float bytesThroughputRate, int readyFetchItems, int pendingFetchItems) {
@@ -69,24 +73,26 @@ public class TaskScheduler extends Configured {
   }
 
   public enum Counter {
-    pages, bytes, errors, finishedTasks, expiredQueues, unknowHosts, unexpectedErrors,
+    mbytes, unknowHosts,
     readyTasks, pendingTasks,
-    pagesThroughput, bytesThroughput,
-    waitingFetchThreads, activeFetchThreads,
-    rowsWritten, newRowsWritten
+    pagesThou, mbThou,
+    rowsRedirect,
+    rowsPeresist, newRowsPeresist, newDetailRows
   }
 
   public static final int QUEUE_REMAINDER_LIMIT = 5;
 
-  private static AtomicInteger objectSequence = new AtomicInteger(0);
+  private static final AtomicInteger objectSequence = new AtomicInteger(0);
 
   private final int id;
 
-  private final NutchContext context;
-  private NutchCounter counter;
+  private final FetchMonitor fetchMonitor;
 
-  private TasksMonitor tasksMonitor;// all fetch items are contained in several queues
-  private Queue<FetchResult> fetchResultQueue = new ConcurrentLinkedQueue<>();
+  private final NutchContext context;
+  private final NutchCounter counter;
+
+  private final TasksMonitor tasksMonitor;// all fetch items are contained in several queues
+  private final Queue<FetchResult> fetchResultQueue = new ConcurrentLinkedQueue<>();
 
   /**
    * Our own Hardware bandwidth in Mbytes, if exceed the limit, slows down the task scheduling.
@@ -94,16 +100,19 @@ public class TaskScheduler extends Configured {
    */
   private final int bandwidth;
 
-  // handle redirect
+  // Handle redirect
   private final URLFilters urlFilters;
   private final URLNormalizers normalizers;
   private final boolean ignoreExternalLinks;
 
-  // parser setting
+  // Parser setting
   private final boolean storingContent;
   private final boolean parse;
   private final ParseUtil parseUtil;
   private final boolean skipTruncated;
+
+  /** Injector */
+  private final SeedBuilder seedBuiler;
 
   /** Feeder threads */
   private final int maxFeedPerThread;
@@ -119,37 +128,52 @@ public class TaskScheduler extends Configured {
   private final AtomicInteger activeFetchThreadCount = new AtomicInteger(0);
   private final AtomicInteger idleFetchThreadCount = new AtomicInteger(0);
 
+  /** DbUpdate */
+  private final int maxDbUpdateNewRows;
+
   /** Indexer */
-  private JITIndexer JITIndexer;
+  private final JITIndexer jitIndexer;
 
   /** Update */
-  private boolean updateJIT;
-  private MapDatumBuilder mapDatumBuilder;
-  private ReduceDatumBuilder reduceDatumBuilder;
+  private final MapDatumBuilder mapDatumBuilder;
+  private final ReduceDatumBuilder reduceDatumBuilder;
 
   // Timer
-  private final long startTime = System.currentTimeMillis(); // start time of fetcher run
+  private final long startTime = System.currentTimeMillis(); // Start time of fetcher run
   private final AtomicLong lastTaskStartTime = new AtomicLong(startTime);
   private final AtomicLong lastTaskFinishTime = new AtomicLong(startTime);
 
-  // statistics
+  // Statistics
   private final AtomicLong totalBytes = new AtomicLong(0);        // total fetched bytes
   private final AtomicInteger totalPages = new AtomicInteger(0);  // total fetched pages
   private final AtomicInteger fetchErrors = new AtomicInteger(0); // total fetch fetchErrors
 
   private final AtomicDouble avePageLength = new AtomicDouble(0.0);
 
-  private String reprUrl; // choosed representative url
-
   /** Output */
-  private Path outputDir;
+  private final Path outputDir;
+
+  private final String reportSuffix;
+
+  private final NutchMetrics nutchMetrics;
+
+  /**
+   * The reprUrl is the representative url of a redirect, we save a reprUrl for each thread,
+   * We use a concurrent skip list map to gain the best concurrency
+   * */
+  // TODO : check why we store a reprUrl for each thread? @vincent
+  private Map<Long, String> reprUrls = new ConcurrentSkipListMap<>();
 
   @SuppressWarnings("rawtypes")
-  public TaskScheduler(NutchCounter counter, NutchContext context) throws IOException {
+  public TaskScheduler(FetchMonitor fetchMonitor, NutchCounter counter, NutchContext context) throws IOException {
     Configuration conf = context.getConfiguration();
     setConf(conf);
 
+    // TODO : use FetchMonitor.id
     this.id = objectSequence.incrementAndGet();
+
+    this.fetchMonitor = fetchMonitor;
+
     this.counter = counter;
     this.context = context;
 
@@ -162,16 +186,17 @@ public class TaskScheduler extends Configured {
     this.normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_FETCHER);
 
     this.tasksMonitor = new TasksMonitor(conf);
+    this.seedBuiler = new SeedBuilder(conf);
 
-    // index manager
+    this.maxDbUpdateNewRows = conf.getInt("db.update.max.outlinks", 100);
+
+    // Index manager
     boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
-    this.JITIndexer = indexJIT ? new JITIndexer(conf) : null;
+    this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
-    this.updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, true);
-    if (updateJIT) {
-      mapDatumBuilder = new MapDatumBuilder(counter, conf);
-      reduceDatumBuilder = new ReduceDatumBuilder(counter, conf);
-    }
+    boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, true);
+    mapDatumBuilder = updateJIT ? new MapDatumBuilder(counter, conf) : null;
+    reduceDatumBuilder = updateJIT ? new ReduceDatumBuilder(counter, conf) : null;
 
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
@@ -180,6 +205,10 @@ public class TaskScheduler extends Configured {
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
     this.outputDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
+
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
+
+    this.nutchMetrics = new NutchMetrics(conf);
 
     LOG.info(Params.format(
         "id", id,
@@ -194,7 +223,8 @@ public class TaskScheduler extends Configured {
         "storingContent", storingContent,
         "ignoreExternalLinks", ignoreExternalLinks,
 
-        "indexJIT", indexJIT,
+        "indexJIT", indexJIT(),
+        "updateJIT", updateJIT(),
         "outputDir", outputDir
     ));
   }
@@ -205,12 +235,16 @@ public class TaskScheduler extends Configured {
 
   public int getBandwidth() { return this.bandwidth; }
 
+  public FetchMonitor getFetchMonitor() {
+    return fetchMonitor;
+  }
+
   public TasksMonitor getTasksMonitor() {
     return tasksMonitor;
   }
 
-  public JITIndexer getJITIndexer() {
-    return JITIndexer;
+  public JITIndexer getJitIndexer() {
+    return jitIndexer;
   }
 
   public long getLastTaskFinishTime() {
@@ -223,7 +257,9 @@ public class TaskScheduler extends Configured {
     return initFetchThreadCount * maxFeedPerThread;
   }
 
-  public boolean indexJIT() { return JITIndexer != null; }
+  public boolean indexJIT() { return jitIndexer != null; }
+
+  public boolean updateJIT() { return mapDatumBuilder != null && reduceDatumBuilder != null; }
 
   public void registerFeederThread(FeederThread feederThread) {
     feederThreads.add(feederThread);
@@ -253,6 +289,42 @@ public class TaskScheduler extends Configured {
   public void unregisterIdleThread(FetchThread thread) {
     idleFetchThreads.remove(thread);
     idleFetchThreadCount.decrementAndGet();
+  }
+
+  /**
+   * Return Injected urls count
+   * */
+  public int inject(Set<String> urlLines, String batchId) {
+    return urlLines.stream().mapToInt(urlLine -> inject(urlLine, batchId)).sum();
+  }
+
+  /**
+   * @return Injected urls count
+   * */
+  public int inject(String urlLine, String batchId) {
+    if (urlLine == null || urlLine.isEmpty()) {
+      return 0;
+    }
+
+    urlLine = urlLine.trim();
+    if (urlLine.startsWith("#")) {
+      return 0;
+    }
+
+    WebPage page = seedBuiler.buildWebPage(urlLine);
+    String url = page.getVariableAsString("url");
+    TableUtil.setPriority(page, FETCH_PRIORITY_SEED);
+    // set score?
+
+    Mark.INJECT_MARK.removeMarkIfExist(page);
+    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+    page.setBatchId(batchId);
+
+    tasksMonitor.produce(context.getJobId(), url, page);
+
+    LOG.info("Injected " + url + " with batch id " + batchId);
+
+    return 1;
   }
 
   public void produce(FetchResult result) {
@@ -315,7 +387,7 @@ public class TaskScheduler extends Configured {
     FetchTask fetchTask = tasksMonitor.getPendingTask(queueID, itemID);
 
     if (fetchTask == null) {
-      LOG.error("Failed to finish task [{} - {}]", queueID, itemID);
+      LOG.warn("Failed to finish task [{} - {}]", queueID, itemID);
 
       return;
     }
@@ -329,7 +401,7 @@ public class TaskScheduler extends Configured {
       fetchErrors.incrementAndGet();
 
       try {
-        output(fetchTask, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
+        handleResult(fetchTask, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
       } catch (IOException | InterruptedException e) {
         LOG.error("Unexpected fetcher exception {}", e);
       } finally {
@@ -350,85 +422,67 @@ public class TaskScheduler extends Configured {
   public boolean isFeederAlive() { return !feederThreads.isEmpty(); }
 
   public boolean isMissionComplete() {
-    return !isFeederAlive()
-        && tasksMonitor.readyItemCount() == 0
-        && tasksMonitor.pendingItemCount() == 0;
+    return !isFeederAlive() && tasksMonitor.readyItemCount() == 0 && tasksMonitor.pendingItemCount() == 0;
   }
 
   public void cleanup() {
-    String outerBorder = StringUtils.repeat('-', 100);
-    String innerBorder = StringUtils.repeat('.', 100);
-    REPORT_LOG.info(outerBorder);
-    REPORT_LOG.info(innerBorder);
-    REPORT_LOG.info("[Final Report]");
+    String border = StringUtils.repeat('.', 40);
+    REPORT_LOG.info(border);
+    REPORT_LOG.info("[Final Report - " + TimingUtil.now() + "]");
 
-    feederThreads.forEach(FeederThread::halt);
-    waitUtilEmpty(feederThreads, 10 * 1000);
-
-    activeFetchThreads.forEach(FetchThread::halt);
-    waitUtilEmpty(activeFetchThreads, 10 * 1000);
-
+    feederThreads.forEach(FeederThread::exitAndJoin);
+    activeFetchThreads.forEach(FetchThread::exitAndJoin);
     retiredFetchThreads.forEach(FetchThread::report);
 
-    if (JITIndexer != null) {
-      JITIndexer.cleanup();
+    if (jitIndexer != null) {
+      jitIndexer.cleanup();
     }
 
-    REPORT_LOG.info("[Final]" + context.getStatus());
     tasksMonitor.report();
     REPORT_LOG.info("[End Report]");
-    REPORT_LOG.info(innerBorder);
-    REPORT_LOG.info(outerBorder);
+    REPORT_LOG.info(border);
+
+    LOG.info("[Final] " + context.getStatus());
 
     tasksMonitor.cleanup();
   }
 
   /**
-   * Collection must be thread safe
-   * */
-  private void waitUtilEmpty(Collection collection, long timeout) {
-    try {
-      while (!collection.isEmpty()) {
-        Thread.sleep(1000);
-      }
-    } catch (final Exception ignored) {}
-  }
-
-  /**
    * Wait for a while and report task status
    *
-   * @param reportInterval Report interval
+   * @param reportInterval Report interval in milliseconds
    */
-  public Status waitAndReport(int reportInterval) throws IOException {
+  public Status waitAndReport(long reportInterval) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
     long bytesLastSec = totalBytes.get();
 
     try {
-      Thread.sleep(reportInterval * 1000);
+      Thread.sleep(reportInterval);
     } catch (InterruptedException ignored) {
     }
 
-    float pagesThroughputRate = (totalPages.get() - pagesLastSec) / reportInterval;
-    float bytesThroughputRate = (totalBytes.get() - bytesLastSec) / reportInterval;
+    float reportIntervalSec = reportInterval / 1000.0f;
+    float pagesThrouRate = (totalPages.get() - pagesLastSec) / reportIntervalSec;
+    float bytesThrouRate = (totalBytes.get() - bytesLastSec) / reportIntervalSec;
 
     int readyFetchItems = tasksMonitor.readyItemCount();
     int pendingFetchItems = tasksMonitor.pendingItemCount();
 
-    counter.setValue(Counter.activeFetchThreads, activeFetchThreadCount.get());
-    counter.setValue(Counter.waitingFetchThreads, idleFetchThreadCount.get());
     counter.setValue(Counter.readyTasks, readyFetchItems);
     counter.setValue(Counter.pendingTasks, pendingFetchItems);
-    counter.setValue(Counter.pagesThroughput, Math.round(pagesThroughputRate));
-    counter.setValue(Counter.bytesThroughput, Math.round(bytesThroughputRate));
+    counter.setValue(Counter.pagesThou, Math.round(pagesThrouRate));
+    counter.setValue(Counter.mbThou, Math.round(bytesThrouRate / 1000));
 
-    String statusString = getStatusString(pagesThroughputRate, bytesThroughputRate, readyFetchItems, pendingFetchItems);
+    String statusString = getStatusString(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
 
-    /** status string shows in yarn admin ui */
+    /** Status string shows in yarn admin ui */
     context.setStatus(statusString);
+
+    /** And also log it */
     LOG.info(statusString);
 
-    return new Status(pagesThroughputRate, bytesThroughputRate, readyFetchItems, pendingFetchItems);
+    return new Status(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
   }
 
   private String getStatusString(float pagesThroughput,
@@ -567,11 +621,16 @@ public class TaskScheduler extends Configured {
     });
   }
 
-  private void doFinishFetchTask(FetchTask fetchTask, ProtocolOutput output) throws IOException, InterruptedException, URLFilterException {
+  /**
+   * Thread safe
+   * */
+  private void doFinishFetchTask(FetchTask fetchTask, ProtocolOutput output)
+      throws IOException, InterruptedException, URLFilterException {
+    final String url = fetchTask.getUrl();
     final ProtocolStatus status = output.getStatus();
     final Content content = output.getContent();
 
-    // unblock queue
+    // un-block queue
     tasksMonitor.finish(fetchTask);
 
     switch (status.getCode()) {
@@ -581,7 +640,8 @@ public class TaskScheduler extends Configured {
         break;
 
       case ProtocolStatusCodes.SUCCESS:        // got a page
-        output(fetchTask, content, status, CrawlStatus.STATUS_FETCHED);
+        handleResult(fetchTask, content, status, CrawlStatus.STATUS_FETCHED);
+        tasksMonitor.statHost(url);
         break;
 
       case ProtocolStatusCodes.MOVED:         // redirect
@@ -595,39 +655,39 @@ public class TaskScheduler extends Configured {
           code = CrawlStatus.STATUS_REDIR_TEMP;
           temp = true;
         }
+        // TODO : It's not a good idea to save newUrl in message
         final String newUrl = ProtocolStatusUtils.getMessage(status);
         handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage());
-        output(fetchTask, content, status, code);
+        handleResult(fetchTask, content, status, code);
         break;
 
       case ProtocolStatusCodes.CONNECTION_TIMED_OUT:
       case ProtocolStatusCodes.UNKNOWN_HOST:
-        String domain = URLUtil.getDomainName(fetchTask.getUrl());
-        tasksMonitor.addUnreachableHost(domain);
-        output(fetchTask, null, status, CrawlStatus.STATUS_GONE);
+        handleResult(fetchTask, null, status, CrawlStatus.STATUS_GONE);
+        tasksMonitor.statUnreachableHost(url);
         break;
       case ProtocolStatusCodes.EXCEPTION:
         logFetchFailure(ProtocolStatusUtils.getMessage(status));
 
-      /* FALLTHROUGH */
+      /** FALL THROUGH **/
       case ProtocolStatusCodes.RETRY:          // retry
       case ProtocolStatusCodes.BLOCKED:
-        output(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
+        handleResult(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
         break;
 
       case ProtocolStatusCodes.GONE:           // gone
       case ProtocolStatusCodes.NOTFOUND:
       case ProtocolStatusCodes.ACCESS_DENIED:
       case ProtocolStatusCodes.ROBOTS_DENIED:
-        output(fetchTask, null, status, CrawlStatus.STATUS_GONE);
+        handleResult(fetchTask, null, status, CrawlStatus.STATUS_GONE);
         break;
       case ProtocolStatusCodes.NOTMODIFIED:
-        output(fetchTask, null, status, CrawlStatus.STATUS_NOTMODIFIED);
+        handleResult(fetchTask, null, status, CrawlStatus.STATUS_NOTMODIFIED);
         break;
       default:
-        LOG.warn("Unknown ProtocolStatus: " + status.getCode());
-        output(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
-    } // switch
+        LOG.warn("Unknown ProtocolStatus : " + status.getCode());
+        handleResult(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
+    }
   }
 
   private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WebPage page)
@@ -642,31 +702,41 @@ public class TaskScheduler extends Configured {
       String toHost = new URL(newUrl).getHost().toLowerCase();
       String fromHost = new URL(url).getHost().toLowerCase();
       if (!toHost.equals(fromHost)) {
-        // external links
+        // External links
         return;
       }
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
     page.getMetadata().put(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
-    reprUrl = URLUtil.chooseRepr(reprUrl, newUrl, temp);
-    if (reprUrl == null) {
-      LOG.warn("reprUrl==null");
-    } else {
-      page.setReprUrl(new Utf8(reprUrl));
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("[" + redirType + "] redirect to " + reprUrl + " , fetching later");
-      }
-    }
+
+    String reprUrl = setRedirectRepresentativeUrl(page, url, newUrl, temp);
+
+    nutchMetrics.reportRedirects(String.format("[%s] - %100s -> %s\n", redirType, url, reprUrl), reportSuffix);
+
+    counter.increase(Counter.rowsRedirect);
   }
 
-  /**
-   * Write the reduce result back to the backend storage
-   *
-   * Multiple threaded
-   * */
-  @SuppressWarnings("unchecked")
-  private void output(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
+  private String setRedirectRepresentativeUrl(WebPage page, String url, String newUrl, boolean temp) {
+    long threadId = Thread.currentThread().getId();
+
+    String reprUrl = reprUrls.get(threadId);
+    if (reprUrl == null) {
+      reprUrl = url;
+    }
+    reprUrl = URLUtil.chooseRepr(reprUrl, newUrl, temp);
+    if (reprUrl != null) {
+      page.setReprUrl(new Utf8(reprUrl));
+      reprUrls.put(threadId, reprUrl);
+    }
+    else {
+      LOG.warn("reprUrl is null");
+    }
+
+    return reprUrl;
+  }
+
+  private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
     WebPage page = fetchTask.getPage();
@@ -676,7 +746,7 @@ public class TaskScheduler extends Configured {
     FetchUtil.setFetchTime(page);
     FetchUtil.setMarks(page);
 
-    String key = TableUtil.reverseUrl(url);
+    String reverseUrl = TableUtil.reverseUrl(url);
 
     // Only STATUS_FETCHED can be parsed
     // TODO : We should calculate the signature to know if a webpage is really NOTMODIFIED
@@ -684,24 +754,25 @@ public class TaskScheduler extends Configured {
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
       if (!skipTruncated || !ParserMapper.isTruncated(url, page)) {
         synchronized (parseUtil) {
-          parseUtil.process(key, page);
+          parseUtil.process(reverseUrl, page);
         }
 
         Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
         // JIT Index
-        if (JITIndexer != null && parseMark != null) {
-          JITIndexer.produce(fetchTask);
+        if (jitIndexer != null && parseMark != null) {
+          jitIndexer.produce(fetchTask);
         }
       }
     }
 
+    // Debug fetch time history
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
     if (fetchTimeHistory.contains(",")) {
-      LOG.info("Url " + fetchTask.getUrl()
+      String report = "Url " + fetchTask.getUrl()
           + ", status : " + CrawlStatus.getName(status)
           + ", fetchTimeHistory : " + fetchTimeHistory
-          + ", signature : " + StringUtil.toHexString(page.getSignature())
-      );
+          + ", signature : " + StringUtil.toHexString(page.getSignature());
+      nutchMetrics.reportFetchTimeHistory(report, reportSuffix);
     }
 
     // Remove content if storingContent is false. Content is added to page above
@@ -712,33 +783,57 @@ public class TaskScheduler extends Configured {
 
     // LOG.debug("ready to write hadoop : {}, {}", page.getStatus(), page.getMarkers());
 
-    if (updateJIT) {
-      Pair<UrlWithScore, WebPageWritable> updateDatum = mapDatumBuilder.buildDatum(url, key, page);
-      output(updateDatum.getKey(), updateDatum.getValue());
-      counter.increase(Counter.rowsWritten);
-
-      List<Pair<UrlWithScore, WebPageWritable>> updateData = mapDatumBuilder.buildNewRows(url, page);
-      updateData.forEach(e -> output(e.getKey(), e.getValue()));
-      counter.increase(Counter.newRowsWritten, updateData.size());
-    }
-    else {
-      context.write(key, page);
-      counter.increase(Counter.rowsWritten);
-    }
+    output(url, reverseUrl, page);
 
     updateStatus(fetchTask.getUrl(), page);
   }
 
-  private void output(UrlWithScore urlWithScore, WebPageWritable webPageWritable) {
-    String key = urlWithScore.getReversedUrl().toString();
+  /**
+   * Write the reduce result back to the backend storage
+   *
+   * threadsafe
+   * */
+  @SuppressWarnings("unchecked")
+  private void output(String url, String reversedUrl, WebPage page) throws IOException, InterruptedException {
+    if (updateJIT()) {
+      Pair<UrlWithScore, WebPageWritable> updateDatum;
+      List<Pair<UrlWithScore, WebPageWritable>> updateData;
+
+      synchronized (mapDatumBuilder) {
+        updateDatum = mapDatumBuilder.buildDatum(url, reversedUrl, page);
+        outputWithDbUpdate(url, updateDatum.getKey(), updateDatum.getValue(), false);
+
+        updateData = mapDatumBuilder.buildNewRows(url, page);
+        updateData.stream().limit(maxDbUpdateNewRows).forEach(e -> outputWithDbUpdate(url, e.getKey(), e.getValue(), true));
+      }
+    }
+    else {
+      context.write(reversedUrl, page);
+      counter.increase(Counter.rowsPeresist);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void outputWithDbUpdate(String url, UrlWithScore urlWithScore, WebPageWritable webPageWritable, boolean isNewRow) {
+    String reversedUrl = urlWithScore.getReversedUrl().toString();
     WebPage page = webPageWritable.getWebPage();
 
-    reduceDatumBuilder.updateRow(key, page);
+    reduceDatumBuilder.updateRowWithoutScoring(url, page);
 
     // LOG.debug("Write to hdfs : " + page.getBaseUrl());
 
     try {
-      context.write(key, page);
+      context.write(reversedUrl, page);
+
+      if (isNewRow) {
+        counter.increase(Counter.newRowsPeresist);
+        if (CrawlFilter.sniffPageCategory(url) == CrawlFilter.PageCategory.DETAIL) {
+          counter.increase(Counter.newDetailRows);
+        }
+      }
+      else {
+        counter.increase(Counter.rowsPeresist);
+      }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
     }
@@ -752,8 +847,7 @@ public class TaskScheduler extends Configured {
     }
 
     counter.updateAffectedRows(url);
-    counter.increase(Counter.pages);
-    counter.increase(Counter.bytes, pageLength);
+    counter.increase(Counter.mbytes, Math.round(pageLength / 1024.0f));
 
     totalPages.incrementAndGet();
     totalBytes.addAndGet(pageLength);
@@ -763,7 +857,7 @@ public class TaskScheduler extends Configured {
     // LOG.warn("Failed to fetch " + url);
 
     if (!message.isEmpty()) {
-      LOG.warn(message);
+      LOG.warn("Fetch failed, " + message);
     }
 
     // TODO : handle java.net.UnknownHostException
@@ -771,6 +865,6 @@ public class TaskScheduler extends Configured {
     // 2. or we may just ignore it, because the error does not spread out in the next loop
 
     fetchErrors.incrementAndGet();
-    counter.increase(Counter.errors);
+    counter.increase(NutchCounter.Counter.errors);
   }
 }

@@ -19,23 +19,26 @@ package org.apache.nutch.fetch.service;
 import com.google.common.collect.Lists;
 import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.fetch.TaskSchedulers;
-import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
+import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path(value = "/fetch")
 @Produces({ MediaType.APPLICATION_JSON })
 public class FetchResource {
 
-  public static final Logger LOG = FetchJob.LOG;
+  public static final Logger LOG = LoggerFactory.getLogger(FetchServer.class);
 
   public final static int MAX_TASKS_PER_SCHEDULE = 100;
 
@@ -61,20 +64,57 @@ public class FetchResource {
     return taskSchedulers.randomFetchItems(count);
   }
 
-//  @PUT
-//  @Path("/inject/{url}")
-//  public List<FetchTask.Key> addFetchItem(@PathParam("url") String item) {
-//    List<FetchTask.Key> keys = Lists.newArrayList();
-//
-//    if (count < 0) {
-//      LOG.debug("Invalid count " + count);
-//      return keys;
-//    }
-//
-//    taskSchedulers.get();
-//
-//    return keys;
-//  }
+  @GET
+  @Path("/scheduler/list")
+  public List<Integer> listScheduers() {
+    return taskSchedulers.schedulerIds();
+  }
+
+  @GET
+  @Path("/scheduler/listCommands")
+  public List<String> listCommands() {
+    return taskSchedulers.schedulerIds().stream()
+        .map(id -> "curl http://localhost:8182/fetch/stop/" + id)
+        .collect(Collectors.toList());
+  }
+
+  @GET
+  @Path("/stop/{schedulerId}")
+  public void stop(@PathParam("schedulerId") int schedulerId) {
+    TaskScheduler taskScheduler = taskSchedulers.get(schedulerId);
+    if (taskScheduler != null) {
+      taskScheduler.getFetchMonitor().halt();
+    }
+  }
+
+  @PUT
+  @Path("/inject")
+  public int inject(String urlLine) {
+    int count = 0;
+
+    TaskScheduler taskScheduler = taskSchedulers.peek();
+    if (taskScheduler != null) {
+      String batchId = "JITInjected" + TimingUtil.now("yyyyMMdd");
+      count = taskScheduler.inject(urlLine, batchId);
+    }
+
+    return count;
+  }
+
+  @PUT
+  @Path("/inject")
+  @Consumes(MediaType.APPLICATION_JSON)
+  public int inject(Set<String> urlLines) {
+    int count = 0;
+
+    TaskScheduler taskScheduler = taskSchedulers.peek();
+    if (taskScheduler != null) {
+      String batchId = "JITInjected" + TimingUtil.now("yyyyMMdd");
+      count = taskScheduler.inject(urlLines, batchId);
+    }
+
+    return count;
+  }
 
   /**
    * Accept page content from satellite(crowdsourcing web fetcher),
