@@ -24,6 +24,7 @@ import com.kohlschutter.boilerpipe.sax.BoilerpipeSAXInput;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
@@ -52,9 +53,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.apache.nutch.metadata.Nutch.CACHING_FORBIDDEN_CONTENT;
-import static org.apache.nutch.metadata.Nutch.CACHING_FORBIDDEN_KEY;
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
+import static org.apache.nutch.crawl.filters.CrawlFilter.sniffPageCategoryByTextDensity;
+import static org.apache.nutch.metadata.Nutch.*;
 
 public class HtmlParser implements Parser {
 
@@ -121,7 +121,7 @@ public class HtmlParser implements Parser {
       return ParseStatusUtils.getEmptyParse(null, getConf());
     }
 
-    // get meta directives
+    // Get meta directives
     HTMLMetaProcessor.getMetaTags(metaTags, docRoot, baseURL);
     setMetadata(page, metaTags);
 
@@ -135,7 +135,7 @@ public class HtmlParser implements Parser {
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
     String textContent = page.getVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
-    getOutlinks(url, baseURL, textContent);
+    tryGetOutlinks(url, baseURL, textContent);
 
     ParseStatus status = getStatus(metaTags);
     Parse parse = new Parse(textContent, pageTitle, outlinks, status);
@@ -189,16 +189,8 @@ public class HtmlParser implements Parser {
     return status;
   }
 
-  private void getOutlinks(String url, URL base, String text) {
+  private void tryGetOutlinks(String url, URL base, String text) {
     if (text == null || text.isEmpty()) {
-      return;
-    }
-
-    /**
-     * @vincent : We collect detail pages from index pages
-     * TODO : This is a temporary solution, and should be configurated
-     * */
-    if (crawlFilters.isDetailUrl(url)) {
       return;
     }
 
@@ -224,6 +216,15 @@ public class HtmlParser implements Parser {
       outlinks = l.toArray(new Outlink[l.size()]);
       if (LOG.isTraceEnabled()) {
         LOG.trace("found " + outlinks.length + " outlinks in " + url);
+      }
+    }
+
+    boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", true);
+    if (noFollowDetailPage) {
+      int _a = outlinks.length;
+      int _char = text.length();
+      if (sniffPageCategoryByTextDensity(_a, _char) == CrawlFilter.PageCategory.DETAIL) {
+        outlinks = new Outlink[0];
       }
     }
   }

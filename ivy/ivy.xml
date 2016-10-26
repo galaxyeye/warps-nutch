@@ -100,6 +100,8 @@
         <dependency org="com.h2database" name="h2" rev="1.4.180" conf="*->default"/>
         <dependency org="org.eclipse.persistence" name="javax.persistence" rev="2.0.0" conf="*->default"/>
 
+        <dependency org="org.apache.solr" name="solr-solrj" rev="6.1.0"/>
+
         <!-- Distributed storage -->
         <!--
 

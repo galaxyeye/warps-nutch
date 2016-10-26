@@ -16,16 +16,15 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import java.io.File;
-import java.util.ArrayList;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
+import java.io.File;
+import java.util.ArrayList;
 
 /**
  * TODO : more generic seed generator

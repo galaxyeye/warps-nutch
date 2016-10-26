@@ -102,7 +102,7 @@ public class FetchServer extends Application {
     return null;
   }
 
-  public static FetchServer startInDaemonThread(final Configuration conf, final int port) {
+  public static FetchServer startAsDaemon(final Configuration conf, final int port) {
     if (isRunning(port)) {
       return null;
     }
@@ -112,6 +112,15 @@ public class FetchServer extends Application {
     thread.start();
 
     return thread.getServer();
+  }
+
+  public static int acquirePort(Configuration conf) {
+    NutchClient client = new NutchClient(conf);
+    if (client.available()) {
+      return client.acquirePort(ServerInstance.Type.FetcherServer);
+    }
+
+    return -1;
   }
 
   private static class FetchServerThread extends Thread {
@@ -231,12 +240,4 @@ public class FetchServer extends Application {
     return true;
   }
 
-  public static int acquirePort(Configuration conf) {
-    NutchClient client = new NutchClient(conf);
-    if (client.available()) {
-      return client.acquirePort(ServerInstance.Type.FetcherServer);
-    }
-
-    return -1;
-  }
 }

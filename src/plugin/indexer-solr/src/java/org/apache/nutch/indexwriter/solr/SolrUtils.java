@@ -17,11 +17,8 @@
 package org.apache.nutch.indexwriter.solr;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
-import org.apache.nutch.util.Params;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -35,42 +32,37 @@ public class SolrUtils {
   public static Logger LOG = LoggerFactory.getLogger(SolrUtils.class);
   /**
    * Make it static to avoid version dismatch problem
-   * */
+   */
   private static HttpClient HTTP_CLIENT = new SystemDefaultHttpClient();
+
   /**
-   * @param conf
    * @return SolrClient
    */
-  public static ArrayList<SolrClient> getSolrClients(Configuration conf) {
-    String[] urls = conf.getStrings(SolrConstants.SERVER_URL);
-    String[] zkHostString = conf.getStrings(SolrConstants.ZOOKEEPER_HOSTS);
-    String conllection = conf.get(SolrConstants.COLLECTION);
-
+  public static ArrayList<SolrClient> getSolrClients(String[] solrUrls, String[] zkHosts, String collection) {
     ArrayList<SolrClient> solrClients = new ArrayList<>();
 
-    for (int i = 0; i < urls.length; i++) {
-      SolrClient client = new HttpSolrClient.Builder(urls[i])
+    for (String solrUrl : solrUrls) {
+      SolrClient client = new HttpSolrClient.Builder(solrUrl)
           .withHttpClient(HTTP_CLIENT)
           .build();
       solrClients.add(client);
     }
 
-    if (solrClients.isEmpty() && zkHostString != null && zkHostString.length > 0) {
-      for (int i = 0; i < zkHostString.length; i++) {
-        CloudSolrClient client = getCloudSolrClient(zkHostString);
-        client.setDefaultCollection(conllection);
-        solrClients.add(client);
-      }
+    if (solrClients.isEmpty()) {
+      CloudSolrClient client = getCloudSolrClient(zkHosts);
+      client.setDefaultCollection(collection);
+      solrClients.add(client);
     }
 
-    LOG.info(Params.formatAsLine(
-        "className", SolrUtils.class.getSimpleName(),
-        "urls", StringUtils.join(urls, ", "),
-        "zkHostString", StringUtils.join(zkHostString, ", "),
-        "conllection", conllection
-    ));
-
     return solrClients;
+  }
+
+  public static SolrClient getSolrClient(String[] solrUrls, String[] zkHosts, String collection) {
+    ArrayList<SolrClient> solrClients = getSolrClients(solrUrls, zkHosts, collection);
+    if (solrClients.isEmpty()) {
+      return null;
+    }
+    return solrClients.get(0);
   }
 
   public static CloudSolrClient getCloudSolrClient(String... zkHosts) {
@@ -90,4 +82,3 @@ public class SolrUtils {
     return client;
   }
 }
-

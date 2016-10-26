@@ -55,12 +55,6 @@ public class IndexJob extends NutchJob implements Tool {
   public static final String THREADS_KEY = "fetcher.threads.fetch";
   public static final String INDEXER_PARAMS = "indexer.additional.params";
   public static final String INDEXER_DELETE = "indexer.delete";
-  public static final String INDEXER_DELETE_ROBOTS_NOINDEX = "indexer.delete.robots.noindex";
-  public static final String INDEXER_DELETE_SKIPPED = "indexer.delete.skipped.by.indexingfilter";
-  public static final String INDEXER_SKIP_NOTMODIFIED = "indexer.skip.notmodified";
-  public static final String URL_FILTERING = "indexer.url.filters";
-  public static final String URL_NORMALIZING = "indexer.url.normalizers";
-  public static final String INDEXER_BINARY_AS_BASE64 = "indexer.binary.base64";
 
   private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
 
@@ -100,6 +94,7 @@ public class IndexJob extends NutchJob implements Tool {
     int threads = params.getInt(ARG_THREADS, 5);
     boolean resume = params.getBoolean(ARG_RESUME, false);
     boolean reindex = params.getBoolean(ARG_REINDEX, false);
+    // TODO : It seems not used yet
     numTasks = params.getInt(ARG_NUMTASKS, conf.getInt(PARAM_MAPREDUCE_JOB_REDUCES, 2));
     int limit = params.getInt(ARG_LIMIT, -1);
 
@@ -195,7 +190,7 @@ public class IndexJob extends NutchJob implements Tool {
    *          resume index job
    * @param numTasks
    *          number of fetching tasks (reducers). If set to < 1 then use the
-   *          default, which is mapred.map.tasks.
+   *          default, which is mapreduce.job.reduces.
    * @return 0 on success
    * @throws Exception
    * */
@@ -227,7 +222,7 @@ public class IndexJob extends NutchJob implements Tool {
         + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");"
         + "    -threads N    - number of fetching threads per task\n"
         + "    -resume       - resume interrupted job\n"
-        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapred.map.tasks)"
+        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapreduce.job.reduces)"
         + "    -solrUrl - solr server url, for example, http://localhost:8983/solr/gettingstarted\n"
         + "    -zkHostString  - zk host string, zoomkeeper higher priority then solrUrl\n"
         + "    -collection    - collection name if zkHostString is specified\n";

@@ -256,7 +256,8 @@ public class GenerateJob extends NutchJob implements Tool {
         ARG_CRAWL, crawlId,
         ARG_BATCH, batchId,
         ARG_REGENERATE, reGenerate,
-        ARG_CURTIME, pseudoCurrTime, ARG_FILTER, filter,
+        ARG_CURTIME, pseudoCurrTime,
+        ARG_FILTER, filter,
         ARG_NORMALIZE, norm));
 
     return getConf().get(PARAM_BATCH_ID);

@@ -30,42 +30,33 @@ import org.w3c.dom.Node;
 
 import java.io.IOException;
 import java.util.Objects;
-
-import static org.apache.nutch.util.StringUtil.*;
+import java.util.regex.Pattern;
 
 public class CrawlFilter extends Configured {
 
   public static final Logger LOG = CrawlFilters.LOG;
 
-  public static PageCategory sniffPageCategory(String url) {
-    Objects.requireNonNull(url);
+  /**
+   * The follow patterns are simple rule to indicate a url's category, this is a very simple solution, and the result is
+   * not accurate
+   * TODO : configurable
+   * */
+  public static Pattern INDEX_PAGE_URL_PATTERN = Pattern.compile(".+(index|tags|chanel).+");
 
-    PageCategory pageCategory = PageCategory.ANY;
+  public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
 
-    url = url.toLowerCase();
+  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|content|/20[012][0-9]/{0,1}[01][0-9]/|/20[012]-[0-9]{0,1}-[01][0-9]/|/\\d{2,}/\\d{5,}|\\d{7,}).+");
 
-    if (StringUtils.countMatches(url, "/") <= 3) {
-      // http://t.tt/12345678
-      pageCategory = PageCategory.INDEX;
-    }
-    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = PageCategory.DETAIL;
-    }
-    else if (SEARCH_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = PageCategory.SEARCH;
-    }
-    else if (MEDIA_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = PageCategory.MEDIA;
-    }
-    else if (INDEX_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = PageCategory.INDEX;
-    }
-
-    return pageCategory;
-  }
+  public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
   public static PageCategory sniffPageCategory(String url, double _char, double _a) {
-    PageCategory pageCategory;
+    PageCategory pageCategory = sniffPageCategoryByTextDensity(_char, _a);
+
+    return pageCategory == PageCategory.ANY ? sniffPageCategoryByUrlPattern(url) : pageCategory;
+  }
+
+  public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
+    PageCategory pageCategory = PageCategory.ANY;
 
     if (_a < 1) {
       _a = 1;
@@ -74,11 +65,41 @@ public class CrawlFilter extends Configured {
     if (_char/_a < 15) {
       pageCategory = PageCategory.INDEX;
     }
-    else if (_char > 1200) {
+    else if (_char > 1500) {
       pageCategory = PageCategory.DETAIL;
     }
-    else {
-      return sniffPageCategory(url);
+
+    return pageCategory;
+  }
+
+  /**
+   * A simple regex rule to sniff the possible category of a web page
+   * */
+  public static PageCategory sniffPageCategoryByUrlPattern(String url) {
+    Objects.requireNonNull(url);
+
+    PageCategory pageCategory = PageCategory.ANY;
+
+    url = url.toLowerCase();
+
+    if (url.endsWith("/")) {
+      pageCategory = PageCategory.INDEX;
+    }
+    else if (StringUtils.countMatches(url, "/") <= 3) {
+      // http://t.tt/12345678
+      pageCategory = PageCategory.INDEX;
+    }
+    else if (INDEX_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.INDEX;
+    }
+    else if (SEARCH_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.SEARCH;
+    }
+    else if (MEDIA_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.MEDIA;
+    }
+    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
+      pageCategory = PageCategory.DETAIL;
     }
 
     return pageCategory;

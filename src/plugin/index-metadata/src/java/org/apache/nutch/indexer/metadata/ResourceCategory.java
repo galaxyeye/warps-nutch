@@ -1,14 +1,14 @@
 package org.apache.nutch.indexer.metadata;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Created by vincent on 16-9-14.
@@ -22,7 +22,7 @@ public class ResourceCategory implements Configurable {
   private static final Logger LOG = LoggerFactory.getLogger(ResourceCategory.class);
 
   private Configuration conf;
-  private Map<String, String> resourceCategories = new LinkedHashMap<>();
+  private ArrayList<Pair<String, String>> resourceCategories = new ArrayList<>();
 
   public ResourceCategory() {
   }
@@ -35,9 +35,12 @@ public class ResourceCategory implements Configurable {
    *
    * */
   public String getCategory(String url) {
-    for (String regex : resourceCategories.keySet()) {
+    for (Pair<String, String> entry : resourceCategories) {
+      String regex = entry.getKey();
+      String category = entry.getValue();
+
       if (url.matches(regex)) {
-        return resourceCategories.get(regex);
+        return category;
       }
     }
 
@@ -92,7 +95,7 @@ public class ResourceCategory implements Configurable {
       // add non-blank lines and non-commented lines
       String[] parts = line.split("\\s+");
       if (parts.length >= 2) {
-        resourceCategories.put(parts[0], parts[1]);
+        resourceCategories.add(Pair.of(parts[0], parts[1]));
       }
     }
   }

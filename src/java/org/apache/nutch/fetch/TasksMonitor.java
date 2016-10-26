@@ -530,7 +530,7 @@ public class TasksMonitor {
     report += "\n";
 
     String hostsReport = availableHosts.values().stream().sorted()
-        .map(hostInfo -> String.format("%40s -> %15s, %15s, %15s, %15s, %15s",
+        .map(hostInfo -> String.format("%40s -> %-20s %-20s %-20s %-20s %-20s",
             hostInfo.hostName,
             "urls : " + hostInfo.urls,
             "indexUrls : " + hostInfo.indexUrls,

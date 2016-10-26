@@ -114,14 +114,14 @@ public class NetUtil {
   }
 
   public static URL getUrl(Configuration conf, String path) throws MalformedURLException {
-    String host = conf.get("nutch.master.domain", "localhost");
+    String host = conf.get("nutch.master.host", "localhost");
     int port = conf.getInt("nutch.server.port", 8182);
 
     return new URL("http", host, port, path);
   }
 
   public static String getBaseUrl(Configuration conf) {
-    String host = conf.get("nutch.master.domain");
+    String host = conf.get("nutch.master.host");
     int port = conf.getInt("nutch.server.port", 8081);
 
     return "http://" + host + ":" + port;

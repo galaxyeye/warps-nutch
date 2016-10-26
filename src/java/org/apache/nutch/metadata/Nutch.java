@@ -80,6 +80,12 @@ public interface Nutch {
   int FETCH_PRIORITY_DETAIL_PAGE = 10000;
   int FETCH_PRIORITY_SEED = 10 * 10000;
 
+  float SCORE_DEFAULT = 1.0f;
+  float SCORE_INDEX_PAGE = 1.0f;
+  float SCORE_INJECTED = Float.MAX_VALUE / 1000;
+  float SCORE_SEED = SCORE_INJECTED / 1000;
+  float SCORE_DETAIL_PAGE = SCORE_SEED / 1000;
+
   /**
    * All arguments from command line
    * */
@@ -200,8 +206,9 @@ public interface Nutch {
   /**
    * Fetch parameters
    * */
-  String PARAM_FETCH_MAPPER_LIMIT = "fetch.mapper.limit";
-  String PARAM_RESUME = "fetch.job.resume";
+  String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
+  String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
+  String PARAM_RESUME = "nutch.job.resume";
   String PARAM_THREADS = "fetcher.threads.fetch";
 
   /**
@@ -213,6 +220,7 @@ public interface Nutch {
    * Indexing parameters
    * */
   String PARAM_INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
+
   String PARAM_SOLR_SERVER_URL = "solr.server.url";
   String PARAM_SOLR_ZK = "solr.zookeeper.hosts";
   String PARAM_SOLR_COLLECTION = "solr.collection";
@@ -235,6 +243,8 @@ public interface Nutch {
   String PARAM_GENERATOR_DELAY = "crawl.gen.delay";
   String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
   String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
+
+  String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
 
   /**
    * Document fields

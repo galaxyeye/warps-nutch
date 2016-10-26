@@ -17,13 +17,15 @@
 package org.apache.nutch.indexwriter.solr;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexField;
-import org.apache.nutch.mapreduce.IndexJob;
 import org.apache.nutch.indexer.IndexWriter;
+import org.apache.nutch.mapreduce.IndexJob;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.metadata.SolrConstants;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.solr.client.solrj.SolrClient;
@@ -47,14 +49,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SolrIndexWriter implements IndexWriter {
 
   public static final Logger LOG = LoggerFactory.getLogger(SolrIndexWriter.class);
 
   private Configuration conf;
-  private String serverURL;
-  private String zkHosts;
+  private String[] solrUrls = ArrayUtils.EMPTY_STRING_ARRAY;
+  private String[] zkHosts = ArrayUtils.EMPTY_STRING_ARRAY;
+  private String collection;
   private List<SolrClient> solrClients;
   private SolrMappingReader solrMapping;
   private ModifiableSolrParams params;
@@ -75,16 +80,12 @@ public class SolrIndexWriter implements IndexWriter {
 
   }
 
-  public SolrIndexWriter(Configuration jobConf) {
-    setConf(jobConf);
+  public void open(JobConf jobConf, String name) {
+    solrClients = SolrUtils.getSolrClients(solrUrls, zkHosts, collection);
   }
 
-  public void open(JobConf jobConf, String name) throws IOException {
-    solrClients = SolrUtils.getSolrClients(jobConf);
-  }
-
-  public void open(Configuration jobConf) throws IOException {
-    solrClients = SolrUtils.getSolrClients(conf);
+  public void open(Configuration jobConf) {
+    solrClients = SolrUtils.getSolrClients(solrUrls, zkHosts, collection);
   }
 
   public void deleteByQuery(String query) throws IOException {
@@ -184,11 +185,12 @@ public class SolrIndexWriter implements IndexWriter {
     }
 
     push();
+
     try {
       for (SolrClient solrClient : solrClients) {
         solrClient.commit();
       }
-    } catch (final SolrServerException e) {
+    } catch (Throwable e) {
       LOG.error("Failed to commit to solr : " + e.getMessage());
     }
   }
@@ -196,7 +198,7 @@ public class SolrIndexWriter implements IndexWriter {
   public void push() throws IOException {
     if (inputDocs.size() > 0) {
       try {
-        String message = "Indexing " + inputDocs.size() + "/" + Integer.toString(totalAdds) + " documents";
+        String message = "Indexing " + inputDocs.size() + "/" + totalAdds + " documents";
         if (numDeletes > 0) {
           message += ", deleting " + numDeletes + " ones";
         }
@@ -212,12 +214,9 @@ public class SolrIndexWriter implements IndexWriter {
         for (SolrClient solrClient : solrClients) {
           solrClient.request(req);
         }
-
-//        if (LOG.isDebugEnabled()) {
-//          debug(req);
-//        }
-      } catch (SolrServerException e) {
-        LOG.error(e.getMessage());
+      }
+      catch (Throwable e) {
+        LOG.error("Failed to write to solr " + e.toString());
       }
 
       inputDocs.clear();
@@ -287,18 +286,15 @@ public class SolrIndexWriter implements IndexWriter {
   public void setConf(Configuration conf) {
     this.conf = conf;
 
-    System.out.println("Solr url : " + conf.get(Nutch.PARAM_SOLR_SERVER_URL));
-
-    // serverURL = conf.get(SolrConstants.SERVER_URL);
-    serverURL = conf.get(Nutch.PARAM_SOLR_SERVER_URL);
-    // zkHosts = conf.get(SolrConstants.ZOOKEEPER_HOSTS);
-    zkHosts = conf.get(Nutch.PARAM_SOLR_ZK);
+    solrUrls = conf.getStrings(Nutch.PARAM_SOLR_SERVER_URL, ArrayUtils.EMPTY_STRING_ARRAY);
+    zkHosts = conf.getStrings(Nutch.PARAM_SOLR_ZK, ArrayUtils.EMPTY_STRING_ARRAY);
+    collection = conf.get(Nutch.PARAM_SOLR_COLLECTION);
 
     // dateFormat = DateFormat.getDateInstance(DateFormat.DEFAULT, Locale.ENGLISH);
 
-    if (serverURL == null && zkHosts == null) {
+    if (solrUrls == null && zkHosts == null) {
       String message = "Either SOLR URL or Zookeeper URL is required. " +
-          "Use -D " + SolrConstants.SERVER_URL + " or -D " + SolrConstants.ZOOKEEPER_HOSTS;
+          "Use -D " + Nutch.PARAM_SOLR_SERVER_URL + " or -D " + Nutch.PARAM_SOLR_ZK;
       message += "\n" + describe();
       LOG.error(message);
       throw new RuntimeException("Failed to init SolrIndexWriter");
@@ -322,20 +318,22 @@ public class SolrIndexWriter implements IndexWriter {
       }
     }
 
-    LOG.info(Params.formatAsLine(
+    LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "batchSize", batchSize,
         "delete", delete,
         "params", params,
-        "serverURL", serverURL,
-        "zkHosts", zkHosts
+        "solrUrls", Stream.of(solrUrls).collect(Collectors.joining(",")),
+        "zkHosts", Stream.of(zkHosts).collect(Collectors.joining(",")),
+        "collection", collection
     ));
   }
 
   public String describe() {
     StringBuffer sb = new StringBuffer("SOLRIndexWriter\n");
-    sb.append("\t").append(SolrConstants.SERVER_URL).append(" : URL of the SOLR instance\n");
-    sb.append("\t").append(SolrConstants.ZOOKEEPER_HOSTS).append(" : URL of the Zookeeper quorum\n");
+    sb.append("\t").append(Nutch.PARAM_SOLR_SERVER_URL).append(" : URL of the SOLR instance\n");
+    sb.append("\t").append(Nutch.PARAM_SOLR_ZK).append(" : URL of the Zookeeper quorum\n");
+    sb.append("\t").append(Nutch.PARAM_SOLR_COLLECTION).append(" : SOLR collection\n");
     sb.append("\t").append(SolrConstants.COMMIT_SIZE).append(" : buffer size when sending to SOLR (default 1000)\n");
     sb.append("\t").append(SolrConstants.MAPPING_FILE)
         .append(" : name of the mapping file for fields (default solrindex-mapping.xml)\n");

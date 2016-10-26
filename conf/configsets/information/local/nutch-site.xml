@@ -39,6 +39,11 @@
   </property>
 
   <property>
+    <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
+    <value>true</value>
+  </property>
+
+  <property>
     <name>fetcher.threads.per.queue</name>
     <value>5</value>
   </property>
@@ -88,9 +93,13 @@
   </property>
 
   <property>
-    <name>nutch.master.domain</name>
+    <name>nutch.master.host</name>
     <value>localhost</value>
-    <description></description>
+    <description>
+      A internet ip, hostname, or domain.
+      All fetch servers register itself using a internet domain so satellites
+      can do tasks from the internet.
+    </description>
   </property>
 
   <property>
@@ -128,9 +137,9 @@
   </property>
 
   <property>
-    <name>mapred.task.timeout</name>
+    <name>fetcher.task.timeout</name>
     <value>10m</value>
-    <description>fetch thread will exit if no any fetch item for mapred.task.timeout minutes</description>
+    <description>fetch thread will exit if no any fetch item for fetcher.task.timeout minutes</description>
   </property>
 
   <property>
@@ -146,8 +155,7 @@
   <property>
     <name>parser.skip.truncated</name>
     <value>false</value>
-    <description>no truncate actually since we give a very large value for
-      http.content.limit</description>
+    <description>no truncate actually since we give a very large value for http.content.limit</description>
   </property>
 
   <property>
@@ -229,13 +237,6 @@
   <property>
     <name>generator.map.threads.per.task</name>
     <value>50</value>
-    <description></description>
-  </property>
-
-  <!-- Hadoop Turning -->
-  <property>
-    <name>mapred.map.tasks</name>
-    <value>1</value>
     <description></description>
   </property>
 

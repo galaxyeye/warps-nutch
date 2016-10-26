@@ -43,7 +43,7 @@
   </property>
 
   <property>
-    <name>nutch.master.domain</name>
+    <name>nutch.master.host</name>
     <value>localhost</value>
     <description></description>
   </property>
@@ -86,10 +86,10 @@
   </property>
 
   <property>
-    <name>mapred.task.timeout</name>
+    <name>fetcher.task.timeout</name>
     <value>10m</value>
     <description>fetch thread will exit if no any fetch item for
-      mapred.task.timeout minutes</description>
+      fetcher.task.timeout minutes</description>
   </property>
 
   <property>
@@ -162,13 +162,6 @@
   <property>
     <name>generator.map.threads.per.task</name>
     <value>50</value>
-    <description></description>
-  </property>
-
-  <!-- Hadoop Turning -->
-  <property>
-    <name>mapred.map.tasks</name>
-    <value>1</value>
     <description></description>
   </property>
 

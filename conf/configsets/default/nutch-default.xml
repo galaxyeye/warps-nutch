@@ -1403,7 +1403,7 @@
     </property>
 
     <property>
-        <name>nutch.master.domain</name>
+        <name>nutch.master.host</name>
         <value>master</value>
         <description>A internet ip, hostname, or domain.</description>
     </property>

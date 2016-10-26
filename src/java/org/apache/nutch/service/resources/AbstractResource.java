@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.nutch.service.ConfManager;
 import org.apache.nutch.service.JobManager;
-import org.apache.nutch.service.NutchServer;
+import org.apache.nutch.service.NutchMaster;
 import org.restlet.Context;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -32,15 +32,15 @@ import org.springframework.context.ApplicationContext;
 @Produces({ MediaType.APPLICATION_JSON })
 public abstract class AbstractResource {
 
-  public static final Logger LOG = NutchServer.LOG;
+  public static final Logger LOG = NutchMaster.LOG;
 
-  protected NutchServer server;
+  protected NutchMaster server;
   protected ConfManager configManager;
   protected JobManager jobManager;
   protected ApplicationContext springContext;
 
   public AbstractResource() {
-    server = (NutchServer) Context.getCurrent().getAttributes().get(NutchServer.NUTCH_SERVER);
+    server = (NutchMaster) Context.getCurrent().getAttributes().get(NutchMaster.NUTCH_SERVER);
     configManager = server.getConfManager();
     jobManager = server.getJobManager();
     springContext = server.getSpringContext();

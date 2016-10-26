@@ -38,6 +38,7 @@ import java.util.Map;
 
 /**
  * TODO : need full unit test
+ * TODO : Move to plugin, urlfilter/contentfilter, etc
  * */
 public class CrawlFilters extends Configured {
 
@@ -216,7 +217,7 @@ public class CrawlFilters extends Configured {
   public boolean isDetailUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
     if (pageType == PageCategory.DETAIL) {
       return true;
@@ -234,7 +235,7 @@ public class CrawlFilters extends Configured {
   public boolean isMediaUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
     if (pageType == PageCategory.MEDIA) {
       return true;
@@ -252,7 +253,7 @@ public class CrawlFilters extends Configured {
   public boolean isSearchUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
     if (pageType == PageCategory.SEARCH) {
       return true;
@@ -270,7 +271,7 @@ public class CrawlFilters extends Configured {
   public boolean isIndexUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
     if (pageType == PageCategory.INDEX) {
       return true;

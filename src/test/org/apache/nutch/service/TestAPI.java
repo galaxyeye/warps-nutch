@@ -38,14 +38,14 @@ public class TestAPI {
   public void test() throws Exception {
   }
   //
-  // private static NutchServer server;
+  // private static NutchMaster server;
   // ClientResource cli;
   //
   // private static String baseUrl = "http://localhost:8192/nutch/";
   //
   // @BeforeClass
   // public static void before() throws Exception {
-  // server = new NutchServer(8192);
+  // server = new NutchMaster(8192);
   // server.start();
   // }
   //

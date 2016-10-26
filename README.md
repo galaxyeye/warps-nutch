@@ -28,7 +28,7 @@ To run crawler using crowdsourcing mode :
 1. make sure you are familiar with Apache Nutch
 
 2. modify nutch-site.xml, set "fetcher.fetch.mode" to be "crowdsourcing", 
-   set "nutch.master.domain" to be the machine you run nutch server
+   set "nutch.master.host" to be the machine you run nutch server
 
 3. start satellite on any machine follow satellite's README. Satellite is desinged to
    run on any cheap PC, it acts as a "normal browser" just like you visit a website

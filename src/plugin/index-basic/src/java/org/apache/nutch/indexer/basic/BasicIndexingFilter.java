@@ -90,7 +90,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   /**
-   * TODO : do it inside boilerpipe
+   * TODO : do it inside boilerpipe or scent
    * */
   private CrawlFilter.PageCategory sniffPageCategory(IndexDocument doc, String url, WebPage page) {
     CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
@@ -102,9 +102,6 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     double _char = textContent.length();
     double _a = page.getOutlinks().size();
-//    if (_char / _a < 15) {
-//      pageCategory = "index";
-//    }
 
     if (textContent.isEmpty()) {
       if (_a > 30) {

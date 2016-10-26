@@ -35,6 +35,7 @@ import org.apache.nutch.storage.local.model.ServerInstance;
 import org.apache.nutch.storage.local.service.BrowserInstanceService;
 import org.apache.nutch.storage.local.service.ServerInstanceService;
 import org.apache.nutch.util.NetUtil;
+import org.apache.nutch.util.NutchConfiguration;
 import org.restlet.Component;
 import org.restlet.Context;
 import org.restlet.data.Protocol;
@@ -56,11 +57,12 @@ import java.util.logging.Level;
 
 import static org.apache.nutch.metadata.Nutch.DEFAULT_MASTER_HOSTNAME;
 import static org.apache.nutch.metadata.Nutch.DEFAULT_MASTER_PORT;
+import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_MASTER_HOST;
 
-public class NutchServer extends Application {
+public class NutchMaster extends Application {
   public static final String NUTCH_SERVER = "NUTCH_SERVER";
 
-  public static final Logger LOG = LoggerFactory.getLogger(NutchServer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(NutchMaster.class);
 
   private static final String LOCALHOST = "localhost";
   private static final String DEFAULT_LOG_LEVEL = "INFO";
@@ -82,16 +84,16 @@ public class NutchServer extends Application {
   private JobManager jobManager;
   private long startTime;
 
-  private static AtomicBoolean running = new AtomicBoolean(false);
+  private AtomicBoolean running = new AtomicBoolean(false);
 
   /**
    * Public constructor which accepts the port we wish to run the server on as
    * well as the logging granularity. If the latter option is not provided via
-   * {@link org.apache.nutch.service.NutchServer#main(String[])} then it defaults to
+   * {@link NutchMaster#main(String[])} then it defaults to
    * 'INFO' however best attempts should always be made to specify a logging
    * level.
    */
-  public NutchServer() {
+  public NutchMaster() {
     // Hadoop configuration
     configManager = new ConfManagerImpl();
     conf = configManager.getDefault();
@@ -159,22 +161,22 @@ public class NutchServer extends Application {
     return startTime;
   }
 
-  public static void startServer() {
-    if (!isRunning()) {
-      NutchServer server = new NutchServer();
+  public static void startServer(Configuration conf) {
+    if (!isRunning(conf)) {
+      NutchMaster server = new NutchMaster();
       server.start();
     }
   }
 
-  public static Thread startInDaemonThread(Configuration conf) {
-    if (!NetUtil.isMaster(conf) || NutchServer.isRunning()) {
+  public static Thread startAsDaemon(Configuration conf) {
+    if (!NetUtil.isMaster(conf) || NutchMaster.isRunning(conf)) {
       return null;
     }
 
     Thread thread = new Thread() {
       @Override
       public void run() {
-        startServer();
+        startServer(conf);
       }
     };
 
@@ -189,23 +191,21 @@ public class NutchServer extends Application {
    * 
    * @return true if a server instance is running.
    */
-  public static boolean isRunning() {
-    if (running.get()) {
-      return true;
-    }
+  public static boolean isRunning(Configuration conf) {
+    String master = conf.get(PARAM_NUTCH_MASTER_HOST, DEFAULT_MASTER_HOSTNAME);
 
-    return NetUtil.testNetwork("127.0.0.1", port);
+    return NetUtil.testNetwork(master, port);
   }
 
   /**
    * Starts the Nutch server printing some logging to the log file.
    */
   public void start() {
-    if (isRunning()) {
-      LOG.info("NutchServer is already running");
+    if (isRunning(conf)) {
+      LOG.info("NutchMaster is already running");
     }
 
-    LOG.info("Starting NutchServer on port: {} with logging level: {} ...", port, logLevel);
+    LOG.info("Starting NutchMaster on port: {} with logging level: {} ...", port, logLevel);
 
     try {
       component.start();
@@ -213,12 +213,12 @@ public class NutchServer extends Application {
       throw new IllegalStateException("Cannot start server!", e);
     }
 
-    LOG.info("Started NutchServer on port {}", port);
+    LOG.info("Started NutchMaster on port {}", port);
     running.set(true);
     startTime = System.currentTimeMillis();
 
     // use a intenet hostname/domain/ip to enable internet access by a satellite
-    String master = conf.get("nutch.master.domain", DEFAULT_MASTER_HOSTNAME);
+    String master = conf.get("nutch.master.host", DEFAULT_MASTER_HOSTNAME);
     int port = conf.getInt("nutch.server.port", DEFAULT_MASTER_PORT);
     registerFectchServerInstance(master, port, conf);
   }
@@ -275,7 +275,7 @@ public class NutchServer extends Application {
       return false;
     }
 
-    LOG.info("Stopping NutchServer on port {}...", port);
+    LOG.info("Stopping NutchMaster on port {}...", port);
     try {
       NutchClient client = new NutchClient(conf);
       client.unregister(new ServerInstance(null, port, ServerInstance.Type.NutchServer));
@@ -284,7 +284,7 @@ public class NutchServer extends Application {
 
       running.set(false);
 
-      LOG.info("Stopped NutchServer on port {}", port);
+      LOG.info("Stopped NutchMaster on port {}", port);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot stop nutch server", e);
     }
@@ -309,10 +309,10 @@ public class NutchServer extends Application {
     OptionBuilder.hasArg();
     OptionBuilder.withArgName("logging level");
     OptionBuilder.withDescription(
-        "Select a logging level for the NutchServer: \n" + "ALL|CONFIG|FINER|FINEST|INFO|OFF|SEVERE|WARNING");
+        "Select a logging level for the NutchMaster: \n" + "ALL|CONFIG|FINER|FINEST|INFO|OFF|SEVERE|WARNING");
     options.addOption(OptionBuilder.create(CMD_LOG_LEVEL));
 
-    OptionBuilder.withDescription("Stop running NutchServer. "
+    OptionBuilder.withDescription("Stop running NutchMaster. "
         + "true value forces the Server to stop despite running jobs e.g. kills the tasks ");
     OptionBuilder.hasOptionalArg();
     OptionBuilder.withArgName("force");
@@ -335,7 +335,7 @@ public class NutchServer extends Application {
 
     if (commandLine.hasOption(CMD_HELP)) {
       HelpFormatter formatter = new HelpFormatter();
-      formatter.printHelp("NutchServer", options, true);
+      formatter.printHelp("NutchMaster", options, true);
       return;
     }
 
@@ -354,6 +354,6 @@ public class NutchServer extends Application {
       return;
     }
 
-    startServer();
+    startServer(NutchConfiguration.create());
   }
 }

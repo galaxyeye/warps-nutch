@@ -59,7 +59,7 @@
     </property>
 
     <property>
-        <name>nutch.master.domain</name>
+        <name>nutch.master.host</name>
         <value>qiwur.com</value>
         <description>
             A internet ip, hostname, or domain.
@@ -108,10 +108,10 @@
     </property>
 
     <property>
-        <name>mapred.task.timeout</name>
+        <name>fetcher.task.timeout</name>
         <value>10</value>
         <description>fetch thread will exit if no any fetch item for
-            mapred.task.timeout minutes
+            fetcher.task.timeout minutes
         </description>
     </property>
 
@@ -197,13 +197,6 @@
         <name>solr.collection</name>
         <value>novel_native_0808</value>
         <description>solr collection</description>
-    </property>
-
-    <!-- Hadoop Turning -->
-    <property>
-        <name>mapred.map.tasks</name>
-        <value>1</value>
-        <description></description>
     </property>
 
 </configuration>

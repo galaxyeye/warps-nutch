@@ -8,7 +8,6 @@ import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -37,8 +36,7 @@ public class IndexWriters {
 
         HashMap<String, IndexWriter> indexerMap = new HashMap<>();
         Extension[] extensions = point.getExtensions();
-        for (int i = 0; i < extensions.length; i++) {
-          Extension extension = extensions[i];
+        for (Extension extension : extensions) {
           IndexWriter writer = (IndexWriter) extension.getExtensionInstance();
           String writerName = writer.getClass().getName();
 
@@ -64,7 +62,7 @@ public class IndexWriters {
         indexWriter.open(conf);
       }
       catch (Throwable e) {
-        LOG.error(e.toString());
+        LOG.error("Failed to open indexer, " + e.toString());
       }
     }
   }
@@ -75,7 +73,7 @@ public class IndexWriters {
         indexWriter.write(doc);
       }
       catch (Throwable e) {
-        LOG.error(e.toString());
+        LOG.error("Failed to write to indexer, " + e.getMessage());
       }
     }
   }
@@ -86,7 +84,7 @@ public class IndexWriters {
         indexWriter.update(doc);
       }
       catch (Throwable e) {
-        LOG.error(e.toString());
+        LOG.error("Failed to update doc via indexer, " + e.getMessage());
       }
     }
   }
@@ -97,7 +95,7 @@ public class IndexWriters {
         indexWriter.delete(key);
       }
       catch (Throwable e) {
-        LOG.error(e.toString());
+        LOG.error("Failed to delete doc via indexer, " + e.getMessage());
       }
     }
   }
@@ -108,14 +106,19 @@ public class IndexWriters {
         indexWriter.close();
       }
       catch (Throwable e) {
-        LOG.error(e.toString());
+        LOG.error("Failed to close indexer, " + e.getMessage());
       }
     }
   }
 
-  public void commit() throws IOException {
+  public void commit() {
     for (IndexWriter indexWriter : indexWriters) {
-      indexWriter.commit();
+      try {
+        indexWriter.commit();
+      }
+      catch (Throwable e) {
+        LOG.error("Failed to commit doc to indexer, " + e.getMessage());
+      }
     }
   }
 

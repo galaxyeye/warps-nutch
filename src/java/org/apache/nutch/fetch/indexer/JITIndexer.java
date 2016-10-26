@@ -114,7 +114,9 @@ public class JITIndexer {
       LOG.error(e.toString());
     }
     finally {
-      indexWriters.close();
+      synchronized (indexWriters) {
+        indexWriters.close();
+      }
     }
   }
 
@@ -123,11 +125,16 @@ public class JITIndexer {
    * */
   public void index(FetchTask fetchTask) {
     try {
+      if (fetchTask == null) {
+        LOG.error("Failed to index, null fetchTask");
+        return;
+      }
+
       String url = fetchTask.getUrl();
-      String key = TableUtil.reverseUrl(url);
+      String reverseUrl = TableUtil.reverseUrl(url);
       WebPage page = fetchTask.getPage();
 
-      IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
+      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
       if (doc != null) {
         String textContent = doc.getFieldValueAsString("text_content");
         if (textContent != null && textContent.length() > minimalContentLenght) {
@@ -138,7 +145,7 @@ public class JITIndexer {
       } // if
     }
     catch (Throwable e) {
-      LOG.error(e.toString());
+      LOG.error("Failed to index a page" + e.toString());
     }
   }
 

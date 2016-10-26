@@ -61,6 +61,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   // last-modified, or, if that's not present, use fetch time.
   private IndexDocument addTime(IndexDocument doc, WebPage page, String url) {
     long time = -1;
+
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
       time = TimingUtil.parseTime(lastModified.toString()); // use as time
@@ -73,9 +74,9 @@ public class MoreIndexingFilter implements IndexingFilter {
     // un-stored, indexed and un-tokenized
     if (time > 0) {
       doc.add("header_last_modified", new Date(time));
+      String dateString = DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
+      doc.add("last_modified_s", dateString);
     }
-    String dateString = DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
-    doc.add("last_modified_s", dateString);
 
     return doc;
   }
@@ -196,8 +197,8 @@ public class MoreIndexingFilter implements IndexingFilter {
     }
 
     MatchResult result;
-    for (int i = 0; i < patterns.length; i++) {
-      if (matcher.contains(contentDisposition.toString(), patterns[i])) {
+    for (Perl5Pattern pattern : patterns) {
+      if (matcher.contains(contentDisposition.toString(), pattern)) {
         result = matcher.getMatch();
         doc.removeField("meta_title");
         doc.add("meta_title", result.group(1));

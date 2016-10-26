@@ -9,6 +9,7 @@ import org.apache.nutch.crawl.SignatureComparator;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.scoring.ScoreDatum;
@@ -192,7 +193,7 @@ public class ReduceDatumBuilder {
         long prevFetchTime = page.getPrevFetchTime();
         long modifiedTime = page.getModifiedTime();
         long prevModifiedTime = page.getPrevModifiedTime();
-        CharSequence lastModified = page.getHeaders().get(new Utf8("Last-Modified"));
+        CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
 
         if (lastModified != null) {
           try {

@@ -19,9 +19,7 @@ package org.apache.nutch.util;
 
 import org.junit.Test;
 
-import java.util.regex.Pattern;
-
-import static org.junit.Assert.assertFalse;
+import static org.apache.nutch.crawl.filters.CrawlFilter.DETAIL_PAGE_URL_PATTERN;
 import static org.junit.Assert.assertTrue;
 
 /** Unit tests for StringUtil methods. */
@@ -46,15 +44,11 @@ public class TestStringUtil {
         "http://reli.cssn.cn/zjx/zjx_zjyj/zjx_jdjyj/201607/t20160722_3131878.shtml",
         "http://aitxt.com/book/12313413874",
         "http://aitxt.com/12313413874.html",
+        "http://company.stcn.com/2016/1013/12905266.shtml"
     };
-    String regex = ".+(detail|item|article|book|good|product|thread|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+";
-    Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(regex);
 
     for (String url : urls) {
-      assertTrue(url.matches(regex));
       assertTrue(DETAIL_PAGE_URL_PATTERN.matcher(url).matches());
     }
-
-    assertFalse("http://t.tt/".matches(regex));
   }
 }

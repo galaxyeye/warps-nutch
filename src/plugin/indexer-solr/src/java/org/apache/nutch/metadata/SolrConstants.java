@@ -14,17 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nutch.indexwriter.solr;
+package org.apache.nutch.metadata;
 
 public interface SolrConstants {
 
   String SOLR_PREFIX = "solr.";
-
-  String SERVER_URL = SOLR_PREFIX + "server.url";
-
-  String ZOOKEEPER_HOSTS = SOLR_PREFIX + "zookeeper.hosts";
-
-  String COLLECTION = SOLR_PREFIX + "collection";
 
   String COMMIT_SIZE = SOLR_PREFIX + "commit.size";
 
@@ -45,10 +39,4 @@ public interface SolrConstants {
   String TIMESTAMP_FIELD = "tstamp";
 
   String DIGEST_FIELD = "digest";
-
-  @Deprecated
-  String COMMIT_INDEX = SOLR_PREFIX + "commit.index";
-
-  @Deprecated
-  String PARAMS = SOLR_PREFIX + "params";
 }

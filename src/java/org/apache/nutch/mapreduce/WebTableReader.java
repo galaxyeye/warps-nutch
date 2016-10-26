@@ -74,17 +74,14 @@ public class WebTableReader extends NutchJob implements Tool {
 
     @Override
     public void setup(Context context) {
-      sort = context.getConfiguration().getBoolean("db.reader.stats.sort",
-          false);
+      sort = context.getConfiguration().getBoolean("db.reader.stats.sort", false);
     }
 
     public void close() {
     }
 
     @Override
-    protected void map(
-        String key,
-        WebPage value,
+    protected void map(String key, WebPage value,
         org.apache.hadoop.mapreduce.Mapper<String, WebPage, Text, LongWritable>.Context context)
         throws IOException, InterruptedException {
       context.write(new Text("T"), COUNT_1);
@@ -101,8 +98,7 @@ public class WebTableReader extends NutchJob implements Tool {
     }
   }
 
-  public static class WebTableStatCombiner extends
-      Reducer<Text, LongWritable, Text, LongWritable> {
+  public static class WebTableStatCombiner extends Reducer<Text, LongWritable, Text, LongWritable> {
     LongWritable val = new LongWritable();
 
     @Override
@@ -148,8 +144,7 @@ public class WebTableReader extends NutchJob implements Tool {
 
   }
 
-  public static class WebTableStatReducer extends
-      Reducer<Text, LongWritable, Text, LongWritable> {
+  public static class WebTableStatReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
 
     @Override
     public void cleanup(Context context) {

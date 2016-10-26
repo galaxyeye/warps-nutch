@@ -59,7 +59,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     String crawlId = conf.get(PARAM_CRAWL_ID);
     String fetchMode = conf.get(PARAM_FETCH_MODE);
     int numTasks = conf.getInt(PARAM_MAPREDUCE_JOB_REDUCES, 2);
-    limit = conf.getInt(PARAM_FETCH_MAPPER_LIMIT, -1);
+    limit = conf.getInt(PARAM_MAPPER_LIMIT, -1);
     limit = limit < 2 * numTasks ? limit : limit/numTasks;
 
     resume = conf.getBoolean(PARAM_RESUME, false);

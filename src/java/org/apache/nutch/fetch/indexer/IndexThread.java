@@ -18,7 +18,7 @@ public class IndexThread extends Thread implements Comparable<IndexThread> {
   private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
   private final Configuration conf;
-  private final int processLevelId;
+  private final int id;
 
   private AtomicBoolean halt = new AtomicBoolean(false);
 
@@ -28,10 +28,10 @@ public class IndexThread extends Thread implements Comparable<IndexThread> {
     this.conf = conf;
     this.JITIndexer = JITIndexer;
 
-    this.processLevelId = instanceSequence.incrementAndGet();
+    this.id = instanceSequence.incrementAndGet();
 
     this.setDaemon(true);
-    this.setName("IndexThread-" + processLevelId);
+    this.setName("IndexThread-" + id);
   }
 
   public void halt() {

@@ -24,8 +24,9 @@ function printUsage() {
   echo "Usage: nutch [--config dir] COMMAND"
   echo "where COMMAND is one of:"
   echo " master    	run nutch master service"
+  echo " samplejob  run sample mapreduce program"
   echo " inject		inject new urls into the database"
-  echo " hostinject     creates or updates an existing host table from a text file"
+  echo " hostinject creates or updates an existing host table from a text file"
   echo " generate 	generate new batches to fetch from crawl db"
   echo " fetch 		fetch URLs marked during generate"
   echo " parse 		parse URLs marked during fetch"
@@ -131,6 +132,8 @@ if [ "$COMMAND" = "crawl" ] ; then
   exit -1
 elif [ "$COMMAND" = "master" ] ; then
   CLASS=org.apache.nutch.service.NutchServer
+elif [ "$COMMAND" = "samplejob" ] ; then
+  CLASS=org.apache.nutch.mapreduce.SampleJob
 elif [ "$COMMAND" = "inject" ] ; then
   CLASS=org.apache.nutch.mapreduce.InjectJob
 elif [ "$COMMAND" = "hostinject" ] ; then
@@ -146,7 +149,7 @@ elif [ "$COMMAND" = "updatedb" ] ; then
 elif [ "$COMMAND" = "updatehostdb" ] ; then
   CLASS=org.apache.nutch.mapreduce.HostDbUpdateJob
 elif [ "$COMMAND" = "readdb" ] ; then
-  CLASS=org.apache.nutch.crawl.WebTableReader
+  CLASS=org.apache.nutch.mapreduce.WebTableReader
 elif [ "$COMMAND" = "readhostdb" ] ; then
   CLASS=org.apache.nutch.host.HostDbReader
 elif [ "$COMMAND" = "elasticindex" ] ; then

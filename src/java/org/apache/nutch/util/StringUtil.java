@@ -49,17 +49,6 @@ public final class StringUtil {
   public static final String[] padding = { "", " ", "  ", "   ", "    ", "     ", "      ", "       ", "        ",
       "         ", "          " };
 
-  /**
-   * TODO : configurable
-   * */
-  public static Pattern INDEX_PAGE_URL_PATTERN = Pattern.compile(".+(index|tags).+");
-
-  public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
-
-  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|/20[012][0-9]/{0,1}[01][0-9]/|\\d{10,}).+");
-
-  public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|video).+");
-
   public static final Comparator<String> LongerFirstComparator = new Comparator<String>() {
     public int compare(String s, String s2) {
       int result = Integer.compare(s2.length(), s.length());

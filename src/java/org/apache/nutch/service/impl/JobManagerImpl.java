@@ -23,7 +23,7 @@ import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.ConfManager;
 import org.apache.nutch.service.JobManager;
-import org.apache.nutch.service.NutchServer;
+import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.service.model.request.JobConfig;
 import org.apache.nutch.service.model.response.JobInfo;
 import org.apache.nutch.service.model.response.JobInfo.State;
@@ -33,7 +33,7 @@ import java.util.Collection;
 
 public class JobManagerImpl implements JobManager {
 
-  public static final Logger LOG = NutchServer.LOG;
+  public static final Logger LOG = NutchMaster.LOG;
 
   private JobFactory jobFactory;
   private JobWorkerPoolExecutor executor;

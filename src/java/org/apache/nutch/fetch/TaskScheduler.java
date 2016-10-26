@@ -387,7 +387,8 @@ public class TaskScheduler extends Configured {
     FetchTask fetchTask = tasksMonitor.getPendingTask(queueID, itemID);
 
     if (fetchTask == null) {
-      LOG.warn("Failed to finish task [{} - {}]", queueID, itemID);
+      // Can not find task to finish, The queue might be retuned or cleared up
+      LOG.info("Can not find task to finish [{} - {}]", queueID, itemID);
 
       return;
     }
@@ -451,7 +452,7 @@ public class TaskScheduler extends Configured {
    * Wait for a while and report task status
    *
    * @param reportInterval Report interval in milliseconds
-   */
+   * */
   public Status waitAndReport(long reportInterval) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
@@ -827,7 +828,7 @@ public class TaskScheduler extends Configured {
 
       if (isNewRow) {
         counter.increase(Counter.newRowsPeresist);
-        if (CrawlFilter.sniffPageCategory(url) == CrawlFilter.PageCategory.DETAIL) {
+        if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
           counter.increase(Counter.newDetailRows);
         }
       }

@@ -36,7 +36,7 @@ public class RuntimeUtil {
 
     JSONArray data = new JSONArray(Arrays.asList(args));
 
-    System.out.println("It's crowdsourcing mode, forward the command to NutchServer...");
+    System.out.println("It's crowdsourcing mode, forward the command to NutchMaster...");
 
     ProcessBuilder builder = new ProcessBuilder("curl",
         "-v",

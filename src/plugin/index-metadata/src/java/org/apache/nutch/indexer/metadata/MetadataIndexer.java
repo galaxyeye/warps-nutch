@@ -36,7 +36,6 @@ import java.util.*;
  * "index.parse" or "index.content" who's values are comma-delimited
  * <value>key1,key2,key3</value>.
  */
-
 public class MetadataIndexer implements IndexingFilter {
   private Configuration conf;
   private static final String PARSE_CONF_PROPERTY = "index.metadata";
@@ -74,23 +73,23 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   private void addHost(IndexDocument doc, String url, WebPage page) throws IndexingException {
-    String reprUrl = TableUtil.toString(page.getReprUrl());
-    String reprUrlString = reprUrl != null ? reprUrl : null;
+    String reprUrlString = page.getReprUrl() != null ? page.getReprUrl().toString() : null;
+
+    url = reprUrlString == null ? url : reprUrlString;
+
+    if (url == null || url.isEmpty()) {
+      return;
+    }
 
     try {
-      URL u;
-      if (reprUrlString != null) {
-        u = new URL(reprUrlString);
-      } else {
-        u = new URL(url);
-      }
+      URL u = new URL(url);
 
       String domain = URLUtil.getDomainName(u);
 
       doc.add("domain", domain);
-      doc.add("url", reprUrlString == null ? url : reprUrlString);
+      doc.add("url", url);
       doc.addIfNotNull("site_name", siteNames.getSiteName(domain));
-      doc.addIfNotNull("resource_category", resourceCategory.getCategory(domain));
+      doc.addIfNotNull("resource_category", resourceCategory.getCategory(url));
       doc.addIfNotNull("host", u.getHost());
     } catch (MalformedURLException e) {
       throw new IndexingException(e);
@@ -140,6 +139,7 @@ public class MetadataIndexer implements IndexingFilter {
         if (!k.isEmpty() && !metadata.isEmpty()) {
           final String finalK = k;
 
+          // TODO : avoid this dirty hard coding
           if (finalK.equalsIgnoreCase("meta_description")) {
             Arrays.stream(metadata.split("\t")).forEach(v -> doc.addIfAbsent(finalK, v));
           }

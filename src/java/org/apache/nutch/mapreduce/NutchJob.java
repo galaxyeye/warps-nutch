@@ -140,10 +140,7 @@ public abstract class NutchJob extends Configured {
     float res = 0;
     try {
       res = (currentJob.mapProgress() + currentJob.reduceProgress()) / 2.0f;
-    } catch (IOException e) {
-      LOG.warn(e.toString());
-      res = 0;
-    } catch (IllegalStateException e) {
+    } catch (IOException|IllegalStateException e) {
       LOG.warn(e.toString());
       res = 0;
     }

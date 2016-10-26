@@ -31,32 +31,32 @@ CRAWL_ID="$2"
 if [ "$#" -eq 3 ]; then
     LIMIT="$3"
 elif [ "$#" -eq 4 ]; then
-     SOLRURL="$3"
+     SOLR_COLLECTION="$3"
      LIMIT="$4"
 else
     echo "Unknown # of arguments $#"
-    echo "Usage: crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    echo "Usage: crawl <seedDir> <crawlID> [<solrCollection>] <numberOfRounds>"
     exit -1;
 fi
 
 if [ "$SEEDDIR" = "" ]; then
-    echo "Missing seedDir : crawl <seedDir> <crawlID> [<solrURL>] <numberOfRounds>"
+    echo "Missing seedDir : crawl <seedDir> <crawlID> [<solrCollection>] <numberOfRounds>"
     exit -1;
 fi
 
 if [ "$CRAWL_ID" = "" ]; then
-    echo "Missing crawlID : crawl <seedDir> <crawlID> [<solrURL>] <numberOfRounds>"
+    echo "Missing crawlID : crawl <seedDir> <crawlID> [<solrCollection>] <numberOfRounds>"
     exit -1;
 fi
 
-if [ "$SOLRURL" = "" ]; then
+if [ "$SOLR_COLLECTION" = "" ]; then
     # echo "No SOLRURL specified. Skipping indexing."
-    echo "No SOLRURL specified. Index just in time."
-    INDEX_JIT_OPTIONS=" -index -collection information_native_0724"
+    echo "Missing solrCollection : crawl <seedDir> <crawlID> [<solrCollection>] <numberOfRounds>"
+    exit -1;
 fi
 
 if [ "$LIMIT" = "" ]; then
-    echo "Missing numberOfRounds : crawl <seedDir> <crawlID> [<solrURL>] <numberOfRounds>"
+    echo "Missing numberOfRounds : crawl <seedDir> <crawlID> [<solrCollection>] <numberOfRounds>"
     exit -1;
 fi
 
@@ -75,20 +75,20 @@ fi
 numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
-# 10K per task?
-sizeFetchlist=`expr $numSlaves \* 10000`
+# It's depend on how fast do you want to finish the fetch loop
+sizeFetchlist=`expr $numSlaves \* 3000`
 
 # time limit for feching
 timeLimitFetch=180
 
-# Adds <days> to the current time to facilitate 
-# crawling urls already fetched sooner then 
+# Adds <days> to the current time to facilitate
+# crawling urls already fetched sooner then
 # db.default.fetch.interval.
 addDays=0
 #############################################
 
-# note that some of the options listed here could be set in the 
-# corresponding hadoop site xml param file 
+# note that some of the options listed here could be set in the
+# corresponding hadoop site xml param file
 commonOptions="-D mapreduce.job.reduces=$numTasks -D mapred.child.java.opts=-Xmx1000m -D mapreduce.reduce.speculative=false -D mapreduce.map.speculative=false -D mapreduce.map.output.compress=true"
 
 # determines whether mode based on presence of job file
@@ -101,27 +101,27 @@ if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
 
  HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
  mkdir -p $HDFS_SEED_DIR
- cp -r "$SEEDDIR" "$HDFS_BASE_URI/$HDFS_SEED_DIR"
+ cp -r "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
  hadoop fs -mkdir -p $HDFS_SEED_DIR
- hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI/$HDFS_SEED_DIR"
+ hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
 
  SEEDDIR=$HDFS_SEED_DIR
 fi
 
 function __bin_nutch {
-    # run $bin/nutch, exit if exit value indicates error
+  # run $bin/nutch, exit if exit value indicates error
 
-    echo "$bin/nutch $@" ;# echo command and arguments
-    "$bin/nutch" "$@"
+  echo "$bin/nutch $@" ;# echo command and arguments
+  "$bin/nutch" "$@"
 
-    RETCODE=$?
-    if [ $RETCODE -ne 0 ]
-    then
-        echo "Error running:"
-        echo "  $bin/nutch $@"
-        echo "Failed with exit value $RETCODE."
-        exit $RETCODE
-    fi
+  RETCODE=$?
+  if [ $RETCODE -ne 0 ]
+  then
+      echo "Error running:"
+      echo "  $bin/nutch $@"
+      echo "Failed with exit value $RETCODE."
+      exit $RETCODE
+  fi
 }
 
 # initial injection
@@ -139,13 +139,14 @@ do
    break
   fi
 
+  echo "\n\n\n"
   echo `date` ": Iteration $a of $LIMIT"
 
   echo "Generating batchId"
   batchId=$DATE-$RANDOM
 
   echo "Generating a new fetchlist"
-  generate_args=($commonOptions -topN $sizeFetchlist -noNorm -noFilter -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
+  generate_args=($commonOptions -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
   echo "$bin/nutch generate ${generate_args[@]}"
   $bin/nutch generate "${generate_args[@]}"
   RETCODE=$?
@@ -164,28 +165,7 @@ do
 
   echo "Fetching : "
   # __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
-  __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 $INDEX_JIT_OPTIONS
-
-  # parsing the batch
-  echo "Parsing : "
-  # enable the skipping of records for the parsing so that a dodgy document 
-  # so that it does not fail the full task
-  skipRecordsOptions="-D mapreduce.task.skip.start.attempts=2 -D mapreduce.map.skip.maxrecords=1"
-  __bin_nutch parse $commonOptions $skipRecordsOptions $batchId -crawlId "$CRAWL_ID"
-
-  # updatedb with this batch
-  echo "CrawlDB update for $CRAWL_ID"
-  __bin_nutch updatedb $commonOptions $batchId -crawlId "$CRAWL_ID"
-
-  if [ -n "$SOLRURL" ]; then
-    echo "Indexing $CRAWL_ID on SOLR index -> $SOLRURL"
-    __bin_nutch index $commonOptions -all -crawlId "$CRAWL_ID" -solrUrl $SOLRURL
-
-    echo "SOLR dedup -> $SOLRURL"
-    # __bin_nutch solrdedup $commonOptions $SOLRURL
-  else
-      echo "Skipping indexing tasks: no SOLR url provided."
-  fi
+  __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
 done
 

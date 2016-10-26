@@ -30,6 +30,7 @@ import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.ProtocolFactory;
+import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -114,7 +115,7 @@ public class FetchJob extends NutchJob implements Tool {
 
     conf.setInt(PARAM_THREADS, threads);
     conf.setBoolean(PARAM_RESUME, resume);
-    conf.setInt(PARAM_FETCH_MAPPER_LIMIT, limit);
+    conf.setInt(PARAM_MAPPER_LIMIT, limit);
     conf.setInt(PARAM_MAPREDUCE_JOB_REDUCES, numTasks);
 
     conf.setBoolean(PARAM_INDEX_JUST_IN_TIME, index);
@@ -184,7 +185,7 @@ public class FetchJob extends NutchJob implements Tool {
    * @param resume
    * @param numTasks
    *          number of fetching tasks (reducers). If set to < 1 then use the
-   *          default, which is mapred.map.tasks.
+   *          default, which is mapreduce.job.reduces.
    * @return 0 on success
    * @throws Exception
    * */
@@ -230,7 +231,7 @@ public class FetchJob extends NutchJob implements Tool {
         + "    -threads N    - number of fetching threads per task\n"
         + "    -resume       - resume interrupted job\n"
         + "    -index        - index in time\n"
-        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapred.map.tasks)"
+        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapreduce.job.reduces)"
         + "    -solrUrl      - solr server url, for example, http://localhost:8983/solr/gettingstarted\n"
         + "    -zkHostString - zk host string, zoomkeeper higher priority then solrUrl\n"
         + "    -collection   - collection name if zkHostString is specified\n";
@@ -296,6 +297,9 @@ public class FetchJob extends NutchJob implements Tool {
     LOG.info("---------------------------------------------------\n\n");
 
     Configuration conf = NutchConfiguration.create();
+    // NutchMaster should run on master instance
+    NutchMaster.startAsDaemon(conf);
+
     int res = ToolRunner.run(conf, new FetchJob(), args);
     System.exit(res);
   }

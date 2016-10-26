@@ -16,6 +16,7 @@ import java.io.IOException;
 
 /**
  * Created by vincent on 16-9-8.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class SimpleIndexer {
 

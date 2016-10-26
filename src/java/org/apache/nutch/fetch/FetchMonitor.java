@@ -7,7 +7,7 @@ import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchServer;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
-import org.apache.nutch.service.NutchServer;
+import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Thread.sleep;
 import static org.apache.nutch.fetch.TaskScheduler.QUEUE_REMAINDER_LIMIT;
 import static org.apache.nutch.metadata.Nutch.*;
 
@@ -92,8 +91,8 @@ public class FetchMonitor {
     fetchMode = conf.getEnum(PARAM_FETCH_MODE, FetchMode.NATIVE);
     fetchThreadCount = conf.getInt("fetcher.threads.fetch", 5);
 
-    fetchJobTimeout = 60 * 1000 * NutchConfiguration.getUint(conf, "fetcher.timelimit.mins", Integer.MAX_VALUE / 60 / 1000 / 20);
-    fetchTaskTimeout = conf.getTimeDuration("mapred.task.timeout", Duration.ofMinutes(10).toMillis(), TimeUnit.MILLISECONDS);
+    fetchJobTimeout = 60 * 1000 * NutchConfiguration.getUint(conf, "fetcher.timelimit.mins", 60);
+    fetchTaskTimeout = conf.getTimeDuration("fetcher.task.timeout", Duration.ofMinutes(10).toMillis(), TimeUnit.MILLISECONDS);
     // pendingQueueCheckInterval = 60 * 1000 * conf.getLong("fetcher.pending.queue.check.time", 8);
     pendingQueueCheckInterval = conf.getTimeDuration("fetcher.pending.queue.check.time", Duration.ofMinutes(8).toMillis(), TimeUnit.MILLISECONDS);
     pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
@@ -168,10 +167,8 @@ public class FetchMonitor {
     // Queue feeder thread
     startFeederThread(context);
 
-    startNutchMaster();
-
-    if (!NutchServer.isRunning()) {
-      LOG.error("Failed to start nutch master, exit ...");
+    if (!NutchMaster.isRunning(conf)) {
+      LOG.error("Failed to find nutch master, exit ...");
       return;
     }
 
@@ -279,7 +276,7 @@ public class FetchMonitor {
   }
 
   private void startFetchService(final Configuration conf, final int port) {
-    fetchServer = FetchServer.startInDaemonThread(conf, port);
+    fetchServer = FetchServer.startAsDaemon(conf, port);
   }
 
   private int tryAcquireFetchServerPort() {
@@ -289,17 +286,6 @@ public class FetchMonitor {
       return -1;
     }
     return port;
-  }
-
-  private void startNutchMaster() throws InterruptedException {
-    if (!NutchServer.isRunning()) {
-      NutchServer.startInDaemonThread(conf);
-    }
-
-    int counter = 10;
-    while (counter-- > 0 && !NutchServer.isRunning()) {
-      sleep(1000);
-    }
   }
 
   private void startCheckAndReportLoop() throws IOException {

@@ -84,8 +84,7 @@ public class ParseUtil {
     filters = new URLFilters(conf);
     normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
-    maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE
-        : maxOutlinksPerPage;
+    maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
     ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
     executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("parse-%d").setDaemon(true).build());
   }
@@ -229,6 +228,17 @@ public class ParseUtil {
         continue;
       } catch (URLFilterException e) {
         continue;
+      }
+
+      // TODO : use suffix-urlfilter intead, this is a quick dirty fix
+      final String[] filterSuffixes = {"js", "css", "jpg", "png", "jpeg", "gif"};
+      if (toUrl != null) {
+        for (String filterSuffix : filterSuffixes) {
+          if (toUrl.endsWith(filterSuffix)) {
+            toUrl = null;
+            break;
+          }
+        }
       }
 
       if (toUrl == null) {

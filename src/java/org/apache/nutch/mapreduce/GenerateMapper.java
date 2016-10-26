@@ -36,8 +36,11 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
+import java.time.Year;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
@@ -46,6 +49,10 @@ import static org.apache.nutch.metadata.Nutch.*;
 public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
 
   public static final Logger LOG = GenerateJob.LOG;
+
+  private static final int year = Year.now().getValue();
+  private static final int yearLowerBound = 1990;
+  private static final int yearUpperBound = Year.now().getValue();
 
   private enum Counter {
     malformedUrl, rowsInjected, rowsIsSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable, pagesAlreadyGenerated,
@@ -66,10 +73,14 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private FetchSchedule fetchSchedule;
   private long pseudoCurrTime;
   private long topN;
+  private long maxDetailPageCount;
+  private Set<String> oldYears;
   private int maxDistance;
   private String[] keyRange;
   private boolean reGenerate = false;
   private boolean ignoreGenerated = true;
+
+  private int detailPages = 0;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -97,6 +108,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime);
     topN = conf.getLong(PARAM_GENERATOR_TOP_N, Long.MAX_VALUE);
+    maxDetailPageCount = Math.round(topN * 0.667);
+    oldYears = IntStream.range(yearLowerBound, yearUpperBound - 1).mapToObj(String::valueOf).collect(Collectors.toSet());
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
@@ -153,7 +166,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
      * */
     String isSeed = TableUtil.getMetadata(page, META_IS_SEED);
     if (isSeed != null) {
-      entry.set(url, Float.MAX_VALUE);
+      entry.set(url, SCORE_SEED);
       output(url, entry, page, context);
       getCounter().increase(Counter.rowsIsSeed);
       return;
@@ -162,7 +175,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     // Page is injected, this is a seed url and has the highest fetch priority
     // INJECT_MARK will be removed in DbUpdate stage
     if (Mark.INJECT_MARK.hasMark(page)) {
-      entry.set(url, Float.MAX_VALUE);
+      entry.set(url, SCORE_INJECTED);
       output(url, entry, page, context);
       getCounter().increase(Counter.rowsInjected);
       return;
@@ -193,6 +206,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     } // if
 
     // Filter on distance
+    // TODO : We have already filtered urls on dbupdate phrase, check if that is right @vincent
     if (maxDistance > -1) {
       CharSequence distanceUtf8 = page.getMarkers().get(Nutch.DISTANCE);
       if (distanceUtf8 != null) {
@@ -226,19 +240,35 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       // Typically, we use OPIC scoring filter
       // TODO : use a better scoring filter for information monitoring @vincent
       score = scoringFilters.generatorSortValue(url, page, score);
-    } catch (ScoringFilterException e) {
-      // ignore
+    } catch (ScoringFilterException ignored) {
     }
 
-    // Detail pages comes first
+    // TODO : Move to a ScoreFilter
+    // Detail pages comes first, but we still need some pages with other category
     if (crawlFilters.isDetailUrl(url)) {
-      score = Float.MAX_VALUE;
+      ++detailPages;
+
+      if (detailPages < maxDetailPageCount) {
+        score = SCORE_DETAIL_PAGE;
+      }
+
+      // For urls who contains year information
+      // http://bond.hexun.com/2011-01-07/126641872.html
+      for (String lastYear : oldYears) {
+        if (url.contains("/" + lastYear)) {
+          score = SCORE_DEFAULT;
+          break;
+          // return;
+        } // if
+      } // for
     }
 
     // Sort by score
     entry.set(url, score);
 
     output(url, entry, page, context);
+
+    getCounter().updateAffectedRows(url);
   }
 
 //  private boolean shouldFetch(String url, WebPage page, long currTime) {
@@ -256,8 +286,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
 
     context.write(entry, page);
-
-    getCounter().updateAffectedRows(url);
   }
 
   // Url filter

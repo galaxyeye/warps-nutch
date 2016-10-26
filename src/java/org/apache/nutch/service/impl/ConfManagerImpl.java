@@ -21,7 +21,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.service.ConfManager;
-import org.apache.nutch.service.NutchServer;
+import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.service.model.request.NutchConfig;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.util.NutchConfiguration;
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConfManagerImpl implements ConfManager {
 
-  public static final Logger LOG = NutchServer.LOG;
+  public static final Logger LOG = NutchMaster.LOG;
 
   private Map<String, Configuration> configurations = Maps.newConcurrentMap();
 

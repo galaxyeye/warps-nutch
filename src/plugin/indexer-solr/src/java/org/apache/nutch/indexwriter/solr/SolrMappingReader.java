@@ -19,6 +19,7 @@ package org.apache.nutch.indexwriter.solr;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.metadata.SolrConstants;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
