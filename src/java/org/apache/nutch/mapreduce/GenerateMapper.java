@@ -16,8 +16,11 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
+import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
@@ -31,38 +34,39 @@ import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
+import org.mortbay.util.ArrayQueue;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
-import java.time.Year;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
-
   public static final Logger LOG = GenerateJob.LOG;
 
-  private static final int year = Year.now().getValue();
-  private static final int yearLowerBound = 1990;
-  private static final int yearUpperBound = Year.now().getValue();
-
   private enum Counter {
-    malformedUrl, rowsInjected, rowsIsSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable, pagesAlreadyGenerated,
-    pagesTooFarAway, rowsNormalisedToNull, rowsFiltered, pagesFetchLater
+    malformedUrl, rowsInjected, rowsIsSeed, rowsDetailFromSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
+    rowsNormalisedToNull, rowsFiltered, oldUrlDate,
+    tieba, bbs, news, blog,
+    pagesAlreadyGenerated, pagesTooFarAway, pagesFetchLater, pagesNeverFetch
   }
 
   private NutchMetrics nutchMetrics;
   private final Set<String> unreachableHosts = new HashSet<>();
-  private final SelectorEntry entry = new SelectorEntry();
 
+  /**
+   * Injector
+   */
+  private SeedBuilder seedBuiler;
+  private Queue<String> seedUrlQueue = new ArrayQueue<>();
+
+  private String batchId;
   private URLUtil.HostGroupMode hostGroupMode;
   private boolean filter;
   private boolean normalise;
@@ -74,7 +78,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private long pseudoCurrTime;
   private long topN;
   private long maxDetailPageCount;
-  private Set<String> oldYears;
   private int maxDistance;
   private String[] keyRange;
   private boolean reGenerate = false;
@@ -89,6 +92,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     getCounter().register(Counter.class);
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
+    batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
     String fetchMode = conf.get(PARAM_FETCH_MODE);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
@@ -99,6 +103,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
+    this.seedBuiler = new SeedBuilder(conf);
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
     urlFilters = filter ? new URLFilters(conf) : null;
@@ -107,22 +112,28 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime);
-    topN = conf.getLong(PARAM_GENERATOR_TOP_N, Long.MAX_VALUE);
+    topN = conf.getLong(PARAM_GENERATOR_TOP_N, Long.MAX_VALUE / 2);
     maxDetailPageCount = Math.round(topN * 0.667);
-    oldYears = IntStream.range(yearLowerBound, yearUpperBound - 1).mapToObj(String::valueOf).collect(Collectors.toSet());
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
     crawlFilters = CrawlFilters.create(conf);
     keyRange = crawlFilters.getMaxReversedKeyRange();
 
+    String seedFileLockName = conf.get(PARAM_SEED_FILE_LOCK_NAME);
+    if (seedFileLockName != null) {
+      seedUrlQueue.addAll(FSUtils.readAllSeeds(new Path(HDFS_PATH_ALL_SEED_FILE), new Path(seedFileLockName), conf));
+    }
+
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "fetchMode", fetchMode,
+        "batchId", batchId,
         "hostGroupMode", hostGroupMode,
         "filter", filter,
         "topN", topN,
+        "seedUrls", seedUrlQueue.size(),
         "normalise", normalise,
         "maxDistance", maxDistance,
         "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
@@ -135,6 +146,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
         "unreachableHosts", unreachableHosts.size()
     ));
+
+    createSeedRows(context);
   }
 
   @Override
@@ -161,14 +174,24 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return;
     }
 
+    SelectorEntry entry = new SelectorEntry();
+
     /**
      * We crawl seed every time we start, AdaptiveScheduler is just works
      * */
-    String isSeed = TableUtil.getMetadata(page, META_IS_SEED);
-    if (isSeed != null) {
+    if (TableUtil.isSeed(page)) {
       entry.set(url, SCORE_SEED);
       output(url, entry, page, context);
       getCounter().increase(Counter.rowsIsSeed);
+      return;
+    }
+
+    // TODO : navigate
+
+    if (TableUtil.isFromSeed(page) && crawlFilters.isDetailUrl(url)) {
+      entry.set(url, SCORE_PAGES_FROM_SEED);
+      output(url, entry, page, context);
+      getCounter().increase(Counter.rowsDetailFromSeed);
       return;
     }
 
@@ -180,6 +203,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       getCounter().increase(Counter.rowsInjected);
       return;
     }
+
+    // TODO : handle tieba, bbs and blog
 
     if (Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.pagesAlreadyGenerated);
@@ -225,12 +250,12 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     // Fetch schedule, timing filter
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
-      if (LOG.isDebugEnabled()) {
-        // LOG.debug("Fetch later '" + url + "', fetchTime=" + page.getFetchTime() + ", curTime=" + pseudoCurrTime);
+      if (page.getFetchTime() - pseudoCurrTime < Duration.ofDays(30).toMillis()) {
+        getCounter().increase(Counter.pagesFetchLater);
       }
-
-      // getCounter().increase("pagesFetchLater");
-      getCounter().increase(Counter.pagesFetchLater);
+      else {
+        getCounter().increase(Counter.pagesNeverFetch);
+      }
 
       return;
     }
@@ -243,6 +268,11 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     } catch (ScoringFilterException ignored) {
     }
 
+    if (crawlFilters.hasOldUrlDate(url)) {
+      getCounter().increase(Counter.oldUrlDate);
+      return;
+    }
+
     // TODO : Move to a ScoreFilter
     // Detail pages comes first, but we still need some pages with other category
     if (crawlFilters.isDetailUrl(url)) {
@@ -251,16 +281,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       if (detailPages < maxDetailPageCount) {
         score = SCORE_DETAIL_PAGE;
       }
-
-      // For urls who contains year information
-      // http://bond.hexun.com/2011-01-07/126641872.html
-      for (String lastYear : oldYears) {
-        if (url.contains("/" + lastYear)) {
-          score = SCORE_DEFAULT;
-          break;
-          // return;
-        } // if
-      } // for
     }
 
     // Sort by score
@@ -332,5 +352,40 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     return true;
+  }
+
+  private void createSeedRows(Context context) throws IOException, InterruptedException {
+    while (!seedUrlQueue.isEmpty()) {
+      String urlLine = seedUrlQueue.poll();
+
+      if (urlLine == null || urlLine.isEmpty()) {
+        continue;
+      }
+
+      urlLine = urlLine.trim();
+      if (urlLine.startsWith("#")) {
+        continue;
+      }
+
+      getCounter().increase(rows);
+
+      WebPage page = seedBuiler.buildWebPage(urlLine);
+      String url = page.getVariableAsString("url");
+      TableUtil.setPriority(page, FETCH_PRIORITY_SEED);
+      // set score?
+
+      Mark.INJECT_MARK.removeMarkIfExist(page);
+      Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+      page.setBatchId(batchId);
+
+      SelectorEntry entry = new SelectorEntry();
+
+      entry.set(url, SCORE_INJECTED);
+
+      output(url, entry, page, context);
+
+      getCounter().increase(Counter.rowsInjected);
+      getCounter().updateAffectedRows(url);
+    }
   }
 }

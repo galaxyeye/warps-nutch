@@ -16,7 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -44,11 +43,7 @@ public class ParserJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(ParserJob.class);
 
-  public static final String RESUME_KEY = "parse.job.resume";
-  public static final String FORCE_KEY = "parse.job.force";
-  public static final String REPARSE_KEY = "parse.job.reparse";
   public static final String SKIP_TRUNCATED = "parser.skip.truncated";
-  public static final Utf8 REPARSE = new Utf8("-reparse");
 
   private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
 
@@ -112,14 +107,16 @@ public class ParserJob extends NutchJob implements Tool {
     batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
     Boolean reparse = batchId.equalsIgnoreCase("-reparse");
     batchId = reparse ? "-all" : batchId;
+    int limit = params.getInt(ARG_LIMIT, -1);
     Boolean resume = params.getBoolean(ARG_RESUME, false);
     Boolean force = params.getBoolean(ARG_FORCE, false);
 
     getConf().set(PARAM_CRAWL_ID, crawlId);
     getConf().set(PARAM_BATCH_ID, batchId);
-    getConf().setBoolean(RESUME_KEY, resume);
-    getConf().setBoolean(FORCE_KEY, force);
-    getConf().setBoolean(REPARSE_KEY, reparse);
+    conf.setInt(PARAM_LIMIT, limit);
+    getConf().setBoolean(PARAM_RESUME, resume);
+    getConf().setBoolean(PARAM_FORCE, force);
+    getConf().setBoolean(PARAM_REPARSE, reparse);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -128,7 +125,8 @@ public class ParserJob extends NutchJob implements Tool {
         "fetchMode", fetchMode,
         "resume", resume,
         "force", force,
-        "reparse", reparse
+        "reparse", reparse,
+        "limit", limit
     ));
   }
 
@@ -158,20 +156,14 @@ public class ParserJob extends NutchJob implements Tool {
   }
 
   private void printUsage() {
-    System.err
-        .println("Usage: ParserJob (<batchId> | -all | -reparse) [-crawlId <id>] [-resume] [-force]");
-    System.err
-        .println("    <batchId>     - symbolic batch ID created by Generator");
-    System.err
-        .println("    -all          - consider pages from all crawl jobs");
-    System.err
-        .println("    -reparse      - reparse pages from all crawl jobs");
-    System.err
-        .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
-    System.err
-        .println("    -resume       - resume a previous incomplete job");
-    System.err
-        .println("    -force        - force re-parsing even if a page is already parsed");
+    System.err.println("Usage: ParserJob (<batchId> | -all | -reparse) [-crawlId <id>] [-resume] [-force]");
+    System.err.println("    <batchId>     - symbolic batch ID created by Generator");
+    System.err.println("    -all          - consider pages from all crawl jobs");
+    System.err.println("    -reparse      - reparse pages from all crawl jobs");
+    System.err.println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
+    System.err.println("    -limit        - limit");
+    System.err.println("    -resume       - resume a previous incomplete job");
+    System.err.println("    -force        - force re-parsing even if a page is already parsed");
   }
 
   public int run(String[] args) throws Exception {
@@ -190,6 +182,7 @@ public class ParserJob extends NutchJob implements Tool {
 
     String crawlId = conf.get(PARAM_CRAWL_ID, "");
 
+    int limit = -1;
     boolean resume = false;
     boolean force = false;
 
@@ -198,24 +191,28 @@ public class ParserJob extends NutchJob implements Tool {
         crawlId = args[++i];
         // getConf().set(PARAM_CRAWL_ID, args[++i]);
       }
+      else if ("-limit".equals(args[i])) {
+        limit = Integer.parseInt(args[++i]);
+      }
       else if ("-resume".equals(args[i])) {
         resume = true;
-      } else if ("-force".equals(args[i])) {
-        force = true;
       }
-    }
+      else if ("-force".equals(args[i])) {
+        force = true;
+      }    }
 
-    parse(crawlId, batchId, resume, force);
+    parse(crawlId, batchId, limit, resume, force);
 
     return 0;
   }
 
-  public void parse(String crawlId, String batchId, boolean resume, boolean force) {
+  public void parse(String crawlId, String batchId, int limit, boolean resume, boolean force) {
     run(Params.toArgMap(
         ARG_CRAWL, crawlId,
         ARG_BATCH, batchId,
         ARG_RESUME, resume,
-        ARG_FORCE, force
+        ARG_FORCE, force,
+        ARG_LIMIT, limit > 0 ? limit : null
     ));
   }
 

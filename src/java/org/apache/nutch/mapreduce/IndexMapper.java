@@ -1,36 +1,42 @@
 package org.apache.nutch.mapreduce;
 
-/**
- * Created by vincent on 16-8-1.
- */
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseStatusCodes;
+import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
+import org.apache.nutch.util.TableUtil;
 
 import java.io.IOException;
 
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Created by vincent on 16-7-30.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocument> {
 
-  public enum Counter { unmatchStatus, notUpdated, alreadyIndexed, indexFailed };
+  public enum Counter { unmatchStatus, notUpdated, alreadyIndexed, pageTruncated, parseFailed, indexFailed, shortContent, hasPublishTime, hasAuthor };
 
   private DataStore<String, WebPage> storage;
+  private ParseUtil parseUtil;
+  private boolean skipTruncated;
+
   private String batchId;
-  private int count = 0;
   private boolean reindex = false;
   private int limit = -1;
+  private int minTextLenght;
+
+  private int count = 0;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -41,8 +47,12 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
     batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
-    reindex = conf.getBoolean(ARG_REINDEX, false);
-    limit = conf.getInt(ARG_LIMIT, -1);
+    reindex = conf.getBoolean(PARAM_REINDEX, false);
+    limit = conf.getInt(PARAM_LIMIT, -1);
+    minTextLenght = conf.getInt("indexer.minimal.text.length", 200);
+
+    parseUtil = reindex ? new ParseUtil(conf) : null;
+    skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
 
     try {
       storage = StorageUtils.createWebStore(conf, String.class, WebPage.class);
@@ -55,7 +65,8 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
         "crawlId", crawlId,
         "batchId", batchId,
         "reindex", reindex,
-        "limit", limit
+        "limit", limit,
+        "minTextLenght", minTextLenght
     ));
   }
 
@@ -67,58 +78,105 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
   }
 
   @Override
-  public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
-    if (limit > -1 && count > limit) {
-      stop("hit limit " + limit + ", finish mapper.");
-      return;
-    }
+  public void map(String reverseUrl, WebPage page, Context context) throws IOException, InterruptedException {
+    try {
+      getCounter().increase(rows);
 
-    ParseStatus pstatus = page.getParseStatus();
-
-    if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
-      getCounter().increase(Counter.unmatchStatus);
-      return; // filter urls not parsed
-    }
-
-    if (!reindex) {
-      Utf8 mark = Mark.UPDATEDB_MARK.checkMark(page);
-      if (mark == null) {
-        getCounter().increase(Counter.notUpdated);
-        // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
+      if (limit > -1 && count > limit) {
+        stop("hit limit " + limit + ", finish mapper");
         return;
       }
 
-      mark = Mark.INDEX_MARK.checkMark(page);
-      if (mark != null) {
-        getCounter().increase(Counter.alreadyIndexed);
-        // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
+      String url = TableUtil.unreverseUrl(reverseUrl);
+
+      // For test only
+      ParseStatus pstatus = page.getParseStatus();
+      if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
+        getCounter().increase(Counter.unmatchStatus);
+        return; // filter urls not parsed
+      }
+      // End for test only
+
+      if (!reindex) {
+        // ParseStatus pstatus = page.getParseStatus();
+        if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
+          getCounter().increase(Counter.unmatchStatus);
+          return; // filter urls not parsed
+        }
+
+        Utf8 mark = Mark.UPDATEDB_MARK.checkMark(page);
+        if (mark == null) {
+          getCounter().increase(Counter.notUpdated);
+          // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
+          return;
+        }
+
+        mark = Mark.INDEX_MARK.checkMark(page);
+        if (mark != null) {
+          getCounter().increase(Counter.alreadyIndexed);
+          // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
+          return;
+        }
+      }
+
+      if (reindex) {
+        if (ParserMapper.isTruncated(url, page)) {
+          getCounter().increase(Counter.pageTruncated);
+          if (skipTruncated) {
+            return;
+          }
+        }
+
+        Parse parse = parseUtil.parse(url, page);
+        if (parse == null) {
+          getCounter().increase(Counter.parseFailed);
+          return;
+        }
+      }
+
+      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
+      if (doc == null) {
+        getCounter().increase(Counter.indexFailed);
+        // LOG.debug("Failed to get IndexDocument for " + TableUtil.unreverseUrl(key));
         return;
       }
+
+      String textContent = doc.getFieldValueAsString(DOC_FIELD_TEXT_CONTENT);
+      if (textContent == null || textContent.length() < minTextLenght) {
+        getCounter().increase(Counter.shortContent);
+        return;
+      }
+
+      if (doc.getField("author") != null || doc.getField("director") != null) {
+        getCounter().increase(Counter.hasAuthor);
+      }
+
+      if (doc.getField("publish_time") != null) {
+        getCounter().increase(Counter.hasPublishTime);
+      }
+
+      // LOG.debug("Indexing : " + TableUtil.unreverseUrl(key));
+
+      if (!reindex) {
+        // Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
+        Mark.INDEX_MARK.putMark(page, new Utf8(batchId));
+      }
+
+      // LOG.debug(TableUtil.toString(page.getText()));
+
+      // Multiple output
+      TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+
+      storage.put(reverseUrl, page);
+      context.write(reverseUrl, doc);
+
+      getCounter().updateAffectedRows(doc.getUrl());
+
+      ++count;
     }
-
-    IndexDocument doc = new IndexDocument.Builder(conf).build(key, page);
-    if (doc == null) {
-      getCounter().increase(Counter.indexFailed);
-      // LOG.debug("Failed to get IndexDocument for " + TableUtil.unreverseUrl(key));
-      return;
+    catch (Throwable e) {
+      LOG.error(e.toString());
     }
-
-    // LOG.debug("Indexing : " + TableUtil.unreverseUrl(key));
-
-    if (!reindex) {
-      // Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
-      Mark.INDEX_MARK.putMark(page, new Utf8(batchId));
-    }
-
-    // LOG.debug(TableUtil.toString(page.getText()));
-
-    // Multiple output
-    storage.put(key, page);
-    context.write(key, doc);
-
-    getCounter().updateAffectedRows(doc.getUrl());
-    
-    ++count;
   }
 
   @Override

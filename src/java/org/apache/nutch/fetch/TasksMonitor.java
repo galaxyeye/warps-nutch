@@ -260,7 +260,7 @@ public class TasksMonitor {
   /**
    * Available hosts statistics
    * */
-  public synchronized void statHost(String url) {
+  public synchronized void statHost(String url, WebPage page) {
     if (url == null || url.isEmpty()) {
       return;
     }
@@ -305,6 +305,29 @@ public class TasksMonitor {
       if (debugUrls) {
         nutchMetrics.debugUnknownTypeUrls(url, reportSuffix);
       }
+    }
+
+    if (url.contains("blog")) {
+      ++hostStat.blogUrls;
+      if (debugUrls) {
+        nutchMetrics.debugBlogUrls(url, reportSuffix);
+      }
+    }
+    if (url.contains("tieba")) {
+      ++hostStat.tiebaUrls;
+      if (debugUrls) {
+        nutchMetrics.debugTiebaUrls(url, reportSuffix);
+      }
+    }
+    if (url.contains("bbs")) {
+      ++hostStat.bbsUrls;
+      if (debugUrls) {
+        nutchMetrics.debugBBSUrls(url, reportSuffix);
+      }
+    }
+
+    if (TableUtil.isFromSeed(page)) {
+      ++hostStat.urlsFromSeed;
     }
 
     if (url.length() > maxUrlLength) {

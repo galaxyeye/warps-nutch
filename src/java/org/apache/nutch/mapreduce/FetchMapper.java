@@ -65,7 +65,6 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     resume = conf.getBoolean(PARAM_RESUME, false);
     this.nutchMetrics = new NutchMetrics(conf);
 
-    // unreachableHostsPath = NutchConfiguration.getPath(conf, PARAM_NUTCH_UNREACHABLE_HOSTS_FILE, Paths.get(PATH_UNREACHABLE_HOSTS));
     boolean ignoreUnreachableHosts = conf.getBoolean("fetcher.fetch.mapper.ignore.unreachable.hosts", true);
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);

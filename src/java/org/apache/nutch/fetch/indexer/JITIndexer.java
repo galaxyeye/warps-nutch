@@ -30,9 +30,9 @@ public class JITIndexer {
 
   private Configuration conf;
 
-  private int batchSize = 2500;
+  private int batchSize = 1000;
   private int indexThreadCount;
-  private int minimalContentLenght;
+  private int minTextLenght;
 
   private final Set<IndexThread> activeIndexThreads = new ConcurrentSkipListSet<>();
   private final BlockingQueue<FetchTask> indexTasks = Queues.newLinkedBlockingQueue(batchSize);
@@ -45,7 +45,7 @@ public class JITIndexer {
 
     this.batchSize = conf.getInt("indexer.index.batch.size", this.batchSize);
     this.indexThreadCount = conf.getInt("indexer.index.thread.count", 1);
-    this.minimalContentLenght = conf.getInt("indexer.minimal.content.length", 1000);
+    this.minTextLenght = conf.getInt("indexer.minimal.text.length", 200);
 
     indexWriters = new IndexWriters(conf);
     indexWriters.open(conf);
@@ -79,7 +79,7 @@ public class JITIndexer {
     }
 
     ByteBuffer content = page.getContent();
-    if (minimalContentLenght > 0 && content.array().length < minimalContentLenght) {
+    if (minTextLenght > 0 && content.array().length < minTextLenght) {
       // TODO : add a counter to report this case
       return;
     }
@@ -137,7 +137,9 @@ public class JITIndexer {
       IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
       if (doc != null) {
         String textContent = doc.getFieldValueAsString("text_content");
-        if (textContent != null && textContent.length() > minimalContentLenght) {
+        if (textContent != null && textContent.length() > minTextLenght) {
+          TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+
           synchronized (indexWriters) {
             indexWriters.write(doc);
           }

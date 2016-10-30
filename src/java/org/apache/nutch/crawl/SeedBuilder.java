@@ -77,6 +77,8 @@ public class SeedBuilder {
     String url = StringUtils.substringBefore(urlLine, "\t");
 
     Map<String, String> metadata = getMetadata(urlLine);
+    // Add metadata to page
+    TableUtil.putAllMetadata(row, metadata);
 
     String reversedUrl = null;
     try {
@@ -95,9 +97,6 @@ public class SeedBuilder {
 
     row.setVariable("url", url);
     row.setVariable("reversedUrl", reversedUrl);
-
-    // Add metadata to page
-    TableUtil.putAllMetadata(row, metadata);
 
     if (customPageScore != -1f) {
       row.setScore(customPageScore);

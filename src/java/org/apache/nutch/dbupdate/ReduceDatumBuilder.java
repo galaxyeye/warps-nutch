@@ -85,6 +85,7 @@ public class ReduceDatumBuilder {
 
   public WebPage createNewRow(String url) {
     WebPage page = WebPage.newBuilder().build();
+
     fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 

@@ -17,8 +17,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
-import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
+import static org.apache.nutch.metadata.Nutch.*;
 
 public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> {
 
@@ -31,7 +30,10 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
   private boolean force;
   private boolean reparse;
   private Utf8 batchId;
+  private int limit = -1;
   private boolean skipTruncated;
+
+  private int count = 0;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -42,9 +44,10 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
 
     batchId = new Utf8(conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR));
     parseUtil = new ParseUtil(conf);
-    resume = conf.getBoolean(ParserJob.RESUME_KEY, false);
-    reparse = conf.getBoolean(ParserJob.REPARSE_KEY, false);
-    force = conf.getBoolean(ParserJob.FORCE_KEY, false);
+    resume = conf.getBoolean(PARAM_RESUME, false);
+    reparse = conf.getBoolean(PARAM_REPARSE, false);
+    force = conf.getBoolean(PARAM_FORCE, false);
+    limit = conf.getInt(PARAM_LIMIT, -1);
     skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
 
     LOG.info(Params.format(
@@ -52,31 +55,50 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
         "resume", resume,
         "reparse", reparse,
         "force", force,
+        "limit", limit,
         "skipTruncated", skipTruncated
     ));
   }
 
   @Override
-  public void map(String reverseUrl, WebPage page, Context context) throws IOException, InterruptedException {
-    getCounter().increase(rows);
+  public void map(String reverseUrl, WebPage page, Context context) {
+    try {
+      getCounter().increase(rows);
 
-    String url = TableUtil.unreverseUrl(reverseUrl);
+      if (limit > -1 && count > limit) {
+        stop("hit limit " + limit + ", finish mapper.");
+        return;
+      }
 
-    if (!shouldProcess(url, page)) {
-      return;
+      String url = TableUtil.unreverseUrl(reverseUrl);
+
+      if (!shouldProcess(url, page)) {
+        return;
+      }
+
+      Parse parse = parseUtil.process(reverseUrl, page);
+      if (parse == null) {
+        getCounter().increase(Counter.parseFailed);
+        return;
+      }
+
+      // if where is FETCH_MARK set, we also have PARSE_MARK set after the parse
+
+      ParseStatus pstatus = page.getParseStatus();
+
+      countParseStatus(pstatus);
+      if (parse.getOutlinks() != null) {
+        getCounter().increase(NutchCounter.Counter.outlinks, parse.getOutlinks().length);
+      }
+      getCounter().updateAffectedRows(url);
+
+      context.write(reverseUrl, page);
+
+      ++count;
     }
-
-    Parse parse = parseUtil.process(reverseUrl, page);
-
-    // if where is FETCH_MARK set, we also have PARSE_MARK set after the parse
-
-    ParseStatus pstatus = page.getParseStatus();
-
-    countParseStatus(pstatus);
-    getCounter().increase(NutchCounter.Counter.outlinks, parse.getOutlinks().length);
-    getCounter().updateAffectedRows(url);
-
-    context.write(reverseUrl, page);
+    catch (Throwable e) {
+      LOG.error(e.toString());
+    }
   }
 
   // 0 : "notparsed", 1 : "success", 2 : "failed"
@@ -165,7 +187,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
 
     int actualSize = content.limit();
     if (inHeaderSize > actualSize) {
-      LOG.warn(url + " skipped. Content of size " + inHeaderSize + " was truncated to " + actualSize);
+      // LOG.warn(url + " skipped. Content of size " + inHeaderSize + " was truncated to " + actualSize);
       return true;
     }
 

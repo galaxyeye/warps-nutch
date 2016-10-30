@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 
+import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
@@ -172,8 +173,15 @@ public class TableUtil {
   }
 
   public static boolean isSeed(WebPage page) {
-    String isSeed = getMetadata(page, META_IS_SEED);
-    return isSeed != null;
+    return hasMetadata(page, META_IS_SEED);
+  }
+
+  public static boolean isFromSeed(WebPage page) {
+    return hasMetadata(page, META_FROM_SEED);
+  }
+
+  public static void markFromSeed(WebPage page) {
+    putMetadata(page, META_FROM_SEED, YES_STRING);
   }
 
   /**
@@ -240,10 +248,47 @@ public class TableUtil {
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
     if (!fetchTimeHistory.isEmpty()) {
       String[] times = fetchTimeHistory.split(",");
-      firstCrawlTime = new Date(TimingUtil.parseTime(times[0]));
+      long time = TimingUtil.parseTime(times[0]);
+      if (time > 0) {
+        firstCrawlTime = new Date(time);
+      }
     }
 
     return firstCrawlTime == null ? defaultValue : firstCrawlTime;
+  }
+
+  public static String getIndexTimeHistory(WebPage page, String defaultValue) {
+    String s = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
+    return s == null ? defaultValue : s;
+  }
+
+  public static void putIndexTimeHistory(WebPage page, long indexTime) {
+    String dateStr = TimingUtil.solrCompatibleFormat(indexTime);
+    String indexTimeHistory = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
+    if (indexTimeHistory == null) {
+      indexTimeHistory = dateStr;
+    }
+    else {
+      indexTimeHistory += ",";
+      indexTimeHistory += dateStr;
+    }
+
+    TableUtil.putMetadata(page, Metadata.META_INDEX_TIME_HISTORY, indexTimeHistory);
+  }
+
+  public static Date getFirstIndexTime(WebPage page, Date defaultValue) {
+    Date firstIndexTime = null;
+
+    String indexTimeHistory = TableUtil.getIndexTimeHistory(page, "");
+    if (!indexTimeHistory.isEmpty()) {
+      String[] times = indexTimeHistory.split(",");
+      long time = TimingUtil.parseTime(times[0]);
+      if (time > 0) {
+        firstIndexTime = new Date(time);
+      }
+    }
+
+    return firstIndexTime == null ? defaultValue : firstIndexTime;
   }
 
   public static void putMark(WebPage page, CharSequence key, CharSequence value) {
@@ -286,6 +331,11 @@ public class TableUtil {
   public static String getMetadata(WebPage page, String key, String defaultValue) {
     String value = getMetadata(page, key);
     return value == null ? defaultValue : value;
+  }
+
+  public static boolean hasMetadata(WebPage page, String key) {
+    ByteBuffer bvalue = page.getMetadata().get(new Utf8(key));
+    return bvalue != null;
   }
 
   // But only delete when they exist. This is much faster for the underlying store

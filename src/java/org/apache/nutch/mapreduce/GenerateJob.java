@@ -20,6 +20,7 @@ import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
@@ -32,6 +33,7 @@ import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.*;
+import org.mortbay.util.ArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +43,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.nutch.crawl.URLPartitioner.PARTITION_MODE_KEY;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -54,6 +53,7 @@ public class GenerateJob extends NutchJob implements Tool {
   public static final Logger LOG = LoggerFactory.getLogger(GenerateJob.class);
 
   private static final Set<WebPage.Field> FIELDS = new HashSet<>();
+  private Queue<String> seedUrlQueue = new ArrayQueue<>();
 
   static {
     FIELDS.add(WebPage.Field.FETCH_TIME);
@@ -92,14 +92,18 @@ public class GenerateJob extends NutchJob implements Tool {
     long pseudoCurrTime = params.getLong(ARG_CURTIME, startTime);
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
 
+    String seedFileLockName = HDFS_PATH_ALL_SEED_FILE + getJobName() + ".lock";
+    seedUrlQueue.addAll(FSUtils.readAllSeeds(new Path(HDFS_PATH_ALL_SEED_FILE), new Path(seedFileLockName), conf));
+
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
     conf.setLong(GENERATE_TIME_KEY, startTime); // seems not used, (or pseudoCurrTime used?)
     conf.setLong(PARAM_GENERATOR_CUR_TIME, pseudoCurrTime);
-    conf.setLong(PARAM_GENERATOR_TOP_N, topN);
+    conf.setLong(PARAM_GENERATOR_TOP_N, topN + seedUrlQueue.size());
     conf.setBoolean(PARAM_GENERATE_REGENERATE, reGenerate);
     conf.setBoolean(PARAM_GENERATE_FILTER, filter);
     conf.setBoolean(PARAM_GENERATE_NORMALISE, norm);
+    conf.set(PARAM_SEED_FILE_LOCK_NAME, seedFileLockName);
 
     URLUtil.HostGroupMode hostGroupMode = conf.getEnum(PARAM_GENERATOR_COUNT_MODE, URLUtil.HostGroupMode.BY_HOST);
     conf.setEnum(PARTITION_MODE_KEY, hostGroupMode);
@@ -108,6 +112,7 @@ public class GenerateJob extends NutchJob implements Tool {
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "batchId", batchId,
+        "seedUrls", seedUrlQueue.size(),
         "filter", filter,
         "norm", norm,
         "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
@@ -119,6 +124,14 @@ public class GenerateJob extends NutchJob implements Tool {
     ));
 
     Files.write(Paths.get(PATH_LAST_BATCH_ID), (batchId + "\n").getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+  }
+
+  @Override
+  protected void cleanup(Map<String, Object> args) {
+    String seedFileLockName = HDFS_PATH_ALL_SEED_FILE + getJobName() + ".lock";
+    FSUtils.deleteIfExits(new Path(seedFileLockName), getConf());
+
+    super.cleanup(args);
   }
 
   @Override

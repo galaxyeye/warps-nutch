@@ -50,11 +50,11 @@ import java.util.concurrent.TimeUnit;
  * A Utility class containing methods to simply perform parsing utilities such
  * as iterating through a preferred list of {@link Parser}s to obtain
  * {@link Parse} objects.
- * 
+ *
  * @author mattmann
  * @author J&eacute;r&ocirc;me Charron
  * @author S&eacute;bastien Le Callonnec
- * */
+ */
 public class ParseUtil {
 
   /* our log stream */
@@ -69,13 +69,15 @@ public class ParseUtil {
   private final int maxOutlinks;
   private final boolean ignoreExternalLinks;
   private final ParserFactory parserFactory;
-  /** Parser timeout set to 30 sec by default. Set -1 to deactivate **/
+  /**
+   * Parser timeout set to 30 sec by default. Set -1 to deactivate
+   **/
   private final int maxParseTime;
   private final ExecutorService executorService;
 
   /**
    * @param conf
-   * */
+   */
   public ParseUtil(Configuration conf) {
     this.conf = conf;
     parserFactory = new ParserFactory(conf);
@@ -98,9 +100,8 @@ public class ParseUtil {
    * until a successful parse is performed and a {@link Parse} object is
    * returned. If the parse is unsuccessful, a message is logged to the
    * <code>WARNING</code> level, and an empty parse is returned.
-   * 
-   * @throws ParseException
-   *           If there is an error parsing.
+   *
+   * @throws ParseException If there is an error parsing.
    */
   public Parse parse(String url, WebPage page) throws ParseException {
     Parser[] parsers;
@@ -115,8 +116,7 @@ public class ParseUtil {
 
       if (maxParseTime != -1) {
         parse = runParser(parsers[i], url, page);
-      }
-      else {
+      } else {
         parse = parsers[i].getParse(url, page);
       }
 
@@ -148,7 +148,7 @@ public class ParseUtil {
   /**
    * Parses given web page and stores parsed content within page. Puts a
    * meta-redirect to outlinks.
-   * 
+   *
    * @param reverseUrl
    * @param page
    */
@@ -269,6 +269,7 @@ public class ParseUtil {
       page.getOutlinks().put(utf8ToUrl, new Utf8(outlinks[i].getAnchor()));
     } // for
 
+    // TODO : Marks should be set in mapper or reducer, not util methods
     Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
     if (fetchMark != null) {
       Mark.PARSE_MARK.putMark(page, fetchMark);

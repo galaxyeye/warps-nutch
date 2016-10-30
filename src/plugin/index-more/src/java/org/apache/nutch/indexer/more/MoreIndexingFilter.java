@@ -12,7 +12,6 @@ import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.oro.text.regex.*;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -73,9 +72,9 @@ public class MoreIndexingFilter implements IndexingFilter {
 
     // un-stored, indexed and un-tokenized
     if (time > 0) {
-      doc.add("header_last_modified", new Date(time));
-      String dateString = DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
-      doc.add("last_modified_s", dateString);
+      Date date = new Date(time);
+      doc.add("header_last_modified", date);
+      doc.add("last_modified_s", TimingUtil.solrCompatibleFormat(date));
     }
 
     return doc;

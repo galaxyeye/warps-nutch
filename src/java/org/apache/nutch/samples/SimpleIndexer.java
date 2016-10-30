@@ -69,6 +69,7 @@ public class SimpleIndexer {
       doc = indexingFilters.filter(new IndexDocument(key), url, page);
       if (indexWriters != null) {
         indexWriters.write(doc);
+        TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
       }
 
       System.out.println(doc);

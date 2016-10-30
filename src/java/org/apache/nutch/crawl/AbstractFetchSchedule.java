@@ -17,14 +17,14 @@
 
 package org.apache.nutch.crawl;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class provides common methods for implementations of
@@ -106,11 +106,6 @@ public abstract class AbstractFetchSchedule extends Configured implements
    * @param page
    * @return adjusted page information, including all original information.
    *         NOTE: this may be a different instance than
-   * @param datum
-   *          , but implementations should make sure that it contains at least
-   *          all information from
-   * @param datum
-   *          .
    */
   @Override
   public void setPageGoneSchedule(String url, WebPage page, long prevFetchTime,

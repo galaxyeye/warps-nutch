@@ -85,6 +85,7 @@ public interface Nutch {
   float SCORE_INJECTED = Float.MAX_VALUE / 1000;
   float SCORE_SEED = SCORE_INJECTED / 1000;
   float SCORE_DETAIL_PAGE = SCORE_SEED / 1000;
+  float SCORE_PAGES_FROM_SEED = SCORE_SEED / 1000;
 
   /**
    * All arguments from command line
@@ -160,7 +161,6 @@ public interface Nutch {
   /** Solr Collection. */
   String ARG_COLLECTION = "collection";
   /** Reindex. */
-  String ARG_REINDEX = "reindex";
 
   /**
    * Status / result message.
@@ -197,18 +197,22 @@ public interface Nutch {
   String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
   String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
   String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
-  String PARAM_NUTCH_UNREACHABLE_HOSTS_FILE = "nutch.unreachable.hosts.file";
 
   String PARAM_BATCH_ID = "nutch.batch.name";
   String PARAM_PARSE = "parser.parse";
   String PARAM_REPARSE = "parser.reparse";
+  String PARAM_REINDEX = "reindex";
+  String PARAM_FORCE = "force";
+  String PARAM_RESUME = "nutch.job.resume";
+  String PARAM_LIMIT = "limit";
+  String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
+  String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
+
+  String PARAM_SEED_FILE_LOCK_NAME = "seed.file.lock.name";
 
   /**
    * Fetch parameters
    * */
-  String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
-  String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
-  String PARAM_RESUME = "nutch.job.resume";
   String PARAM_THREADS = "fetcher.threads.fetch";
 
   /**
@@ -277,7 +281,11 @@ public interface Nutch {
   String PATH_NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
   String PATH_NUTCH_OUTPUT_DIR = PATH_NUTCH_TMP_DIR;
   String PATH_NUTCH_REPORT_DIR = PATH_NUTCH_OUTPUT_DIR + "/report";
-  String PATH_UNREACHABLE_HOSTS = PATH_NUTCH_OUTPUT_DIR + "/unreachable-hosts.txt";
   String PATH_LOCAL_COMMAND = PATH_NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
   String PATH_LAST_BATCH_ID = PATH_NUTCH_TMP_DIR + "/last-batch-id";
+
+  String FILE_UNREACHABLE_HOSTS = "unreachable-hosts.txt";
+
+  // TODO : avoid hard coding
+  String HDFS_PATH_ALL_SEED_FILE = "hdfs://galaxyeye:9000/tmp/nutch-seeds/all.txt";
 }

@@ -73,7 +73,7 @@ public class TaskScheduler extends Configured {
   }
 
   public enum Counter {
-    mbytes, unknowHosts,
+    mbytes, unknowHosts, rowsInjected,
     readyTasks, pendingTasks,
     pagesThou, mbThou,
     rowsRedirect,
@@ -111,14 +111,20 @@ public class TaskScheduler extends Configured {
   private final ParseUtil parseUtil;
   private final boolean skipTruncated;
 
-  /** Injector */
+  /**
+   * Injector
+   */
   private final SeedBuilder seedBuiler;
 
-  /** Feeder threads */
+  /**
+   * Feeder threads
+   */
   private final int maxFeedPerThread;
   private final Set<FeederThread> feederThreads = new ConcurrentSkipListSet<>();
 
-  /** Fetch threads */
+  /**
+   * Fetch threads
+   */
   private final int initFetchThreadCount;
   private final int maxThreadsPerQueue;
 
@@ -128,13 +134,19 @@ public class TaskScheduler extends Configured {
   private final AtomicInteger activeFetchThreadCount = new AtomicInteger(0);
   private final AtomicInteger idleFetchThreadCount = new AtomicInteger(0);
 
-  /** DbUpdate */
+  /**
+   * DbUpdate
+   */
   private final int maxDbUpdateNewRows;
 
-  /** Indexer */
+  /**
+   * Indexer
+   */
   private final JITIndexer jitIndexer;
 
-  /** Update */
+  /**
+   * Update
+   */
   private final MapDatumBuilder mapDatumBuilder;
   private final ReduceDatumBuilder reduceDatumBuilder;
 
@@ -150,7 +162,9 @@ public class TaskScheduler extends Configured {
 
   private final AtomicDouble avePageLength = new AtomicDouble(0.0);
 
-  /** Output */
+  /**
+   * Output
+   */
   private final Path outputDir;
 
   private final String reportSuffix;
@@ -160,7 +174,7 @@ public class TaskScheduler extends Configured {
   /**
    * The reprUrl is the representative url of a redirect, we save a reprUrl for each thread,
    * We use a concurrent skip list map to gain the best concurrency
-   * */
+   */
   // TODO : check why we store a reprUrl for each thread? @vincent
   private Map<Long, String> reprUrls = new ConcurrentSkipListMap<>();
 
@@ -210,6 +224,8 @@ public class TaskScheduler extends Configured {
 
     this.nutchMetrics = new NutchMetrics(conf);
 
+    // TODO : inject initial seeds
+
     LOG.info(Params.format(
         "id", id,
 
@@ -229,11 +245,17 @@ public class TaskScheduler extends Configured {
     ));
   }
 
-  public int getId() { return id; }
+  public int getId() {
+    return id;
+  }
 
-  public String name() { return getClass().getSimpleName() + "-" + id; }
+  public String name() {
+    return getClass().getSimpleName() + "-" + id;
+  }
 
-  public int getBandwidth() { return this.bandwidth; }
+  public int getBandwidth() {
+    return this.bandwidth;
+  }
 
   public FetchMonitor getFetchMonitor() {
     return fetchMonitor;
@@ -251,15 +273,21 @@ public class TaskScheduler extends Configured {
     return lastTaskFinishTime.get();
   }
 
-  public int getActiveFetchThreadCount() { return activeFetchThreadCount.get(); }
+  public int getActiveFetchThreadCount() {
+    return activeFetchThreadCount.get();
+  }
 
   public int getFeedLimit() {
     return initFetchThreadCount * maxFeedPerThread;
   }
 
-  public boolean indexJIT() { return jitIndexer != null; }
+  public boolean indexJIT() {
+    return jitIndexer != null;
+  }
 
-  public boolean updateJIT() { return mapDatumBuilder != null && reduceDatumBuilder != null; }
+  public boolean updateJIT() {
+    return mapDatumBuilder != null && reduceDatumBuilder != null;
+  }
 
   public void registerFeederThread(FeederThread feederThread) {
     feederThreads.add(feederThread);
@@ -293,9 +321,13 @@ public class TaskScheduler extends Configured {
 
   /**
    * Return Injected urls count
-   * */
+   */
   public int inject(Set<String> urlLines, String batchId) {
     return urlLines.stream().mapToInt(urlLine -> inject(urlLine, batchId)).sum();
+  }
+
+  public int inject(String urlLine) {
+    return inject(urlLine, ALL_BATCH_ID_STR);
   }
 
   /**
@@ -322,7 +354,7 @@ public class TaskScheduler extends Configured {
 
     tasksMonitor.produce(context.getJobId(), url, page);
 
-    LOG.info("Injected " + url + " with batch id " + batchId);
+    counter.increase(Counter.rowsInjected);
 
     return 1;
   }
@@ -642,7 +674,7 @@ public class TaskScheduler extends Configured {
 
       case ProtocolStatusCodes.SUCCESS:        // got a page
         handleResult(fetchTask, content, status, CrawlStatus.STATUS_FETCHED);
-        tasksMonitor.statHost(url);
+        tasksMonitor.statHost(url, fetchTask.getPage());
         break;
 
       case ProtocolStatusCodes.MOVED:         // redirect
@@ -804,6 +836,8 @@ public class TaskScheduler extends Configured {
         updateDatum = mapDatumBuilder.buildDatum(url, reversedUrl, page);
         outputWithDbUpdate(url, updateDatum.getKey(), updateDatum.getValue(), false);
 
+        // TODO : check if we really build new rows using MapDatumBuilder
+        // so we need check if there are unexpected marks, metadata, etc
         updateData = mapDatumBuilder.buildNewRows(url, page);
         updateData.stream().limit(maxDbUpdateNewRows).forEach(e -> outputWithDbUpdate(url, e.getKey(), e.getValue(), true));
       }
@@ -819,14 +853,26 @@ public class TaskScheduler extends Configured {
     String reversedUrl = urlWithScore.getReversedUrl().toString();
     WebPage page = webPageWritable.getWebPage();
 
-    reduceDatumBuilder.updateRowWithoutScoring(url, page);
+    if (isNewRow) {
+      page = reduceDatumBuilder.createNewRow(url);
+
+      if (TableUtil.isSeed(page)) {
+        TableUtil.markFromSeed(page);
+      }
+    }
+    else {
+      reduceDatumBuilder.updateRowWithoutScoring(url, page);
+    }
 
     // LOG.debug("Write to hdfs : " + page.getBaseUrl());
 
     try {
-      context.write(reversedUrl, page);
+      synchronized(context) {
+        context.write(reversedUrl, page);
+      }
 
       if (isNewRow) {
+        // is it thread safe?
         counter.increase(Counter.newRowsPeresist);
         if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
           counter.increase(Counter.newDetailRows);

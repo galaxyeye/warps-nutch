@@ -32,6 +32,7 @@
          -->
     <!-- Use fixed field type detection, do not support automatically mapping, every field should be here -->
     <fields>
+
         <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
 
         <!-- Common metadata fields, named specifically to match up with
@@ -85,6 +86,8 @@
         <field name="last_index_time" type="date" indexed="true" stored="true"/>
         <!-- 最近索引时间，Nutch兼容 -->
         <field name="last_modified_s" type="string" indexed="true" />
+        <!-- 索引时间列表 -->
+        <field name="index_time_history" type="string" indexed="false" stored="true"/>
         <!-- 文档最后修改时间（HTTP HEADER） -->
         <field name="header_last_modified" type="date" indexed="true" stored="true"/>
 
@@ -112,9 +115,12 @@
         <field name="article_title" type="text_zh" indexed="true" stored="true" multiValued="true"/>
         <!-- 实体名称，由信息抽取获得 -->
         <field name="entity_name" type="text_zh" indexed="true" stored="true" multiValued="true"/>
-        <!-- 正文全文，由信息抽取获得。拷贝到text字段计算索引，故不索引; 由html_content存储内容，故不存储 -->
-        <field name="text_content" type="text_zh" indexed="false" stored="false"/>
-        <!-- 正文HTML，由信息抽取获得 -->
+        <!--
+             正文全文，由信息抽取获得。拷贝到text字段计算索引; 由于需要存储词频信息，故需要索引; 由html_content存储内容，故不存储
+             存储the term vector, the term frequency, inverse document frequency, position and offset information
+        -->
+        <field name="text_content" type="text_zh" indexed="true" stored="false" />
+        <!-- 正文HTML，由信息抽取获得。拷贝到text字段计算索引，故不索引 -->
         <field name="html_content" type="text_zh" indexed="false" stored="true"/>
 
         <!-- 引用网站，由信息抽取获得 -->

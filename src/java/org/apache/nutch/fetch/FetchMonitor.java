@@ -208,7 +208,9 @@ public class FetchMonitor {
         taskSchedulers.remove(taskScheduler.getId());
       }
 
-      Files.delete(Paths.get(finishScript));
+      if (Files.exists(Paths.get(finishScript))) {
+        Files.delete(Paths.get(finishScript));
+      }
     }
     catch (Throwable e) {
       LOG.error(StringUtil.stringifyException(e));

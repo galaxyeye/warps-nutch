@@ -99,15 +99,21 @@ public class MetadataIndexer implements IndexingFilter {
   private void addTime(IndexDocument doc, String url, WebPage page) {
     Date crawlTime = new Date(page.getFetchTime());
     String crawlTimeStr = TimingUtil.solrCompatibleFormat(crawlTime);
-    Date indexTime = new Date();
     Date firstCrawlTime = TableUtil.getFirstCrawlTime(page, crawlTime);
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, crawlTimeStr);
 
     doc.add("first_crawl_time", firstCrawlTime);
     doc.add("last_crawl_time", crawlTime);
-    doc.add("first_index_time", indexTime);
-    doc.add("last_index_time", indexTime);
     doc.add("fetch_time_history", fetchTimeHistory);
+
+    Date indexTime = new Date();
+    String indexTimeStr = TimingUtil.solrCompatibleFormat(indexTime);
+    Date firstIndexTime = TableUtil.getFirstIndexTime(page, indexTime);
+    String indexTimeHistory = TableUtil.getIndexTimeHistory(page, indexTimeStr);
+
+    doc.add("first_index_time", firstIndexTime);
+    doc.add("last_index_time", indexTime);
+    doc.add("index_time_history", indexTimeHistory);
   }
 
   private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {

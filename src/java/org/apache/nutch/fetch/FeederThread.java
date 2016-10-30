@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -35,7 +36,6 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
 
   private AtomicBoolean halted = new AtomicBoolean(false);
   private Iterator<FetchEntry> currentIter;
-  private boolean hasMore;
 
   @SuppressWarnings("rawtypes")
   public FeederThread(TaskScheduler taskScheduler, NutchContext context)
@@ -52,17 +52,15 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     this.setDaemon(true);
     this.setName(getClass().getSimpleName() + "-" + id);
 
-    LOG.info("Initializing " + getName());
-
-    hasMore = context.nextKey();
-    if (hasMore) {
-      currentIter = context.getValues().iterator();
-    }
-
     // the value of the time limit is either -1 or the time where it should finish
     int timeLimitMins = conf.getInt("fetcher.timelimit.mins", -1);
     timeLimitMillis = timeLimitMins > 0 ? System.currentTimeMillis() + 1000 * 60 * timeLimitMins : -1;
     // timeLimitMillis = conf.getTimeDuration("fetcher.timelimit.mins", Duration.ofMinutes(60).toMillis(), TimeUnit.MINUTES);
+
+    LOG.info(Params.format(
+        "className", getClass().getSimpleName(),
+        "id", id
+    ));
   }
 
   public void halt() {
@@ -90,6 +88,11 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     int timeLimitCount = 0;
 
     try {
+      boolean hasMore = context.nextKey();
+      if (hasMore) {
+        currentIter = context.getValues().iterator();
+      }
+
       TasksMonitor tasksMonitor = taskScheduler.getTasksMonitor();
 
       while (!isHalted() && hasMore) {
@@ -112,7 +115,6 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
         int feedCapacity = feedLimit - tasksMonitor.readyItemCount() - tasksMonitor.pendingItemCount();
         if (feedCapacity <= 0) {
           // fetchMonitor are full - spin-wait until they have some free space
-
           try {
             Thread.sleep(1000);
           } catch (final Exception ignored) {}

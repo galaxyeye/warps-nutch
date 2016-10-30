@@ -31,6 +31,7 @@ import org.w3c.dom.Node;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class CrawlFilter extends Configured {
 
@@ -41,11 +42,18 @@ public class CrawlFilter extends Configured {
    * not accurate
    * TODO : configurable
    * */
-  public static Pattern INDEX_PAGE_URL_PATTERN = Pattern.compile(".+(index|tags|chanel).+");
+  public static Pattern[] INDEX_PAGE_URL_PATTERNS = {
+      Pattern.compile(".+tieba.baidu.com/.+search.+"),
+      Pattern.compile(".+(index|tags|chanel).+"),
+  };
 
   public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
 
-  public static Pattern DETAIL_PAGE_URL_PATTERN = Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|content|/20[012][0-9]/{0,1}[01][0-9]/|/20[012]-[0-9]{0,1}-[01][0-9]/|/\\d{2,}/\\d{5,}|\\d{7,}).+");
+  // TODO : configurable, testable
+  public static Pattern[] DETAIL_PAGE_URL_PATTERNS = {
+      Pattern.compile(".+tieba.baidu.com/p/(\\d+)"),
+      Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|content|/20[012][0-9]/{0,1}[01][0-9]/|/20[012]-[0-9]{0,1}-[01][0-9]/|/\\d{2,}/\\d{5,}|\\d{7,}).+")
+  };
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
@@ -75,13 +83,14 @@ public class CrawlFilter extends Configured {
   /**
    * A simple regex rule to sniff the possible category of a web page
    * */
-  public static PageCategory sniffPageCategoryByUrlPattern(String url) {
-    Objects.requireNonNull(url);
+  public static PageCategory sniffPageCategoryByUrlPattern(String urlString) {
+    Objects.requireNonNull(urlString);
 
     PageCategory pageCategory = PageCategory.ANY;
 
-    url = url.toLowerCase();
+    final String url = urlString.toLowerCase();
 
+    // Notice : ***DO KEEP*** the right order
     if (url.endsWith("/")) {
       pageCategory = PageCategory.INDEX;
     }
@@ -89,17 +98,17 @@ public class CrawlFilter extends Configured {
       // http://t.tt/12345678
       pageCategory = PageCategory.INDEX;
     }
-    else if (INDEX_PAGE_URL_PATTERN.matcher(url).matches()) {
+    else if (Stream.of(INDEX_PAGE_URL_PATTERNS).anyMatch(pattern -> pattern.matcher(url).matches())) {
       pageCategory = PageCategory.INDEX;
+    }
+    else if (Stream.of(DETAIL_PAGE_URL_PATTERNS).anyMatch(pattern -> pattern.matcher(url).matches())){
+      pageCategory = PageCategory.DETAIL;
     }
     else if (SEARCH_PAGE_URL_PATTERN.matcher(url).matches()) {
       pageCategory = PageCategory.SEARCH;
     }
     else if (MEDIA_PAGE_URL_PATTERN.matcher(url).matches()) {
       pageCategory = PageCategory.MEDIA;
-    }
-    else if (DETAIL_PAGE_URL_PATTERN.matcher(url).matches()) {
-      pageCategory = PageCategory.DETAIL;
     }
 
     return pageCategory;

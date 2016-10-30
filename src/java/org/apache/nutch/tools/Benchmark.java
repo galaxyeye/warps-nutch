@@ -256,7 +256,7 @@ public class Benchmark extends Configured implements Tool {
       res.addTiming("fetch", i + "", delta);
       if (!isParsing) {
         start = System.currentTimeMillis();
-        parseBatch.parse("", batchId, false, false); // parse it, if needed
+        parseBatch.parse("", batchId, -1, false, false); // parse it, if needed
         delta = System.currentTimeMillis() - start;
         res.addTiming("parse", i + "", delta);
       }

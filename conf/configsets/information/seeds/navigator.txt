@@ -1,0 +1,10 @@
+# 导航网站
+http://www.2345.com/ isNavigator=true
+http://www.china123.com/ isNavigator=true
+http://site.baidu.com/ isNavigator=true
+http://123.sogou.com/ isNavigator=true
+http://123.chinaso.com/ isNavigator=true
+http://7999.com/ isNavigator=true
+http://news.baidu.com/ isNavigator=true
+http://news.sina.com.cn/ isNavigator=true
+http://news.qq.com/ isNavigator=true

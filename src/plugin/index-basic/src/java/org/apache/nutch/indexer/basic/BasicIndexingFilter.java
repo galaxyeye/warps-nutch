@@ -23,6 +23,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.Params;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -68,6 +69,7 @@ public class BasicIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    * */
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+
     addDocFields(doc, url, page);
 
     addPageCategory(doc, url, page);
@@ -86,7 +88,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page));
+    doc.add(DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page).name());
   }
 
   /**
@@ -123,10 +125,10 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     MAX_CONTENT_LENGTH = conf.getInt("indexer.max.content.length", 10 * 10000);
 
-//    LOG.info(StringUtil.formatAsLine(
-//        "className", this.getClass().getSimpleName(),
-//        "MAX_CONTENT_LENGTH", MAX_CONTENT_LENGTH
-//    ));
+    LOG.info(Params.formatAsLine(
+        "className", this.getClass().getSimpleName(),
+        "MAX_CONTENT_LENGTH", MAX_CONTENT_LENGTH
+    ));
   }
 
   /**

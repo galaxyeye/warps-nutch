@@ -4,11 +4,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.NutchReporter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.TimingUtil;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,16 +35,23 @@ public class NutchMetrics {
   public static final Logger REPORT_LOG = NutchReporter.chooseLog(false);
 
   private final Configuration conf;
+  private Path reportDir;
   private Path unreachableHostsPath;
 
   public NutchMetrics(Configuration conf) {
     this.conf = conf;
 
     try {
-      unreachableHostsPath = NutchConfiguration.getPath(conf,
-          PARAM_NUTCH_UNREACHABLE_HOSTS_FILE, Paths.get(PATH_UNREACHABLE_HOSTS));
+      reportDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
+      reportDir = Paths.get(reportDir.toAbsolutePath().toString(), TimingUtil.format(System.currentTimeMillis(), "yyyyMMdd"));
+      Files.createDirectories(reportDir);
+
+      unreachableHostsPath = Paths.get(reportDir.toAbsolutePath().toString(), FILE_UNREACHABLE_HOSTS);
       Files.createDirectories(unreachableHostsPath.getParent());
-      unreachableHostsPath.toFile().createNewFile();
+
+      if (!Files.exists(unreachableHostsPath)) {
+        Files.createFile(unreachableHostsPath);
+      }
     } catch (IOException e) {
       LOG.error(e.toString());
     }
@@ -94,12 +104,24 @@ public class NutchMetrics {
     writeReport(longUrl + "\n", "urls-media-" + reportSuffix + ".txt");
   }
 
+  public void debugBBSUrls(String longUrl, String reportSuffix) {
+    writeReport(longUrl + "\n", "urls-bbs-" + reportSuffix + ".txt");
+  }
+
+  public void debugBlogUrls(String longUrl, String reportSuffix) {
+    writeReport(longUrl + "\n", "urls-blog-" + reportSuffix + ".txt");
+  }
+
+  public void debugTiebaUrls(String longUrl, String reportSuffix) {
+    writeReport(longUrl + "\n", "urls-tieba-" + reportSuffix + ".txt");
+  }
+
   public void debugUnknownTypeUrls(String longUrl, String reportSuffix) {
     writeReport(longUrl + "\n", "urls-unknown-" + reportSuffix + ".txt");
   }
 
   public void writeReport(Path reportFile, String report) {
-    writeReport(reportFile, report, false);
+    writeReport(reportFile, report, true);
   }
 
   public void writeReport(String report, String fileSuffix) {
@@ -107,9 +129,21 @@ public class NutchMetrics {
   }
 
   public void writeReport(Path reportFile, String report, boolean printPath) {
+    writeReport(reportFile, report, printPath, true);
+  }
+
+  public void writeReport(Path reportFile, String report, boolean printPath, boolean buffered) {
     try {
-      Files.createDirectories(reportFile.getParent());
-      Files.write(reportFile, report.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      if (!Files.exists(reportFile)) {
+        Files.createDirectories(reportFile.getParent());
+        Files.createFile(reportFile);
+      }
+
+      // TODO : flush only if the buffer is full or the program is about to exit
+      BufferedWriter writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+      writer.write(report);
+      writer.flush();
+
       if (printPath) {
         Log.info("Report written to " + reportFile.toAbsolutePath());
       }
@@ -119,12 +153,7 @@ public class NutchMetrics {
   }
 
   public void writeReport(String report, String fileSuffix, boolean printPath) {
-    try {
-      Path outputDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
-      Path reportFile = Paths.get(outputDir.toAbsolutePath().toString(), fileSuffix);
-      writeReport(reportFile, report, printPath);
-    } catch (IOException e) {
-      Log.warn("Failed to write report : " + e.toString());
-    }
+    Path reportFile = Paths.get(reportDir.toAbsolutePath().toString(), fileSuffix);
+    writeReport(reportFile, report, printPath);
   }
 }

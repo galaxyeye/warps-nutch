@@ -67,7 +67,7 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
       return;
     }
 
-    url = datumFilter.filter(url);
+    url = datumFilter.filterUrl(page, url);
     if (url == null) {
       getCounter().increase(Counter.urlFiltered);
       return;

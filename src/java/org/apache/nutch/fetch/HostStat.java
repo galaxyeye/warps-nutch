@@ -18,7 +18,11 @@ public class HostStat implements Comparable<HostStat> {
   public int detailUrls = 0;
   public int searchUrls = 0;
   public int mediaUrls = 0;
+  public int bbsUrls = 0;
+  public int blogUrls = 0;
+  public int tiebaUrls = 0;
   public int urlsTooLong = 0;
+  public int urlsFromSeed = 0;
 
   @Override
   public int compareTo(HostStat hostStat) {

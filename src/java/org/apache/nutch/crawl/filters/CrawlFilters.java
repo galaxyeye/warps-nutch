@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.filters.CrawlFilter.PageCategory;
@@ -33,8 +34,14 @@ import org.w3c.dom.Node;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Year;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * TODO : need full unit test
@@ -45,6 +52,16 @@ public class CrawlFilters extends Configured {
   public static final Logger LOG = LoggerFactory.getLogger(CrawlFilters.class);
 
   public static final String CRAWL_FILTER_RULES = "crawl.filter.rules";
+
+  private static final int currentYear = Year.now().getValue();
+  private static final String currentYearStr = String.valueOf(currentYear);
+  private static final int currentMonth = new Date().getMonth();
+  private static final String currentMonthStr = String.valueOf(currentMonth);
+  private static final int yearLowerBound = 1990;
+
+  private Set<String> oldYears;
+  private Set<String> oldMonth;
+  private Pattern oldMonthUrlDatePattern;
 
   @Expose
   private List<CrawlFilter> crawlFilters = Lists.newArrayList();
@@ -78,6 +95,11 @@ public class CrawlFilters extends Configured {
 
   public CrawlFilters(Configuration conf) {
     setConf(conf);
+
+    oldYears = IntStream.range(yearLowerBound, currentYear).mapToObj(String::valueOf).collect(Collectors.toSet());
+    oldMonth = IntStream.range(1, currentMonth).mapToObj(m -> String.format("%02d", m)).collect(Collectors.toSet());
+    // eg : ".+2016[/\.-]?(01|02|03|04|05|06|07|08|09).+"
+    oldMonthUrlDatePattern = Pattern.compile(".+" + currentYearStr + "[/\\.-]?(" + StringUtils.join(oldMonth, "|") + ").+");
   }
 
   @Override
@@ -214,6 +236,26 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
+  /**
+   * For urls who contains date information, for example
+   * http://bond.hexun.com/2011-01-07/126641872.html
+   * */
+  public boolean hasOldUrlDate(String url) {
+    if (url == null) {
+      return true;
+    }
+
+    if (oldYears.stream().anyMatch(url::contains)) {
+      return true;
+    }
+
+    if (oldMonthUrlDatePattern.asPredicate().test(url)) {
+      return true;
+    }
+
+    return false;
+  }
+
   public boolean isDetailUrl(String url) {
     if (url == null) return false;
 
@@ -225,6 +267,24 @@ public class CrawlFilters extends Configured {
 
     for (CrawlFilter filter : crawlFilters) {
       if (filter.isDetailUrl(url)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean isIndexUrl(String url) {
+    if (url == null) return false;
+
+    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
+
+    if (pageType == PageCategory.INDEX) {
+      return true;
+    }
+
+    for (CrawlFilter filter : crawlFilters) {
+      if (filter.isIndexUrl(url)) {
         return true;
       }
     }
@@ -250,8 +310,13 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
+  /**
+   * Notice : index url is not a search url even if it contains "search"
+   * */
   public boolean isSearchUrl(String url) {
-    if (url == null) return false;
+    if (url == null) {
+      return false;
+    }
 
     PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
@@ -261,24 +326,6 @@ public class CrawlFilters extends Configured {
 
     for (CrawlFilter filter : crawlFilters) {
       if (filter.isSearchUrl(url)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public boolean isIndexUrl(String url) {
-    if (url == null) return false;
-
-    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
-
-    if (pageType == PageCategory.INDEX) {
-      return true;
-    }
-
-    for (CrawlFilter filter : crawlFilters) {
-      if (filter.isIndexUrl(url)) {
         return true;
       }
     }

@@ -31,14 +31,40 @@ import java.util.Date;
  * */
 public class TimingUtil {
 
-  public static final String[] GENERAL_DATE_TIME_FORMATS = new String[] {
-      "yyyy/MM/dd",
+  // 2016-03-05 20:07:51
+  // TODO : What's the difference between HH and hh? Guess : 24 hours VS 12 hours
+  public static String[] GENERAL_DATE_TIME_FORMATS = new String[]{
       "yyyy.MM.dd HH:mm:ss",
+
       "yyyy-MM-dd HH:mm:ss",
       "yyyy-MM-dd hh:mm:ss",
       "yyyy-MM-dd HH:mm",
+      "yyyy-MM-dd hh:mm",
+      "yyyy-MM-dd'T'HH:mm:ss'Z'",
+
+      "yyyy年MM月dd日",
+      "yyyy年MM月dd日 HH:mm",
+      "yyyy年MM月dd日 hh:mm",
+      "yyyy年MM月dd日 HH:mm:ss",
+      "yyyy年MM月dd日 hh:mm:ss",
+
+      "yyyy/MM/dd",
+      "yyyy/MM/dd HH:mm",
+      "yyyy/MM/dd hh:mm",
+      "yyyy/MM/dd HH:mm:ss",
+      "yyyy/MM/dd hh:mm:ss",
+      "yyyy/MM/dd HH:mm:ss.SSS zzz",
+      "yyyy/MM/dd HH:mm:ss.SSS",
+      "yyyy/MM/dd HH:mm:ss zzz",
+
+      "MMM dd yyyy HH:mm:ss. zzz",
+      "MMM dd yyyy HH:mm:ss zzz",
+      "dd.MM.yyyy HH:mm:ss zzz",
+      "dd MM yyyy HH:mm:ss zzz",
+      "dd.MM.yyyy zzz",
       "dd.MM.yyyy; HH:mm:ss",
       "dd.MM.yyyy HH:mm:ss",
+
       "EEE MMM dd HH:mm:ss yyyy",
       "EEE MMM dd HH:mm:ss yyyy zzz",
       "EEE MMM dd HH:mm:ss zzz yyyy",
@@ -46,16 +72,7 @@ public class TimingUtil {
       "EEE,dd MMM yyyy HH:mm:ss zzz",
       "EEE, dd MMM yyyy HH:mm:sszzz",
       "EEE, dd MMM yyyy HH:mm:ss",
-      "EEE, dd-MMM-yy HH:mm:ss zzz",
-      "yyyy/MM/dd HH:mm:ss.SSS zzz",
-      "yyyy/MM/dd HH:mm:ss.SSS",
-      "yyyy/MM/dd HH:mm:ss zzz",
-      "MMM dd yyyy HH:mm:ss. zzz",
-      "MMM dd yyyy HH:mm:ss zzz",
-      "dd.MM.yyyy HH:mm:ss zzz",
-      "dd MM yyyy HH:mm:ss zzz",
-      "dd.MM.yyyy zzz",
-      "yyyy-MM-dd'T'HH:mm:ss'Z'"
+      "EEE, dd-MMM-yy HH:mm:ss zzz"
   };
 
   public static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -67,7 +84,7 @@ public class TimingUtil {
     return DateFormat.format(time);
   }
 
-  public static String format(String format, long time) {
+  public static String format(long time, String format) {
     return new SimpleDateFormat(format).format(time);
   }
 
@@ -84,7 +101,7 @@ public class TimingUtil {
   }
 
   public static String now(String format) {
-    return format(format, System.currentTimeMillis());
+    return format(System.currentTimeMillis(), format);
   }
 
   public static String elapsedTime(long start) {
@@ -128,6 +145,10 @@ public class TimingUtil {
     }
 
     return buf.toString();
+  }
+
+  public static Date tryExtractDate(String dateStr) {
+    return null;
   }
 
   public static long parseTime(String date) {

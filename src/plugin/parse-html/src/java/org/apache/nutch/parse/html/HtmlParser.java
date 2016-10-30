@@ -81,7 +81,7 @@ public class HtmlParser implements Parser {
   private DocumentFragment docRoot;
 
   private HTMLMetaTags metaTags = new HTMLMetaTags();
-  private Outlink[] outlinks = new Outlink[0];
+  private ArrayList<Outlink> outlinks = new ArrayList<>();
 
   public void setConf(Configuration conf) {
     this.conf = conf;
@@ -118,6 +118,7 @@ public class HtmlParser implements Parser {
     docRoot = doParse(input);
 
     if (docRoot == null) {
+      LOG.warn("Failed to parse document with encoding " + encoding + ", url : " + url);
       return ParseStatusUtils.getEmptyParse(null, getConf());
     }
 
@@ -135,11 +136,14 @@ public class HtmlParser implements Parser {
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
     String textContent = page.getVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
-    tryGetOutlinks(url, baseURL, textContent);
+    tryGetValidOutlinks(page, url, baseURL, textContent);
 
     ParseStatus status = getStatus(metaTags);
-    Parse parse = new Parse(textContent, pageTitle, outlinks, status);
+    Parse parse = new Parse(textContent, pageTitle, outlinks.toArray(new Outlink[0]), status);
     parse = htmlParseFilters.filter(url, page, parse, metaTags, docRoot);
+    if (parse == null) {
+      LOG.debug("Parse filtered to null, url : " + url);
+    }
 
     if (metaTags.getNoCache()) {
       // Not okay to cache
@@ -189,8 +193,10 @@ public class HtmlParser implements Parser {
     return status;
   }
 
-  private void tryGetOutlinks(String url, URL base, String text) {
-    if (text == null || text.isEmpty()) {
+  private void tryGetValidOutlinks(WebPage page, String url, URL base, String text) {
+    // TODO : do it during iterate the nodes
+    if (text == null || text.isEmpty() || !crawlFilters.testTextSatisfied(text)) {
+      LOG.debug("Filtered by text content");
       return;
     }
 
@@ -202,30 +208,29 @@ public class HtmlParser implements Parser {
       return;
     }
 
-    // TODO : do it during iteration the nodes
-    if (!crawlFilters.testTextSatisfied(text)) {
-      LOG.debug("Filtered by text content");
-      return;
-    }
-
     if (!metaTags.getNoFollow()) { // okay to follow links
-      ArrayList<Outlink> l = new ArrayList<>(); // extract outlinks
+      outlinks.clear();
+
       URL baseTag = domContentUtils.getBase(docRoot);
 
-      domContentUtils.getOutlinks(baseTag != null ? baseTag : base, l, docRoot, crawlFilters);
-      outlinks = l.toArray(new Outlink[l.size()]);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("found " + outlinks.length + " outlinks in " + url);
-      }
+      domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
     boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", true);
     if (noFollowDetailPage) {
-      int _a = outlinks.length;
+      // sniffPageCategoryByTextDensity to see if this is a detail page, do not extract outlinks from detail pages
+
+      int _a = outlinks.size();
       int _char = text.length();
       if (sniffPageCategoryByTextDensity(_a, _char) == CrawlFilter.PageCategory.DETAIL) {
-        outlinks = new Outlink[0];
+        // Do not follow links from detail page
+        outlinks.clear();
+        return;
       }
+    }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("found " + outlinks.size() + " outlinks in " + url);
     }
   }
 
@@ -267,7 +272,10 @@ public class HtmlParser implements Parser {
 
       page.setTitle(doc.getPageTitle());
       page.setVariable(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
-      page.setVariable(Nutch.DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+      page.setVariable(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+
+//      LOG.info("Text content length : " + doc.getTextContent().length()
+//          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
       doc.getFields().entrySet().stream().forEach(entry -> page.setVariable(entry.getKey(), entry.getValue()));
     } catch (BoilerpipeProcessingException |SAXException e) {

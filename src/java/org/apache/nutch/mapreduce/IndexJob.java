@@ -91,12 +91,14 @@ public class IndexJob extends NutchJob implements Tool {
 
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
     batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
+    boolean reindex = batchId.equalsIgnoreCase("-reindex");
+    batchId = reindex ? "-all" : batchId;
     int threads = params.getInt(ARG_THREADS, 5);
     boolean resume = params.getBoolean(ARG_RESUME, false);
-    boolean reindex = params.getBoolean(ARG_REINDEX, false);
     // TODO : It seems not used yet
     numTasks = params.getInt(ARG_NUMTASKS, conf.getInt(PARAM_MAPREDUCE_JOB_REDUCES, 2));
     int limit = params.getInt(ARG_LIMIT, -1);
+    // limit /= numTasks;
 
     // solr parameters
     String solrUrl = params.get(PARAM_SOLR_SERVER_URL, conf.get(PARAM_SOLR_SERVER_URL));
@@ -109,8 +111,8 @@ public class IndexJob extends NutchJob implements Tool {
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.setInt(THREADS_KEY, threads);
     conf.set(PARAM_BATCH_ID, batchId);
-    conf.setInt(ARG_LIMIT, limit);
-    conf.setBoolean(ARG_REINDEX, reindex);
+    conf.setInt(PARAM_LIMIT, limit);
+    conf.setBoolean(PARAM_REINDEX, reindex);
 
     NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_SERVER_URL, solrUrl);
     NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_ZK, zkHostString);
@@ -195,14 +197,13 @@ public class IndexJob extends NutchJob implements Tool {
    * @throws Exception
    * */
   public int index(String crawlId, String batchId,
-                   int threads, boolean resume, boolean reindex, int limit, int numTasks,
+                   int threads, boolean resume, int limit, int numTasks,
                    String solrUrl, String zkHostString, String collection) throws Exception {
     run(Params.toArgMap(
         Nutch.ARG_CRAWL, crawlId,
         Nutch.ARG_BATCH, batchId,
         Nutch.ARG_THREADS, threads,
         Nutch.ARG_RESUME, resume,
-        Nutch.ARG_REINDEX, reindex,
         ARG_LIMIT, limit > 0 ? limit : null,
         Nutch.ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
         PARAM_SOLR_SERVER_URL, solrUrl,
@@ -221,6 +222,7 @@ public class IndexJob extends NutchJob implements Tool {
         + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
         + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");"
         + "    -threads N    - number of fetching threads per task\n"
+        + "    -limit        - limit\n"
         + "    -resume       - resume interrupted job\n"
         + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapreduce.job.reduces)"
         + "    -solrUrl - solr server url, for example, http://localhost:8983/solr/gettingstarted\n"
@@ -237,8 +239,14 @@ public class IndexJob extends NutchJob implements Tool {
     }
 
     Configuration conf = getConf();
-    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID, "");
-    String batchId = Nutch.ALL_BATCH_ID_STR;
+
+    String batchId = args[0];
+    if (!batchId.equals("-all") && !batchId.equals("-reindex") && batchId.startsWith("-")) {
+      printUsage();
+      return -1;
+    }
+
+    String crawlId = conf.get(PARAM_CRAWL_ID, "");
     String solrUrl = conf.get(PARAM_SOLR_SERVER_URL);
     String zkHostString = conf.get(PARAM_SOLR_ZK);
     String collection = conf.get(PARAM_SOLR_COLLECTION);
@@ -246,20 +254,15 @@ public class IndexJob extends NutchJob implements Tool {
     int numTasks = -1;
     int threads = 10;
     boolean resume = false;
-    boolean reindex = false;
     int limit = -1;
 
     for (int i = 1; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
         crawlId = args[++i];
-      } else if ("-batchId".equals(args[i])) {
-        batchId = args[++i];
       } else if ("-threads".equals(args[i])) {
         threads = Integer.parseInt(args[++i]);
       } else if ("-resume".equals(args[i])) {
         resume = true;
-      } else if ("-reindex".equals(args[i])) {
-        reindex = true;
       } else if ("-numTasks".equals(args[i])) {
         numTasks = Integer.parseInt(args[++i]);
       } else if ("-limit".equals(args[i])) {
@@ -275,7 +278,7 @@ public class IndexJob extends NutchJob implements Tool {
       }
     }
 
-    return index(crawlId, batchId, threads, resume, reindex, limit, numTasks, solrUrl, zkHostString, collection);
+    return index(crawlId, batchId, threads, resume, limit, numTasks, solrUrl, zkHostString, collection);
   }
 
   public static void main(String[] args) throws Exception {

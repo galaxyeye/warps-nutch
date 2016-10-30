@@ -25,7 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
+import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
 
 /**
  * Created by vincent on 16-9-25.
@@ -86,14 +87,27 @@ public class MapDatumBuilder {
     ));
   }
 
-  public String filter(String url) {
+  public String filterUrl(WebPage page, String url) {
     try {
       if (normalize) {
         url = normalizers.normalize(url, URLNormalizers.SCOPE_OUTLINK);
       }
 
+      // We always follow detail urls from seed page
+      if (TableUtil.isSeed(page) && crawlFilters.isDetailUrl(url)) {
+        return url;
+      }
+
       if (filter) {
         url = urlFilters.filter(url);
+      }
+
+      if (crawlFilters.hasOldUrlDate(url)) {
+        url = null;
+      }
+
+      if (crawlFilters.isSearchUrl(url) || crawlFilters.isMediaUrl(url)) {
+        url = null;
       }
     } catch (URLFilterException|MalformedURLException e) {
       LOG.error(e.toString());
@@ -105,6 +119,7 @@ public class MapDatumBuilder {
   public Pair<UrlWithScore, WebPageWritable> buildDatum(String url, String reversedUrl, WebPage page) {
     int priority = TableUtil.calculatePriority(url, page, crawlFilters);
     float score = calculatePageScore(url, priority, page);
+
     WebPageWritable pageWritable = new WebPageWritable(conf, page);
     return Pair.of(new UrlWithScore(reversedUrl, score), pageWritable);
   }
@@ -131,7 +146,8 @@ public class MapDatumBuilder {
       return newRows;
     }
 
-    outlinks.entrySet().forEach(e -> scoreData.add(createScoreDatum(e.getKey(), e.getValue(), depth)));
+    outlinks.entrySet().stream().filter(e -> null != filterUrl(page, e.getKey().toString()))
+        .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth)).forEach(scoreData::add);
 
     // TODO : Outlink filtering (i.e. "only keep the first n outlinks")
     try {

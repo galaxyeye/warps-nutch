@@ -39,6 +39,12 @@
   </property>
 
   <property>
+    <name>fetcher.store.content</name>
+    <value>false</value>
+    <description>since every content is index into solr, we do not store the content</description>
+  </property>
+
+  <property>
     <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
     <value>true</value>
   </property>
@@ -156,7 +162,7 @@
 
   <property>
     <name>parser.skip.truncated</name>
-    <value>false</value>
+    <value>true</value>
     <description>no truncate actually since we give a very large value for http.content.limit</description>
   </property>
 
@@ -244,7 +250,7 @@
   </property>
   <property>
     <name>solr.commit.size</name>
-    <value>1000</value>
+    <value>100</value>
     <description>solr collection</description>
   </property>
 

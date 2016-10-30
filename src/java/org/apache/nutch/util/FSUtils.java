@@ -16,12 +16,19 @@
  */
 package org.apache.nutch.util;
 
-import java.io.IOException;
-
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
+import org.mortbay.log.Log;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility methods for common filesystem operations.
@@ -102,5 +109,76 @@ public class FSUtils {
         }
       }
     }
+  }
+
+  public static boolean createIfNotExits(Path path, Configuration conf) {
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (fs.exists(path)) {
+        // The lock file exists, someone else have already read it
+        return false;
+      }
+      else {
+        // The lock file does not exist, i will read it
+        FSDataOutputStream out = fs.create(path);
+        out.close();
+        return true;
+      }
+    }
+    catch (IOException e) {
+      Log.warn(e);
+    }
+
+    return false;
+  }
+
+  public static boolean deleteIfExits(Path path, Configuration conf) {
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (fs.exists(path)) {
+        fs.delete(path, false);
+      }
+    }
+    catch (IOException e) {
+      Log.warn(e);
+    }
+
+    return false;
+  }
+
+  public static List<String> readAllSeeds(Path seedPath, Path lockPath, Configuration conf) {
+    List<String> seeds = new ArrayList<>();
+
+    createIfNotExits(lockPath, conf);
+
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (!fs.exists(seedPath)) {
+        Log.warn("Seed file does not exit!!!");
+        return seeds;
+      }
+
+      BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(seedPath)));
+      try {
+        String line = reader.readLine();
+        while (line != null) {
+          if (line.startsWith("http")) {
+            seeds.add(line);
+          }
+
+          line = reader.readLine();
+        }
+      } finally {
+        // you should close out the BufferedReader
+        reader.close();
+      }
+    } catch (IOException e) {
+      Log.warn(e.toString());
+    }
+
+    return seeds;
   }
 }
