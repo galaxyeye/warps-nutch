@@ -18,12 +18,12 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.GenerateJob;
-import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
+import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.util.TableUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -252,8 +252,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, true);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
-        Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
 
     assertEquals(0, fetchList.size());
 
@@ -275,12 +274,11 @@ public class TestGenerator extends AbstractNutchTest {
    * @return path to generated batch
    * @throws IOException
    */
-  private void generateFetchlist(int numResults, Configuration config,
-      boolean filter) throws Exception {
+  private void generateFetchlist(int numResults, Configuration config, boolean filter) throws Exception {
     // generate batch
     GenerateJob g = new GenerateJob();
     g.setConf(config);
-    String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), System.currentTimeMillis(), filter, false);
+    String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), false, System.currentTimeMillis(), filter, false);
     if (batchId == null)
       throw new RuntimeException("Generator failed");
   }

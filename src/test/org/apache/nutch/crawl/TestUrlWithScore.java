@@ -36,7 +36,7 @@ public class TestUrlWithScore {
   public void testSerialization() throws IOException {
     // create a key and test basic functionality
     UrlWithScore keyOut = new UrlWithScore(TableUtil.reverseUrl("http://example.org/"), 1f);
-    assertEquals(TableUtil.reverseUrl("http://example.org/"), keyOut.getReversedUrl().toString());
+    assertEquals(TableUtil.reverseUrl("http://example.org/"), keyOut.getReversedUrl());
     assertEquals(1f, keyOut.getScore().get(), 0.001);
 
     // write to out
@@ -49,7 +49,7 @@ public class TestUrlWithScore {
     ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
     DataInputStream in = new DataInputStream(bis);
     keyIn.readFields(in);
-    assertEquals(keyOut.getReversedUrl().toString(), keyIn.getReversedUrl().toString());
+    assertEquals(keyOut.getReversedUrl(), keyIn.getReversedUrl());
     assertEquals(keyOut.getScore().get(), keyIn.getScore().get(), 0.001);
 
     in.close();

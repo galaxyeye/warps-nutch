@@ -104,6 +104,9 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     double _char = textContent.length();
     double _a = page.getOutlinks().size();
+    if (_a == 0) {
+      _a = (double)page.getVariable("outlinks_count");
+    }
 
     if (textContent.isEmpty()) {
       if (_a > 30) {

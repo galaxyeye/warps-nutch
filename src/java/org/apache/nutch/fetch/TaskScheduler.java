@@ -4,14 +4,12 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.crawl.NutchContext;
-import org.apache.nutch.crawl.SeedBuilder;
-import org.apache.nutch.crawl.UrlWithScore;
+import org.apache.hadoop.io.Writable;
+import org.apache.nutch.crawl.*;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
@@ -30,6 +28,7 @@ import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ProtocolStatus;
+import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
@@ -147,8 +146,10 @@ public class TaskScheduler extends Configured {
   /**
    * Update
    */
+  private final DataStore<String, WebPage> datastore;
   private final MapDatumBuilder mapDatumBuilder;
   private final ReduceDatumBuilder reduceDatumBuilder;
+  private final boolean updateSeedPages;
 
   // Timer
   private final long startTime = System.currentTimeMillis(); // Start time of fetcher run
@@ -183,7 +184,6 @@ public class TaskScheduler extends Configured {
     Configuration conf = context.getConfiguration();
     setConf(conf);
 
-    // TODO : use FetchMonitor.id
     this.id = objectSequence.incrementAndGet();
 
     this.fetchMonitor = fetchMonitor;
@@ -209,8 +209,14 @@ public class TaskScheduler extends Configured {
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
     boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, true);
-    mapDatumBuilder = updateJIT ? new MapDatumBuilder(counter, conf) : null;
-    reduceDatumBuilder = updateJIT ? new ReduceDatumBuilder(counter, conf) : null;
+    try {
+      datastore = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+    } catch (ClassNotFoundException e) {
+      throw new IOException(e);
+    }
+    this.mapDatumBuilder = updateJIT ? new MapDatumBuilder(counter, conf) : null;
+    this.reduceDatumBuilder = updateJIT ? new ReduceDatumBuilder(counter, conf) : null;
+    this.updateSeedPages = true;
 
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
@@ -222,7 +228,7 @@ public class TaskScheduler extends Configured {
 
     this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
 
-    this.nutchMetrics = new NutchMetrics(conf);
+    this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     // TODO : inject initial seeds
 
@@ -332,7 +338,7 @@ public class TaskScheduler extends Configured {
 
   /**
    * @return Injected urls count
-   * */
+   */
   public int inject(String urlLine, String batchId) {
     if (urlLine == null || urlLine.isEmpty()) {
       return 0;
@@ -369,7 +375,7 @@ public class TaskScheduler extends Configured {
 
   /**
    * Multiple threaded
-   * */
+   */
   public FetchTask schedule(String queueId) {
     List<FetchTask> fetchTasks = schedule(queueId, 1);
     return fetchTasks.isEmpty() ? null : fetchTasks.iterator().next();
@@ -412,7 +418,7 @@ public class TaskScheduler extends Configured {
 
   /**
    * Finished downloading the web page
-   *
+   * <p>
    * Multiple threaded, non-synchronized class member variables are not allowed inside this method.
    */
   public void finish(String queueID, int itemID, ProtocolOutput output) {
@@ -447,12 +453,14 @@ public class TaskScheduler extends Configured {
 
   /**
    * Multiple threaded
-   * */
+   */
   public FetchResult pollFetchResut() {
     return fetchResultQueue.remove();
   }
 
-  public boolean isFeederAlive() { return !feederThreads.isEmpty(); }
+  public boolean isFeederAlive() {
+    return !feederThreads.isEmpty();
+  }
 
   public boolean isMissionComplete() {
     return !isFeederAlive() && tasksMonitor.readyItemCount() == 0 && tasksMonitor.pendingItemCount() == 0;
@@ -484,7 +492,7 @@ public class TaskScheduler extends Configured {
    * Wait for a while and report task status
    *
    * @param reportInterval Report interval in milliseconds
-   * */
+   */
   public Status waitAndReport(long reportInterval) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
@@ -519,7 +527,7 @@ public class TaskScheduler extends Configured {
   }
 
   private String getStatusString(float pagesThroughput,
-                                  float bytesThroughput, int readyFetchItems, int pendingFetchItems) throws IOException {
+                                 float bytesThroughput, int readyFetchItems, int pendingFetchItems) throws IOException {
     final DecimalFormat df = new DecimalFormat("0.0");
 
     this.avePageLength.set(bytesThroughput / pagesThroughput);
@@ -635,7 +643,7 @@ public class TaskScheduler extends Configured {
 
   /**
    * Dump fetch threads
-   * */
+   */
   public void dumpFetchThreads() {
     LOG.debug("There are " + activeFetchThreads.size() + " active fetch threads and " + idleFetchThreads.size() + " idle ones");
 
@@ -656,7 +664,7 @@ public class TaskScheduler extends Configured {
 
   /**
    * Thread safe
-   * */
+   */
   private void doFinishFetchTask(FetchTask fetchTask, ProtocolOutput output)
       throws IOException, InterruptedException, URLFilterException {
     final String url = fetchTask.getUrl();
@@ -702,7 +710,7 @@ public class TaskScheduler extends Configured {
       case ProtocolStatusCodes.EXCEPTION:
         logFetchFailure(ProtocolStatusUtils.getMessage(status));
 
-      /** FALL THROUGH **/
+        /** FALL THROUGH **/
       case ProtocolStatusCodes.RETRY:          // retry
       case ProtocolStatusCodes.BLOCKED:
         handleResult(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
@@ -761,8 +769,7 @@ public class TaskScheduler extends Configured {
     if (reprUrl != null) {
       page.setReprUrl(new Utf8(reprUrl));
       reprUrls.put(threadId, reprUrl);
-    }
-    else {
+    } else {
       LOG.warn("reprUrl is null");
     }
 
@@ -776,7 +783,7 @@ public class TaskScheduler extends Configured {
 
     FetchUtil.setStatus(page, status, pstatus);
     FetchUtil.setContent(page, content);
-    FetchUtil.setFetchTime(page);
+    FetchUtil.setFetchTime(page, status);
     FetchUtil.setMarks(page);
 
     String reverseUrl = TableUtil.reverseUrl(url);
@@ -801,10 +808,11 @@ public class TaskScheduler extends Configured {
     // Debug fetch time history
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
     if (fetchTimeHistory.contains(",")) {
-      String report = "Url " + fetchTask.getUrl()
-          + ", status : " + CrawlStatus.getName(status)
-          + ", fetchTimeHistory : " + fetchTimeHistory
-          + ", signature : " + StringUtil.toHexString(page.getSignature());
+      String report = String.format("%100s", fetchTask.getUrl())
+          + "\tfetchTimeHistory : " + fetchTimeHistory
+          + "\tstatus : " + CrawlStatus.getName(status)
+//          + "\tsignature : " + StringUtil.toHexString(page.getSignature())
+          + "\n";
       nutchMetrics.reportFetchTimeHistory(report, reportSuffix);
     }
 
@@ -816,75 +824,132 @@ public class TaskScheduler extends Configured {
 
     // LOG.debug("ready to write hadoop : {}, {}", page.getStatus(), page.getMarkers());
 
-    output(url, reverseUrl, page);
+    outputWithDbUpdate(url, reverseUrl, page);
 
     updateStatus(fetchTask.getUrl(), page);
   }
 
   /**
    * Write the reduce result back to the backend storage
-   *
+   * <p>
    * threadsafe
    * */
   @SuppressWarnings("unchecked")
-  private void output(String url, String reversedUrl, WebPage page) throws IOException, InterruptedException {
+  private void outputWithDbUpdate(String url, String reversedUrl, WebPage page) throws IOException, InterruptedException {
     if (updateJIT()) {
-      Pair<UrlWithScore, WebPageWritable> updateDatum;
-      List<Pair<UrlWithScore, WebPageWritable>> updateData;
+      boolean isSeed = TableUtil.isSeed(page);
 
       synchronized (mapDatumBuilder) {
-        updateDatum = mapDatumBuilder.buildDatum(url, reversedUrl, page);
-        outputWithDbUpdate(url, updateDatum.getKey(), updateDatum.getValue(), false);
+        // TODO : check if we really need build new rows using MapDatumBuilder
+//        mapDatumBuilder.createNewDataWithoutScore(url, page, maxDbUpdateNewRows).keySet().stream()
+//            .filter(key -> datastore.get(key) == null)
+//            .forEach(key -> outputOutlinkPage(url, key, isSeed));
 
-        // TODO : check if we really build new rows using MapDatumBuilder
+        // TODO : check if we really build new rows using MapDatumBuilder, it seems we should build new rows using ReduceDatumBuilder
         // so we need check if there are unexpected marks, metadata, etc
-        updateData = mapDatumBuilder.buildNewRows(url, page);
-        updateData.stream().limit(maxDbUpdateNewRows).forEach(e -> outputWithDbUpdate(url, e.getKey(), e.getValue(), true));
+        Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, page);
+        outlinkRows.entrySet().stream()
+            .limit(maxDbUpdateNewRows)
+            .forEach(e -> outputOutlinkPage(url, e.getKey(), e.getValue(), isSeed));
+
+        // 1. no need to write seed pages back
+        // 2. we may need a local list to maintain urls fetched recently, so we ignore them if we can see them in a page
+        if (!isSeed || updateSeedPages) {
+          outputMainPage(url, reversedUrl, page, outlinkRows);
+        }
       }
-    }
-    else {
+    } else {
       context.write(reversedUrl, page);
       counter.increase(Counter.rowsPeresist);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private void outputWithDbUpdate(String url, UrlWithScore urlWithScore, WebPageWritable webPageWritable, boolean isNewRow) {
-    String reversedUrl = urlWithScore.getReversedUrl().toString();
-    WebPage page = webPageWritable.getWebPage();
+  private void outputMainPage(String url, String reversedUrl, WebPage page, Map<UrlWithScore, NutchWritable> outlinkRows) {
+    counter.increase(Counter.rowsPeresist);
 
-    if (isNewRow) {
-      page = reduceDatumBuilder.createNewRow(url);
-
-      if (TableUtil.isSeed(page)) {
-        TableUtil.markFromSeed(page);
-      }
-    }
-    else {
-      reduceDatumBuilder.updateRowWithoutScoring(url, page);
-    }
-
-    // LOG.debug("Write to hdfs : " + page.getBaseUrl());
+    // Calculate inlinked score data, and return the main web page
+    WebPage oldPage = datastore.get(reversedUrl);
+    reduceDatumBuilder.calculateInlinks(url, outlinkRows.values());
+    reduceDatumBuilder.process(url, page, oldPage, true);
 
     try {
       synchronized(context) {
         context.write(reversedUrl, page);
       }
+    } catch (IOException|InterruptedException e) {
+      LOG.error("Failed to write to hdfs" + e.toString());
+    }
+  }
 
-      if (isNewRow) {
-        // is it thread safe?
-        counter.increase(Counter.newRowsPeresist);
-        if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
-          counter.increase(Counter.newDetailRows);
-        }
+  @SuppressWarnings("unchecked")
+  private void outputOutlinkPage(String sourceUrl, UrlWithScore urlWithScore, NutchWritable nutchWritable, boolean fromSeed) {
+    String reversedUrl = urlWithScore.getReversedUrl();
+    String url = TableUtil.unreverseUrl(reversedUrl);
+
+    WebPage page = null;
+
+    Writable writable = nutchWritable.get();
+    if (writable instanceof WebPageWritable) {
+      page = ((WebPageWritable) writable).getWebPage();
+    }
+
+    if (page == null) {
+      LOG.error("Failed to get web page, invalid nutchWritable");
+      return;
+    }
+
+    WebPage oldPage = datastore.get(reversedUrl);
+    if (oldPage == null) {
+      page = reduceDatumBuilder.createNewRow(url);
+      reduceDatumBuilder.updateRow(url, page);
+
+      counter.increase(Counter.newRowsPeresist);
+      if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
+        counter.increase(Counter.newDetailRows);
       }
-      else {
-        counter.increase(Counter.rowsPeresist);
+
+      if (fromSeed) {
+        TableUtil.markFromSeed(page);
+        nutchMetrics.reportUrlsFromSeed(url, sourceUrl, reportSuffix);
+      }
+    }
+
+    try {
+      synchronized(context) {
+        context.write(reversedUrl, page);
       }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
     }
   }
+
+//  @SuppressWarnings("unchecked")
+//  private void outputOutlinkPage(String sourceUrl, UrlWithScore urlWithScore, WebPageWritable webPageWritable, boolean fromSeed) {
+//    String url = TableUtil.unreverseUrl(reversedUrl);
+//
+//    // TODO : There is no inlinks, so the score does not works
+//    WebPage page = reduceDatumBuilder.createNewRow(url);
+//    reduceDatumBuilder.updateRow(url, page);
+//
+//    counter.increase(Counter.newRowsPeresist);
+//    if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
+//      counter.increase(Counter.newDetailRows);
+//    }
+//
+//    if (fromSeed) {
+//      TableUtil.markFromSeed(page);
+//      nutchMetrics.reportUrlsFromSeed(url, sourceUrl, reportSuffix);
+//    }
+//
+//    try {
+//      synchronized(context) {
+//        context.write(reversedUrl, page);
+//      }
+//    } catch (IOException|InterruptedException e) {
+//      LOG.error("Failed to write to hdfs" + e.toString());
+//    }
+//  }
 
   private void updateStatus(String url, WebPage page) throws IOException {
     int pageLength = 0;

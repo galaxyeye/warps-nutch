@@ -63,7 +63,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     limit = limit < 2 * numTasks ? limit : limit/numTasks;
 
     resume = conf.getBoolean(PARAM_RESUME, false);
-    this.nutchMetrics = new NutchMetrics(conf);
+    this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     boolean ignoreUnreachableHosts = conf.getBoolean("fetcher.fetch.mapper.ignore.unreachable.hosts", true);
     if (ignoreUnreachableHosts) {

@@ -45,15 +45,16 @@ public abstract class NutchJob extends Configured {
 
   private static final Logger LOG = LoggerFactory.getLogger(NutchJob.class);
 
-  protected Map<String, Object> params = Maps.newConcurrentMap();
-  protected Map<String, Object> status = Maps.newConcurrentMap();
-  protected Map<String, Object> results = Maps.newConcurrentMap();
+  protected final Map<String, Object> params = Maps.newConcurrentMap();
+  protected final Map<String, Object> status = Maps.newConcurrentMap();
+  protected final Map<String, Object> results = Maps.newConcurrentMap();
 
-  protected long affectedRows = 0;
   protected Job currentJob;
-  protected int numJobs = 1;
-  protected int currentJobNum = 0;
   protected long startTime = System.currentTimeMillis();
+
+  private long affectedRows = 0;
+  private int numJobs = 1;
+  private int currentJobNum = 0;
 
   protected void setup(Map<String, Object> args) throws Exception {
     LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");

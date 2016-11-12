@@ -16,19 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.storage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
 import org.apache.gora.query.Result;
@@ -41,6 +28,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests basic Gora functionality by writing and reading webpages.
@@ -71,8 +70,7 @@ public class TestGoraStorage extends AbstractNutchTest {
     readWrite(id, webPageStore);
   }
 
-  private static void readWrite(String id, DataStore<String, WebPage> store)
-      throws IOException, Exception {
+  private static void readWrite(String id, DataStore<String, WebPage> store) throws Exception {
     WebPage page = WebPage.newBuilder().build();
     int max = 1000;
     for (int i = 0; i < max; i++) {

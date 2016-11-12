@@ -45,7 +45,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
   public static final Logger LOG = GenerateJob.LOG;
 
-  private enum Counter { hosts, hostCountTooLarge, malformedUrl }
+  private enum Counter { hosts, hostCountTooLarge, malformedUrl, isSeed, isFromSeed }
 
   private long limit;
   private long maxCountPerHost;
@@ -70,7 +70,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
     maxCountPerHost = conf.getLong(PARAM_GENERATOR_MAX_TASKS_PER_HOST, 10000);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    nutchMetrics = new NutchMetrics(conf);
+    nutchMetrics = NutchMetrics.getInstance(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -118,7 +118,17 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       try {
         context.write(TableUtil.reverseUrl(key.url), page);
 
+        if (TableUtil.isSeed(page)) {
+          getCounter().increase(Counter.isSeed);
+        }
+        else if (TableUtil.isFromSeed(page)) {
+          getCounter().increase(Counter.isFromSeed);
+        }
+
         getCounter().updateAffectedRows(key.url);
+
+        context.setStatus(getCounter().getStatusString());
+
       } catch (MalformedURLException e) {
         getCounter().increase(Counter.malformedUrl);
         continue;

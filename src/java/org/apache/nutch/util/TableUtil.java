@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
 
 import java.net.MalformedURLException;
@@ -182,6 +183,21 @@ public class TableUtil {
 
   public static void markFromSeed(WebPage page) {
     putMetadata(page, META_FROM_SEED, YES_STRING);
+  }
+
+  public static int getWebDepth(WebPage page) {
+    int depth = Integer.MAX_VALUE;
+    CharSequence depthUtf8 = page.getMarkers().get(Nutch.DISTANCE);
+
+    if (depthUtf8 != null) {
+      depth = Integer.parseInt(depthUtf8.toString());
+    }
+
+    return depth;
+  }
+
+  public static void setWebDepth(WebPage page, int newDistance) {
+    page.getMarkers().put(DISTANCE, new Utf8(Integer.toString(newDistance)));
   }
 
   /**

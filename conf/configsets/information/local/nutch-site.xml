@@ -216,7 +216,7 @@
 
   <property>
     <name>solr.commit.size</name>
-    <value>500</value>
+    <value>100</value>
     <description>solr collection</description>
   </property>
 

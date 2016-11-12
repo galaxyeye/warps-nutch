@@ -93,19 +93,21 @@ commonOptions="-D mapreduce.job.reduces=$numTasks -D mapred.child.java.opts=-Xmx
 
 # determines whether mode based on presence of job file
 if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
- # check that hadoop can be found on the path
- if [ $(which hadoop | wc -l ) -eq 0 ]; then
+  # check that hadoop can be found on the path
+  if [ $(which hadoop | wc -l ) -eq 0 ]; then
     echo "Can't find Hadoop executable. Add HADOOP_HOME/bin to the path or run in local mode."
     exit -1;
- fi
+  fi
 
- HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
- mkdir -p $HDFS_SEED_DIR
- cp -r "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
- hadoop fs -mkdir -p $HDFS_SEED_DIR
- hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
+  if [ $SEEDDIR != "false" ]; then
+    HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
+    mkdir -p $HDFS_SEED_DIR
+    cp -r "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
+    hadoop fs -mkdir -p $HDFS_SEED_DIR
+    hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
 
- SEEDDIR=$HDFS_SEED_DIR
+    SEEDDIR=$HDFS_SEED_DIR
+  fi
 fi
 
 function __bin_nutch {
@@ -125,8 +127,10 @@ function __bin_nutch {
 }
 
 # initial injection
-echo "Injecting seed URLs"
-__bin_nutch inject "$SEEDDIR" -crawlId "$CRAWL_ID"
+# echo "Injecting seed URLs"
+if [ $SEEDDIR != "false" ]; then
+  __bin_nutch inject "$SEEDDIR" -crawlId "$CRAWL_ID"
+fi
 
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))

@@ -44,7 +44,7 @@ public class CrawlFilter extends Configured {
    * */
   public static Pattern[] INDEX_PAGE_URL_PATTERNS = {
       Pattern.compile(".+tieba.baidu.com/.+search.+"),
-      Pattern.compile(".+(index|tags|chanel).+"),
+      Pattern.compile(".+(index|list|tags|chanel).+"),
   };
 
   public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
@@ -63,6 +63,7 @@ public class CrawlFilter extends Configured {
     return pageCategory == PageCategory.ANY ? sniffPageCategoryByUrlPattern(url) : pageCategory;
   }
 
+  /** TODO : use machine learning to calculate the parameters */
   public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
     PageCategory pageCategory = PageCategory.ANY;
 
@@ -70,10 +71,11 @@ public class CrawlFilter extends Configured {
       _a = 1;
     }
 
-    if (_char/_a < 15) {
+    // 链接数不少于60个
+    if (_a > 60 && _char/_a < 30) {
       pageCategory = PageCategory.INDEX;
     }
-    else if (_char > 1500) {
+    else if (_char > 3000) {
       pageCategory = PageCategory.DETAIL;
     }
 

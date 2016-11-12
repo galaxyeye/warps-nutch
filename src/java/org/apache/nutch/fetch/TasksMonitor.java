@@ -99,7 +99,7 @@ public class TasksMonitor {
     this.pendingTimeout = conf.getLong("fetcher.pending.timeout", 3 * 60 * 1000);
 
     this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
-    this.nutchMetrics = new NutchMetrics(conf);
+    this.nutchMetrics = NutchMetrics.getInstance(conf);
     this.nutchMetrics.loadUnreachableHosts(unreachableHosts);
     this.debugUrls = conf.getBoolean("fetcher.debug.urls", false);
 

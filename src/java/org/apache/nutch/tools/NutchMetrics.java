@@ -16,29 +16,45 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
- * TODO : use better metrics module, for example, http://metrics.dropwizard.io
+ * TODO : use better metrics module, for example, metrics from alibaba http://metrics.dropwizard.io
  * */
 
 /**
  * Created by vincent on 16-10-12.
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
-public class NutchMetrics {
+public class NutchMetrics implements AutoCloseable {
 
   public static final Logger LOG = LoggerFactory.getLogger(NutchMetrics.class);
   public static final Logger REPORT_LOG = NutchReporter.chooseLog(false);
 
+  private static NutchMetrics instance;
+
   private final Configuration conf;
   private Path reportDir;
   private Path unreachableHostsPath;
+  private Map<Path, BufferedWriter> writers = new HashMap<>();
 
-  public NutchMetrics(Configuration conf) {
+  /**
+   * TODO : check if there is a singleton bug
+   * */
+  public static NutchMetrics getInstance(Configuration conf) {
+    if(instance == null) {
+      instance = new NutchMetrics(conf);
+    }
+
+    return instance;
+  }
+
+  private NutchMetrics(Configuration conf) {
     this.conf = conf;
 
     try {
@@ -57,6 +73,18 @@ public class NutchMetrics {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    writers.values().forEach(writer -> {
+      try {
+        writer.flush();
+        writer.close();
+      } catch (IOException e) {
+        LOG.error(e.toString());
+      }
+    });
+  }
+
   public Path getUnreachableHostsPath() { return unreachableHostsPath; }
 
   public void loadUnreachableHosts(Set<String> unreachableHosts) {
@@ -69,6 +97,11 @@ public class NutchMetrics {
 
   public void reportRedirects(String redirectString, String reportSuffix) {
     writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
+  }
+
+  public void reportUrlsFromSeed(String url, String seedUrl, String reportSuffix) {
+    String reportString = seedUrl + " -> " + url;
+    writeReport(reportString, "fetch-redirects-" + reportSuffix + ".txt");
   }
 
   public void reportFetchTimeHistory(String fetchTimeHistory, String reportSuffix) {
@@ -100,24 +133,28 @@ public class NutchMetrics {
     writeReport(longUrl + "\n", "urls-long-" + reportSuffix + ".txt");
   }
 
-  public void debugMediaUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-media-" + reportSuffix + ".txt");
+  public void debugMediaUrls(String url, String reportSuffix) {
+    writeReport(url + "\n", "urls-media-" + reportSuffix + ".txt");
   }
 
-  public void debugBBSUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-bbs-" + reportSuffix + ".txt");
+  public void debugBBSUrls(String url, String reportSuffix) {
+    writeReport(url + "\n", "urls-bbs-" + reportSuffix + ".txt");
   }
 
-  public void debugBlogUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-blog-" + reportSuffix + ".txt");
+  public void debugBlogUrls(String url, String reportSuffix) {
+    writeReport(url + "\n", "urls-blog-" + reportSuffix + ".txt");
   }
 
-  public void debugTiebaUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-tieba-" + reportSuffix + ".txt");
+  public void debugTiebaUrls(String url, String reportSuffix) {
+    writeReport(url + "\n", "urls-tieba-" + reportSuffix + ".txt");
   }
 
-  public void debugUnknownTypeUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-unknown-" + reportSuffix + ".txt");
+  public void debugUnknownTypeUrls(String url, String reportSuffix) {
+    writeReport(url + "\n", "urls-unknown-" + reportSuffix + ".txt");
+  }
+
+  public void debugIndexDocTime(String timeStrings, String reportSuffix) {
+    writeReport(timeStrings + "\n", "index-doc-time-" + reportSuffix + ".txt");
   }
 
   public void writeReport(Path reportFile, String report) {
@@ -139,16 +176,22 @@ public class NutchMetrics {
         Files.createFile(reportFile);
       }
 
-      // TODO : flush only if the buffer is full or the program is about to exit
-      BufferedWriter writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-      writer.write(report);
-      writer.flush();
-
-      if (printPath) {
-        Log.info("Report written to " + reportFile.toAbsolutePath());
+      BufferedWriter writer = writers.get(reportFile);
+      if (writer == null) {
+        writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+        writers.put(reportFile, writer);
       }
+
+      writer.write(report);
+
+      // TODO : flush only when the buffer is full?
+      writer.flush();
     } catch (IOException e) {
       Log.warn("Failed to write report : " + e.toString());
+    }
+
+    if (printPath) {
+      Log.info("Report written to " + reportFile.toAbsolutePath());
     }
   }
 
@@ -156,4 +199,5 @@ public class NutchMetrics {
     Path reportFile = Paths.get(reportDir.toAbsolutePath().toString(), fileSuffix);
     writeReport(reportFile, report, printPath);
   }
+
 }

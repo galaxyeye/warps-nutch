@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 
@@ -73,20 +73,20 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
       return;
     }
 
-    Pair<UrlWithScore, WebPageWritable> updateDatum = datumFilter.buildDatum(url, reversedUrl, page);
-    output(updateDatum.getKey(), updateDatum.getValue(), context);
+    Pair<UrlWithScore, NutchWritable> mapDatum = datumFilter.buildDatum(reversedUrl, page);
+    output(mapDatum.getKey(), mapDatum.getValue(), context);
     getCounter().increase(Counter.rowsMapped);
 
-    List<Pair<UrlWithScore, WebPageWritable>> updateData = datumFilter.buildNewRows(url, page);
-    updateData.forEach(e -> output(e.getKey(), e.getValue(), context));
+    Map<UrlWithScore, NutchWritable> updateData = datumFilter.createRowsFromOutlink(url, page);
+    updateData.entrySet().forEach(e -> output(e.getKey(), e.getValue(), context));
     getCounter().increase(Counter.newRowsMapped, updateData.size());
   }
 
-  private void output(UrlWithScore urlWithScore, WebPageWritable webPageWritable, Context context) {
+  private void output(UrlWithScore urlWithScore, NutchWritable nutchWritable, Context context) {
     try {
-      context.write(urlWithScore, new NutchWritable(webPageWritable));
+      context.write(urlWithScore, nutchWritable);
     } catch (IOException|InterruptedException e) {
-      LOG.error("Failed to write to hdfs" + e.toString());
+      LOG.error("Failed to write to hdfs " + e.toString());
     }
   }
 }

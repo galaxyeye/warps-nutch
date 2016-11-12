@@ -1,6 +1,7 @@
 package org.apache.nutch.fetch;
 
 import org.apache.avro.util.Utf8;
+import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ProtocolStatus;
@@ -58,12 +59,13 @@ public class FetchUtil {
     }
   }
 
-  static public void setFetchTime(WebPage page) {
+  static public void setFetchTime(WebPage page, byte status) {
     final long prevFetchTime = page.getFetchTime();
     final long fetchTime = System.currentTimeMillis();
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(fetchTime);
 
+    if (status == CrawlStatus.STATUS_FETCHED)
     TableUtil.putFetchTimeHistory(page, fetchTime);
   }
 }

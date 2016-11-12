@@ -16,21 +16,22 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-
-import java.net.MalformedURLException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.fetch.data.FetchEntry;
+import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.URLUtil;
 import org.junit.Test;
+
+import java.net.MalformedURLException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 /**
  * Tests {@link URLPartitioner}
@@ -45,8 +46,7 @@ public class TestURLPartitioner {
   public void testOneReducer() {
     URLPartitioner partitioner = new URLPartitioner();
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_HOST);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
     int numReduceTasks = 1;
@@ -64,8 +64,7 @@ public class TestURLPartitioner {
   public void testModeHost() {
     URLPartitioner partitioner = new URLPartitioner();
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_HOST);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
     int numReduceTasks = 100;
@@ -92,8 +91,7 @@ public class TestURLPartitioner {
   public void testModeDomain() {
     URLPartitioner partitioner = new URLPartitioner();
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_DOMAIN);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_DOMAIN);
     partitioner.setConf(conf);
 
     int numReduceTasks = 100;
@@ -120,8 +118,7 @@ public class TestURLPartitioner {
   public void testModeIP() {
     URLPartitioner partitioner = new URLPartitioner();
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_IP);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_IP);
     partitioner.setConf(conf);
 
     int numReduceTasks = 100;
@@ -150,22 +147,18 @@ public class TestURLPartitioner {
   public void testSeed() {
     URLPartitioner partitioner = new URLPartitioner();
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_HOST);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
     int numReduceTasks = 100;
-    int partitionNoSeed = partitioner.getPartition("http://example.org/",
-        numReduceTasks);
+    int partitionNoSeed = partitioner.getPartition("http://example.org/", numReduceTasks);
 
     conf.setInt(URLPartitioner.PARTITION_URL_SEED, 1);
     partitioner.setConf(conf);
 
-    int partitionWithSeed = partitioner.getPartition("http://example.org/",
-        numReduceTasks);
+    int partitionWithSeed = partitioner.getPartition("http://example.org/", numReduceTasks);
 
-    assertNotSame("partitions should differ because of different seed",
-        partitionNoSeed, partitionWithSeed);
+    assertNotSame("partitions should differ because of different seed", partitionNoSeed, partitionWithSeed);
   }
 
   /**
@@ -180,26 +173,20 @@ public class TestURLPartitioner {
     URLPartitioner.SelectorEntryPartitioner sigPartitioner = new URLPartitioner.SelectorEntryPartitioner();
 
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_HOST);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
 
     refPartitioner.setConf(conf);
     sigPartitioner.setConf(conf);
 
     int numReduceTasks = 100;
 
-    int partitionFromRef = refPartitioner.getPartition(
-        "http://www.example.org/", numReduceTasks);
+    int partitionFromRef = refPartitioner.getPartition("http://www.example.org/", numReduceTasks);
     // init selector entry (score shouldn't matter)
-    SelectorEntry selectorEntry = new SelectorEntry("http://www.example.org/",
-        1337);
+    SelectorEntry selectorEntry = new SelectorEntry("http://www.example.org/", 1337);
     WebPage page = WebPage.newBuilder().build();
-    int partitionFromSig = sigPartitioner.getPartition(selectorEntry, page,
-        numReduceTasks);
+    int partitionFromSig = sigPartitioner.getPartition(selectorEntry, page, numReduceTasks);
 
-    assertEquals("partitions should be same", partitionFromRef,
-        partitionFromSig);
-
+    assertEquals("partitions should be same", partitionFromRef, partitionFromSig);
   }
 
   /**
@@ -216,26 +203,20 @@ public class TestURLPartitioner {
     URLPartitioner.FetchEntryPartitioner sigPartitioner = new URLPartitioner.FetchEntryPartitioner();
 
     Configuration conf = NutchConfiguration.create();
-    conf.set(URLPartitioner.PARTITION_MODE_KEY,
-        URLPartitioner.PARTITION_MODE_HOST);
+    conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
 
     refPartitioner.setConf(conf);
     sigPartitioner.setConf(conf);
 
     int numReduceTasks = 100;
 
-    int partitionFromRef = refPartitioner.getPartition(
-        "http://www.example.org/", numReduceTasks);
+    int partitionFromRef = refPartitioner.getPartition("http://www.example.org/", numReduceTasks);
     IntWritable intWritable = new IntWritable(1337); // doesn't matter
     WebPage page = WebPage.newBuilder().build();
     String key = TableUtil.reverseUrl("http://www.example.org/");
     FetchEntry fetchEntry = new FetchEntry(conf, key, page);
-    int partitionFromSig = sigPartitioner.getPartition(intWritable, fetchEntry,
-        numReduceTasks);
+    int partitionFromSig = sigPartitioner.getPartition(intWritable, fetchEntry, numReduceTasks);
 
-    assertEquals("partitions should be same", partitionFromRef,
-        partitionFromSig);
-
+    assertEquals("partitions should be same", partitionFromRef, partitionFromSig);
   }
-
 }

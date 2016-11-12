@@ -216,7 +216,7 @@ public class SimpleParser extends Configured {
 
     FetchUtil.setStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
     FetchUtil.setContent(page, content);
-    FetchUtil.setFetchTime(page);
+    FetchUtil.setFetchTime(page, CrawlStatus.STATUS_FETCHED);
     FetchUtil.setMarks(page);
 
     if (content == null) {

@@ -2,6 +2,7 @@ package org.apache.nutch.dbupdate;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchCounter;
@@ -21,9 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
 import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
@@ -45,14 +47,9 @@ public class MapDatumBuilder {
 
   private ScoringFilters scoringFilters;
 
-  /**
-   * Reuse variables for efficiency
-   * */
-  private final List<ScoreDatum> scoreData = new ArrayList<>(200);
-  // There are no more than 200 outlinks in a page generally
-  private final List<Pair<UrlWithScore, WebPageWritable>> newRows = new ArrayList<>(200);
-
   private final String batchId;
+
+  private final int MAX_WEB_DEPTH = 3;
 
   private final boolean normalize;
   private final boolean filter;
@@ -87,6 +84,11 @@ public class MapDatumBuilder {
     ));
   }
 
+  public boolean isValidUrl(WebPage page, CharSequence url) {
+    return filterUrl(page, url.toString()) != null;
+  }
+
+  // TODO : make sure url == page.getBaseUrl()
   public String filterUrl(WebPage page, String url) {
     try {
       if (normalize) {
@@ -109,19 +111,47 @@ public class MapDatumBuilder {
       if (crawlFilters.isSearchUrl(url) || crawlFilters.isMediaUrl(url)) {
         url = null;
       }
-    } catch (URLFilterException|MalformedURLException e) {
+    } catch (URLFilterException | MalformedURLException e) {
       LOG.error(e.toString());
     }
 
     return url;
   }
 
-  public Pair<UrlWithScore, WebPageWritable> buildDatum(String url, String reversedUrl, WebPage page) {
-    int priority = TableUtil.calculatePriority(url, page, crawlFilters);
-    float score = calculatePageScore(url, priority, page);
+  public Pair<UrlWithScore, NutchWritable> buildDatum(String reversedUrl, WebPage page) {
+    NutchWritable nutchWritable = new NutchWritable();
+    nutchWritable.set(new WebPageWritable(conf, page));
+    return Pair.of(new UrlWithScore(reversedUrl, Float.MAX_VALUE), nutchWritable);
+  }
 
-    WebPageWritable pageWritable = new WebPageWritable(conf, page);
-    return Pair.of(new UrlWithScore(reversedUrl, score), pageWritable);
+  public Pair<UrlWithScore, NutchWritable> createNewDatum(String url, WebPage sourcePage) {
+    int priority = TableUtil.calculatePriority(url, sourcePage, crawlFilters);
+    float score = calculatePageScore(url, priority, sourcePage);
+    String reversedUrl = null;
+    try {
+      reversedUrl = TableUtil.reverseUrl(url);
+    } catch (MalformedURLException ignored) {
+    }
+
+    NutchWritable nutchWritable = new NutchWritable();
+    nutchWritable.set(new WebPageWritable(conf, sourcePage));
+    return Pair.of(new UrlWithScore(reversedUrl, score), nutchWritable);
+  }
+
+  public Map<CharSequence, CharSequence> getOutlinks(WebPage sourcePage, final int depth, final int limit) {
+    // Do not dive too deep
+    final Map<CharSequence, CharSequence> outlinks = sourcePage.getOutlinks();
+
+    if (depth > MAX_WEB_DEPTH) {
+      counter.increase(NutchCounter.Counter.tooDeepPages);
+    }
+
+    if (depth > MAX_WEB_DEPTH || outlinks == null || outlinks.isEmpty()) {
+      return new HashMap<>();
+    }
+
+    return outlinks.keySet().stream().limit(limit)
+        .filter(link -> isValidUrl(sourcePage, link)).collect(Collectors.toMap(link -> link, outlinks::get));
   }
 
   /**
@@ -129,66 +159,25 @@ public class MapDatumBuilder {
    *
    * TODO : Write the result into hdfs directly to deduce memory consumption
    * */
-  public List<Pair<UrlWithScore, WebPageWritable>> buildNewRows(String url, WebPage page) {
-    newRows.clear();
-    scoreData.clear();
-
-    // Do not dive too deep
-    final int depth = getWebDepth(page);
-    final int maxWebDepth = 3;
-    if (depth > maxWebDepth) {
-      counter.increase(NutchCounter.Counter.tooDeepPages);
-      return newRows;
-    }
-
-    Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
-    if (outlinks == null || outlinks.isEmpty()) {
-      return newRows;
-    }
-
-    outlinks.entrySet().stream().filter(e -> null != filterUrl(page, e.getKey().toString()))
-        .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth)).forEach(scoreData::add);
+  public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
+    final int depth = TableUtil.getWebDepth(sourcePage);
+    final int limit = 100;
+    final Map<CharSequence, CharSequence> outlinks = getOutlinks(sourcePage, depth, limit);
+    List<ScoreDatum> scoreData = outlinks.entrySet().stream()
+        .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth))
+        .collect(Collectors.toList());
 
     // TODO : Outlink filtering (i.e. "only keep the first n outlinks")
     try {
-      scoringFilters.distributeScoreToOutlinks(url, page, scoreData, outlinks.size());
+      scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, scoreData, outlinks.size());
     } catch (ScoringFilterException e) {
-      counter.increase(NutchCounter.Counter.scoringErrors);
-      LOG.warn("Distributing score failed for URL: " + url + " exception:" + StringUtil.stringifyException(e));
+      LOG.warn("Distributing score failed for URL : " + sourceUrl + " exception:" + StringUtil.stringifyException(e));
     }
 
-    /**
-     * annotation : @vincent the code is used to calculate page scores for each outlink of this page
-     * in our case, we are not interested in the weight of each page,
-     * we need the crawl goes faster, so we disable page rank by default
-     * */
-    int outlinkCount = 0;
-    for (ScoreDatum scoreDatum : scoreData) {
-      ++outlinkCount;
+    counter.increase(NutchCounter.Counter.outlinks, scoreData.size());
 
-      try {
-        String reversedUrl = TableUtil.reverseUrl(scoreDatum.getUrl());
-        newRows.add(buildDatum(url, reversedUrl, page));
-      } catch (MalformedURLException e) {
-        counter.increase(NutchCounter.Counter.errors);
-        LOG.warn(e.toString());
-      }
-    }
-
-    counter.increase(NutchCounter.Counter.outlinks, outlinkCount);
-
-    return newRows;
-  }
-
-  private int getWebDepth(WebPage page) {
-    int depth = Integer.MAX_VALUE;
-    CharSequence depthUtf8 = page.getMarkers().get(Nutch.DISTANCE);
-
-    if (depthUtf8 != null) {
-      depth = Integer.parseInt(depthUtf8.toString());
-    }
-
-    return depth;
+    return scoreData.stream().map(d -> createNewDatum(d.getUrl(), sourcePage))
+        .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
   }
 
   private ScoreDatum createScoreDatum(CharSequence url, CharSequence anchor, int depth) {

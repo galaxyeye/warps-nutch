@@ -40,9 +40,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -98,7 +96,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
     ignoreGenerated = !reGenerate || conf.getBoolean(PARAM_IGNORE_GENERATED, false);
 
-    this.nutchMetrics = new NutchMetrics(conf);
+    this.nutchMetrics = NutchMetrics.getInstance(conf);
     boolean ignoreUnreachableHosts = conf.getBoolean("generator.ignore.unreachable.hosts", true);
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
@@ -122,7 +120,13 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     String seedFileLockName = conf.get(PARAM_SEED_FILE_LOCK_NAME);
     if (seedFileLockName != null) {
-      seedUrlQueue.addAll(FSUtils.readAllSeeds(new Path(HDFS_PATH_ALL_SEED_FILE), new Path(seedFileLockName), conf));
+      List<String> seedUrls = FSUtils.readAllSeeds(new Path(HDFS_PATH_ALL_SEED_FILE), new Path(seedFileLockName), conf);
+      if (!seedUrls.isEmpty()) {
+        Collections.shuffle(seedUrls);
+        // TODO : since seeds have higher priority, we still need an algorithm to drop out the pages who does not change
+        // Random select a sub set of all urls, no more than 5000 because of the effiiency problem
+        seedUrlQueue.addAll(seedUrls.subList(0, 1000));
+      }
     }
 
     LOG.info(Params.format(
@@ -154,11 +158,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-//    if (LOG.isDebugEnabled()) {
-//      LOG.debug(reversedUrl);
-//      return;
-//    }
-
     String url = TableUtil.unreverseUrl(reversedUrl);
 
     // Host
@@ -174,23 +173,17 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return;
     }
 
-    SelectorEntry entry = new SelectorEntry();
-
     /**
      * We crawl seed every time we start, AdaptiveScheduler is just works
      * */
     if (TableUtil.isSeed(page)) {
-      entry.set(url, SCORE_SEED);
-      output(url, entry, page, context);
+      output(url, new SelectorEntry(url, SCORE_SEED), page, context);
       getCounter().increase(Counter.rowsIsSeed);
       return;
     }
 
-    // TODO : navigate
-
     if (TableUtil.isFromSeed(page) && crawlFilters.isDetailUrl(url)) {
-      entry.set(url, SCORE_PAGES_FROM_SEED);
-      output(url, entry, page, context);
+      output(url, new SelectorEntry(url, SCORE_PAGES_FROM_SEED), page, context);
       getCounter().increase(Counter.rowsDetailFromSeed);
       return;
     }
@@ -198,9 +191,12 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     // Page is injected, this is a seed url and has the highest fetch priority
     // INJECT_MARK will be removed in DbUpdate stage
     if (Mark.INJECT_MARK.hasMark(page)) {
-      entry.set(url, SCORE_INJECTED);
-      output(url, entry, page, context);
+      output(url, new SelectorEntry(url, SCORE_INJECTED), page, context);
       getCounter().increase(Counter.rowsInjected);
+      return;
+    }
+
+    if (2 > 1) {
       return;
     }
 
@@ -268,11 +264,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     } catch (ScoringFilterException ignored) {
     }
 
-    if (crawlFilters.hasOldUrlDate(url)) {
-      getCounter().increase(Counter.oldUrlDate);
-      return;
-    }
-
     // TODO : Move to a ScoreFilter
     // Detail pages comes first, but we still need some pages with other category
     if (crawlFilters.isDetailUrl(url)) {
@@ -283,23 +274,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
     }
 
-    // Sort by score
-    entry.set(url, score);
-
-    output(url, entry, page, context);
+    output(url, new SelectorEntry(url, score), page, context);
 
     getCounter().updateAffectedRows(url);
   }
-
-//  private boolean shouldFetch(String url, WebPage page, long currTime) {
-//    boolean should = false;
-//
-//
-//
-//    should = fetchSchedule.shouldFetch(url, page, pseudoCurrTime);
-//
-//    return should;
-//  }
 
   private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     // Generate time, we will use this mark to decide if we re-generate this page
@@ -378,11 +356,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
       page.setBatchId(batchId);
 
-      SelectorEntry entry = new SelectorEntry();
-
-      entry.set(url, SCORE_INJECTED);
-
-      output(url, entry, page, context);
+      output(url, new SelectorEntry(url, SCORE_INJECTED), page, context);
 
       getCounter().increase(Counter.rowsInjected);
       getCounter().updateAffectedRows(url);

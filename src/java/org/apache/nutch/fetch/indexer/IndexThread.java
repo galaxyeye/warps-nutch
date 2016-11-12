@@ -18,6 +18,7 @@ public class IndexThread extends Thread implements Comparable<IndexThread> {
   private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
   private final Configuration conf;
+
   private final int id;
 
   private AtomicBoolean halt = new AtomicBoolean(false);

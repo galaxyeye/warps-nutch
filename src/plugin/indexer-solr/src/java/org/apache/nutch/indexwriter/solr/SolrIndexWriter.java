@@ -26,6 +26,7 @@ import org.apache.nutch.indexer.IndexWriter;
 import org.apache.nutch.mapreduce.IndexJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.metadata.SolrConstants;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.solr.client.solrj.SolrClient;
@@ -45,11 +46,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
 
 public class SolrIndexWriter implements IndexWriter {
 
@@ -70,6 +74,9 @@ public class SolrIndexWriter implements IndexWriter {
   private int totalUpdates = 0;
   private boolean delete = false;
   private boolean writeFile = false;
+
+  private String reportSuffix;
+  private NutchMetrics nutchMetrics;
 
   private final List<SolrInputDocument> inputDocs = new ArrayList<>();
   private final List<SolrInputDocument> updateDocs = new ArrayList<>();
@@ -166,6 +173,15 @@ public class SolrIndexWriter implements IndexWriter {
     if (inputDocs.size() + numDeletes >= batchSize) {
       push();
     }
+
+    debugIndexDocTime(doc);
+  }
+
+  private void debugIndexDocTime(IndexDocument doc) {
+    IndexDocument debugDoc = new IndexDocument();
+    String[] debugFields = {"url", "page_category", "last_crawl_time", "publish_time", "fetch_time_history", "index_time_history"};
+    Arrays.stream(debugFields).forEachOrdered(f -> debugDoc.addIfNotNull(f, doc.getFieldValue(f)));
+    nutchMetrics.debugIndexDocTime(debugDoc.formatAsLine(), reportSuffix);
   }
 
   @Override
@@ -316,6 +332,9 @@ public class SolrIndexWriter implements IndexWriter {
         params.add(kv[0], kv[1]);
       }
     }
+
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
+    this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

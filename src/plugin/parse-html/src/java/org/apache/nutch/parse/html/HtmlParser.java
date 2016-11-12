@@ -216,7 +216,9 @@ public class HtmlParser implements Parser {
       domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
-    boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", true);
+    page.setVariable("outlinks_count", outlinks.size());
+
+    boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", false);
     if (noFollowDetailPage) {
       // sniffPageCategoryByTextDensity to see if this is a detail page, do not extract outlinks from detail pages
 

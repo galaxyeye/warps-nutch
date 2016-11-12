@@ -40,7 +40,7 @@
 
   <property>
     <name>fetcher.store.content</name>
-    <value>false</value>
+    <value>true</value>
     <description>since every content is index into solr, we do not store the content</description>
   </property>
 

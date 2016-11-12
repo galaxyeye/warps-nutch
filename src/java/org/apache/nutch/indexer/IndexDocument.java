@@ -17,6 +17,7 @@
 package org.apache.nutch.indexer;
 
 import org.apache.commons.collections4.map.LinkedMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -201,6 +202,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
     documentMeta.write(out);
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("doc {\n");
@@ -212,6 +214,23 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
       sb.append("\n");
     }
     sb.append("}\n");
+    return sb.toString();
+  }
+
+  public String formatAsLine() {
+    StringBuilder sb = new StringBuilder();
+
+    int i = 0;
+    for (Map.Entry<String, IndexField> entry : fields.entrySet()) {
+      if (i++ > 0) {
+        sb.append(", ");
+      }
+
+      sb.append(entry.getKey());
+      sb.append(" : ");
+      sb.append(StringUtils.replaceChars(format(entry.getValue()), "[]", ""));
+    }
+
     return sb.toString();
   }
 

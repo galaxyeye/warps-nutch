@@ -19,7 +19,6 @@ package org.apache.nutch.util;
 
 import org.junit.Test;
 
-import static org.apache.nutch.crawl.filters.CrawlFilter.DETAIL_PAGE_URL_PATTERN;
 import static org.junit.Assert.assertTrue;
 
 /** Unit tests for StringUtil methods. */
@@ -34,21 +33,5 @@ public class TestStringUtil {
     text = "http://aitxt.com/book/12313413874";
     regex = ".*";
     assertTrue(text.matches(regex));
-  }
-
-  @Test
-  public void testUrlPattern() {
-    String[] urls = {
-        "http://aitxt.com/2016/01/12313413874.html",
-        "http://aitxt.com/2019/02/12283413826.html",
-        "http://reli.cssn.cn/zjx/zjx_zjyj/zjx_jdjyj/201607/t20160722_3131878.shtml",
-        "http://aitxt.com/book/12313413874",
-        "http://aitxt.com/12313413874.html",
-        "http://company.stcn.com/2016/1013/12905266.shtml"
-    };
-
-    for (String url : urls) {
-      assertTrue(DETAIL_PAGE_URL_PATTERN.matcher(url).matches());
-    }
   }
 }

@@ -2,13 +2,13 @@ package org.apache.nutch.dbupdate;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.crawl.SignatureComparator;
+import org.apache.hadoop.io.Writable;
+import org.apache.nutch.crawl.*;
 import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.mapreduce.DbUpdateReducer;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.protocols.HttpDateFormat;
@@ -19,6 +19,8 @@ import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -31,9 +33,12 @@ import java.util.stream.Stream;
  */
 public class ReduceDatumBuilder {
 
+  public static final Logger LOG = LoggerFactory.getLogger(ReduceDatumBuilder.class);
+
   private final NutchCounter counter;
   private final int retryMax;
   private final int maxInterval;
+  private final int maxLinks;
   private final FetchSchedule fetchSchedule;
   private final ScoringFilters scoringFilters;
   private final CrawlFilters crawlFilters;
@@ -45,6 +50,7 @@ public class ReduceDatumBuilder {
 
     retryMax = conf.getInt("db.fetch.retry.max", 3);
     maxInterval = conf.getInt("db.fetch.interval.max", 0);
+    maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
     crawlFilters = CrawlFilters.create(conf);
@@ -52,6 +58,7 @@ public class ReduceDatumBuilder {
     params = Params.of(
         "retryMax", retryMax,
         "maxInterval", maxInterval,
+        "maxLinks", maxLinks,
         "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
         "scoringFilters", Stream.of(scoringFilters.getScoringFilterNames())
     );
@@ -59,24 +66,68 @@ public class ReduceDatumBuilder {
 
   public Params getParams() { return params; }
 
-  public void updateRow(String url, WebPage page) {
-    if (Mark.FETCH_MARK.hasMark(page)) {
-      processStatus(url, page);
+  public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
+    //check if page is already in the db
+    if(page == null && oldPage != null) {
+      // if we return here inlinks will not be updated
+      page = oldPage;
     }
+    else if (page == null) {
+      // Here we got a new webpage from outlink
+      if (!additionsAllowed) {
+        return;
+      }
+
+      page = createNewRow(url);
+
+      counter.increase(DbUpdateReducer.Counter.newRows);
+    }
+    else {
+      // process the main page
+      processFetchSchedule(url, page);
+    }
+
+    if (page.getInlinks() != null) {
+      page.getInlinks().clear();
+    }
+
+    updateRow(url, page);
+  }
+
+  /**
+   * The mapper phrase can set NutchWritable to be a WebPageWritable or a ScoreDatum,
+   * the WebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
+   * from that webpage
+   * */
+  public WebPage calculateInlinks(String url, Iterable<NutchWritable> values) {
+    WebPage page = null;
+    inlinkedScoreData.clear();
+
+    for (NutchWritable nutchWritable : values) {
+      Writable val = nutchWritable.get();
+      if (val instanceof WebPageWritable) {
+        page = ((WebPageWritable) val).getWebPage();
+      } else {
+        inlinkedScoreData.add((ScoreDatum) val);
+
+        if (inlinkedScoreData.size() >= maxLinks) {
+          LOG.info("Limit reached, skipping further inlinks for " + url);
+          break;
+        }
+      }
+    } // for
+
+    return page;
+  }
+
+  public void updateRow(String url, WebPage page) {
+//    if (Mark.FETCH_MARK.hasMark(page)) {
+//      processFetchSchedule(url, page);
+//    }
 
     calculateDistance(page);
 
-    calculateScore(url, page);
-
-    updateMetadata(page);
-
-    updateStatusCounter(page);
-  }
-
-  public void updateRowWithoutScoring(String url, WebPage page) {
-    if (Mark.FETCH_MARK.hasMark(page)) {
-      processStatus(url, page);
-    }
+    updateScore(url, page);
 
     updateMetadata(page);
 
@@ -97,10 +148,6 @@ public class ReduceDatumBuilder {
     }
 
     return page;
-  }
-
-  public List<ScoreDatum> getInlinkedScoreData() {
-    return this.inlinkedScoreData;
   }
 
   /**
@@ -140,9 +187,9 @@ public class ReduceDatumBuilder {
     }
   }
 
-  private void calculateScore(String url, WebPage page) {
+  private void updateScore(String url, WebPage page) {
     try {
-      scoringFilters.initialScore(url, page);
+      scoringFilters.updateScore(url, page, inlinkedScoreData);
     } catch (ScoringFilterException e) {
       page.setScore(0.0f);
       counter.increase(NutchCounter.Counter.errors);
@@ -167,7 +214,7 @@ public class ReduceDatumBuilder {
     }
   }
 
-  private void processStatus(String url, WebPage page) {
+  public void processFetchSchedule(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {

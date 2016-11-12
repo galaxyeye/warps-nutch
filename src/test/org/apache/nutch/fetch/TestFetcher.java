@@ -58,8 +58,7 @@ public class TestFetcher extends AbstractNutchTest {
   public void setUp() throws Exception {
     super.setUp();
     urlPath = new Path(testdir, "urls");
-    server = CrawlTestUtil.getServer(conf.getInt("content.server.port", 50000),
-        "build/test/data/fetch-test-site");
+    server = CrawlTestUtil.getServer(conf.getInt("content.server.port", 50000), "build/test/data/fetch-test-site");
     server.start();
   }
 
@@ -75,7 +74,7 @@ public class TestFetcher extends AbstractNutchTest {
   public void testFetch() throws Exception {
 
     // generate seedlist
-    ArrayList<String> urls = new ArrayList<String>();
+    ArrayList<String> urls = new ArrayList<>();
 
     addUrl(urls, "index.html");
     addUrl(urls, "pagea.html");
@@ -93,7 +92,7 @@ public class TestFetcher extends AbstractNutchTest {
     // generate
     long time = System.currentTimeMillis();
     GenerateJob g = new GenerateJob(conf);
-    String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), time, false, false);
+    String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), false, time, false, false);
 
     // fetch
     time = System.currentTimeMillis();

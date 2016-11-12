@@ -14,7 +14,6 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -78,11 +77,12 @@ public class JITIndexer {
       return; // filter urls not parsed
     }
 
-    ByteBuffer content = page.getContent();
-    if (minTextLenght > 0 && content.array().length < minTextLenght) {
-      // TODO : add a counter to report this case
-      return;
-    }
+    // page content may not stored
+//    ByteBuffer content = page.getContent();
+//    if (minTextLenght > 0 && content.array().length < minTextLenght) {
+//      // TODO : add a counter to report this case
+//      return;
+//    }
 
     indexTasks.add(fetchTask);
   }
@@ -135,14 +135,12 @@ public class JITIndexer {
       WebPage page = fetchTask.getPage();
 
       IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
+      doc = filter(doc, page);
       if (doc != null) {
-        String textContent = doc.getFieldValueAsString("text_content");
-        if (textContent != null && textContent.length() > minTextLenght) {
-          TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+        TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
 
-          synchronized (indexWriters) {
-            indexWriters.write(doc);
-          }
+        synchronized (indexWriters) {
+          indexWriters.write(doc);
         }
       } // if
     }
@@ -151,10 +149,42 @@ public class JITIndexer {
     }
   }
 
+  private IndexDocument filter(IndexDocument doc, WebPage page) {
+    if (doc == null || page == null) {
+      return null;
+    }
+
+    String textContent = doc.getFieldValueAsString("text_content");
+
+    if (textContent == null || textContent.length() < 200) {
+      return null;
+    }
+
+    // Index any page if it has publish time
+//    if (doc.getField("publish_time") != null && textContent.length() > 500) {
+//      return doc;
+//    }
+
+    // doc also contains page category information, but they are not accuracy
+//    int _char = textContent.length();
+//    double _a = page.getOutlinks().size();
+//    if (_a == 0) {
+//      _a = (double)page.getVariable("outlinks_count");
+//    }
+//
+//    // Index detail page only
+//    if (CrawlFilter.sniffPageCategoryByTextDensity(_char, _a) != CrawlFilter.PageCategory.DETAIL) {
+//      return null;
+//    }
+
+    return doc;
+  }
+
   private static boolean isParseSuccess(ParseStatus status) {
     if (status == null) {
       return false;
     }
+
     return status.getMajorCode() == ParseStatusCodes.SUCCESS;
   }
 }

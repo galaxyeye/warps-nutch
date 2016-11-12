@@ -66,7 +66,9 @@ public final class UrlWithScore implements WritableComparable<UrlWithScore> {
     this.score = new FloatWritable(score);
   }
 
-  public Text getReversedUrl() { return reversedUrl; }
+  public String getReversedUrl() { return reversedUrl.toString(); }
+
+  public Text getReversedUrlText() { return reversedUrl; }
 
   public void setReversedUrl(Text reversedUrl) {
     this.reversedUrl = reversedUrl;

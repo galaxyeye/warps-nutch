@@ -16,12 +16,12 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.hadoop.io.Writable;
+import org.apache.gora.store.DataStore;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 
@@ -45,6 +44,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
   private ReduceDatumBuilder datumBuilder;
   private boolean additionsAllowed;
   private int maxLinks;
+  public DataStore<String, WebPage> datastore;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -57,6 +57,12 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     additionsAllowed = conf.getBoolean(CRAWLDB_ADDITIONS_ALLOWED, true);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
+    try {
+      datastore = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+    }
+    catch (ClassNotFoundException e) {
+      throw new IOException(e);
+    }
 
     Params.of(
         "className", this.getClass().getSimpleName(),
@@ -76,44 +82,22 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     }
   }
 
+  /**
+   * We get a list of score datum who are inlinks to a webpage after partition,
+   * so the dbupdate phrase calculates the scores of all pages
+   * */
   private void doReduce(UrlWithScore key, Iterable<NutchWritable> values, Context context)
       throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-    String reversedUrl = key.getReversedUrl().toString();
+    String reversedUrl = key.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    WebPage page = null;
-    List<ScoreDatum> inlinkedScoreData = datumBuilder.getInlinkedScoreData();
-    inlinkedScoreData.clear();
+    // Calculate inlinked score data, and return the main web page
+    WebPage page = datumBuilder.calculateInlinks(url, values);
+    WebPage oldPage = datastore.get(reversedUrl);
 
-    /**
-     * Notice : @vincent Why the value type is not clear?
-     * */
-    for (NutchWritable nutchWritable : values) {
-      Writable val = nutchWritable.get();
-      if (val instanceof WebPageWritable) {
-        page = ((WebPageWritable) val).getWebPage();
-      } else {
-        inlinkedScoreData.add((ScoreDatum) val);
-        if (inlinkedScoreData.size() >= maxLinks) {
-          LOG.info("Limit reached, skipping further inlinks for " + url);
-          break;
-        }
-      }
-    } // for
-
-    if (page == null) {
-      if (!additionsAllowed) {
-        return;
-      }
-
-      page = datumBuilder.createNewRow(url);
-
-      getCounter().increase(Counter.newRows);
-    }
-
-    datumBuilder.updateRow(url, page);
+    datumBuilder.process(url, page, oldPage, additionsAllowed);
 
     getCounter().updateAffectedRows(url);
 
