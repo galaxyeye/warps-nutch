@@ -98,7 +98,7 @@ public class TasksMonitor {
     this.minCrawlDelay = (long) (conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000);
     this.pendingTimeout = conf.getLong("fetcher.pending.timeout", 3 * 60 * 1000);
 
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
     this.nutchMetrics = NutchMetrics.getInstance(conf);
     this.nutchMetrics.loadUnreachableHosts(unreachableHosts);
     this.debugUrls = conf.getBoolean("fetcher.debug.urls", false);
@@ -503,13 +503,6 @@ public class TasksMonitor {
     return queue;
   }
 
-  private void reportCost() {
-    String report = "Top slow hosts : \n" + workingQueues.getCostReport();
-    report += "\n";
-    REPORT_LOG.info(report);
-    nutchMetrics.writeReport(report, "queue-costs-" + reportSuffix + ".txt", true);
-  }
-
   private void reportServedThreads() {
     StringBuilder report = new StringBuilder();
     queueServedThreads.keySet().stream()
@@ -587,6 +580,14 @@ public class TasksMonitor {
 
     REPORT_LOG.info(sb.toString());
 
-    nutchMetrics.writeReport(sb.toString(), "queue-costs.txt-" + reportSuffix + ".txt", true);
+    nutchMetrics.writeReport(sb.toString(), "queue-costs-" + reportSuffix + ".txt", true);
   }
+
+  private void reportCost() {
+    String report = "Top slow hosts : \n" + workingQueues.getCostReport();
+    report += "\n";
+    REPORT_LOG.info(report);
+    nutchMetrics.writeReport(report, "queue-costs-" + reportSuffix + ".txt", true);
+  }
+
 }

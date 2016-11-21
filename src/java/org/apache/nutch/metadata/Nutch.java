@@ -192,7 +192,6 @@ public interface Nutch {
   String PARAM_NUTCH_REPORT_DIR = "nutch.report.dir";
   String PARAM_CRAWL_ID = "storage.crawl.id";
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
-  String PARAM_FETCH_PRIORITY = "fetcher.fetch.priority";
   String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
   String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
   String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
@@ -208,7 +207,7 @@ public interface Nutch {
   String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
   String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
 
-  String PARAM_SEED_FILE_LOCK_NAME = "seed.file.lock.name";
+  // String PARAM_SEED_FILE_LOCK_NAME = "seed.file.lock.name";
 
   /**
    * Fetch parameters
@@ -258,6 +257,7 @@ public interface Nutch {
   String DOC_FIELD_TEXT_CONTENT = "text_content";
   String DOC_FIELD_HTML_CONTENT = "html_content";
   String DOC_FIELD_PAGE_CATEGORY = "page_category";
+  String DOC_FIELD_PUBLISH_TIME = "publish_time";
 
   /**
    * Program keys
@@ -286,6 +286,6 @@ public interface Nutch {
 
   String FILE_UNREACHABLE_HOSTS = "unreachable-hosts.txt";
 
-  // TODO : avoid hard coding
-  String HDFS_PATH_ALL_SEED_FILE = "hdfs://galaxyeye:9000/tmp/nutch-seeds/all.txt";
+  // TODO : mark it as a hdfs path
+  String PATH_ALL_SEED_FILE = "/tmp/nutch-seeds/all.txt";
 }

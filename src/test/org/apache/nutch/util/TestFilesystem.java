@@ -19,7 +19,7 @@ public class TestFilesystem {
 
   @Test
   public void testFiles() throws IOException {
-    String readableTime = new SimpleDateFormat("MMdd.hhmmss").format(System.currentTimeMillis());
+    String readableTime = new SimpleDateFormat("MMdd.HHmmss").format(System.currentTimeMillis());
 
     Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
 
@@ -30,7 +30,7 @@ public class TestFilesystem {
 
   @Test
   public void testCreateFiles() throws IOException {
-    String readableTime = new SimpleDateFormat("MMdd.hhmmss").format(System.currentTimeMillis());
+    String readableTime = new SimpleDateFormat("MMdd.HHmmss").format(System.currentTimeMillis());
 
     Path cmdFile = Paths.get("/tmp/nutch/command/test." + readableTime + ".sh");
     Files.write(cmdFile, "#bin\necho hello world".getBytes(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);

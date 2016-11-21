@@ -17,10 +17,6 @@
 
 package org.apache.nutch.parse.html;
 
-import com.kohlschutter.boilerpipe.BoilerpipeProcessingException;
-import com.kohlschutter.boilerpipe.document.TextDocument;
-import com.kohlschutter.boilerpipe.extractors.ChineseNewsExtractor;
-import com.kohlschutter.boilerpipe.sax.BoilerpipeSAXInput;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
@@ -39,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DocumentFragment;
+import org.warps.scent.document.TextDocument;
+import org.warps.scent.extractors.ChineseNewsExtractor;
+import org.warps.scent.sax.SAXInput;
+import org.warps.scent.util.ProcessingException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -130,7 +130,7 @@ public class HtmlParser implements Parser {
     if (!metaTags.getNoIndex()) { // okay to index
       // Get input source, again. It's not reusable
       InputSource input2 = getContentAsInputSource(page, encoding);
-      extractByBoilerpipe(page, input2);
+      extractByScent(page, input2);
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
@@ -253,8 +253,8 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void extractByBoilerpipe(WebPage page, InputSource input) {
-    LOG.trace("Try extract by boilerpipe");
+  private void extractByScent(WebPage page, InputSource input) {
+    LOG.trace("Try extract by Scent");
 
     if (page.getContent() == null) {
       LOG.warn("Can not extract content, page content is null");
@@ -262,7 +262,8 @@ public class HtmlParser implements Parser {
     }
 
     try {
-      TextDocument doc = new BoilerpipeSAXInput(input).getTextDocument();
+      TextDocument doc = new SAXInput(input).getTextDocument();
+      doc.setBaseUrl(page.getBaseUrl().toString());
 
       ChineseNewsExtractor extractor = new ChineseNewsExtractor();
       extractor.setRegexFieldRules(regexExtractor.getRegexFieldRules());
@@ -280,7 +281,7 @@ public class HtmlParser implements Parser {
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
       doc.getFields().entrySet().stream().forEach(entry -> page.setVariable(entry.getKey(), entry.getValue()));
-    } catch (BoilerpipeProcessingException |SAXException e) {
+    } catch (ProcessingException |SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
     }
   }

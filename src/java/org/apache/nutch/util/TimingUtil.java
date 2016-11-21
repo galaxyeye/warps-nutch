@@ -76,7 +76,8 @@ public class TimingUtil {
   };
 
   public static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.hhmmss");
+
+  public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.HHmmss");
 
   public static long[] TIME_FACTOR = { 60 * 60 * 1000, 60 * 1000, 1000 };
 

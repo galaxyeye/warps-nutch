@@ -159,7 +159,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
             try {
               modifiedTime = HttpDateFormat.toLong(lastModified.toString());
               prevModifiedTime = page.getModifiedTime();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
           }
           schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime,

@@ -76,7 +76,7 @@ numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
 # It's depend on how fast do you want to finish the fetch loop
-sizeFetchlist=`expr $numSlaves \* 3000`
+sizeFetchlist=`expr $numSlaves \* 1000`
 
 # time limit for feching
 timeLimitFetch=180
@@ -113,7 +113,7 @@ fi
 function __bin_nutch {
   # run $bin/nutch, exit if exit value indicates error
 
-  echo "$bin/nutch $@" ;# echo command and arguments
+  echo "$bin/nutch $@" ; # echo command and arguments
   "$bin/nutch" "$@"
 
   RETCODE=$?
@@ -170,6 +170,26 @@ do
   echo "Fetching : "
   # __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
   __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+
+  DATE=`date +%s`
+  HOUR=`date +%k`
+  # HOUR=1
+  if (($HOUR<=6)) || (($HOUR>=22)); then
+    echo "Good night, I will sleep for 30 minutes, to awake me, use command : >>>"
+    echo "touch .AWAKE"
+    echo "<<<"
+
+    for i in {1..180}
+    do
+      if [ -e ".AWAKE" ]; then
+        echo "AWAKE file found - escaping loop"
+        mv .AWAKE ".AWAKE_EXECUTED_$DATE"
+        break
+      else
+        sleep 10s
+      fi
+    done
+  fi
 
 done
 

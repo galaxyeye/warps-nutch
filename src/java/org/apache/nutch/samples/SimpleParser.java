@@ -19,9 +19,6 @@ package org.apache.nutch.samples;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kohlschutter.boilerpipe.BoilerpipeProcessingException;
-import com.kohlschutter.boilerpipe.document.TextDocument;
-import com.kohlschutter.boilerpipe.sax.BoilerpipeSAXInput;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +42,9 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.warps.scent.document.TextDocument;
+import org.warps.scent.sax.SAXInput;
+import org.warps.scent.util.ProcessingException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -150,7 +150,7 @@ public class SimpleParser extends Configured {
       if (page != null) {
         extract(page);
       }
-    } catch (ProtocolNotFound|SAXException|IOException|BoilerpipeProcessingException e) {
+    } catch (ProtocolNotFound|SAXException|IOException|ProcessingException e) {
       LOG.error(e.getMessage());
     }
   }
@@ -165,7 +165,7 @@ public class SimpleParser extends Configured {
     return new InputSource(stream);
   }
 
-  public void extract(WebPage page) throws IOException, SAXException, BoilerpipeProcessingException {
+  public void extract(WebPage page) throws IOException, SAXException, ProcessingException {
     InputSource input = getContentAsInputSource(page);
 
     EncodingDetector encodingDetector = new EncodingDetector(getConf());
@@ -173,8 +173,8 @@ public class SimpleParser extends Configured {
     input.setEncoding(encoding);
 
     input = getContentAsInputSource(page);
-    TextDocument boilerpipeDoc = new BoilerpipeSAXInput(input).getTextDocument();
-    System.out.println(boilerpipeDoc.getText(true, true));
+    TextDocument scentDoc = new SAXInput(input).getTextDocument();
+    System.out.println(scentDoc.getText(true, true));
   }
 
   public WebPage getWebPage() {

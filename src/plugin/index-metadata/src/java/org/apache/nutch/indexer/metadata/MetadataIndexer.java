@@ -63,7 +63,7 @@ public class MetadataIndexer implements IndexingFilter {
   public void setConf(Configuration conf) {
     this.conf = conf;
 
-    conf.getStringCollection(PARSE_CONF_PROPERTY).stream().forEach(metatag -> {
+    conf.getStringCollection(PARSE_CONF_PROPERTY).forEach(metatag -> {
       String key = PARSE_META_PREFIX + metatag.toLowerCase(Locale.ROOT);
       String value = INDEX_PREFIX + metatag;
 
@@ -74,7 +74,7 @@ public class MetadataIndexer implements IndexingFilter {
     resourceCategory = new ResourceCategory(conf);
 
     this.nutchMetrics = NutchMetrics.getInstance(conf);
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
 
 //    LOG.info(StringUtil.formatAsLine(
 //        "className", this.getClass().getSimpleName(),
@@ -182,8 +182,8 @@ public class MetadataIndexer implements IndexingFilter {
             Arrays.stream(metadata.split("\t")).forEach(v -> doc.add(finalK, v));
           }
         }
-      }
-    }
+      } // if
+    } // for
 
     return doc;
   }

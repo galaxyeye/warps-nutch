@@ -23,6 +23,8 @@ import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.JobConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -31,6 +33,8 @@ import java.util.Map;
 import java.util.Random;
 
 public class NutchUtil {
+
+  public static final Logger LOG = LoggerFactory.getLogger(NutchUtil.class);
 
   public static String generateBatchId() {
     return (System.currentTimeMillis() / 1000) + "-" + Math.abs(new Random().nextInt());

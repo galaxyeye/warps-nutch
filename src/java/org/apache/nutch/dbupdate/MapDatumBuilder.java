@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
 import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
+import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
 
 /**
  * Created by vincent on 16-9-25.
@@ -45,18 +46,14 @@ public class MapDatumBuilder {
   private NutchCounter counter;
   private Configuration conf;
 
-  private ScoringFilters scoringFilters;
-
   private final String batchId;
-
-  private final int MAX_WEB_DEPTH = 3;
-
+  private final int maxDistance;
   private final boolean normalize;
   private final boolean filter;
   private final URLNormalizers normalizers;
   private final URLFilters urlFilters;
   private final CrawlFilters crawlFilters;
-  private final boolean pageRankEnabled = false;
+  private ScoringFilters scoringFilters;
 
   public MapDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -64,15 +61,14 @@ public class MapDatumBuilder {
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
 
-    scoringFilters = new ScoringFilters(conf);
+    maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
     normalize = conf.getBoolean(URL_NORMALIZING, true);
     filter = conf.getBoolean(URL_FILTERING, true);
-
     normalizers = normalize ? new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK) : null;
     urlFilters = filter ? new URLFilters(conf) : null;
-
     crawlFilters = CrawlFilters.create(conf);
+    scoringFilters = new ScoringFilters(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -80,7 +76,7 @@ public class MapDatumBuilder {
         "batchId", batchId,
         "normalize", normalize,
         "filter", filter,
-        "pageRankEnabled", pageRankEnabled
+        "maxDistance", maxDistance
     ));
   }
 
@@ -89,27 +85,21 @@ public class MapDatumBuilder {
   }
 
   // TODO : make sure url == page.getBaseUrl()
-  public String filterUrl(WebPage page, String url) {
+  public String filterUrl(WebPage mainPage, String url) {
     try {
       if (normalize) {
         url = normalizers.normalize(url, URLNormalizers.SCOPE_OUTLINK);
       }
 
-      // We always follow detail urls from seed page
-      if (TableUtil.isSeed(page) && crawlFilters.isDetailUrl(url)) {
-        return url;
-      }
-
       if (filter) {
+        url = temporaryUrlFilter(url, mainPage);
+
+        // We explicitly follow detail urls from seed page TODO : this can be avoid
+        if (TableUtil.isSeed(mainPage) && crawlFilters.isDetailUrl(url)) {
+          return url;
+        }
+
         url = urlFilters.filter(url);
-      }
-
-      if (crawlFilters.hasOldUrlDate(url)) {
-        url = null;
-      }
-
-      if (crawlFilters.isSearchUrl(url) || crawlFilters.isMediaUrl(url)) {
-        url = null;
       }
     } catch (URLFilterException | MalformedURLException e) {
       LOG.error(e.toString());
@@ -118,15 +108,35 @@ public class MapDatumBuilder {
     return url;
   }
 
-  public Pair<UrlWithScore, NutchWritable> buildDatum(String reversedUrl, WebPage page) {
+  // TODO : make it a plugin
+  private String temporaryUrlFilter(String url, WebPage mainPage) {
+    if (crawlFilters.isSearchUrl(url) || crawlFilters.isMediaUrl(url)) {
+      url = null;
+    }
+
+    if (crawlFilters.hasOldUrlDate(url)) {
+      url = null;
+    }
+
+    return url;
+  }
+
+  /**
+   * Build map phrase datum
+   * */
+  public Pair<UrlWithScore, NutchWritable> buildMainDatum(String reversedUrl, WebPage page) {
     NutchWritable nutchWritable = new NutchWritable();
     nutchWritable.set(new WebPageWritable(conf, page));
     return Pair.of(new UrlWithScore(reversedUrl, Float.MAX_VALUE), nutchWritable);
   }
 
+  /**
+   * Build map phrase datum
+   * */
   public Pair<UrlWithScore, NutchWritable> createNewDatum(String url, WebPage sourcePage) {
     int priority = TableUtil.calculatePriority(url, sourcePage, crawlFilters);
     float score = calculatePageScore(url, priority, sourcePage);
+
     String reversedUrl = null;
     try {
       reversedUrl = TableUtil.reverseUrl(url);
@@ -138,20 +148,20 @@ public class MapDatumBuilder {
     return Pair.of(new UrlWithScore(reversedUrl, score), nutchWritable);
   }
 
-  public Map<CharSequence, CharSequence> getOutlinks(WebPage sourcePage, final int depth, final int limit) {
+  public Map<CharSequence, CharSequence> getFilteredOutlinks(WebPage sourcePage, final int depth, final int limit) {
     // Do not dive too deep
     final Map<CharSequence, CharSequence> outlinks = sourcePage.getOutlinks();
 
-    if (depth > MAX_WEB_DEPTH) {
+    if (depth > maxDistance) {
       counter.increase(NutchCounter.Counter.tooDeepPages);
     }
 
-    if (depth > MAX_WEB_DEPTH || outlinks == null || outlinks.isEmpty()) {
+    if (depth > maxDistance || outlinks == null || outlinks.isEmpty()) {
       return new HashMap<>();
     }
 
-    return outlinks.keySet().stream().limit(limit)
-        .filter(link -> isValidUrl(sourcePage, link)).collect(Collectors.toMap(link -> link, outlinks::get));
+    return outlinks.keySet().stream().filter(link -> isValidUrl(sourcePage, link))
+            .limit(limit).collect(Collectors.toMap(link -> link, outlinks::get));
   }
 
   /**
@@ -161,17 +171,19 @@ public class MapDatumBuilder {
    * */
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = TableUtil.getWebDepth(sourcePage);
-    final int limit = 100;
-    final Map<CharSequence, CharSequence> outlinks = getOutlinks(sourcePage, depth, limit);
+    final int limit = 1000;
+
+    final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, depth, limit);
     List<ScoreDatum> scoreData = outlinks.entrySet().stream()
         .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth))
         .collect(Collectors.toList());
 
     // TODO : Outlink filtering (i.e. "only keep the first n outlinks")
     try {
+      // In OPIC, the source page's score is distributed for all inlink/outlink pages
       scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, scoreData, outlinks.size());
     } catch (ScoringFilterException e) {
-      LOG.warn("Distributing score failed for URL : " + sourceUrl + " exception:" + StringUtil.stringifyException(e));
+      LOG.warn("Distributing score failed for URL : " + sourceUrl + " Exception:" + StringUtil.stringifyException(e));
     }
 
     counter.increase(NutchCounter.Counter.outlinks, scoreData.size());
