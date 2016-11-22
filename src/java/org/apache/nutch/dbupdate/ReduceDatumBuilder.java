@@ -84,11 +84,7 @@ public class ReduceDatumBuilder {
     }
     else {
       // process the main page
-      processFetchSchedule(url, page);
-    }
-
-    if (page.getInlinks() != null) {
-      page.getInlinks().clear();
+      updateFetchSchedule(url, page);
     }
 
     updateRow(url, page);
@@ -121,11 +117,7 @@ public class ReduceDatumBuilder {
   }
 
   public void updateRow(String url, WebPage page) {
-//    if (Mark.FETCH_MARK.hasMark(page)) {
-//      processFetchSchedule(url, page);
-//    }
-
-    calculateDistance(page);
+    calculateInlinksAndDistance(page);
 
     updateScore(url, page);
 
@@ -157,12 +149,10 @@ public class ReduceDatumBuilder {
    * If the new distance is smaller than old one (or if old did not exist yet),
    * write it to the page.
    * */
-  private void calculateDistance(WebPage page) {
-    if (page.getInlinks() == null) {
-      return;
+  private void calculateInlinksAndDistance(WebPage page) {
+    if (page.getInlinks() != null) {
+      page.getInlinks().clear();
     }
-
-    page.getInlinks().clear();
 
     int smallestDist = Integer.MAX_VALUE;
     for (ScoreDatum inlink : inlinkedScoreData) {
@@ -174,15 +164,11 @@ public class ReduceDatumBuilder {
     }
 
     if (smallestDist != Integer.MAX_VALUE) {
-      int oldDistance = Integer.MAX_VALUE;
-      CharSequence oldDistUtf8 = page.getMarkers().get(Nutch.DISTANCE);
-      if (oldDistUtf8 != null) {
-        oldDistance = Integer.parseInt(oldDistUtf8.toString());
-      }
-
+      int oldDistance = TableUtil.getWebDepth(page);
       int newDistance = smallestDist + 1;
+
       if (newDistance < oldDistance) {
-        page.getMarkers().put(Nutch.DISTANCE, new Utf8(Integer.toString(newDistance)));
+        TableUtil.setWebDepth(page, newDistance);
       }
     }
   }
@@ -194,6 +180,9 @@ public class ReduceDatumBuilder {
       page.setScore(0.0f);
       counter.increase(NutchCounter.Counter.errors);
     }
+
+    // if page contains date string of today, and it's an index page
+    // it should have a very high score
   }
 
   private void updateMetadata(WebPage page) {
@@ -214,11 +203,11 @@ public class ReduceDatumBuilder {
     }
   }
 
-  public void processFetchSchedule(String url, WebPage page) {
+  public void updateFetchSchedule(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {
-      case CrawlStatus.STATUS_FETCHED: // succesful fetch
+      case CrawlStatus.STATUS_FETCHED: // successful fetch
       case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
       case CrawlStatus.STATUS_REDIR_PERM:
       case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, notmodified

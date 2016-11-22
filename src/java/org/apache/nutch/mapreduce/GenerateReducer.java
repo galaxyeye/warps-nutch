@@ -19,6 +19,7 @@ package org.apache.nutch.mapreduce;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import org.apache.avro.util.Utf8;
+import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
@@ -27,10 +28,12 @@ import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
+import org.mortbay.util.ArrayQueue;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Queue;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -45,7 +48,12 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
   public static final Logger LOG = GenerateJob.LOG;
 
-  private enum Counter { hosts, hostCountTooLarge, malformedUrl, isSeed, isFromSeed }
+  private enum Counter { hosts, hostCountTooLarge, malformedUrl, pagesInjected, isSeed, isFromSeed }
+
+  /**
+   * Injector
+   */
+  private SeedBuilder seedBuiler;
 
   private long limit;
   private long maxCountPerHost;
@@ -65,12 +73,13 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
 
     // Generate top N links only
-    limit = conf.getLong(PARAM_GENERATOR_TOP_N, Long.MAX_VALUE);
+    limit = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
     limit /= context.getNumReduceTasks();
 
     maxCountPerHost = conf.getLong(PARAM_GENERATOR_MAX_TASKS_PER_HOST, 10000);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     nutchMetrics = NutchMetrics.getInstance(conf);
+    this.seedBuiler = new SeedBuilder(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -83,8 +92,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
   }
 
   @Override
-  protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context)
-      throws IOException, InterruptedException {
+  protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     if (LOG.isTraceEnabled()) {
@@ -100,42 +108,59 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     }
 
     for (WebPage page : values) {
-      if (count >= limit) {
-        stop("Enough pages generated, quit");
-        break;
-      }
-
-      addGeneratedHosts(host);
-      if (maxCountPerHost > 0 && hostNames.count(host) > maxCountPerHost) {
-        getCounter().increase(Counter.hostCountTooLarge);
-        break;
-      }
-
-      Mark.INJECT_MARK.removeMarkIfExist(page);
-      Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
-      page.setBatchId(batchId);
-
       try {
-        context.write(TableUtil.reverseUrl(key.url), page);
-
-        if (TableUtil.isSeed(page)) {
-          getCounter().increase(Counter.isSeed);
-        }
-        else if (TableUtil.isFromSeed(page)) {
-          getCounter().increase(Counter.isFromSeed);
+        if (count >= limit) {
+          stop("Enough pages generated, quit");
+          break;
         }
 
-        getCounter().updateAffectedRows(key.url);
+        addGeneratedHosts(host);
+        if (maxCountPerHost > 0 && hostNames.count(host) > maxCountPerHost) {
+          getCounter().increase(Counter.hostCountTooLarge);
+          break;
+        }
 
-        context.setStatus(getCounter().getStatusString());
+        page = updatePage(url, page);
 
-      } catch (MalformedURLException e) {
-        getCounter().increase(Counter.malformedUrl);
-        continue;
+        context.write(TableUtil.reverseUrl(url), page);
+
+        updateStatus(url, page, context);
+
+        ++count;
       }
-
-      ++count;
+      catch (Throwable e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     } // for
+  }
+
+  private WebPage updatePage(String url, WebPage page) {
+    if (TableUtil.isSeed(page)) {
+      // TODO : check why some fields are not passed properly from mapper phrase
+      page = seedBuiler.buildWebPage(url);
+    }
+
+    page.setBatchId(batchId);
+    // Generate time, we will use this mark to decide if we re-generate this page
+    TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
+
+    Mark.INJECT_MARK.removeMarkIfExist(page);
+    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+
+    return page;
+  }
+
+  private void updateStatus(String url, WebPage page, Context context) throws IOException {
+    if (TableUtil.isSeed(page)) {
+      getCounter().increase(Counter.isSeed);
+    }
+    else if (TableUtil.isFromSeed(page)) {
+      getCounter().increase(Counter.isFromSeed);
+    }
+
+    getCounter().updateAffectedRows(url);
+
+    context.setStatus(getCounter().getStatusString());
   }
 
   @Override

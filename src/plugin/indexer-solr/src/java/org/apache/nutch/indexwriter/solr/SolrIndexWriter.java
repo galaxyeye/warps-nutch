@@ -179,7 +179,7 @@ public class SolrIndexWriter implements IndexWriter {
 
   private void debugIndexDocTime(IndexDocument doc) {
     IndexDocument debugDoc = new IndexDocument();
-    String[] debugFields = {"url", "page_category", "last_crawl_time", "publish_time", "fetch_time_history", "index_time_history"};
+    String[] debugFields = {"page_category", "last_crawl_time", "publish_time", "url"};
     Arrays.stream(debugFields).forEachOrdered(f -> debugDoc.addIfNotNull(f, doc.getFieldValue(f)));
     nutchMetrics.debugIndexDocTime(debugDoc.formatAsLine(), reportSuffix);
   }
@@ -315,7 +315,7 @@ public class SolrIndexWriter implements IndexWriter {
       throw new RuntimeException("Failed to init SolrIndexWriter");
     }
 
-    batchSize = conf.getInt(SolrConstants.COMMIT_SIZE, 200);
+    batchSize = conf.getInt(SolrConstants.COMMIT_SIZE, 250);
     delete = conf.getBoolean(IndexJob.INDEXER_DELETE, false);
     String paramString = conf.get(IndexJob.INDEXER_PARAMS);
 
@@ -333,7 +333,7 @@ public class SolrIndexWriter implements IndexWriter {
       }
     }
 
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.hhmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
     this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     LOG.info(Params.format(

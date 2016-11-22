@@ -29,10 +29,9 @@ public class HadoopFSUtil {
   /**
    * Check if running under distributed file system
    * */
-  public static boolean isDistributed(Configuration conf) {
-    String fsName = conf.get("fs.default.name");
-
-    return fsName.startsWith("hdfs");
+  public static boolean isDistributedFS(Configuration conf) {
+    String fsName = conf.get("fs.defaultFS");
+    return fsName != null && fsName.startsWith("hdfs");
   }
 
   /**

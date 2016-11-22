@@ -5,7 +5,6 @@ import org.apache.nutch.mapreduce.NutchReporter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.TimingUtil;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,8 +99,8 @@ public class NutchMetrics implements AutoCloseable {
   }
 
   public void reportUrlsFromSeed(String url, String seedUrl, String reportSuffix) {
-    String reportString = seedUrl + " -> " + url;
-    writeReport(reportString, "fetch-redirects-" + reportSuffix + ".txt");
+    String reportString = seedUrl + " -> " + url + "\n";
+    writeReport(reportString, "fetch-urls-from-seed-" + reportSuffix + ".txt");
   }
 
   public void reportFetchTimeHistory(String fetchTimeHistory, String reportSuffix) {
@@ -187,11 +186,11 @@ public class NutchMetrics implements AutoCloseable {
       // TODO : flush only when the buffer is full?
       writer.flush();
     } catch (IOException e) {
-      Log.warn("Failed to write report : " + e.toString());
+      LOG.error("Failed to write report : " + e.toString());
     }
 
     if (printPath) {
-      Log.info("Report written to " + reportFile.toAbsolutePath());
+      LOG.info("Report written to " + reportFile.toAbsolutePath());
     }
   }
 

@@ -109,9 +109,9 @@ public class OPICScoringFilter implements ScoringFilter {
     float factor = 1.0f;
 
     // We crawl detail url with higher priority
-    if (crawlFilters.isDetailUrl(url)) {
-      factor = 10000.0f;
-    }
+//    if (crawlFilters.isDetailUrl(url)) {
+//      factor = Nutch.FETCH_PRIORITY_DETAIL_PAGE;
+//    }
 
     for (ScoreDatum scoreDatum : inlinkedScoreData) {
       adjust += scoreDatum.getScore();
@@ -119,6 +119,7 @@ public class OPICScoringFilter implements ScoringFilter {
 
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
+
     ByteBuffer cashRaw = row.getMetadata().get(CASH_KEY);
     float cash = 0.0f;
     if (cashRaw != null) {
@@ -130,8 +131,7 @@ public class OPICScoringFilter implements ScoringFilter {
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage row,
-      Collection<ScoreDatum> scoreData, int allCount) {
+  public void distributeScoreToOutlinks(String fromUrl, WebPage row, Collection<ScoreDatum> scoreData, int allCount) {
     ByteBuffer cashRaw = row.getMetadata().get(CASH_KEY);
     if (cashRaw == null) {
       return;
@@ -150,7 +150,7 @@ public class OPICScoringFilter implements ScoringFilter {
     for (ScoreDatum scoreDatum : scoreData) {
       try {
         String toHost = new URL(scoreDatum.getUrl()).getHost();
-        String fromHost = new URL(fromUrl.toString()).getHost();
+        String fromHost = new URL(fromUrl).getHost();
         if (toHost.equalsIgnoreCase(fromHost)) {
           scoreDatum.setScore(internalScore);
         } else {

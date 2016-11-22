@@ -10,6 +10,7 @@ import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -29,7 +30,7 @@ public class JITIndexer {
 
   private Configuration conf;
 
-  private int batchSize = 1000;
+  private int batchSize = 2000;
   private int indexThreadCount;
   private int minTextLenght;
 
@@ -145,7 +146,7 @@ public class JITIndexer {
       } // if
     }
     catch (Throwable e) {
-      LOG.error("Failed to index a page" + e.toString());
+      LOG.error("Failed to index a page " + StringUtil.stringifyException(e));
     }
   }
 

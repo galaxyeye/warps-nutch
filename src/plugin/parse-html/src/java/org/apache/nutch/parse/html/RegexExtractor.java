@@ -1,12 +1,12 @@
 package org.apache.nutch.parse.html;
 
 import com.google.common.collect.*;
-import com.kohlschutter.boilerpipe.labels.DefaultLabels;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.warps.scent.document.BlockLabels;
 
 import java.io.*;
 import java.util.LinkedHashSet;
@@ -58,7 +58,7 @@ public class RegexExtractor implements Configurable {
    * TODO : load from configuration files
    * */
   private void init() {
-    labeledFieldRules.put("article_title", DefaultLabels.TITLE);
+    labeledFieldRules.put("article_title", BlockLabels.TITLE);
 
     regexFieldRules.put("author", "(记者：)\\s*([一-龥]+)");
     regexFieldRules.put("director", "(编辑：)\\s*([一-龥]+)");

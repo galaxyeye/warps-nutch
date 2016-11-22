@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_SEED;
 
 /**
  * Created by vincent on 16-9-24.
@@ -44,7 +45,7 @@ public class SeedBuilder {
   /** Custom page score */
   private float customPageScore;
   /** Custom fetch interval in second */
-  private int customFetchIntervalSec;
+  private int customFetchIntervalSec = -1;
   /** Fetch interval in second */
   private int fetchIntervalSec;
   private float scoreInjected;
@@ -76,7 +77,7 @@ public class SeedBuilder {
 
     String url = StringUtils.substringBefore(urlLine, "\t");
 
-    Map<String, String> metadata = getMetadata(urlLine);
+    Map<String, String> metadata = buildMetadata(urlLine);
     // Add metadata to page
     TableUtil.putAllMetadata(row, metadata);
 
@@ -95,6 +96,7 @@ public class SeedBuilder {
       return row;
     }
 
+    // TODO : Check the difference between hbase.url and page.baseUrl
     row.setVariable("url", url);
     row.setVariable("reversedUrl", reversedUrl);
 
@@ -111,6 +113,9 @@ public class SeedBuilder {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
+    TableUtil.setPriority(row, FETCH_PRIORITY_SEED);
+
+    // TODO : DISTANCE should be metadata
     row.getMarkers().put(Nutch.DISTANCE, new Utf8(String.valueOf(0)));
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);
 
@@ -124,10 +129,14 @@ public class SeedBuilder {
     // For seeds, we re-fetch it every time we start the loop
     int fetchInterval = (int)Duration.ofMinutes(1).getSeconds();
 
+    if (customFetchIntervalSec != -1) {
+      fetchInterval = customFetchIntervalSec;
+    }
+
     return fetchInterval;
   }
 
-  private Map<String, String> getMetadata(String seedUrl) {
+  private Map<String, String> buildMetadata(String seedUrl) {
     Map<String, String> metadata = new TreeMap<>();
     metadata.put(META_IS_SEED, Nutch.YES_STRING);
 

@@ -36,17 +36,14 @@ import java.util.Properties;
  */
 public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHeaders, Nutch, Feed {
 
-  /**
-   * Nutch metadata
-   * */
   /** Fetch time history, comma seperated fetch timestamp */
-  public static final String META_FETCH_TIME_HISTORY = "META-NUTCH-FETCH-TIME-HISTORY";
-  public static final String META_INDEX_TIME_HISTORY = "META-NUTCH-INDEX-TIME-HISTORY";
-  public static final String META_TMP = "META-TMP-";
+  public static final String META_FETCH_TIME_HISTORY = "NUTCH-FETCH-TIME-HISTORY";
+  public static final String META_INDEX_TIME_HISTORY = "NUTCH-INDEX-TIME-HISTORY";
+  public static final String META_TMP = "TMP-";
   public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
-  public static final String META_IS_NAVIGATOR = "META-IS-NAVIGATOR";
-  public static final String META_IS_SEED = "META-IS-SEED";
-  public static final String META_FROM_SEED = "META-FROM-SEED";
+  public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
+  public static final String META_IS_SEED = "IS-SEED";
+  public static final String META_FROM_SEED = "FROM-SEED";
 
   /**
    * A map of all metadata attributes.

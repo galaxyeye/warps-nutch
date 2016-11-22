@@ -199,7 +199,7 @@
 
   <property>
     <name>db.update.max.outlinks</name>
-    <value>10</value>
+    <value>1000</value>
   </property>
 
   <!-- Parsing -->
@@ -232,6 +232,15 @@
 
   <!-- Generate -->
   <property>
+    <name>generate.max.distance</name>
+    <value>2</value>
+    <description>The maximum distance of an URL that the generator is allowed
+      to select for fetch. The distance is the smallest number of nodes (shortest path)
+      of an URL from the original injected URL. (Injected URLs have distance 0).
+    </description>
+  </property>
+
+  <property>
     <name>generator.map.threads.per.task</name>
     <value>50</value>
     <description></description>
@@ -250,7 +259,7 @@
   </property>
   <property>
     <name>solr.commit.size</name>
-    <value>100</value>
+    <value>250</value>
     <description>solr collection</description>
   </property>
 

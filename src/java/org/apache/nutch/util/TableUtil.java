@@ -31,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 
+import static org.apache.nutch.metadata.Metadata.META_FETCH_PRIORITY;
 import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -224,18 +225,18 @@ public class TableUtil {
    * TODO : use a standalone field for page
    * */
   public static void setPriority(WebPage page, int priority) {
-    TableUtil.putMetadata(page, PARAM_FETCH_PRIORITY, String.valueOf(priority));
+    TableUtil.putMetadata(page, META_FETCH_PRIORITY, String.valueOf(priority));
   }
 
   public static void setPriorityIfAbsent(WebPage page, int priority) {
-    String s = TableUtil.getMetadata(page, PARAM_FETCH_PRIORITY);
+    String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
     if (s == null) {
       setPriority(page, priority);
     }
   }
 
   public static int getPriority(WebPage page, int defaultPriority) {
-    String s = TableUtil.getMetadata(page, PARAM_FETCH_PRIORITY);
+    String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
     return StringUtil.tryParseInt(s, defaultPriority);
   }
 

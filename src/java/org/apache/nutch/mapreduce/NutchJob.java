@@ -83,7 +83,7 @@ public abstract class NutchJob extends Configured {
 
   public String getJobName() {
     if (currentJob == null) {
-      String readableTime = new SimpleDateFormat("MMdd.hhmmss").format(startTime);
+      String readableTime = new SimpleDateFormat("MMdd.HHmmss").format(startTime);
       return getClass().getSimpleName() + "-" + readableTime;
     }
     else {

@@ -67,8 +67,8 @@ public class SeedResource extends AbstractResource {
 
     try {
       Configuration conf = configManager.get(ConfManager.DEFAULT);
-      String fsName = conf.get("fs.default.name");
-      LOG.info("fs.default.name : " + fsName);
+      String fsName = conf.get("fs.defaultFS");
+      LOG.info("FS : " + fsName);
 
       if (fsName.contains("hdfs")) {
         LOG.info("Running under hadoop distributed file system");

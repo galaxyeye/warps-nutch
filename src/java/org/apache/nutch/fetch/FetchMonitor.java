@@ -98,7 +98,7 @@ public class FetchMonitor {
     pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
     pendingQueueLastCheckTime = startTime;
 
-    /**
+    /*
      * Used for threshold check, holds pages and bytes processed in the last sec
      * We should keep a minimal fetch speed
      * */

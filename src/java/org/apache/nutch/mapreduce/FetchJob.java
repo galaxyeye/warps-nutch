@@ -17,6 +17,7 @@
 package org.apache.nutch.mapreduce;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -60,6 +61,7 @@ public class FetchJob extends NutchJob implements Tool {
     FIELDS.add(WebPage.Field.MARKERS);
     FIELDS.add(WebPage.Field.REPR_URL);
     FIELDS.add(WebPage.Field.FETCH_TIME);
+    FIELDS.add(WebPage.Field.METADATA);
   }
 
   private int numTasks = 2;
@@ -72,6 +74,9 @@ public class FetchJob extends NutchJob implements Tool {
     setConf(conf);
   }
 
+  /**
+   * The field list affects which field to reads, but does not affect which field to to write
+   * */
   public Collection<WebPage.Field> getFields(Job job) {
     Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
     if (job.getConfiguration().getBoolean(PARAM_PARSE, false)) {
@@ -155,6 +160,8 @@ public class FetchJob extends NutchJob implements Tool {
 
     // used to get schema name
     DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+
+    LOG.debug("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
