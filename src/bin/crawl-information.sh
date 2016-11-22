@@ -175,7 +175,7 @@ do
   HOUR=`date +%k`
   # HOUR=1
   if (($HOUR<=6)) || (($HOUR>=22)); then
-    echo "Good night, I will sleep for 30 minutes, to awake me, use command : >>>"
+    echo "Good night, I will sleep for 30 minutes, to wake up me, use command : >>>"
     echo "touch .AWAKE"
     echo "<<<"
 

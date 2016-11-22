@@ -33,13 +33,15 @@ import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
-import org.mortbay.util.ArrayQueue;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -164,6 +166,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     // Testing
     seedUrls.add("http://www.sxrb.com/sxxww/xwpd/sx/");
+    seedUrls.add("http://news.baidu.com/");
   }
 
   @Override
