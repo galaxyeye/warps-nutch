@@ -10,7 +10,6 @@ import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
@@ -26,6 +25,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_TIME;
 
 /**
  * Created by vincent on 16-9-25.
@@ -188,7 +189,7 @@ public class ReduceDatumBuilder {
   private void updateMetadata(WebPage page) {
     // Clear temporary metadata
     TableUtil.clearMetadata(page, FetchJob.REDIRECT_DISCOVERED);
-    TableUtil.clearMetadata(page, Nutch.PARAM_GENERATE_TIME);
+    TableUtil.clearMetadata(page, PARAM_GENERATE_TIME);
 
     // Clear markers
     Mark.INJECT_MARK.removeMarkIfExist(page);

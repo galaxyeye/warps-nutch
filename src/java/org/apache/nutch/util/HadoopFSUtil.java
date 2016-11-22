@@ -16,13 +16,13 @@
  */
 package org.apache.nutch.util;
 
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
 
 public class HadoopFSUtil {
 
@@ -32,6 +32,28 @@ public class HadoopFSUtil {
   public static boolean isDistributedFS(Configuration conf) {
     String fsName = conf.get("fs.defaultFS");
     return fsName != null && fsName.startsWith("hdfs");
+  }
+
+  public static Set<String> loadSeeds(String path, String jobName, Configuration conf) throws IOException {
+    Set<String> seedUrls = new HashSet<>();
+
+    if (isDistributedFS(conf)) {
+      // read all lines and lock the file, any other progress can not read the file if the lock file does not exist
+      List<String> readedSeedUrls = readAndLock(new Path("hdfs://" + path), jobName, conf);
+      // Collections.shuffle(readedSeedUrls);
+      // TODO : since seeds have higher priority, we still need an algorithm to drop out the pages who does not change
+      // Random select a sub set of all urls, no more than 5000 because of the efficiency problem
+      // readedSeedUrls = readedSeedUrls.subList(0, 1000);
+      seedUrls.addAll(readedSeedUrls);
+
+      NutchUtil.LOG.info("Loaded " + seedUrls.size() + " seed urls");
+    }
+
+    // Testing
+    seedUrls.add("http://www.sxrb.com/sxxww/xwpd/sx/");
+//    seedUrls.add("http://news.baidu.com/");
+
+    return seedUrls;
   }
 
   /**
@@ -77,4 +99,112 @@ public class HadoopFSUtil {
     return res;
   }
 
+  public static boolean createIfNotExits(Path path, Configuration conf) {
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (fs.exists(path)) {
+        // The lock file exists, someone else have already read it
+        return false;
+      } else {
+        // The lock file does not exist, i will read it
+        FSDataOutputStream out = fs.create(path);
+        out.close();
+        return true;
+      }
+    } catch (IOException e) {
+      NutchUtil.LOG.error(e.toString());
+    }
+
+    return false;
+  }
+
+  public static boolean deleteIfExits(Path path, Configuration conf) {
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (fs.exists(path)) {
+        fs.delete(path, false);
+      }
+    } catch (IOException e) {
+      NutchUtil.LOG.warn(e.toString());
+    }
+
+    return false;
+  }
+
+  public static boolean isLocked(Path path, String jobName, Configuration conf) {
+    Path lockPath = new Path(path.toString() + "." + jobName + ".lock");
+
+    try (FileSystem fs = FileSystem.get(conf)) {
+      return fs.exists(lockPath);
+    } catch (IOException e) {
+      NutchUtil.LOG.error(e.toString());
+    }
+
+    return false;
+  }
+
+  public static boolean lock(Path path, String jobName, Configuration conf) {
+    Path lockPath = new Path(path.toString() + "." + jobName + ".lock");
+    createIfNotExits(lockPath, conf);
+    return true;
+  }
+
+  public static boolean unlock(Path path, String jobName, Configuration conf) {
+    Path lockPath = new Path(path.toString() + "." + jobName + ".lock");
+    deleteIfExits(lockPath, conf);
+    return true;
+  }
+
+  public static List<String> readAndLock(Path path, String jobName, Configuration conf) {
+    if (isLocked(path, jobName, conf)) {
+      return new ArrayList<>();
+    }
+
+    lock(path, jobName, conf);
+    return readAllLines(path, conf);
+  }
+
+  public static List<String> readAndUnlock(Path path, String jobName, Configuration conf) {
+    List<String> seeds = readAllLines(path, conf);
+    unlock(path, jobName, conf);
+    return seeds;
+  }
+
+  public static List<String> readIfNotLocked(Path path, String jobName, Configuration conf) {
+    if (isLocked(path, jobName, conf)) {
+      return new ArrayList<>();
+    }
+
+    return readAllLines(path, conf);
+  }
+
+  public static List<String> readAllLines(Path path, Configuration conf) {
+    List<String> seeds = new ArrayList<>();
+
+    try {
+      FileSystem fs = FileSystem.get(conf);
+
+      if (!fs.exists(path)) {
+        NutchUtil.LOG.warn("Seed file does not exit!!!");
+        return seeds;
+      }
+
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(path)))) {
+        String line = reader.readLine();
+        while (line != null) {
+          if (line.startsWith("http")) {
+            seeds.add(line);
+          }
+
+          line = reader.readLine();
+        } // while
+      }
+    } catch (IOException e) {
+      NutchUtil.LOG.error(e.toString());
+    }
+
+    return seeds;
+  }
 }

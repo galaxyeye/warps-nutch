@@ -28,14 +28,13 @@ import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
-import org.mortbay.util.ArrayQueue;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Queue;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
@@ -141,6 +140,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     }
 
     page.setBatchId(batchId);
+    TableUtil.clearMetadata(page, META_FROM_SEED);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
 

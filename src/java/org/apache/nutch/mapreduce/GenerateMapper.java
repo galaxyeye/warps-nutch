@@ -16,7 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SeedBuilder;
@@ -38,9 +37,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
@@ -118,10 +115,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     keyRange = crawlFilters.getMaxReversedKeyRange();
 
     this.seedBuiler = new SeedBuilder(conf);
-
-    loadSeeds();
-    topN += seedUrls.size();
-    conf.setLong(PARAM_GENERATOR_TOP_N, topN);
+    seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -145,28 +139,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     ));
 
     createSeedRows(context);
-  }
-
-  /**
-   * TODO : The code can be refined and removed by enhancing scoring/schedule system
-   * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
-   * */
-  private void loadSeeds() throws IOException {
-    if (FSUtils.isDistributedFS(conf)) {
-      // read all lines and lock the file, any other progress can not read the file if the lock file does not exist
-      String jobName = conf.get(PARAM_NUTCH_JOB_NAME);
-      List<String> readedSeedUrls = FSUtils.readAndLock(new Path("hdfs://" + PATH_ALL_SEED_FILE), jobName, conf);
-      Collections.shuffle(readedSeedUrls);
-      // TODO : since seeds have higher priority, we still need an algorithm to drop out the pages who does not change
-      // Random select a sub set of all urls, no more than 5000 because of the efficiency problem
-      seedUrls.addAll(readedSeedUrls.subList(0, 1000));
-
-      LOG.info("Loaded " + seedUrls.size() + " seed urls");
-    }
-
-    // Testing
-    seedUrls.add("http://www.sxrb.com/sxxww/xwpd/sx/");
-    seedUrls.add("http://news.baidu.com/");
   }
 
   @Override
@@ -323,6 +295,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
   /**
    * Seed rows creation should be done in mapper phrase because there might be much fewer reducers in the cluster
+   *
+   * TODO : The code can be refined and removed by enhancing scoring/schedule system
+   * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
+   *
    * */
   private void createSeedRows(Context context) throws IOException, InterruptedException {
     for (String urlLine : seedUrls) {

@@ -76,7 +76,7 @@ public class TaskScheduler extends Configured {
     readyTasks, pendingTasks,
     pagesThou, mbThou,
     rowsRedirect,
-    rowsPeresist, newRowsPeresist, newDetailRows
+    rowsPeresist, newRowsPeresist, newDetailRows, existOutlinkRows
   }
 
   public static final int QUEUE_REMAINDER_LIMIT = 5;
@@ -896,12 +896,14 @@ public class TaskScheduler extends Configured {
       return;
     }
 
+    /** TODO : maintain a in-memory recent outlink list */
     WebPage oldPage = datastore.get(reversedUrl);
     // The page is already in the db, we just return here
     if (oldPage != null) {
       // In the original nutch-2.3.1, we write the page again to update inlinks
       // but in our version, there is no need to update inlinks
 
+      counter.increase(Counter.existOutlinkRows);
       return;
     }
 
@@ -913,6 +915,10 @@ public class TaskScheduler extends Configured {
       counter.increase(Counter.newDetailRows);
     }
 
+    /**
+     * We crawl pages from seed immediately the next loop starts
+     * TODO : we can do this using score/schedule mechanism
+     * */
     if (fromSeed) {
       TableUtil.markFromSeed(page);
       nutchMetrics.reportUrlsFromSeed(url, sourceUrl, reportSuffix);
