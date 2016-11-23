@@ -39,9 +39,9 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +127,7 @@ public class DomainStatistics extends Configured implements Tool {
 
     long end = System.currentTimeMillis();
     LOG.info("DomainStatistics: finished at " + sdf.format(end) + ", elapsed: "
-        + TimingUtil.elapsedTime(start, end));
+        + DateTimeUtil.elapsedTime(start, end));
 
     if (!success)
       return -1;

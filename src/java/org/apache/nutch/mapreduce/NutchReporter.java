@@ -19,7 +19,7 @@ package org.apache.nutch.mapreduce;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +111,7 @@ public class NutchReporter extends Thread {
     String innerBorder = StringUtils.repeat('.', 100);
     LOG.info(outerBorder);
     LOG.info(innerBorder);
-    LOG.info("== Report thread started [ " + TimingUtil.now() + " ] [ " + jobName + " ] ==");
+    LOG.info("== Report thread started [ " + DateTimeUtil.now() + " ] [ " + jobName + " ] ==");
 
     do {
       try {
@@ -122,7 +122,7 @@ public class NutchReporter extends Thread {
     }
     while (running.get());
 
-    LOG.info("Report thread stopped [ " + TimingUtil.now() + " ]");
+    LOG.info("Report thread stopped [ " + DateTimeUtil.now() + " ]");
   } // run
 
   private void report() {

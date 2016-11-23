@@ -22,7 +22,7 @@ import org.apache.nutch.fetch.TaskSchedulers;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class FetchResource {
 
     TaskScheduler taskScheduler = taskSchedulers.peek();
     if (taskScheduler != null) {
-      String batchId = "JITInjected" + TimingUtil.now("yyyyMMdd");
+      String batchId = "JITInjected" + DateTimeUtil.now("yyyyMMdd");
       count = taskScheduler.inject(urlLine, batchId);
     }
 
@@ -109,7 +109,7 @@ public class FetchResource {
 
     TaskScheduler taskScheduler = taskSchedulers.peek();
     if (taskScheduler != null) {
-      String batchId = "JITInjected" + TimingUtil.now("yyyyMMdd");
+      String batchId = "JITInjected" + DateTimeUtil.now("yyyyMMdd");
       count = taskScheduler.inject(urlLines, batchId);
     }
 

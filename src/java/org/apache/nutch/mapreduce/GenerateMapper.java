@@ -127,7 +127,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "topN", topN,
         "normalise", normalise,
         "maxDistance", maxDistance,
-        "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
+        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "fetchSchedule", fetchSchedule.getClass().getName(),
         "scoringFilters", scoringFilters.getClass().getName(),
         "crawlFilters", crawlFilters,
@@ -253,6 +253,9 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     return true;
   }
 
+  /**
+   * TODO : special cases should be move to scoring/schedule module
+   * */
   private boolean handleSpecialCases(String url, WebPage page, Context context) throws IOException, InterruptedException {
     float score = -1.0f;
     Counter counter = null;

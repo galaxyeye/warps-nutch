@@ -5,7 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
@@ -314,8 +314,8 @@ public class FetchQueue implements Comparable<FetchQueue> {
         "pendingTasks", pendingTasks.size(),
         "crawlDelay(s)", df.format(crawlDelay / 1000),
         "minCrawlDelay(s)", df.format(minCrawlDelay / 1000),
-        "now", TimingUtil.now(),
-        "nextFetchTime", TimingUtil.format(nextFetchTime),
+        "now", DateTimeUtil.now(),
+        "nextFetchTime", DateTimeUtil.format(nextFetchTime),
         "aveTimeCost(s)", df.format(averageTimeCost()),
         "aveThoRate(s)", df.format(averageThroughputRate()),
         "readyTasks", readyTasks.size(),

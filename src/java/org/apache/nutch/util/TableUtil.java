@@ -31,10 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 
-import static org.apache.nutch.metadata.Metadata.META_FETCH_PRIORITY;
-import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
-import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Metadata.*;
 
 public class TableUtil {
 
@@ -240,6 +237,43 @@ public class TableUtil {
     return StringUtil.tryParseInt(s, defaultPriority);
   }
 
+  public static void setPublishTime(WebPage page, String publishTime) {
+    putMetadata(page, META_PUBLISH_TIME, publishTime);
+  }
+
+  public static void setPublishTime(WebPage page, Date publishTime) {
+    putMetadata(page, META_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+  }
+
+  public static String getPublishTimeStr(WebPage page) {
+    return getMetadata(page, META_PUBLISH_TIME);
+  }
+
+  public static long getPublishTime(WebPage page) {
+    String publishTimeStr = getPublishTimeStr(page);
+    return DateTimeUtil.parseTime(publishTimeStr);
+  }
+
+  public static long getLatestReferredPublishTime(WebPage page) {
+    String publishTimeStr = getMetadata(page, META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME);
+    return DateTimeUtil.parseTime(publishTimeStr);
+  }
+
+  public static void setLatestReferredPublishTime(WebPage page, long publishTime) {
+    putMetadata(page, META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+  }
+
+  public static boolean updateLatestReferredPublishTime(WebPage page, long newPublishTime) {
+    long latestTime = getLatestReferredPublishTime(page);
+
+    if (latestTime < newPublishTime) {
+      setLatestReferredPublishTime(page, newPublishTime);
+      return true;
+    }
+
+    return false;
+  }
+
   public static String getFetchTimeHistory(WebPage page, String defaultValue) {
     String s = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
     return s == null ? defaultValue : s;
@@ -247,7 +281,7 @@ public class TableUtil {
 
   public static void putFetchTimeHistory(WebPage page, long fetchTime) {
     String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
-    fetchTimeHistory = TimingUtil.computeTimeHistory(fetchTimeHistory, fetchTime, 10);
+    fetchTimeHistory = DateTimeUtil.constructTimeHistory(fetchTimeHistory, fetchTime, 10);
     TableUtil.putMetadata(page, Metadata.META_FETCH_TIME_HISTORY, fetchTimeHistory);
   }
 
@@ -257,7 +291,7 @@ public class TableUtil {
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
     if (!fetchTimeHistory.isEmpty()) {
       String[] times = fetchTimeHistory.split(",");
-      long time = TimingUtil.parseTime(times[0]);
+      long time = DateTimeUtil.parseTime(times[0]);
       if (time > 0) {
         firstCrawlTime = new Date(time);
       }
@@ -273,7 +307,7 @@ public class TableUtil {
 
   public static void putIndexTimeHistory(WebPage page, long indexTime) {
     String indexTimeHistory = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
-    indexTimeHistory = TimingUtil.computeTimeHistory(indexTimeHistory, indexTime, 10);
+    indexTimeHistory = DateTimeUtil.constructTimeHistory(indexTimeHistory, indexTime, 10);
     TableUtil.putMetadata(page, Metadata.META_INDEX_TIME_HISTORY, indexTimeHistory);
   }
 
@@ -283,7 +317,7 @@ public class TableUtil {
     String indexTimeHistory = TableUtil.getIndexTimeHistory(page, "");
     if (!indexTimeHistory.isEmpty()) {
       String[] times = indexTimeHistory.split(",");
-      long time = TimingUtil.parseTime(times[0]);
+      long time = DateTimeUtil.parseTime(times[0]);
       if (time > 0) {
         firstIndexTime = new Date(time);
       }
@@ -325,8 +359,7 @@ public class TableUtil {
     if (bvalue == null) {
       return null;
     }
-    String value = Bytes.toString(bvalue.array());
-    return value;
+    return Bytes.toString(bvalue.array());
   }
 
   public static String getMetadata(WebPage page, String key, String defaultValue) {

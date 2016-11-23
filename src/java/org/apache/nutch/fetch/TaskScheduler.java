@@ -40,10 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -225,7 +222,7 @@ public class TaskScheduler extends Configured {
 
     this.outputDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
 
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     this.nutchMetrics = NutchMetrics.getInstance(conf);
 
@@ -469,7 +466,7 @@ public class TaskScheduler extends Configured {
   public void cleanup() {
     String border = StringUtils.repeat('.', 40);
     REPORT_LOG.info(border);
-    REPORT_LOG.info("[Final Report - " + TimingUtil.now() + "]");
+    REPORT_LOG.info("[Final Report - " + DateTimeUtil.now() + "]");
 
     feederThreads.forEach(FeederThread::exitAndJoin);
     activeFetchThreads.forEach(FetchThread::exitAndJoin);
@@ -896,10 +893,15 @@ public class TaskScheduler extends Configured {
 
     // TODO : maintain a in-memory recent outlink list
     WebPage oldPage = datastore.get(reversedUrl);
+
     // The page is already in the db, we just return here
     if (oldPage != null) {
       // In the original nutch-2.3.1, we write the page again to update inlinks
       // but in our version, there is no need to update inlinks
+      long publishTime = TableUtil.getPublishTime(oldPage);
+      if (publishTime > 0) {
+        TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
+      }
 
       counter.increase(Counter.existOutlinkRows);
       return;

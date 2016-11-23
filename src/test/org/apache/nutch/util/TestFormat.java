@@ -25,7 +25,7 @@ public class TestFormat {
     String dateString = "Sat May 27 12:21:42 CST 2017";
 
     try {
-      Date date = DateUtils.parseDate(dateString, TimingUtil.GENERAL_DATE_TIME_FORMATS);
+      Date date = DateUtils.parseDate(dateString, DateTimeUtil.GENERAL_DATE_TIME_FORMATS);
       // Date date = DateUtils.parseDate(dateString);
       dateString = DateFormatUtils.format(date, ISO_DATETIME_TIME_ZONE_FORMAT.getPattern(), TimeZone.getTimeZone("PRC"));
       System.out.println(dateString);

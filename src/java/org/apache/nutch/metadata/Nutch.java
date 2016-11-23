@@ -260,6 +260,10 @@ public interface Nutch {
   String DOC_FIELD_PUBLISH_TIME = "publish_time";
 
   /**
+   * Variable holders
+   * */
+
+  /**
    * Program keys
    * */
   String GENERATE_TIME_KEY = "_ngt_";

@@ -27,8 +27,8 @@ import org.apache.nutch.mapreduce.IndexJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.metadata.SolrConstants;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TimingUtil;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -145,7 +145,7 @@ public class SolrIndexWriter implements IndexWriter {
         Object val2 = val;
 
         if (val instanceof Date) {
-          val2 = TimingUtil.solrCompatibleFormat((Date)val2);
+          val2 = DateTimeUtil.solrCompatibleFormat((Date)val2);
         }
 
         String key = solrMapping.mapKeyIfExists(e.getKey());
@@ -282,7 +282,7 @@ public class SolrIndexWriter implements IndexWriter {
    * */
   private void debug(UpdateRequest request) {
     String username = System.getenv("USER");
-    Path path = Paths.get("/tmp", "scent-" + username, "indexer", "solr", "request." + TimingUtil.now("MdHms") + ".xml");
+    Path path = Paths.get("/tmp", "scent-" + username, "indexer", "solr", "request." + DateTimeUtil.now("MdHms") + ".xml");
     try {
       FileUtils.forceMkdir(path.getParent().toFile());
       String xml = request.getXML();
@@ -333,7 +333,7 @@ public class SolrIndexWriter implements IndexWriter {
       }
     }
 
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
     this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     LOG.info(Params.format(

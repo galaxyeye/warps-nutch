@@ -12,7 +12,7 @@ import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,11 +135,11 @@ public class FetchMonitor {
         "fetchTaskTimeout(m)", df.format(fetchTaskTimeout / 60.0 / 1000),
         "pendingTimeout(m)", df.format(pendingTimeout / 60.0 / 1000),
         "queueCheckInterval(m)", df.format(pendingQueueCheckInterval / 60.0 / 1000),
-        "queueLastCheckTime", TimingUtil.format(pendingQueueLastCheckTime),
+        "queueLastCheckTime", DateTimeUtil.format(pendingQueueLastCheckTime),
 
         "minPageThroughputRate", minPageThroughputRate,
         "maxLowThroughputCount", maxLowThroughputCount,
-        "throughputCheckTimeLimit", TimingUtil.format(throughputCheckTimeLimit),
+        "throughputCheckTimeLimit", DateTimeUtil.format(throughputCheckTimeLimit),
 
         "reportInterval(s)", df.format(reportInterval / 1000.0),
 

@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.NutchReporter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class NutchMetrics implements AutoCloseable {
 
     try {
       reportDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
-      reportDir = Paths.get(reportDir.toAbsolutePath().toString(), TimingUtil.format(System.currentTimeMillis(), "yyyyMMdd"));
+      reportDir = Paths.get(reportDir.toAbsolutePath().toString(), DateTimeUtil.format(System.currentTimeMillis(), "yyyyMMdd"));
       Files.createDirectories(reportDir);
 
       unreachableHostsPath = Paths.get(reportDir.toAbsolutePath().toString(), FILE_UNREACHABLE_HOSTS);

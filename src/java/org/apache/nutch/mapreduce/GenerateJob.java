@@ -113,7 +113,7 @@ public class GenerateJob extends NutchJob implements Tool {
         "batchId", batchId,
         "filter", filter,
         "norm", norm,
-        "pseudoCurrTime", TimingUtil.format(pseudoCurrTime),
+        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "topN", topN,
         "reGenerate", reGenerate,
         PARAM_GENERATOR_COUNT_MODE, hostGroupMode,

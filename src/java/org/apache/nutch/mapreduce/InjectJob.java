@@ -35,7 +35,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +122,7 @@ public class InjectJob extends NutchJob implements Tool {
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "seedDir", seedDir,
-        "jobStartTime", TimingUtil.format(startTime)
+        "jobStartTime", DateTimeUtil.format(startTime)
     ));
   }
 

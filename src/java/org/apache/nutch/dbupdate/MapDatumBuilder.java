@@ -114,7 +114,7 @@ public class MapDatumBuilder {
       url = null;
     }
 
-    if (crawlFilters.hasOldUrlDate(url)) {
+    if (crawlFilters.containsOldDateString(url)) {
       url = null;
     }
 

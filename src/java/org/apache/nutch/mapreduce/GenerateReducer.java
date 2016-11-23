@@ -121,15 +121,17 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
         // seed pages and pages from seeds are fetched imperative
         // TODO : We must drop out seed pages who do not update for days, and an adaptive fetch scheduler is just OK
-        if (!TableUtil.isSeed(page) && !TableUtil.isFromSeed(page)) {
+        if (!TableUtil.isSeed(page)) {
           ++count;
         }
 
+        // update status first
+        updateCounters(url, page, context);
+
+        // and then update the page
         page = updatePage(url, page);
 
         context.write(TableUtil.reverseUrl(url), page);
-
-        updateStatus(url, page, context);
       }
       catch (Throwable e) {
         LOG.error(StringUtil.stringifyException(e));
@@ -139,11 +141,12 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
   private WebPage updatePage(String url, WebPage page) {
     if (TableUtil.isSeed(page)) {
-      // TODO : check why some fields are not passed properly from mapper phrase
+      // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
       page = seedBuiler.buildWebPage(url);
     }
 
     page.setBatchId(batchId);
+    TableUtil.clearMetadata(page, META_FROM_SEED);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
 
@@ -153,12 +156,11 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     return page;
   }
 
-  private void updateStatus(String url, WebPage page, Context context) throws IOException {
+  private void updateCounters(String url, WebPage page, Context context) throws IOException {
     if (TableUtil.isSeed(page)) {
       getCounter().increase(Counter.isSeed);
     }
     else if (TableUtil.isFromSeed(page)) {
-      TableUtil.clearMetadata(page, META_FROM_SEED);
       getCounter().increase(Counter.isFromSeed);
     }
 

@@ -8,8 +8,8 @@ import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.TimingUtil;
 import org.apache.oro.text.regex.*;
 
 import java.util.Collection;
@@ -63,7 +63,7 @@ public class MoreIndexingFilter implements IndexingFilter {
 
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
-      time = TimingUtil.parseTime(lastModified.toString()); // use as time
+      time = DateTimeUtil.parseTime(lastModified.toString()); // use as time
     }
 
     if (time == -1) { // if no last-modified
@@ -74,7 +74,7 @@ public class MoreIndexingFilter implements IndexingFilter {
     if (time > 0) {
       Date date = new Date(time);
       doc.add("header_last_modified", date);
-      doc.add("last_modified_s", TimingUtil.solrCompatibleFormat(date));
+      doc.add("last_modified_s", DateTimeUtil.solrCompatibleFormat(date));
     }
 
     return doc;

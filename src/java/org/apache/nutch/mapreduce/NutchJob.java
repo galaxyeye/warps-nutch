@@ -30,7 +30,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +58,11 @@ public abstract class NutchJob extends Configured {
 
   protected void setup(Map<String, Object> args) throws Exception {
     LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");
-    LOG.info("Job started at " + TimingUtil.format(startTime));
+    LOG.info("Job started at " + DateTimeUtil.format(startTime));
     getConf().set(Nutch.PARAM_NUTCH_JOB_NAME, getJobName());
 
     synchronized (status) {
-      status.put("startTime", TimingUtil.format(startTime));
+      status.put("startTime", DateTimeUtil.format(startTime));
     }
   }
 
@@ -195,11 +195,11 @@ public abstract class NutchJob extends Configured {
   }
 
   public void updateResults() throws IOException, InterruptedException {
-    String finishTime = TimingUtil.format(System.currentTimeMillis());
-    String timeElapsed = TimingUtil.elapsedTime(startTime);
+    String finishTime = DateTimeUtil.format(System.currentTimeMillis());
+    String timeElapsed = DateTimeUtil.elapsedTime(startTime);
 
     results.putAll(Params.toArgMap(
-        "startTime", TimingUtil.format(startTime),
+        "startTime", DateTimeUtil.format(startTime),
         "finishTime", finishTime,
         "timeElapsed", timeElapsed
     ));

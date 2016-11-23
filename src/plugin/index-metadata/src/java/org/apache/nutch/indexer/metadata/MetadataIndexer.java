@@ -23,8 +23,8 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
 import org.apache.nutch.util.URLUtil;
 
 import java.net.MalformedURLException;
@@ -74,7 +74,7 @@ public class MetadataIndexer implements IndexingFilter {
     resourceCategory = new ResourceCategory(conf);
 
     this.nutchMetrics = NutchMetrics.getInstance(conf);
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + TimingUtil.now("MMdd.HHmm"));
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
 //    LOG.info(StringUtil.formatAsLine(
 //        "className", this.getClass().getSimpleName(),
@@ -128,7 +128,7 @@ public class MetadataIndexer implements IndexingFilter {
   private void addTime(IndexDocument doc, String url, WebPage page) {
     Date now = new Date();
 
-    String crawlTimeStr = TimingUtil.solrCompatibleFormat(now);
+    String crawlTimeStr = DateTimeUtil.solrCompatibleFormat(now);
     Date firstCrawlTime = TableUtil.getFirstCrawlTime(page, now);
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, crawlTimeStr);
 
@@ -136,7 +136,7 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("last_crawl_time", crawlTimeStr);
     doc.add("fetch_time_history", fetchTimeHistory);
 
-    String indexTimeStr = TimingUtil.solrCompatibleFormat(now);
+    String indexTimeStr = DateTimeUtil.solrCompatibleFormat(now);
     Date firstIndexTime = TableUtil.getFirstIndexTime(page, now);
     String indexTimeHistory = TableUtil.getIndexTimeHistory(page, indexTimeStr);
 

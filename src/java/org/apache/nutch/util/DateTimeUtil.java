@@ -24,13 +24,35 @@ import org.apache.nutch.net.protocols.HttpDateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * TODO : use apache's DateUtils, DateFormatUtils
  * */
-public class TimingUtil {
+public class DateTimeUtil {
+
+  public static final int CURRENT_YEAR = Year.now().getValue();
+  public static final String CURRENT_YEAR_STR = String.valueOf(CURRENT_YEAR);
+  public static final int CURRENT_MONTH = new Date().getMonth();
+  public static final String CURRENT_MONTH_STR = String.valueOf(CURRENT_MONTH);
+  public static final int YEAR_LOWER_BOUND = 1990;
+
+  public static Set<String> OLD_YEARS;
+  public static Set<String> OLD_MONTH;
+  public static Pattern OLD_MONTH_URL_DATE_PATTERN;
+
+  static {
+    OLD_YEARS = IntStream.range(YEAR_LOWER_BOUND, CURRENT_YEAR).mapToObj(String::valueOf).collect(Collectors.toSet());
+    OLD_MONTH = IntStream.range(1, CURRENT_MONTH).mapToObj(m -> String.format("%02d", m)).collect(Collectors.toSet());
+    // eg : ".+2016[/\.-]?(01|02|03|04|05|06|07|08|09).+"
+    OLD_MONTH_URL_DATE_PATTERN = Pattern.compile(".+" + CURRENT_YEAR_STR + "[/\\.-]?(" + StringUtils.join(OLD_MONTH, "|") + ").+");
+  }
 
   // 2016-03-05 20:07:51
   // TODO : What's the difference between HH and hh? Guess : 24 hours VS 12 hours
@@ -149,26 +171,36 @@ public class TimingUtil {
     return buf.toString();
   }
 
-  public static Date tryExtractDate(String dateStr) {
-    return null;
-  }
-
   public static long parseTime(String date) {
     long time = -1;
+
+    if (date == null) {
+      return time;
+    }
+
     try {
       time = HttpDateFormat.toLong(date);
     } catch (ParseException e) {
       try {
         Date parsedDate = DateUtils.parseDate(date, GENERAL_DATE_TIME_FORMATS);
         time = parsedDate.getTime();
-      } catch (Exception e2) {
-
-      }
+      } catch (Exception ignored) {}
     }
     return time;
   }
 
-  public static String computeTimeHistory(String timeHistory, long fetchTime, int maxRecords) {
+  public static Date tryParseDate(String dateStr) {
+    Date parsedDate = null;
+
+    try {
+      parsedDate = DateUtils.parseDate(dateStr, GENERAL_DATE_TIME_FORMATS);
+    } catch (ParseException ignored) {
+    }
+
+    return parsedDate;
+  }
+
+  public static String constructTimeHistory(String timeHistory, long fetchTime, int maxRecords) {
     String dateStr = solrCompatibleFormat(fetchTime);
 
     if (timeHistory == null) {
@@ -187,5 +219,25 @@ public class TimingUtil {
     }
 
     return timeHistory;
+  }
+
+  /**
+   * For urls who contains date information, for example
+   * http://bond.hexun.com/2011-01-07/126641872.html
+   * */
+  public static boolean containsOldDate(String str) {
+    if (str == null) {
+      return false;
+    }
+
+    if (OLD_YEARS.stream().anyMatch(str::contains)) {
+      return true;
+    }
+
+    if (OLD_MONTH_URL_DATE_PATTERN.asPredicate().test(str)) {
+      return true;
+    }
+
+    return false;
   }
 }

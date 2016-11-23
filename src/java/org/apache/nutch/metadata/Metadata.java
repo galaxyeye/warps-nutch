@@ -39,6 +39,8 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
   /** Fetch time history, comma seperated fetch timestamp */
   public static final String META_FETCH_TIME_HISTORY = "NUTCH-FETCH-TIME-HISTORY";
   public static final String META_INDEX_TIME_HISTORY = "NUTCH-INDEX-TIME-HISTORY";
+  public static final String META_PUBLISH_TIME = "PUBLISH-TIME";
+  public static final String META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME = "LRAPT";
   public static final String META_TMP = "TMP-";
   public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
   public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
@@ -186,7 +188,6 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
   }
 
   public boolean equals(Object o) {
-
     if (o == null) {
       return false;
     }

@@ -11,7 +11,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public class SeedBuilder {
         "className", this.getClass().getSimpleName(),
         "fetchIntervalSec", fetchIntervalSec,
         "scoreInjected", scoreInjected,
-        "injectTime", TimingUtil.format(currentTime)
+        "injectTime", DateTimeUtil.format(currentTime)
     );
   }
 
@@ -124,7 +124,7 @@ public class SeedBuilder {
 
   public int getFetchIntervalSec() {
     // Fetch fetchIntervalSec, the default value is 30 days
-    // int fetchIntervalSec = conf.getInt("db.fetch.fetchIntervalSec.default", TimingUtil.MONTH);
+    // int fetchIntervalSec = conf.getInt("db.fetch.fetchIntervalSec.default", DateTimeUtil.MONTH);
 
     // For seeds, we re-fetch it every time we start the loop
     int fetchInterval = (int)Duration.ofMinutes(1).getSeconds();

@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.mapreduce.NutchCounter;
-import org.apache.nutch.util.TimingUtil;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class TaskSchedulers {
   private Queue<Integer> fetchSchedulerIds = Lists.newLinkedList();
 
   private TaskSchedulers() {
-    this.name = this.getClass().getSimpleName() + "-" + TimingUtil.now("d.Hms");
+    this.name = this.getClass().getSimpleName() + "-" + DateTimeUtil.now("d.Hms");
 
     LOG.info("Initialize " + name);
   }

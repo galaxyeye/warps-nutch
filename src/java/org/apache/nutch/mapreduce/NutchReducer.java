@@ -20,8 +20,8 @@ import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TimingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
     LOG.info(Params.formatAsLine(
         "---- reducer setup ", " ----",
         "className", this.getClass().getSimpleName(),
-        "startTime", TimingUtil.format(startTime),
+        "startTime", DateTimeUtil.format(startTime),
         "reducerTasks", context.getNumReduceTasks(),
         "hostname", counter.getHostname()
     ));
@@ -80,9 +80,9 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
     LOG.info(Params.formatAsLine(
         "---- reducer cleanup ", " ----",
         "className", this.getClass().getSimpleName(),
-        "startTime", TimingUtil.format(startTime),
-        "finishTime", TimingUtil.now(),
-        "timeElapsed", TimingUtil.elapsedTime(startTime)
+        "startTime", DateTimeUtil.format(startTime),
+        "finishTime", DateTimeUtil.now(),
+        "timeElapsed", DateTimeUtil.elapsedTime(startTime)
     ));
   }
 

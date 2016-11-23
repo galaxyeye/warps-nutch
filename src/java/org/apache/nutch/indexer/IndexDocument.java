@@ -29,9 +29,9 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.TimingUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -236,7 +236,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
   private String format(Object obj) {
     if (obj instanceof Date) {
-      return TimingUtil.solrCompatibleFormat((Date)obj);
+      return DateTimeUtil.solrCompatibleFormat((Date)obj);
     }
     else {
       return obj.toString();
