@@ -18,6 +18,7 @@
 package org.apache.nutch.util;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 
 import java.text.NumberFormat;
@@ -165,5 +166,26 @@ public class TimingUtil {
       }
     }
     return time;
+  }
+
+  public static String computeTimeHistory(String timeHistory, long fetchTime, int maxRecords) {
+    String dateStr = solrCompatibleFormat(fetchTime);
+
+    if (timeHistory == null) {
+      timeHistory = dateStr;
+    }
+    else {
+      String[] fetchTimes = timeHistory.split(",");
+      if (fetchTimes.length > maxRecords) {
+        String firstFetchTime = fetchTimes[0];
+        int start = fetchTimes.length - maxRecords;
+        int end = fetchTimes.length;
+        timeHistory = firstFetchTime + ',' + StringUtils.join(fetchTimes, ',', start, end);
+      }
+      timeHistory += ",";
+      timeHistory += dateStr;
+    }
+
+    return timeHistory;
   }
 }

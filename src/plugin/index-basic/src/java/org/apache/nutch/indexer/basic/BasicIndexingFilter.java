@@ -92,7 +92,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   /**
-   * TODO : do it inside boilerpipe or scent
+   * TODO : do it inside scent
    * */
   private CrawlFilter.PageCategory sniffPageCategory(IndexDocument doc, String url, WebPage page) {
     CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
@@ -105,7 +105,10 @@ public class BasicIndexingFilter implements IndexingFilter {
     double _char = textContent.length();
     double _a = page.getOutlinks().size();
     if (_a == 0) {
-      _a = (int)page.getVariable("outlinks_count");
+      Object count = page.getVariable("outlinks_count");
+      if (count != null && count instanceof Integer) {
+        _a = (int)count;
+      }
     }
 
     if (textContent.isEmpty()) {

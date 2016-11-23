@@ -150,7 +150,6 @@ public class TaskScheduler extends Configured {
   private final DataStore<String, WebPage> datastore;
   private final MapDatumBuilder mapDatumBuilder;
   private final ReduceDatumBuilder reduceDatumBuilder;
-  private final boolean updateSeedPages;
 
   // Timer
   private final long startTime = System.currentTimeMillis(); // Start time of fetcher run
@@ -217,7 +216,6 @@ public class TaskScheduler extends Configured {
     }
     this.mapDatumBuilder = updateJIT ? new MapDatumBuilder(counter, conf) : null;
     this.reduceDatumBuilder = updateJIT ? new ReduceDatumBuilder(counter, conf) : null;
-    this.updateSeedPages = true;
 
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
@@ -851,11 +849,11 @@ public class TaskScheduler extends Configured {
     Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, page);
     outlinkRows.entrySet().stream()
             .limit(maxDbUpdateNewRows)
-            .forEach(e -> outputOutlinkPage(url, e.getKey(), e.getValue(), isSeed));
+            .forEach(e -> outputOutlinkPage(url, page, e.getKey(), e.getValue(), isSeed));
 
     // 1. no need to write seed pages back
     // 2. we may need a local list to maintain urls fetched recently, so we ignore them if we can see them in a page
-    if (!isSeed || updateSeedPages) {
+    if (!isSeed) {
       outputMainPage(url, reversedUrl, page, outlinkRows);
     }
   }
@@ -878,7 +876,7 @@ public class TaskScheduler extends Configured {
   }
 
   @SuppressWarnings("unchecked")
-  private void outputOutlinkPage(String sourceUrl, UrlWithScore urlWithScore, NutchWritable nutchWritable, boolean fromSeed) {
+  private void outputOutlinkPage(String sourceUrl, WebPage mainPage, UrlWithScore urlWithScore, NutchWritable nutchWritable, boolean fromSeed) {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
@@ -896,7 +894,7 @@ public class TaskScheduler extends Configured {
       return;
     }
 
-    /** TODO : maintain a in-memory recent outlink list */
+    // TODO : maintain a in-memory recent outlink list
     WebPage oldPage = datastore.get(reversedUrl);
     // The page is already in the db, we just return here
     if (oldPage != null) {

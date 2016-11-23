@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Reduce class for generate
- * 
+ *
  * The #reduce() method write a random integer to all generated URLs. This
  * random number is then used by {@link FetchMapper}.
  */
@@ -119,13 +119,17 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
           break;
         }
 
+        // seed pages and pages from seeds are fetched imperative
+        // TODO : We must drop out seed pages who do not update for days, and an adaptive fetch scheduler is just OK
+        if (!TableUtil.isSeed(page) && !TableUtil.isFromSeed(page)) {
+          ++count;
+        }
+
         page = updatePage(url, page);
 
         context.write(TableUtil.reverseUrl(url), page);
 
         updateStatus(url, page, context);
-
-        ++count;
       }
       catch (Throwable e) {
         LOG.error(StringUtil.stringifyException(e));
@@ -140,7 +144,6 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     }
 
     page.setBatchId(batchId);
-    TableUtil.clearMetadata(page, META_FROM_SEED);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
 
@@ -155,6 +158,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       getCounter().increase(Counter.isSeed);
     }
     else if (TableUtil.isFromSeed(page)) {
+      TableUtil.clearMetadata(page, META_FROM_SEED);
       getCounter().increase(Counter.isFromSeed);
     }
 

@@ -107,14 +107,6 @@ public class GenerateJob extends NutchJob implements Tool {
     URLUtil.HostGroupMode hostGroupMode = conf.getEnum(PARAM_GENERATOR_COUNT_MODE, URLUtil.HostGroupMode.BY_HOST);
     conf.setEnum(PARTITION_MODE_KEY, hostGroupMode);
 
-    /**
-     * TODO : The code can be refined and removed by enhancing scoring/schedule system
-     * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
-     * */
-    Set<String> seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, getJobName(), conf);
-    topN += seedUrls.size();
-    conf.setLong(PARAM_GENERATOR_TOP_N, topN);
-
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,

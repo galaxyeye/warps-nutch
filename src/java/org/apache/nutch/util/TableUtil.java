@@ -18,7 +18,7 @@ package org.apache.nutch.util;
 
 import com.google.common.collect.Maps;
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
@@ -246,16 +246,8 @@ public class TableUtil {
   }
 
   public static void putFetchTimeHistory(WebPage page, long fetchTime) {
-    String date = TimingUtil.solrCompatibleFormat(fetchTime);
     String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
-    if (fetchTimeHistory == null) {
-      fetchTimeHistory = date;
-    }
-    else {
-      fetchTimeHistory += ",";
-      fetchTimeHistory += date;
-    }
-
+    fetchTimeHistory = TimingUtil.computeTimeHistory(fetchTimeHistory, fetchTime, 10);
     TableUtil.putMetadata(page, Metadata.META_FETCH_TIME_HISTORY, fetchTimeHistory);
   }
 
@@ -280,16 +272,8 @@ public class TableUtil {
   }
 
   public static void putIndexTimeHistory(WebPage page, long indexTime) {
-    String dateStr = TimingUtil.solrCompatibleFormat(indexTime);
     String indexTimeHistory = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
-    if (indexTimeHistory == null) {
-      indexTimeHistory = dateStr;
-    }
-    else {
-      indexTimeHistory += ",";
-      indexTimeHistory += dateStr;
-    }
-
+    indexTimeHistory = TimingUtil.computeTimeHistory(indexTimeHistory, indexTime, 10);
     TableUtil.putMetadata(page, Metadata.META_INDEX_TIME_HISTORY, indexTimeHistory);
   }
 
