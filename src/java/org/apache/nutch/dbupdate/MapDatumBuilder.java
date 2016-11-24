@@ -170,7 +170,7 @@ public class MapDatumBuilder {
    * TODO : Write the result into hdfs directly to deduce memory consumption
    * */
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
-    final int depth = TableUtil.getWebDepth(sourcePage);
+    final int depth = TableUtil.getDistance(sourcePage);
     final int limit = 1000;
 
     final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, depth, limit);

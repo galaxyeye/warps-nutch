@@ -152,7 +152,7 @@ public class MetadataIndexer implements IndexingFilter {
       // return doc;
     }
 
-    // doc.add("encoding", page.getVariableAsString("encoding", ""));
+    // doc.add("encoding", page.getTemporaryVariableAsString("encoding", ""));
 
     // get content type
     doc.add("content_type", contentType);

@@ -4,6 +4,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.DbUpdateReducer;
 import org.apache.nutch.mapreduce.FetchJob;
@@ -165,11 +166,11 @@ public class ReduceDatumBuilder {
     }
 
     if (smallestDist != Integer.MAX_VALUE) {
-      int oldDistance = TableUtil.getWebDepth(page);
+      int oldDistance = TableUtil.getDistance(page);
       int newDistance = smallestDist + 1;
 
       if (newDistance < oldDistance) {
-        TableUtil.setWebDepth(page, newDistance);
+        TableUtil.setDistance(page, newDistance);
       }
     }
   }
@@ -244,17 +245,7 @@ public class ReduceDatumBuilder {
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        /**
-         * @vincent
-         * TODO : this is a temporary feature, all detail pages should be fetched only once
-         * */
-        if (crawlFilters.isDetailUrl(url)) {
-          // Never fetch detail again
-          page.setFetchInterval(Integer.MAX_VALUE);
-          page.setFetchTime(Long.MAX_VALUE);
-          // TableUtil.putMetadata(page, "GENERATE_DO_NOT_GENERATE", "true");
-        }
-        else if (maxInterval < page.getFetchInterval()) {
+        if (maxInterval < page.getFetchInterval()) {
           fetchSchedule.forceRefetch(url, page, false);
         }
         break;

@@ -26,6 +26,7 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.apache.nutch.metadata.Metadata.META_CASH_KEY_U8;
 
 /**
  * This plugin implements a variant of an Online Page Importance Computation
@@ -50,8 +53,6 @@ public class OPICScoringFilter implements ScoringFilter {
 
   private final static Logger LOG = LoggerFactory.getLogger(OPICScoringFilter.class);
 
-  private final static Utf8 CASH_KEY = new Utf8("_csh_");
-
   private final static Set<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
@@ -65,7 +66,6 @@ public class OPICScoringFilter implements ScoringFilter {
   private float externalScoreFactor;
   @SuppressWarnings("unused")
   private boolean countFiltered;
-  private CrawlFilters crawlFilters;
 
   public Configuration getConf() {
     return conf;
@@ -77,13 +77,13 @@ public class OPICScoringFilter implements ScoringFilter {
     internalScoreFactor = conf.getFloat("db.score.link.internal", 1.0f);
     externalScoreFactor = conf.getFloat("db.score.link.external", 1.0f);
     countFiltered = conf.getBoolean("db.score.count.filtered", false);
-    crawlFilters = CrawlFilters.create(conf);
   }
 
   @Override
   public void injectedScore(String url, WebPage row) throws ScoringFilterException {
     float score = row.getScore();
-    row.getMetadata().put(CASH_KEY, ByteBuffer.wrap(Bytes.toBytes(score)));
+//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(score)));
+    TableUtil.setCash(row, score);
   }
 
   /**
@@ -93,7 +93,8 @@ public class OPICScoringFilter implements ScoringFilter {
   @Override
   public void initialScore(String url, WebPage row) throws ScoringFilterException {
     row.setScore(0.0f);
-    row.getMetadata().put(CASH_KEY, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
+//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
+    TableUtil.setCash(row, 0.0f);
   }
 
   /** Use {@link WebPage#getScore()}. */
@@ -108,36 +109,48 @@ public class OPICScoringFilter implements ScoringFilter {
     float adjust = 0.0f;
     float factor = 1.0f;
 
-    // We crawl detail url with higher priority
-//    if (crawlFilters.isDetailUrl(url)) {
-//      factor = Nutch.FETCH_PRIORITY_DETAIL_PAGE;
-//    }
-
     for (ScoreDatum scoreDatum : inlinkedScoreData) {
       adjust += scoreDatum.getScore();
     }
 
+    adjust = adjustScoreForArticle(row, adjust);
+
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
 
-    ByteBuffer cashRaw = row.getMetadata().get(CASH_KEY);
-    float cash = 0.0f;
-    if (cashRaw != null) {
-      cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
-    }
+//    ByteBuffer cashRaw = row.getMetadata().get(META_CASH_KEY_U8);
+//    float cash = 0.0f;
+//    if (cashRaw != null) {
+//      cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
+//    }
 
-    row.getMetadata().put(CASH_KEY, ByteBuffer.wrap(Bytes.toBytes(cash + factor * adjust)));
+    float cash = TableUtil.getCash(row);
+//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(cash + factor * adjust)));
+    TableUtil.setCash(row, cash + factor * adjust);
+  }
+
+  private float adjustScoreForArticle(WebPage row, float adjust) {
+    long count = TableUtil.getReferredPageCount(row);
+    if (count > 0) {
+      return adjust + (10000 + count);
+    }
+    return adjust;
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row, Collection<ScoreDatum> scoreData, int allCount) {
-    ByteBuffer cashRaw = row.getMetadata().get(CASH_KEY);
-    if (cashRaw == null) {
-      return;
-    }
+//    ByteBuffer cashRaw = row.getMetadata().get(META_CASH_KEY_U8);
+//    if (cashRaw == null) {
+//      return;
+//    }
+//
+//    float cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
+//    if (cash == 0) {
+//      return;
+//    }
 
-    float cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
+    float cash = TableUtil.getCash(row);
     if (cash == 0) {
       return;
     }
@@ -163,7 +176,8 @@ public class OPICScoringFilter implements ScoringFilter {
     }
 
     // reset cash to zero
-    row.getMetadata().put(CASH_KEY, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
+//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
+    TableUtil.setCash(row, 0.0f);
   }
 
   /** Dampen the boost value by scorePower. */

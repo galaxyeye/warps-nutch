@@ -347,8 +347,8 @@ public class TaskScheduler extends Configured {
     }
 
     WebPage page = seedBuiler.buildWebPage(urlLine);
-    String url = page.getVariableAsString("url");
-    TableUtil.setPriority(page, FETCH_PRIORITY_SEED);
+    String url = page.getTemporaryVariableAsString("url");
+    TableUtil.setFetchPriority(page, FETCH_PRIORITY_SEED);
     // set score?
 
     Mark.INJECT_MARK.removeMarkIfExist(page);
@@ -848,11 +848,7 @@ public class TaskScheduler extends Configured {
             .limit(maxDbUpdateNewRows)
             .forEach(e -> outputOutlinkPage(url, page, e.getKey(), e.getValue(), isSeed));
 
-    // 1. no need to write seed pages back
-    // 2. we may need a local list to maintain urls fetched recently, so we ignore them if we can see them in a page
-    if (!isSeed) {
-      outputMainPage(url, reversedUrl, page, outlinkRows);
-    }
+    outputMainPage(url, reversedUrl, page, outlinkRows);
   }
 
   @SuppressWarnings("unchecked")
@@ -901,6 +897,7 @@ public class TaskScheduler extends Configured {
       long publishTime = TableUtil.getPublishTime(oldPage);
       if (publishTime > 0) {
         TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
+        TableUtil.increaseReferredPageCount(mainPage, 1);
       }
 
       counter.increase(Counter.existOutlinkRows);

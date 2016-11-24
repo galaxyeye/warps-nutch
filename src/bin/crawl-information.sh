@@ -136,10 +136,12 @@ fi
 for ((a=1; a <= LIMIT ; a++))
 do
   DATE=`date +%s`
-  if [ -e ".STOP" ]
-  then
+  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
    echo "STOP file found - escaping loop"
-   mv .STOP ".STOP_EXECUTED_$DATE"
+
+   if [ -e ".STOP" ]; then
+     mv .STOP ".STOP_EXECUTED_$DATE"
+   fi
    break
   fi
 
@@ -181,9 +183,11 @@ do
 
     for i in {1..180}
     do
-      if [ -e ".AWAKE" ]; then
-        echo "AWAKE file found - escaping loop"
-        mv .AWAKE ".AWAKE_EXECUTED_$DATE"
+      if [ -e ".AWAKE" ] || [ -e ".KEEP_AWAKE" ]; then
+        echo "AWAKE file found"
+        if [ -e ".AWAKE" ]; then
+          mv .AWAKE ".AWAKE_EXECUTED_$DATE"
+        fi
         break
       else
         sleep 10s

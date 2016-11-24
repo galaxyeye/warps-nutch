@@ -22,7 +22,6 @@ import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.net.URLNormalizers;
@@ -50,7 +49,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsFiltered, oldUrlDate,
     tieba, bbs, news, blog,
-    pagesAlreadyGenerated, pagesTooFarAway, pagesFetchLater, pagesNeverFetch
+    pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, pagesNeverFetch
   }
 
   private NutchMetrics nutchMetrics;
@@ -169,8 +168,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
        * */
       if (ignoreGenerated) {
         // LOG.debug("Skipping {}; already generated", url);
-        String generateTimeStr = TableUtil.getMetadata(page, Nutch.PARAM_GENERATE_TIME);
-        long generateTime = StringUtil.tryParseLong(generateTimeStr, -1);
+        long generateTime = TableUtil.getGenerateTime(page);
 
         // Do not re-generate pages in one day if it's marked as "GENERATED"
         if (generateTime > 0 && generateTime < Duration.ofDays(1).toMillis()) {
@@ -179,21 +177,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
     } // if
 
-    // Filter on distance
-    // TODO : We have already filtered urls on dbupdate phrase, check if that is right @vincent
-    if (maxDistance > -1) {
-      CharSequence distanceUtf8 = page.getMarkers().get(Nutch.DISTANCE);
-      if (distanceUtf8 != null) {
-        int distance = Integer.parseInt(distanceUtf8.toString());
-        if (distance > maxDistance) {
-          getCounter().increase(Counter.pagesTooFarAway);
-          return;
-        }
-      }
-    }
-
     // Url filter
-    if (!shouldProcess(url, reversedUrl)) {
+    if (!shouldProcess(url, reversedUrl, page)) {
       return;
     }
 
@@ -216,8 +201,16 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       score = scoringFilters.generatorSortValue(url, page, score);
     } catch (ScoringFilterException ignored) {}
 
-    // TODO : Move to a ScoreFilter
-    // Detail pages comes first, but we still need some pages with other category
+    score = adjustScore(url, score);
+
+    output(url, new SelectorEntry(url, score), page, context);
+
+    getCounter().updateAffectedRows(url);
+  }
+
+  // TODO : Move to a ScoreFilter
+  // Detail pages comes first, but we still need some pages with other category
+  private float adjustScore(String url, float score) {
     if (crawlFilters.isDetailUrl(url)) {
       ++detailPages;
 
@@ -231,9 +224,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
     }
 
-    output(url, new SelectorEntry(url, score), page, context);
-
-    getCounter().updateAffectedRows(url);
+    return score;
   }
 
   // Check Host
@@ -257,6 +248,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
    * TODO : special cases should be move to scoring/schedule module
    * */
   private boolean handleSpecialCases(String url, WebPage page, Context context) throws IOException, InterruptedException {
+    int priority = FETCH_PRIORITY_DEFAULT;
     float score = -1.0f;
     Counter counter = null;
 
@@ -268,6 +260,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       counter = Counter.rowsAddedAsSeed;
     }
     else if (TableUtil.isSeed(page)) {
+      priority = FETCH_PRIORITY_SEED;
       score = SCORE_SEED;
       counter = Counter.rowsIsSeed;
     }
@@ -286,7 +279,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     // TODO : handle tieba, bbs and blog
 
     if (score > 0) {
-      output(url, new SelectorEntry(url, score), page, context);
+      output(url, new SelectorEntry(url, priority, score), page, context);
     }
 
     if (counter != null) {
@@ -319,7 +312,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       WebPage page = seedBuiler.buildWebPage(urlLine);
 
       // TODO : Check the difference between hbase.url and page.baseUrl
-      String url = page.getVariableAsString("url");
+      String url = page.getTemporaryVariableAsString("url");
 
       output(url, new SelectorEntry(url, Float.MAX_VALUE), page, context);
 
@@ -333,7 +326,17 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   }
 
   // Url filter
-  private boolean shouldProcess(String url, String reversedUrl) {
+  private boolean shouldProcess(String url, String reversedUrl, WebPage page) {
+    // Filter on distance
+    // TODO : We have already filtered urls on dbupdate phrase, check if that is right @vincent
+    if (maxDistance > -1) {
+      int distance = TableUtil.getDistance(page);
+      if (distance > maxDistance) {
+        getCounter().increase(Counter.pagesTooDeep);
+        return false;
+      }
+    }
+
     // TODO : CrawlFilter may be move to be a plugin
     // key before start key
     if (!CrawlFilter.keyGreaterEqual(reversedUrl, keyRange[0])) {

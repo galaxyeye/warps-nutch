@@ -170,7 +170,7 @@ public class JITIndexer {
 //    int _char = textContent.length();
 //    double _a = page.getOutlinks().size();
 //    if (_a == 0) {
-//      _a = (double)page.getVariable("outlinks_count");
+//      _a = (double)page.getTemporaryVariable("outlinks_count");
 //    }
 //
 //    // Index detail page only

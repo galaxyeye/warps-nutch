@@ -16,6 +16,7 @@
  */
 package org.apache.nutch.metadata;
 
+import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -41,11 +42,15 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
   public static final String META_INDEX_TIME_HISTORY = "NUTCH-INDEX-TIME-HISTORY";
   public static final String META_PUBLISH_TIME = "PUBLISH-TIME";
   public static final String META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME = "LRAPT";
+  public static final String META_REFERRED_PAGES = "REFERRED_PAGES";
   public static final String META_TMP = "TMP-";
   public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
   public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
   public static final String META_IS_SEED = "IS-SEED";
   public static final String META_FROM_SEED = "FROM-SEED";
+
+  public static final String META_CASH_KEY = "_csh_";
+  public static final Utf8 META_CASH_KEY_U8 = new Utf8("_csh_");
 
   /**
    * A map of all metadata attributes.

@@ -139,7 +139,7 @@ public class TasksMonitor {
   }
 
   private int getPriority(WebPage page) {
-    return TableUtil.getPriority(page, FETCH_PRIORITY_DEFAULT);
+    return TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
   }
 
   public synchronized FetchTask consume(String queueId) {

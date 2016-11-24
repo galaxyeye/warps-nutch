@@ -183,7 +183,7 @@ public class TableUtil {
     putMetadata(page, META_FROM_SEED, YES_STRING);
   }
 
-  public static int getWebDepth(WebPage page) {
+  public static int getDistance(WebPage page) {
     int depth = Integer.MAX_VALUE;
     CharSequence depthUtf8 = page.getMarkers().get(Nutch.DISTANCE);
 
@@ -194,7 +194,7 @@ public class TableUtil {
     return depth;
   }
 
-  public static void setWebDepth(WebPage page, int newDistance) {
+  public static void setDistance(WebPage page, int newDistance) {
     page.getMarkers().put(DISTANCE, new Utf8(Integer.toString(newDistance)));
   }
 
@@ -213,7 +213,7 @@ public class TableUtil {
       priority = FETCH_PRIORITY_DETAIL_PAGE;
     }
 
-    setPriorityIfAbsent(page, priority);
+    setFetchPriorityIfAbsent(page, priority);
 
     return priority;
   }
@@ -221,20 +221,42 @@ public class TableUtil {
   /**
    * TODO : use a standalone field for page
    * */
-  public static void setPriority(WebPage page, int priority) {
+  public static void setFetchPriority(WebPage page, int priority) {
     TableUtil.putMetadata(page, META_FETCH_PRIORITY, String.valueOf(priority));
   }
 
-  public static void setPriorityIfAbsent(WebPage page, int priority) {
+  public static void setFetchPriorityIfAbsent(WebPage page, int priority) {
     String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
     if (s == null) {
-      setPriority(page, priority);
+      setFetchPriority(page, priority);
     }
   }
 
-  public static int getPriority(WebPage page, int defaultPriority) {
+  public static int getFetchPriority(WebPage page, int defaultPriority) {
     String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
     return StringUtil.tryParseInt(s, defaultPriority);
+  }
+
+  public static void setGenerateTime(WebPage page, long generateTime) {
+    putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(generateTime));
+  }
+
+  public static long getGenerateTime(WebPage page) {
+    String generateTimeStr = getMetadata(page, PARAM_GENERATE_TIME);
+    return StringUtil.tryParseLong(generateTimeStr, -1);
+  }
+
+  public static float getCash(WebPage page) {
+    ByteBuffer cashRaw = page.getMetadata().get(new Utf8(META_CASH_KEY));
+    float cash = 0.0f;
+    if (cashRaw != null) {
+      cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
+    }
+    return cash;
+  }
+
+  public static void setCash(WebPage page, float cash) {
+    page.getMetadata().put(new Utf8(META_CASH_KEY), ByteBuffer.wrap(Bytes.toBytes(cash)));
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {
@@ -252,6 +274,20 @@ public class TableUtil {
   public static long getPublishTime(WebPage page) {
     String publishTimeStr = getPublishTimeStr(page);
     return DateTimeUtil.parseTime(publishTimeStr);
+  }
+
+  public static long getReferredPageCount(WebPage page) {
+    String referredPages = getMetadata(page, META_REFERRED_PAGES);
+    return StringUtil.tryParseLong(referredPages, 0);
+  }
+
+  public static void setReferredPageCount(WebPage page, long count) {
+    putMetadata(page, META_PUBLISH_TIME, String.valueOf(count));
+  }
+
+  public static void increaseReferredPageCount(WebPage page, long count) {
+    long oldCount = getReferredPageCount(page);
+    putMetadata(page, META_PUBLISH_TIME, String.valueOf(oldCount + count));
   }
 
   public static long getLatestReferredPublishTime(WebPage page) {

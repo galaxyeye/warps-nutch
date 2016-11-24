@@ -146,9 +146,10 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     }
 
     page.setBatchId(batchId);
-    TableUtil.clearMetadata(page, META_FROM_SEED);
     // Generate time, we will use this mark to decide if we re-generate this page
-    TableUtil.putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(startTime));
+    TableUtil.setGenerateTime(page, startTime);
+
+    TableUtil.clearMetadata(page, META_FROM_SEED);
 
     Mark.INJECT_MARK.removeMarkIfExist(page);
     Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));

@@ -169,18 +169,28 @@ public class GenerateJob extends NutchJob implements Tool {
 
   public static class SelectorEntry implements WritableComparable<SelectorEntry> {
     String url;
+    int priority;
     float score;
 
     public SelectorEntry() {
     }
 
     public SelectorEntry(String url, float score) {
+      this(url, FETCH_PRIORITY_DEFAULT, score);
+    }
+
+    public SelectorEntry(String url, int priority, float score) {
       this.url = url;
+      this.priority = priority;
       this.score = score;
     }
 
     public String getUrl() {
       return url;
+    }
+
+    public int getPriority() {
+      return priority;
     }
 
     public float getScore() {
@@ -189,20 +199,27 @@ public class GenerateJob extends NutchJob implements Tool {
 
     public void readFields(DataInput in) throws IOException {
       url = Text.readString(in);
+      priority = in.readInt();
       score = in.readFloat();
     }
 
     public void write(DataOutput out) throws IOException {
       Text.writeString(out, url);
+      out.writeInt(priority);
       out.writeFloat(score);
     }
 
+    @Override
     public int compareTo(SelectorEntry se) {
-      if (se.score > score)
-        return 1;
-      else if (se.score == score)
-        return url.compareTo(se.url);
-      return -1;
+      if (se.priority == priority) {
+        if (se.score == score) {
+          return url.compareTo(se.url);
+        }
+
+        return score < se.score ? -1 : 1;
+      }
+
+      return priority < se.priority ? -1 : 1;
     }
 
     @Override
@@ -211,17 +228,27 @@ public class GenerateJob extends NutchJob implements Tool {
       int result = 1;
       result = prime * result + url.hashCode();
       result = prime * result + Float.floatToIntBits(score);
+      result = prime * result + priority;
       return result;
     }
 
     @Override
     public boolean equals(Object obj) {
+      if (!(obj instanceof SelectorEntry)) {
+        return false;
+      }
+
       SelectorEntry other = (SelectorEntry) obj;
-      if (!url.equals(other.url))
+      if (!url.equals(other.url)) {
         return false;
-      if (Float.floatToIntBits(score) != Float.floatToIntBits(other.score))
+      }
+
+      if (Float.floatToIntBits(score) != Float.floatToIntBits(other.score)) {
         return false;
-      return true;
+      }
+
+      return priority != other.priority;
+
     }
 
     /**
@@ -231,7 +258,19 @@ public class GenerateJob extends NutchJob implements Tool {
      * @param score
      */
     public void set(String url, float score) {
+      set(url, FETCH_PRIORITY_DEFAULT, score);
+    }
+
+    /**
+     * Sets url with score on this writable. Allows for writable reusing.
+     *
+     * @param url
+     * @param priority
+     * @param score
+     */
+    public void set(String url, int priority, float score) {
       this.url = url;
+      this.priority = priority;
       this.score = score;
     }
   }

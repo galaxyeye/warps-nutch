@@ -90,7 +90,7 @@ public class InjectJob extends NutchJob implements Tool {
       }
 
       WebPage row = seedBuiler.buildWebPage(urlLine);
-      String reversedUrl = row.getVariableAsString("reversedUrl");
+      String reversedUrl = row.getTemporaryVariableAsString("reversedUrl");
 
       if (reversedUrl != null) {
         context.write(reversedUrl, row);

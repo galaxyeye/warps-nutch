@@ -88,39 +88,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(DOC_FIELD_PAGE_CATEGORY, sniffPageCategory(doc, url, page).name());
-  }
-
-  /**
-   * TODO : do it inside scent
-   * */
-  private CrawlFilter.PageCategory sniffPageCategory(IndexDocument doc, String url, WebPage page) {
-    CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
-
-    String textContent = (String)page.getVariable(DOC_FIELD_TEXT_CONTENT);
-    if (textContent == null) {
-      return pageCategory;
-    }
-
-    double _char = textContent.length();
-    double _a = page.getOutlinks().size();
-    if (_a == 0) {
-      Object count = page.getVariable("outlinks_count");
-      if (count != null && count instanceof Integer) {
-        _a = (int)count;
-      }
-    }
-
-    if (textContent.isEmpty()) {
-      if (_a > 30) {
-        pageCategory = CrawlFilter.PageCategory.INDEX;
-      }
-    }
-    else {
-      return CrawlFilter.sniffPageCategory(url, _char, _a);
-    }
-
-    return pageCategory;
+    doc.add(DOC_FIELD_PAGE_CATEGORY, CrawlFilter.sniffPageCategory(url, page).name());
   }
 
   /**

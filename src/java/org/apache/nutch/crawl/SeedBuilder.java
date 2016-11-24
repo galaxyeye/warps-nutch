@@ -1,6 +1,5 @@
 package org.apache.nutch.crawl;
 
-import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Nutch;
@@ -97,8 +96,8 @@ public class SeedBuilder {
     }
 
     // TODO : Check the difference between hbase.url and page.baseUrl
-    row.setVariable("url", url);
-    row.setVariable("reversedUrl", reversedUrl);
+    row.setTmporaryVariable("url", url);
+    row.setTmporaryVariable("reversedUrl", reversedUrl);
 
     if (customPageScore != -1f) {
       row.setScore(customPageScore);
@@ -113,10 +112,10 @@ public class SeedBuilder {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
-    TableUtil.setPriority(row, FETCH_PRIORITY_SEED);
+    TableUtil.setFetchPriority(row, FETCH_PRIORITY_SEED);
 
     // TODO : DISTANCE should be metadata
-    row.getMarkers().put(Nutch.DISTANCE, new Utf8(String.valueOf(0)));
+    TableUtil.setDistance(row, 0);
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);
 
     return row;

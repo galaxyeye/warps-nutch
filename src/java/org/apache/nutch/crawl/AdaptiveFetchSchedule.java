@@ -18,10 +18,14 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -90,18 +94,18 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
       long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    long refTime = fetchTime;
+    long refetchTime = fetchTime;
     if (modifiedTime <= 0) {
       modifiedTime = fetchTime;
     }
 
-    int interval = page.getFetchInterval();
+    int intervalSec = page.getFetchInterval();
     switch (state) {
     case FetchSchedule.STATUS_MODIFIED:
-      interval *= (1.0f - DEC_RATE);
+      intervalSec *= (1.0f - DEC_RATE);
       break;
     case FetchSchedule.STATUS_NOTMODIFIED:
-      interval *= (1.0f + INC_RATE);
+      intervalSec *= (1.0f + INC_RATE);
       break;
     case FetchSchedule.STATUS_UNKNOWN:
       break;
@@ -111,19 +115,48 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       // try to synchronize with the time of change
       // TODO: different from normal class (is delta in seconds)?
       int delta = (int) ((fetchTime - modifiedTime) / 1000L);
-      if (delta > interval) {
-        interval = delta;
+      if (delta > intervalSec) {
+        intervalSec = delta;
       }
-      refTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
+      refetchTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
     }
 
-    if (interval < MIN_INTERVAL) interval = MIN_INTERVAL;
-    if (interval > MAX_INTERVAL) interval = MAX_INTERVAL;
+    intervalSec = adjustFetchIntervalForArticle(url, page, fetchTime, intervalSec);
 
-    page.setFetchInterval(interval);
-    page.setFetchTime(refTime + interval * 1000L);
+    if (intervalSec < MIN_INTERVAL) intervalSec = MIN_INTERVAL;
+    if (intervalSec > MAX_INTERVAL) intervalSec = MAX_INTERVAL;
+
+    page.setFetchInterval(intervalSec);
+    page.setFetchTime(refetchTime + intervalSec * 1000L);
     page.setModifiedTime(modifiedTime);
     page.setPrevModifiedTime(prevModifiedTime);
+  }
+
+  /**
+   * Adjust fetch interval for article pages
+   * */
+  private int adjustFetchIntervalForArticle(String url, WebPage page, long fetchTime, int intervalSec) {
+    long lastestReferredPublishTime = TableUtil.getLatestReferredPublishTime(page);
+    if (lastestReferredPublishTime < 0) {
+      return intervalSec;
+    }
+
+    long diff = fetchTime - lastestReferredPublishTime;
+    if (diff < Duration.ofDays(1).toMillis()) {
+      // if there are updates in one day, keep re-fetch the page in every crawl loop
+      intervalSec = 1;
+    }
+    else if (diff > Duration.ofDays(3).toMillis()) {
+      // if there is no any updates in 3 days, check the page again a hour later
+      intervalSec = (int)Duration.ofHours(1).toMinutes() * 60;
+    }
+
+    if (CrawlFilter.sniffPageCategory(url, page) == CrawlFilter.PageCategory.DETAIL) {
+      // Never fetch detail again
+      intervalSec = MAX_INTERVAL;
+    }
+
+    return intervalSec;
   }
 
   public static void main(String[] args) throws Exception {

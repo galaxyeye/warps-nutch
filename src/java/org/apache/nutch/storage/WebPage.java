@@ -799,19 +799,19 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase imp
 
   public java.util.Map<String, Object> getProgramVariables() { return programVariables; }
 
-  public Object getVariable(String name) { return programVariables.get(name); }
+  public Object getTemporaryVariable(String name) { return programVariables.get(name); }
 
-  public String getVariableAsString(String name) {
+  public String getTemporaryVariableAsString(String name) {
     Object value = programVariables.get(name);
     return value == null ? null : value.toString();
   }
 
-  public String getVariableAsString(String name, String defaultValue) {
+  public String getTemporaryVariableAsString(String name, String defaultValue) {
     Object value = programVariables.get(name);
     return value == null ? defaultValue : value.toString();
   }
 
-  public void setVariable(String name, Object value) { programVariables.put(name, value); }
+  public void setTmporaryVariable(String name, Object value) { programVariables.put(name, value); }
 
   /** Creates a new WebPage RecordBuilder */
   public static org.apache.nutch.storage.WebPage.Builder newBuilder() {

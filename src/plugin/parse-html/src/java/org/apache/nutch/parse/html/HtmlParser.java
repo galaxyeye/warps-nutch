@@ -68,7 +68,6 @@ public class HtmlParser implements Parser {
 
   private String parserImpl;
   private CrawlFilters crawlFilters;
-  private boolean ignoreDetailPageOutlinks;
   private String defaultCharEncoding;
   private Configuration conf;
   private RegexExtractor regexExtractor;
@@ -91,7 +90,6 @@ public class HtmlParser implements Parser {
     this.domContentUtils = new DOMContentUtils(conf);
     this.cachingPolicy = getConf().get("parser.caching.forbidden.policy", CACHING_FORBIDDEN_CONTENT);
     this.crawlFilters = CrawlFilters.create(conf);
-    this.ignoreDetailPageOutlinks = getConf().getBoolean("parser.ignore.detail.page.outlinks", true);
     this.regexExtractor = new RegexExtractor(conf);
     this.encodingDetector = new EncodingDetector(conf);
 
@@ -134,7 +132,7 @@ public class HtmlParser implements Parser {
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
-    String textContent = page.getVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
+    String textContent = page.getTemporaryVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
     tryGetValidOutlinks(page, url, baseURL, textContent);
 
@@ -200,7 +198,7 @@ public class HtmlParser implements Parser {
       return;
     }
 
-    /**
+    /*
      * @vincent : We ignore all search links
      * TODO : This is a temporary solution, and should be configurated
      * */
@@ -216,7 +214,7 @@ public class HtmlParser implements Parser {
       domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
-    page.setVariable("outlinks_count", outlinks.size());
+    page.setTmporaryVariable("outlinks_count", outlinks.size());
 
     boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", false);
     if (noFollowDetailPage) {
@@ -237,7 +235,7 @@ public class HtmlParser implements Parser {
   }
 
   private void setEncoding(WebPage page, String encoding) {
-    page.setVariable("encoding", encoding);
+    page.setTmporaryVariable("encoding", encoding);
     TableUtil.putMetadata(page, Nutch.ORIGINAL_CHAR_ENCODING, encoding);
     TableUtil.putMetadata(page, Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
@@ -274,13 +272,18 @@ public class HtmlParser implements Parser {
       extractor.process(doc);
 
       page.setTitle(doc.getPageTitle());
-      page.setVariable(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
-      page.setVariable(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+      page.setTmporaryVariable(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
+      page.setTmporaryVariable(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+      doc.getFields().entrySet().forEach(entry -> page.setTmporaryVariable(entry.getKey(), entry.getValue()));
 
 //      LOG.info("Text content length : " + doc.getTextContent().length()
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
-      doc.getFields().entrySet().stream().forEach(entry -> page.setVariable(entry.getKey(), entry.getValue()));
+      String publishTime = doc.getField(DOC_FIELD_PUBLISH_TIME);
+      if (publishTime != null) {
+        TableUtil.setPublishTime(page, publishTime);
+      }
+
     } catch (ProcessingException |SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
     }

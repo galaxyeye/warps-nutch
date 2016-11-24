@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.net.RegexURLFilter;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -32,6 +33,8 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 
 public class CrawlFilter extends Configured {
 
@@ -57,13 +60,42 @@ public class CrawlFilter extends Configured {
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
+  public static CrawlFilter.PageCategory sniffPageCategory(String url, WebPage page) {
+    CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
+
+    String textContent = (String)page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
+    if (textContent == null) {
+      return pageCategory;
+    }
+
+    double _char = textContent.length();
+    double _a = page.getOutlinks().size();
+    if (_a == 0) {
+      Object count = page.getTemporaryVariable("outlinks_count");
+      if (count != null && count instanceof Integer) {
+        _a = (int)count;
+      }
+    }
+
+    if (textContent.isEmpty()) {
+      if (_a > 30) {
+        pageCategory = CrawlFilter.PageCategory.INDEX;
+      }
+    }
+    else {
+      return CrawlFilter.sniffPageCategory(url, _char, _a);
+    }
+
+    return pageCategory;
+  }
+
   public static PageCategory sniffPageCategory(String url, double _char, double _a) {
     PageCategory pageCategory = sniffPageCategoryByTextDensity(_char, _a);
 
     return pageCategory == PageCategory.ANY ? sniffPageCategoryByUrlPattern(url) : pageCategory;
   }
 
-  /** TODO : use machine learning to calculate the parameters */
+  /* TODO : use machine learning to calculate the parameters */
   public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
     PageCategory pageCategory = PageCategory.ANY;
 
@@ -71,11 +103,11 @@ public class CrawlFilter extends Configured {
       _a = 1;
     }
 
-    // 链接数不少于60个
-    if (_a > 60 && _char/_a < 30) {
+    if (_a > 60 && _char/_a < 20) {
+      // 索引页：链接数不少于60个，文本密度小于20
       pageCategory = PageCategory.INDEX;
     }
-    else if (_char > 3000) {
+    else if (_char/_a > 30) {
       pageCategory = PageCategory.DETAIL;
     }
 
