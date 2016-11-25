@@ -216,10 +216,10 @@ public class GenerateJob extends NutchJob implements Tool {
           return url.compareTo(se.url);
         }
 
-        return score < se.score ? -1 : 1;
+        return score > se.score ? -1 : 1;
       }
 
-      return priority < se.priority ? -1 : 1;
+      return priority > se.priority ? -1 : 1;
     }
 
     @Override
