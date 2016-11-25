@@ -3,9 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7d87538b-5182-40ca-96f4-c4605ea459b5" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/indexer/JITIndexer.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/indexer/JITIndexer.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexWriters.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexWriters.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/plugin/indexer-solr/src/java/org/apache/nutch/indexwriter/solr/SolrIndexWriter.java" afterPath="$PROJECT_DIR$/src/plugin/indexer-solr/src/java/org/apache/nutch/indexwriter/solr/SolrIndexWriter.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
     </list>
     <ignored path="qiwur-nutch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -36,7 +35,28 @@
     <favorites_list name="qiwur-nutch" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="GenerateMapper.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="404">
+              <caret line="356" column="0" selection-start-line="356" selection-start-column="0" selection-end-line="356" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="GenerateReducer.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="436">
+              <caret line="149" column="0" selection-start-line="149" selection-start-column="0" selection-end-line="149" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -90,7 +110,6 @@
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/Outlink.java" />
@@ -102,11 +121,12 @@
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/OutlinkExtractor.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
         <option value="$PROJECT_DIR$/.idea/workspace.xml" />
         <option value="$PROJECT_DIR$/src/plugin/indexer-solr/src/java/org/apache/nutch/indexwriter/solr/SolrIndexWriter.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexWriters.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/indexer/JITIndexer.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
       </list>
     </option>
   </component>
@@ -229,7 +249,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PackageElementNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="indexwriter.solr" />
+              <option name="myItemId" value="mapreduce" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PackageElementNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -796,7 +816,14 @@
       <option name="project" value="LOCAL" />
       <updated>1480040178627</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="1. Catch index exceptions. If a page is failed to index,  we should re-index the page">
+      <created>1480041686126</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1480041686126</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -929,7 +956,8 @@
     <MESSAGE value="1. add news.baidu.com as a seed url" />
     <MESSAGE value="1. ignore .idea/workspace.xml" />
     <MESSAGE value="1. Use fetch priority to control the fetch policy for different kind of links : seeds, pagesFromSeed, detailPage, indexPage, etc" />
-    <option name="LAST_COMMIT_MESSAGE" value="1. Use fetch priority to control the fetch policy for different kind of links : seeds, pagesFromSeed, detailPage, indexPage, etc" />
+    <MESSAGE value="1. Catch index exceptions. If a page is failed to index,  we should re-index the page" />
+    <option name="LAST_COMMIT_MESSAGE" value="1. Catch index exceptions. If a page is failed to index,  we should re-index the page" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1313,22 +1341,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="556">
-          <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="331">
-          <caret line="161" column="0" selection-start-line="161" selection-start-column="0" selection-end-line="161" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="364">
@@ -1447,6 +1459,22 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="436">
+          <caret line="149" column="0" selection-start-line="149" selection-start-column="0" selection-end-line="149" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="404">
+          <caret line="356" column="0" selection-start-line="356" selection-start-column="0" selection-end-line="356" selection-end-column="0" />
           <folding />
         </state>
       </provider>

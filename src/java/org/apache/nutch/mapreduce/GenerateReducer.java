@@ -144,9 +144,9 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     TableUtil.setGenerateTime(page, startTime);
 
     // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
-//    if (TableUtil.isSeed(page)) {
-//      page = seedBuiler.buildWebPage(url);
-//    }
+    if (TableUtil.isSeed(page)) {
+      page = seedBuiler.buildWebPage(url);
+    }
 
     page.setBatchId(batchId);
 

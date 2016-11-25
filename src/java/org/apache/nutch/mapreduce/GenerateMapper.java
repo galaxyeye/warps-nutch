@@ -116,7 +116,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     keyRange = crawlFilters.getMaxReversedKeyRange();
 
     this.seedBuiler = new SeedBuilder(conf);
-    // seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
+    seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -139,7 +139,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "unreachableHosts", unreachableHosts.size()
     ));
 
-    // createSeedRows(context);
+    createSeedRows(context);
   }
 
   @Override
