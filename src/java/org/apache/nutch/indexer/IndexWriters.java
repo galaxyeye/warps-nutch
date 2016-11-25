@@ -8,6 +8,7 @@ import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -67,14 +68,9 @@ public class IndexWriters {
     }
   }
 
-  public void write(IndexDocument doc) {
+  public void write(IndexDocument doc) throws IOException {
     for (IndexWriter indexWriter : indexWriters) {
-      try {
-        indexWriter.write(doc);
-      }
-      catch (Throwable e) {
-        LOG.error("Failed to write to indexer, " + e.getMessage());
-      }
+      indexWriter.write(doc);
     }
   }
 
@@ -111,14 +107,9 @@ public class IndexWriters {
     }
   }
 
-  public void commit() {
+  public void commit() throws IOException {
     for (IndexWriter indexWriter : indexWriters) {
-      try {
-        indexWriter.commit();
-      }
-      catch (Throwable e) {
-        LOG.error("Failed to commit doc to indexer, " + e.getMessage());
-      }
+      indexWriter.commit();
     }
   }
 

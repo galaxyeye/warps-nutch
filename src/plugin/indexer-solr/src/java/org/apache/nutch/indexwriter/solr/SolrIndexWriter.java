@@ -205,8 +205,8 @@ public class SolrIndexWriter implements IndexWriter {
       for (SolrClient solrClient : solrClients) {
         solrClient.commit();
       }
-    } catch (Throwable e) {
-      LOG.error("Failed to commit to solr : " + e.getMessage());
+    } catch (SolrServerException e) {
+      throw makeIOException(e);
     }
   }
 
@@ -230,8 +230,9 @@ public class SolrIndexWriter implements IndexWriter {
           solrClient.request(req);
         }
       }
-      catch (Throwable e) {
+      catch (SolrServerException e) {
         LOG.error("Failed to write to solr " + e.toString());
+        throw makeIOException(e);
       }
 
       inputDocs.clear();
