@@ -11,10 +11,12 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.net.URLNormalizers;
+import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ObjectCache;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -23,13 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
-import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -133,10 +136,7 @@ public class MapDatumBuilder {
   /**
    * Build map phrase datum
    * */
-  public Pair<UrlWithScore, NutchWritable> createNewDatum(String url, WebPage sourcePage) {
-    int priority = TableUtil.calculatePriority(url, sourcePage, crawlFilters);
-    float score = calculatePageScore(url, priority, sourcePage);
-
+  public Pair<UrlWithScore, NutchWritable> createNewDatum(String url, float score, WebPage sourcePage) {
     String reversedUrl = null;
     try {
       reversedUrl = TableUtil.reverseUrl(url);
@@ -148,20 +148,26 @@ public class MapDatumBuilder {
     return Pair.of(new UrlWithScore(reversedUrl, score), nutchWritable);
   }
 
-  public Map<CharSequence, CharSequence> getFilteredOutlinks(WebPage sourcePage, final int depth, final int limit) {
-    // Do not dive too deep
-    final Map<CharSequence, CharSequence> outlinks = sourcePage.getOutlinks();
+  public List<Outlink> getFilteredOutlinks(WebPage sourcePage, final int limit) {
+    List<Outlink> orderedOutlinks = new LinkedList<>();
 
-    if (depth > maxDistance) {
-      counter.increase(NutchCounter.Counter.tooDeepPages);
+    Object obj = sourcePage.getTemporaryVariable(VAR_ORDERED_OUTLINKS);
+    if (obj != null && obj instanceof Outlink[]) {
+      orderedOutlinks = Stream.of((Outlink[])obj).collect(Collectors.toList());
+    }
+    else {
+      final Map<CharSequence, CharSequence> unorderedOutlinks = sourcePage.getOutlinks();
+      if (unorderedOutlinks != null) {
+        orderedOutlinks = unorderedOutlinks.entrySet().stream()
+            .map(e -> new Outlink(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+      }
     }
 
-    if (depth > maxDistance || outlinks == null || outlinks.isEmpty()) {
-      return new HashMap<>();
-    }
-
-    return outlinks.keySet().stream().filter(link -> isValidUrl(sourcePage, link))
-            .limit(limit).collect(Collectors.toMap(link -> link, outlinks::get));
+    return orderedOutlinks.stream()
+        .filter(e -> isValidUrl(sourcePage, e.getToUrl()))
+        .limit(limit)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -171,14 +177,21 @@ public class MapDatumBuilder {
    * */
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = TableUtil.getDistance(sourcePage);
+
+    if (depth >= maxDistance) {
+      counter.increase(NutchCounter.Counter.tooDeepPages);
+      return new HashMap<>();
+    }
+
     final int limit = 1000;
 
-    final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, depth, limit);
-    List<ScoreDatum> scoreData = outlinks.entrySet().stream()
-        .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth))
+    final List<Outlink> outlinks = getFilteredOutlinks(sourcePage, limit);
+
+    // For all links in a page, if the link is closer to the top, it has the higher score
+    List<ScoreDatum> scoreData = IntStream.range(0, outlinks.size())
+        .mapToObj(i -> new ScoreDatum(outlinks.size() - i, outlinks.get(i), depth))
         .collect(Collectors.toList());
 
-    // TODO : Outlink filtering (i.e. "only keep the first n outlinks")
     try {
       // In OPIC, the source page's score is distributed for all inlink/outlink pages
       scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, scoreData, outlinks.size());
@@ -188,18 +201,7 @@ public class MapDatumBuilder {
 
     counter.increase(NutchCounter.Counter.outlinks, scoreData.size());
 
-    return scoreData.stream().map(d -> createNewDatum(d.getUrl(), sourcePage))
+    return scoreData.stream().map(d -> createNewDatum(d.getUrl(), d.getScore(), sourcePage))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-  }
-
-  private ScoreDatum createScoreDatum(CharSequence url, CharSequence anchor, int depth) {
-    return new ScoreDatum(0.0f, url.toString(), anchor.toString(), depth);
-  }
-
-  /**
-   * TODO : We calculate page score mainly in reduer
-   * */
-  private float calculatePageScore(String url, int priority, WebPage page) {
-    return priority * 1.0f;
   }
 }

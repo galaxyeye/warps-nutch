@@ -73,7 +73,7 @@ public class TaskScheduler extends Configured {
     readyTasks, pendingTasks,
     pagesThou, mbThou,
     rowsRedirect,
-    rowsPeresist, newRowsPeresist, newDetailRows, existOutlinkRows
+    rowsPeresist, rowsCreated, newRowsMaybeDetail, existOutlinkRows
   }
 
   public static final int QUEUE_REMAINDER_LIMIT = 5;
@@ -901,15 +901,10 @@ public class TaskScheduler extends Configured {
       }
 
       counter.increase(Counter.existOutlinkRows);
+
+      // TODO : update old page
+
       return;
-    }
-
-    page = reduceDatumBuilder.createNewRow(url);
-    reduceDatumBuilder.updateRow(url, page);
-
-    counter.increase(Counter.newRowsPeresist);
-    if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
-      counter.increase(Counter.newDetailRows);
     }
 
     /**
@@ -919,6 +914,15 @@ public class TaskScheduler extends Configured {
     if (fromSeed) {
       TableUtil.markFromSeed(page);
       nutchMetrics.reportUrlsFromSeed(url, sourceUrl, reportSuffix);
+    }
+
+    int priority = fromSeed ? FETCH_PRIORITY_FROM_SEED : FETCH_PRIORITY_DEFAULT;
+    page = reduceDatumBuilder.createNewRow(url, priority, urlWithScore.getScore().get());
+    reduceDatumBuilder.updateRow(url, page);
+
+    counter.increase(Counter.rowsCreated);
+    if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
+      counter.increase(Counter.newRowsMaybeDetail);
     }
 
     try {

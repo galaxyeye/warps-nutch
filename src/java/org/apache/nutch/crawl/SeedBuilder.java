@@ -113,9 +113,8 @@ public class SeedBuilder {
     }
 
     TableUtil.setFetchPriority(row, FETCH_PRIORITY_SEED);
-
-    // TODO : DISTANCE should be metadata
     TableUtil.setDistance(row, 0);
+
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);
 
     return row;

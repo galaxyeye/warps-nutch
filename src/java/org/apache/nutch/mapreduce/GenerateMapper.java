@@ -38,6 +38,7 @@ import java.net.MalformedURLException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -46,10 +47,11 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
-    malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
+    malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsFromSeed, rowsDetailFromSeed,
+    rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsFiltered, oldUrlDate,
     tieba, bbs, news, blog,
-    pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, pagesNeverFetch
+    pagesAlreadyGenerated, pagesTooDeep, seedsFetchLater, pagesFetchLater, pagesNeverFetch
   }
 
   private NutchMetrics nutchMetrics;
@@ -114,7 +116,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     keyRange = crawlFilters.getMaxReversedKeyRange();
 
     this.seedBuiler = new SeedBuilder(conf);
-    seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
+    // seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -137,7 +139,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "unreachableHosts", unreachableHosts.size()
     ));
 
-    createSeedRows(context);
+    // createSeedRows(context);
   }
 
   @Override
@@ -146,14 +148,113 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!checkHost(url)) {
+    if (!checkHostAvailable(url)) {
       return;
     }
 
-    if (handleSpecialCases(url, page, context)) {
+    int priority = calculateGeneratePriority(url, page);
+    boolean mustGenerate = priority > FETCH_PRIORITY_MUST_GENERATE;
+
+    // Url filter
+    if (!mustGenerate && !shouldGenerate(url, reversedUrl, priority, page)) {
       return;
     }
 
+    // Fetch schedule, timing filter
+    if (!mustGenerate && !fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
+      if (page.getFetchTime() - pseudoCurrTime <= Duration.ofDays(30).toMillis()) {
+        getCounter().increase(Counter.pagesFetchLater);
+        if (TableUtil.isSeed(page)) {
+          getCounter().increase(Counter.seedsFetchLater);
+        }
+      }
+      else {
+        getCounter().increase(Counter.pagesNeverFetch);
+      }
+
+      return;
+    } // if
+
+    float score = page.getScore();
+    try {
+      // Typically, we use OPIC scoring filter
+      score = scoringFilters.generatorSortValue(url, page, score);
+    } catch (ScoringFilterException ignored) {}
+
+    output(url, new SelectorEntry(url, priority, score), page, context);
+
+    getCounter().updateAffectedRows(url);
+  }
+
+  // Check Host
+  private boolean checkHostAvailable(String url) {
+    String host = URLUtil.getHost(url, hostGroupMode);
+
+    if (host == null) {
+      getCounter().increase(Counter.malformedUrl);
+      return false;
+    }
+
+    if (unreachableHosts.contains(host)) {
+      getCounter().increase(Counter.rowsHostUnreachable);
+      return false;
+    }
+
+    return true;
+  }
+
+  private int calculateGeneratePriority(String url, WebPage page) {
+    int priority = TableUtil.calculatePriority(url, page, crawlFilters);
+    Counter counter = null;
+
+    /*
+     * We crawl seed every time we start, AdaptiveScheduler is just works
+     * */
+    if (seedUrls.contains(url)) {
+      // TODO : check this indicator to see if the scoring/schedule system is OK for seed urls
+      counter = Counter.rowsAddedAsSeed;
+    }
+    else if (TableUtil.isSeed(page)) {
+      counter = Counter.rowsIsSeed;
+    }
+
+    if (TableUtil.isFromSeed(page)) {
+      if (crawlFilters.isDetailUrl(url)) {
+        getCounter().increase(Counter.rowsDetailFromSeed);
+      }
+      counter = Counter.rowsFromSeed;
+    }
+
+    if (Mark.INJECT_MARK.hasMark(page)) {
+      // Page is injected, this is a seed url and has the highest fetch priority
+      // INJECT_MARK will be removed in DbUpdate stage
+
+      counter = Counter.rowsInjected;
+    }
+
+    if (crawlFilters.isDetailUrl(url)) {
+      ++detailPages;
+
+      if (detailPages >= maxDetailPageCount) {
+        priority = FETCH_PRIORITY_DEFAULT;
+      }
+    }
+
+    // TODO : handle tieba, bbs and blog
+
+    if (counter != null) {
+      getCounter().increase(counter);
+    }
+
+    return priority;
+  }
+
+  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
+    context.write(entry, page);
+  }
+
+  // Url filter
+  private boolean shouldGenerate(String url, String reversedUrl, int priority, WebPage page) {
     if (Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.pagesAlreadyGenerated);
 
@@ -172,163 +273,16 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
         // Do not re-generate pages in one day if it's marked as "GENERATED"
         if (generateTime > 0 && generateTime < Duration.ofDays(1).toMillis()) {
-          return;
+          return false;
         }
       }
     } // if
 
-    // Url filter
-    if (!shouldProcess(url, reversedUrl, page)) {
-      return;
+    if (priority >= FETCH_PRIORITY_MUST_GENERATE) {
+      return true;
     }
 
-    // Fetch schedule, timing filter
-    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
-      if (page.getFetchTime() - pseudoCurrTime <= Duration.ofDays(30).toMillis()) {
-        getCounter().increase(Counter.pagesFetchLater);
-      }
-      else {
-        getCounter().increase(Counter.pagesNeverFetch);
-      }
-
-      return;
-    }
-
-    float score = page.getScore();
-    try {
-      // Typically, we use OPIC scoring filter
-      // TODO : use a better scoring filter for information monitoring @vincent
-      score = scoringFilters.generatorSortValue(url, page, score);
-    } catch (ScoringFilterException ignored) {}
-
-    score = adjustScore(url, score);
-
-    output(url, new SelectorEntry(url, score), page, context);
-
-    getCounter().updateAffectedRows(url);
-  }
-
-  // TODO : Move to a ScoreFilter
-  // Detail pages comes first, but we still need some pages with other category
-  private float adjustScore(String url, float score) {
-    if (crawlFilters.isDetailUrl(url)) {
-      ++detailPages;
-
-      if (detailPages < maxDetailPageCount) {
-        score = SCORE_DETAIL_PAGE;
-      }
-    }
-    else if (crawlFilters.isIndexUrl(url)) {
-      if (score > SCORE_DETAIL_PAGE) {
-        LOG.debug("Too high score : " + score + ", index url : " + url);
-      }
-    }
-
-    return score;
-  }
-
-  // Check Host
-  private boolean checkHost(String url) {
-    String host = URLUtil.getHost(url, hostGroupMode);
-
-    if (host == null) {
-      getCounter().increase(Counter.malformedUrl);
-      return false;
-    }
-
-    if (unreachableHosts.contains(host)) {
-      getCounter().increase(Counter.rowsHostUnreachable);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * TODO : special cases should be move to scoring/schedule module
-   * */
-  private boolean handleSpecialCases(String url, WebPage page, Context context) throws IOException, InterruptedException {
-    int priority = FETCH_PRIORITY_DEFAULT;
-    float score = -1.0f;
-    Counter counter = null;
-
-    /*
-     * We crawl seed every time we start, AdaptiveScheduler is just works
-     * */
-    if (seedUrls.contains(url)) {
-      // TODO : check this indicator to see if the scoring/schedule system is OK for seed urls
-      counter = Counter.rowsAddedAsSeed;
-    }
-    else if (TableUtil.isSeed(page)) {
-      priority = FETCH_PRIORITY_SEED;
-      score = SCORE_SEED;
-      counter = Counter.rowsIsSeed;
-    }
-    else if (TableUtil.isFromSeed(page) && crawlFilters.isDetailUrl(url)) {
-      score = SCORE_PAGES_FROM_SEED;
-      counter = Counter.rowsDetailFromSeed;
-    }
-    else if (Mark.INJECT_MARK.hasMark(page)) {
-      // Page is injected, this is a seed url and has the highest fetch priority
-      // INJECT_MARK will be removed in DbUpdate stage
-
-      score = SCORE_INJECTED;
-      counter = Counter.rowsInjected;
-    }
-
-    // TODO : handle tieba, bbs and blog
-
-    if (score > 0) {
-      output(url, new SelectorEntry(url, priority, score), page, context);
-    }
-
-    if (counter != null) {
-      getCounter().increase(counter);
-    }
-
-    return score > 0;
-  }
-
-  /**
-   * Seed rows creation should be done in mapper phrase because there might be much fewer reducers in the cluster
-   *
-   * TODO : The code can be refined and removed by enhancing scoring/schedule system
-   * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
-   *
-   * */
-  private void createSeedRows(Context context) throws IOException, InterruptedException {
-    for (String urlLine : seedUrls) {
-      if (urlLine == null || urlLine.isEmpty()) {
-        continue;
-      }
-
-      urlLine = urlLine.trim();
-      if (urlLine.startsWith("#")) {
-        continue;
-      }
-
-      getCounter().increase(rows);
-
-      WebPage page = seedBuiler.buildWebPage(urlLine);
-
-      // TODO : Check the difference between hbase.url and page.baseUrl
-      String url = page.getTemporaryVariableAsString("url");
-
-      output(url, new SelectorEntry(url, Float.MAX_VALUE), page, context);
-
-      getCounter().increase(Counter.rowsInjected);
-      getCounter().updateAffectedRows(url);
-    }
-  }
-
-  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
-    context.write(entry, page);
-  }
-
-  // Url filter
-  private boolean shouldProcess(String url, String reversedUrl, WebPage page) {
     // Filter on distance
-    // TODO : We have already filtered urls on dbupdate phrase, check if that is right @vincent
     if (maxDistance > -1) {
       int distance = TableUtil.getDistance(page);
       if (distance > maxDistance) {
@@ -381,4 +335,35 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     return true;
   }
 
+  /**
+   * Seed rows creation should be done in mapper phrase because there might be much fewer reducers in the cluster
+   *
+   * TODO : The code can be refined and removed by enhancing scoring/schedule system
+   * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
+   *
+   * */
+  private void createSeedRows(Context context) throws IOException, InterruptedException {
+    for (String urlLine : seedUrls) {
+      if (urlLine == null || urlLine.isEmpty()) {
+        continue;
+      }
+
+      urlLine = urlLine.trim();
+      if (urlLine.startsWith("#")) {
+        continue;
+      }
+
+      getCounter().increase(rows);
+
+      WebPage page = seedBuiler.buildWebPage(urlLine);
+
+      // TODO : Check the difference between hbase.url and page.baseUrl
+      String url = page.getTemporaryVariableAsString("url");
+
+      output(url, new SelectorEntry(url, Float.MAX_VALUE), page, context);
+
+      getCounter().increase(Counter.rowsInjected);
+      getCounter().updateAffectedRows(url);
+    }
+  }
 }

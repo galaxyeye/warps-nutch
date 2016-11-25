@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 
 import java.net.MalformedURLException;
@@ -184,7 +185,11 @@ public class TableUtil {
   }
 
   public static int getDistance(WebPage page) {
-    int depth = Integer.MAX_VALUE;
+    return getDistance(page, -1);
+  }
+
+  public static int getDistance(WebPage page, int defaultValue) {
+    int depth = defaultValue;
     CharSequence depthUtf8 = page.getMarkers().get(Nutch.DISTANCE);
 
     if (depthUtf8 != null) {
@@ -206,11 +211,24 @@ public class TableUtil {
   public static int calculatePriority(String url, WebPage page, CrawlFilters crawlFilters) {
     int priority = FETCH_PRIORITY_DEFAULT;
 
-    if (isSeed(page)) {
+    /*
+     * We crawl seed every time we start, AdaptiveScheduler is just works
+     * */
+    if (TableUtil.isSeed(page)) {
       priority = FETCH_PRIORITY_SEED;
     }
-    else if (crawlFilters.isDetailUrl(url)) {
-      priority = FETCH_PRIORITY_DETAIL_PAGE;
+    else if (Mark.INJECT_MARK.hasMark(page)) {
+      priority = FETCH_PRIORITY_SEED;
+    }
+    else if (TableUtil.isFromSeed(page)) {
+      priority = FETCH_PRIORITY_FROM_SEED;
+    }
+
+    if (crawlFilters.isDetailUrl(url)) {
+      priority += FETCH_PRIORITY_DETAIL_PAGE;
+    }
+    else if (crawlFilters.isIndexUrl(url)) {
+      priority += FETCH_PRIORITY_INDEX_PAGE;
     }
 
     setFetchPriorityIfAbsent(page, priority);
@@ -232,17 +250,21 @@ public class TableUtil {
     }
   }
 
+  public static int getFetchPriority(WebPage page) {
+    return getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+  }
+
   public static int getFetchPriority(WebPage page, int defaultPriority) {
     String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
     return StringUtil.tryParseInt(s, defaultPriority);
   }
 
   public static void setGenerateTime(WebPage page, long generateTime) {
-    putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(generateTime));
+    putMetadata(page, META_GENERATE_TIME, String.valueOf(generateTime));
   }
 
   public static long getGenerateTime(WebPage page) {
-    String generateTimeStr = getMetadata(page, PARAM_GENERATE_TIME);
+    String generateTimeStr = getMetadata(page, META_GENERATE_TIME);
     return StringUtil.tryParseLong(generateTimeStr, -1);
   }
 

@@ -147,8 +147,12 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       intervalSec = 1;
     }
     else if (diff > Duration.ofDays(3).toMillis()) {
-      // if there is no any updates in 3 days, check the page again a hour later
-      intervalSec = (int)Duration.ofHours(1).toMinutes() * 60;
+      // if there is no any updates in 3 days, check the page again 2 hour later
+      intervalSec *= (1.0f + INC_RATE);
+      int sec2Hours = (int)Duration.ofHours(2).toMillis() / 1000;
+      if (intervalSec < sec2Hours) {
+        intervalSec = sec2Hours;
+      }
     }
 
     if (CrawlFilter.sniffPageCategory(url, page) == CrawlFilter.PageCategory.DETAIL) {

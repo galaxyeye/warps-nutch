@@ -38,8 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.apache.nutch.metadata.Metadata.META_CASH_KEY_U8;
-
 /**
  * This plugin implements a variant of an Online Page Importance Computation
  * (OPIC) score, described in this paper: <a
@@ -161,17 +159,20 @@ public class OPICScoringFilter implements ScoringFilter {
     float internalScore = scoreUnit * internalScoreFactor;
     float externalScore = scoreUnit * externalScoreFactor;
     for (ScoreDatum scoreDatum : scoreData) {
+      float score = scoreDatum.getScore();
+
       try {
         String toHost = new URL(scoreDatum.getUrl()).getHost();
         String fromHost = new URL(fromUrl).getHost();
+
         if (toHost.equalsIgnoreCase(fromHost)) {
-          scoreDatum.setScore(internalScore);
+          scoreDatum.setScore(score + internalScore);
         } else {
-          scoreDatum.setScore(externalScore);
+          scoreDatum.setScore(score + externalScore);
         }
       } catch (MalformedURLException e) {
         LOG.error("Failed with the following MalformedURLException: ", e);
-        scoreDatum.setScore(externalScore);
+        scoreDatum.setScore(score + externalScore);
       }
     }
 

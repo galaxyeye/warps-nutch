@@ -106,6 +106,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       return;
     }
 
+    int priority = key.getPriority();
     for (WebPage page : values) {
       try {
         if (count >= limit) {
@@ -119,9 +120,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
           break;
         }
 
-        // seed pages and pages from seeds are fetched imperative
-        // TODO : We must drop out seed pages who do not update for days, and an adaptive fetch scheduler is just OK
-        if (!TableUtil.isSeed(page)) {
+        if (priority < FETCH_PRIORITY_MUST_FETCH) {
           ++count;
         }
 
@@ -129,7 +128,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
         updateCounters(url, page, context);
 
         // and then update the page
-        page = updatePage(url, page);
+        page = updatePage(url, priority, page);
 
         context.write(TableUtil.reverseUrl(url), page);
       }
@@ -139,17 +138,17 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     } // for
   }
 
-  private WebPage updatePage(String url, WebPage page) {
-    if (TableUtil.isSeed(page)) {
-      // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
-      page = seedBuiler.buildWebPage(url);
-    }
-
-    page.setBatchId(batchId);
+  private WebPage updatePage(String url, int priority, WebPage page) {
+    TableUtil.setFetchPriority(page, priority);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.setGenerateTime(page, startTime);
 
-    TableUtil.clearMetadata(page, META_FROM_SEED);
+    // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
+//    if (TableUtil.isSeed(page)) {
+//      page = seedBuiler.buildWebPage(url);
+//    }
+
+    page.setBatchId(batchId);
 
     Mark.INJECT_MARK.removeMarkIfExist(page);
     Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));

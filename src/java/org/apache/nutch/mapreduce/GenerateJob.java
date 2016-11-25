@@ -210,16 +210,16 @@ public class GenerateJob extends NutchJob implements Tool {
     }
 
     @Override
-    public int compareTo(SelectorEntry se) {
-      if (se.priority == priority) {
-        if (se.score == score) {
-          return url.compareTo(se.url);
+    public int compareTo(SelectorEntry other) {
+      if (other.priority == priority) {
+        if (other.score == score) {
+          return url.compareTo(other.url);
         }
 
-        return score < se.score ? -1 : 1;
+        return score < other.score ? -1 : 1;
       }
 
-      return priority < se.priority ? -1 : 1;
+      return priority < other.priority ? -1 : 1;
     }
 
     @Override
@@ -247,8 +247,7 @@ public class GenerateJob extends NutchJob implements Tool {
         return false;
       }
 
-      return priority != other.priority;
-
+      return priority == other.priority;
     }
 
     /**

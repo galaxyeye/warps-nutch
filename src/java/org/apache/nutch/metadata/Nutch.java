@@ -75,17 +75,13 @@ public interface Nutch {
 
   Utf8 DISTANCE = new Utf8("dist");
 
-  int FETCH_PRIORITY_DEFAULT = 1;
+  int FETCH_PRIORITY_DEFAULT = 0;
   int FETCH_PRIORITY_INDEX_PAGE = 1;
-  int FETCH_PRIORITY_DETAIL_PAGE = 10000;
-  int FETCH_PRIORITY_SEED = 10 * 10000;
-
-  float SCORE_DEFAULT = 1.0f;
-  float SCORE_INDEX_PAGE = 1.0f;
-  float SCORE_INJECTED = Float.MAX_VALUE / 1000;
-  float SCORE_SEED = SCORE_INJECTED / 1000;
-  float SCORE_DETAIL_PAGE = SCORE_SEED / 1000;
-  float SCORE_PAGES_FROM_SEED = SCORE_SEED / 1000;
+  int FETCH_PRIORITY_DETAIL_PAGE = 2;
+  int FETCH_PRIORITY_MUST_GENERATE = 100;
+  int FETCH_PRIORITY_FROM_SEED = 101;
+  int FETCH_PRIORITY_MUST_FETCH = 1000;
+  int FETCH_PRIORITY_SEED = 1001;
 
   /**
    * All arguments from command line
@@ -228,10 +224,6 @@ public interface Nutch {
   String PARAM_SOLR_ZK = "solr.zookeeper.hosts";
   String PARAM_SOLR_COLLECTION = "solr.collection";
 
-  /**
-   * Generator parameters
-   * */
-  String PARAM_GENERATE_TIME = "generate.generate.time";
   String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
   String PARAM_GENERATOR_MIN_SCORE = "generate.min.score";
   String PARAM_GENERATE_REGENERATE = "generate.re.generate";
@@ -262,6 +254,7 @@ public interface Nutch {
   /**
    * Variable holders
    * */
+  String VAR_ORDERED_OUTLINKS = "ordered_outlinks";
 
   /**
    * Program keys

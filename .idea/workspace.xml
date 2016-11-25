@@ -2,8 +2,25 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7d87538b-5182-40ca-96f4-c4605ea459b5" name="Default" comment="1. failed to ignore .idea/workspace.xml">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/.gitignore" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dictionaries/vincent.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/Outlink.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/Outlink.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/OutlinkExtractor.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/OutlinkExtractor.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java" afterPath="$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java" afterPath="$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java" />
     </list>
     <ignored path="qiwur-nutch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -15,7 +32,6 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
   </component>
@@ -36,21 +52,63 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="GenerateJob.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java">
+      <file leaf-file-name="TaskScheduler.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
-              <caret line="326" column="0" selection-start-line="326" selection-start-column="0" selection-end-line="326" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="267">
+              <caret line="843" column="0" selection-start-line="843" selection-start-column="0" selection-end-line="843" selection-end-column="0" />
+              <folding>
+                <element signature="e#6010#6039#0" expanded="true" />
+                <element signature="e#8824#8825#0" expanded="true" />
+                <element signature="e#8843#8844#0" expanded="true" />
+                <element signature="e#8869#8870#0" expanded="true" />
+                <element signature="e#8923#8924#0" expanded="true" />
+                <element signature="e#8954#8955#0" expanded="true" />
+                <element signature="e#8985#8986#0" expanded="true" />
+                <element signature="e#9028#9029#0" expanded="true" />
+                <element signature="e#9057#9058#0" expanded="true" />
+                <element signature="e#9100#9101#0" expanded="true" />
+                <element signature="e#9129#9130#0" expanded="true" />
+                <element signature="e#9168#9169#0" expanded="true" />
+                <element signature="e#9195#9196#0" expanded="true" />
+                <element signature="e#9236#9237#0" expanded="true" />
+                <element signature="e#9277#9278#0" expanded="true" />
+                <element signature="e#9321#9322#0" expanded="true" />
+                <element signature="e#9366#9367#0" expanded="true" />
+                <element signature="e#9397#9398#0" expanded="true" />
+                <element signature="e#9453#9454#0" expanded="true" />
+                <element signature="e#9484#9485#0" expanded="true" />
+                <element signature="e#9519#9520#0" expanded="true" />
+                <element signature="e#9551#9552#0" expanded="true" />
+                <element signature="e#9621#9622#0" expanded="true" />
+                <element signature="e#9686#9687#0" expanded="true" />
+                <element signature="e#9727#9728#0" expanded="true" />
+                <element signature="e#9794#9795#0" expanded="true" />
+                <element signature="e#9838#9839#0" expanded="true" />
+                <element signature="e#10703#10704#0" expanded="true" />
+                <element signature="e#10753#10754#0" expanded="true" />
+                <element signature="e#11502#11503#0" expanded="true" />
+                <element signature="e#11540#11541#0" expanded="true" />
+                <element signature="e#11589#11590#0" expanded="true" />
+                <element signature="e#11628#11629#0" expanded="true" />
+                <element signature="e#14036#14037#0" expanded="true" />
+                <element signature="e#14078#14079#0" expanded="true" />
+                <element signature="e#14114#14115#0" expanded="true" />
+                <element signature="e#14155#14156#0" expanded="true" />
+                <element signature="e#26193#26223#0" expanded="true" />
+                <element signature="e#28457#28487#0" expanded="true" />
+                <element signature="e#29071#29101#0" expanded="true" />
+                <element signature="e#29732#29762#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="GenerateMapper.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="GenerateMapper.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="245" column="0" selection-start-line="245" selection-start-column="0" selection-end-line="245" selection-end-column="0" />
+            <state relative-caret-position="331">
+              <caret line="161" column="0" selection-start-line="161" selection-start-column="0" selection-end-line="161" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -59,96 +117,29 @@
       <file leaf-file-name="GenerateReducer.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="304">
-              <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+            <state relative-caret-position="556">
+              <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="crawl-information.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bin/crawl-information.sh">
+      <file leaf-file-name="AbstractFetchSchedule.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2115">
-              <caret line="141" column="26" selection-start-line="141" selection-start-column="26" selection-end-line="141" selection-end-column="26" />
+            <state relative-caret-position="769">
+              <caret line="216" column="0" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AdaptiveFetchSchedule.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java">
+      <file leaf-file-name="workspace.xml" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.idea/workspace.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2055">
-              <caret line="160" column="0" selection-start-line="160" selection-start-column="0" selection-end-line="160" selection-end-column="0" />
-              <folding>
-                <element signature="n#!!doc" expanded="false" />
-                <element signature="imports" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="MapDatumBuilder.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1650">
-              <caret line="141" column="46" selection-start-line="141" selection-start-column="46" selection-end-line="141" selection-end-column="46" />
-              <folding>
-                <element signature="imports" expanded="false" />
-                <element signature="e#3023#3024#0" expanded="false" />
-                <element signature="e#3079#3080#0" expanded="false" />
-                <element signature="e#7136#7137#0" expanded="false" />
-                <element signature="e#7168#7169#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="TaskScheduler.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="11280">
-              <caret line="835" column="0" selection-start-line="835" selection-start-column="0" selection-end-line="835" selection-end-column="0" />
-              <folding>
-                <element signature="imports" expanded="false" />
-                <element signature="e#8823#8824#0" expanded="false" />
-                <element signature="e#8842#8843#0" expanded="false" />
-                <element signature="e#8868#8869#0" expanded="false" />
-                <element signature="e#8922#8923#0" expanded="false" />
-                <element signature="e#8953#8954#0" expanded="false" />
-                <element signature="e#8984#8985#0" expanded="false" />
-                <element signature="e#9027#9028#0" expanded="false" />
-                <element signature="e#9056#9057#0" expanded="false" />
-                <element signature="e#9099#9100#0" expanded="false" />
-                <element signature="e#9128#9129#0" expanded="false" />
-                <element signature="e#9167#9168#0" expanded="false" />
-                <element signature="e#9194#9195#0" expanded="false" />
-                <element signature="e#9235#9236#0" expanded="false" />
-                <element signature="e#9276#9277#0" expanded="false" />
-                <element signature="e#9320#9321#0" expanded="false" />
-                <element signature="e#9365#9366#0" expanded="false" />
-                <element signature="e#9396#9397#0" expanded="false" />
-                <element signature="e#9452#9453#0" expanded="false" />
-                <element signature="e#9483#9484#0" expanded="false" />
-                <element signature="e#9518#9519#0" expanded="false" />
-                <element signature="e#9550#9551#0" expanded="false" />
-                <element signature="e#9620#9621#0" expanded="false" />
-                <element signature="e#9685#9686#0" expanded="false" />
-                <element signature="e#9726#9727#0" expanded="false" />
-                <element signature="e#9793#9794#0" expanded="false" />
-                <element signature="e#9837#9838#0" expanded="false" />
-                <element signature="e#10702#10703#0" expanded="false" />
-                <element signature="e#10752#10753#0" expanded="false" />
-                <element signature="e#11501#11502#0" expanded="false" />
-                <element signature="e#11539#11540#0" expanded="false" />
-                <element signature="e#11588#11589#0" expanded="false" />
-                <element signature="e#11627#11628#0" expanded="false" />
-                <element signature="e#14035#14036#0" expanded="false" />
-                <element signature="e#14077#14078#0" expanded="false" />
-                <element signature="e#14113#14114#0" expanded="false" />
-                <element signature="e#14154#14155#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="0">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -156,68 +147,32 @@
       <file leaf-file-name="OPICScoringFilter.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1215">
-              <caret line="119" column="0" selection-start-line="119" selection-start-column="0" selection-end-line="119" selection-end-column="0" />
+            <state relative-caret-position="324">
+              <caret line="92" column="23" selection-start-line="92" selection-start-column="23" selection-end-line="92" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ReduceDatumBuilder.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="361">
+              <caret line="256" column="32" selection-start-line="256" selection-start-column="32" selection-end-line="256" selection-end-column="32" />
               <folding>
-                <element signature="n#!!doc" expanded="false" />
-                <element signature="e#2502#2503#0" expanded="false" />
-                <element signature="e#2523#2524#0" expanded="false" />
-                <element signature="e#6553#6554#0" expanded="false" />
-                <element signature="e#6576#6577#0" expanded="false" />
+                <element signature="docComment;method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
+                <element signature="method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="TableUtil.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java">
+      <file leaf-file-name="FetchSchedule.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/FetchSchedule.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3375">
-              <caret line="248" column="28" selection-start-line="248" selection-start-column="28" selection-end-line="248" selection-end-column="28" />
-              <folding>
-                <element signature="n#!!doc" expanded="false" />
-                <element signature="e#4896#4897#0" expanded="false" />
-                <element signature="e#4956#4957#0" expanded="false" />
-                <element signature="e#5567#5568#0" expanded="false" />
-                <element signature="e#5615#5616#0" expanded="false" />
-                <element signature="e#5667#5668#0" expanded="false" />
-                <element signature="e#5717#5718#0" expanded="false" />
-                <element signature="e#5768#5769#0" expanded="false" />
-                <element signature="e#5823#5824#0" expanded="false" />
-                <element signature="e#8511#8512#0" expanded="false" />
-                <element signature="e#8564#8565#0" expanded="false" />
-                <element signature="e#12094#12095#0" expanded="false" />
-                <element signature="e#12137#12138#0" expanded="false" />
-                <element signature="e#12209#12210#0" expanded="false" />
-                <element signature="e#12252#12253#0" expanded="false" />
-                <element signature="e#12330#12331#0" expanded="false" />
-                <element signature="e#12374#12375#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Metadata.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
-              <caret line="52" column="38" selection-start-line="52" selection-start-column="38" selection-end-line="52" selection-end-column="38" />
-              <folding>
-                <element signature="e#0#7687#0" expanded="false" />
-                <element signature="imports" expanded="false" />
-                <element signature="e#2860#2861#0" expanded="false" />
-                <element signature="e#2940#2941#0" expanded="false" />
-                <element signature="e#3611#3612#0" expanded="false" />
-                <element signature="e#3644#3645#0" expanded="false" />
-                <element signature="e#5199#5200#0" expanded="false" />
-                <element signature="e#5251#5252#0" expanded="false" />
-                <element signature="e#5415#5416#0" expanded="false" />
-                <element signature="e#5446#5447#0" expanded="false" />
-                <element signature="e#5585#5586#0" expanded="false" />
-                <element signature="e#5617#5618#0" expanded="false" />
-                <element signature="e#5686#5687#0" expanded="false" />
-                <element signature="e#5712#5713#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="778">
+              <caret line="158" column="7" selection-start-line="158" selection-start-column="7" selection-end-line="158" selection-end-column="7" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -242,12 +197,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TasksMonitor.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/FetchMapper.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/NutchJob.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/NutchReducer.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/NutchMapper.java" />
-        <option value="$PROJECT_DIR$/conf/configsets/information/local/regex-urlfilter.txt" />
         <option value="$PROJECT_DIR$/conf/configsets/information/local/nutch-site.xml" />
         <option value="$PROJECT_DIR$/src/test/org/apache/nutch/util/TestStringUtil.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/URLPartitioner.java" />
@@ -258,7 +207,6 @@
         <option value="$PROJECT_DIR$/src/plugin/index-metadata/src/java/org/apache/nutch/indexer/metadata/MetadataIndexer.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/indexer/JITIndexer.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/DbUpdateMapper2.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/FetchUtil.java" />
         <option value="$PROJECT_DIR$/src/plugin/indexer-solr/src/java/org/apache/nutch/indexwriter/solr/SolrIndexWriter.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexDocument.java" />
@@ -269,30 +217,37 @@
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/DbUpdateReducer2.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/DbUpdateReducer.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/DbUpdateMapper.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java" />
         <option value="$PROJECT_DIR$/conf/configsets/information/cluster/regex-urlfilter.txt" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/FSUtils.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/HadoopFSUtil.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/TimingUtil.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/filters/CrawlFilters.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/DateTimeUtil.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/storage/WebPage.java" />
         <option value="$PROJECT_DIR$/build/lib/textscent-common-2.0.jar!/org/warps/scent/document/TextDocument.class" />
         <option value="$PROJECT_DIR$/src/plugin/parse-html/src/java/org/apache/nutch/parse/html/HtmlParser.java" />
         <option value="$PROJECT_DIR$/src/plugin/index-basic/src/java/org/apache/nutch/indexer/basic/BasicIndexingFilter.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/filters/CrawlFilter.java" />
-        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java" />
+        <option value="$PROJECT_DIR$/src/bin/crawl-information.sh" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/Outlink.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java" />
         <option value="$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java" />
-        <option value="$PROJECT_DIR$/src/bin/crawl-information.sh" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoringFilters.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/parse/OutlinkExtractor.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java" />
+        <option value="$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java" />
         <option value="$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java" />
+        <option value="$PROJECT_DIR$/.idea/workspace.xml" />
       </list>
     </option>
   </component>
@@ -318,9 +273,10 @@
     <treeState />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="y" value="-4" />
-    <option name="width" value="1920" />
-    <option name="height" value="1084" />
+    <option name="x" value="65" />
+    <option name="y" value="24" />
+    <option name="width" value="1855" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -404,11 +360,11 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="org.apache.nutch.metadata.Metadata" />
+      <recent name="org.apache.nutch.metadata.Nutch" />
       <recent name="org.apache.nutch.crawl.filters.CrawlFilter" />
       <recent name="org.apache.nutch.crawl.filters.CrawlFilters" />
       <recent name="org.apache.nutch.tools.Metrics" />
-      <recent name="org.apache.nutch.util.TableUtil" />
-      <recent name="org.apache.nutch.util.NutchUtil" />
     </key>
     <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
       <recent name="org.apache.nutch.indexwriter.solr" />
@@ -417,8 +373,11 @@
       <recent name="org.apache.nutch.dbupdate" />
       <recent name="org.apache.nutch.mapreduce" />
     </key>
-    <key name="CreateClassDialog.RecentsKey">
-      <recent name="org.apache.nutch.fetcher.data" />
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/conf/configsets/default" />
+      <recent name="$PROJECT_DIR$/src/java/org/apache/nutch/indexer" />
+      <recent name="$PROJECT_DIR$/src/bin" />
+      <recent name="$PROJECT_DIR$/conf/configsets/standalone/local" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="org.apache.nutch.mapreduce" />
@@ -427,11 +386,8 @@
       <recent name="org.apache.nutch.fetcher.data" />
       <recent name="org.apache.nutch.util" />
     </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/conf/configsets/default" />
-      <recent name="$PROJECT_DIR$/src/java/org/apache/nutch/indexer" />
-      <recent name="$PROJECT_DIR$/src/bin" />
-      <recent name="$PROJECT_DIR$/conf/configsets/standalone/local" />
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="org.apache.nutch.fetcher.data" />
     </key>
   </component>
   <component name="RunManager" selected="Application.SeedGenerator">
@@ -578,8 +534,13 @@
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
       <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
       <option name="FORCE_STOP_RUNNING_APP" value="true" />
+      <option name="DEBUGGER_TYPE" value="Java" />
       <option name="USE_LAST_SELECTED_DEVICE" value="false" />
       <option name="PREFERRED_AVD" value="" />
+      <Java />
+      <Profilers>
+        <option name="GAPID_DISABLE_PCS" value="false" />
+      </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
       <method />
@@ -598,8 +559,13 @@
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
       <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
       <option name="FORCE_STOP_RUNNING_APP" value="true" />
+      <option name="DEBUGGER_TYPE" value="Java" />
       <option name="USE_LAST_SELECTED_DEVICE" value="false" />
       <option name="PREFERRED_AVD" value="" />
+      <Java />
+      <Profilers>
+        <option name="GAPID_DISABLE_PCS" value="false" />
+      </Profilers>
       <method />
     </configuration>
     <configuration default="true" type="Applet" factoryName="Applet">
@@ -980,36 +946,36 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="-4" width="1920" height="1084" extended-state="6" />
+    <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
     <editor active="false" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.646875" sideWeight="0.5085379" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32977587" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.41875" sideWeight="0.4914621" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.45302713" sideWeight="0.4914621" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14994664" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32977587" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14980653" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32776618" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.15101388" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1641791" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1430096" sideWeight="0.5" order="8" side_tool="false" content_ui="combo" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32977587" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19791667" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32776618" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1068,7 +1034,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="12" />
+      <option name="time" value="13" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -1133,62 +1099,6 @@
     </buildFile>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/indexer/JITIndexer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="400">
-          <caret line="131" column="0" selection-start-line="131" selection-start-column="0" selection-end-line="131" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/FetchUtil.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="705">
-          <caret line="61" column="25" selection-start-line="61" selection-start-column="25" selection-end-line="61" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="130">
-          <caret line="35" column="13" selection-start-line="35" selection-start-column="13" selection-end-line="35" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexField.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-525">
-          <caret line="33" column="13" selection-start-line="33" selection-start-column="13" selection-end-line="33" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/build/lib/commons-lang3-3.3.2.jar!/org/apache/commons/lang3/StringUtils.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="385">
-          <caret line="1608" column="0" selection-start-line="1608" selection-start-column="0" selection-end-line="1608" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/indexer/IndexDocument.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="535">
-          <caret line="227" column="0" selection-start-line="227" selection-start-column="0" selection-end-line="227" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/samples/SimpleParser.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="196" column="0" selection-start-line="196" selection-start-column="0" selection-end-line="196" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/UrlWithScore.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="205">
-          <caret line="68" column="16" selection-start-line="68" selection-start-column="16" selection-end-line="68" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/test/org/apache/nutch/crawl/TestUrlWithScore.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="130">
@@ -1217,13 +1127,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/DbUpdateReducer.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1020">
@@ -1249,13 +1152,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="165">
           <caret line="41" column="0" selection-start-line="41" selection-start-column="0" selection-end-line="41" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/FetchMapper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
         </state>
       </provider>
     </entry>
@@ -1309,22 +1205,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="118" column="19" selection-start-line="118" selection-start-column="19" selection-end-line="118" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="233" column="21" selection-start-line="233" selection-start-column="21" selection-end-line="233" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar://$PROJECT_DIR$/build/lib/textscent-common-2.0.jar!/org/warps/scent/document/TextDocument.class">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="309">
@@ -1344,14 +1224,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="294">
           <caret line="172" column="0" selection-start-line="172" selection-start-column="0" selection-end-line="172" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/plugin/parse-html/src/java/org/apache/nutch/parse/html/HtmlParser.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="481">
-          <caret line="217" column="0" selection-start-line="217" selection-start-column="0" selection-end-line="217" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -1387,120 +1259,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/FetchSchedule.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="82" column="7" selection-start-line="82" selection-start-column="7" selection-end-line="82" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="331">
-          <caret line="179" column="28" selection-start-line="179" selection-start-column="28" selection-end-line="179" selection-end-column="28" />
-          <folding>
-            <element signature="docComment;method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
-            <element signature="method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoringFilters.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="478">
-          <caret line="128" column="20" selection-start-line="128" selection-start-column="20" selection-end-line="128" selection-end-column="20" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoringFilter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="111" column="7" selection-start-line="111" selection-start-column="7" selection-end-line="111" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="52" column="38" selection-start-line="52" selection-start-column="38" selection-end-line="52" selection-end-column="38" />
-          <folding>
-            <element signature="e#0#7687#0" expanded="false" />
-            <element signature="imports" expanded="false" />
-            <element signature="e#2860#2861#0" expanded="false" />
-            <element signature="e#2940#2941#0" expanded="false" />
-            <element signature="e#3611#3612#0" expanded="false" />
-            <element signature="e#3644#3645#0" expanded="false" />
-            <element signature="e#5199#5200#0" expanded="false" />
-            <element signature="e#5251#5252#0" expanded="false" />
-            <element signature="e#5415#5416#0" expanded="false" />
-            <element signature="e#5446#5447#0" expanded="false" />
-            <element signature="e#5585#5586#0" expanded="false" />
-            <element signature="e#5617#5618#0" expanded="false" />
-            <element signature="e#5686#5687#0" expanded="false" />
-            <element signature="e#5712#5713#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3375">
-          <caret line="248" column="28" selection-start-line="248" selection-start-column="28" selection-end-line="248" selection-end-column="28" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="e#4896#4897#0" expanded="false" />
-            <element signature="e#4956#4957#0" expanded="false" />
-            <element signature="e#5567#5568#0" expanded="false" />
-            <element signature="e#5615#5616#0" expanded="false" />
-            <element signature="e#5667#5668#0" expanded="false" />
-            <element signature="e#5717#5718#0" expanded="false" />
-            <element signature="e#5768#5769#0" expanded="false" />
-            <element signature="e#5823#5824#0" expanded="false" />
-            <element signature="e#8511#8512#0" expanded="false" />
-            <element signature="e#8564#8565#0" expanded="false" />
-            <element signature="e#12094#12095#0" expanded="false" />
-            <element signature="e#12137#12138#0" expanded="false" />
-            <element signature="e#12209#12210#0" expanded="false" />
-            <element signature="e#12252#12253#0" expanded="false" />
-            <element signature="e#12330#12331#0" expanded="false" />
-            <element signature="e#12374#12375#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="249">
-          <caret line="200" column="0" selection-start-line="200" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/storage/WebPage.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="279">
-          <caret line="680" column="44" selection-start-line="680" selection-start-column="44" selection-end-line="680" selection-end-column="44" />
-          <folding>
-            <element signature="e#43061#43062#0" expanded="false" />
-            <element signature="e#43086#43087#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1650">
-          <caret line="141" column="46" selection-start-line="141" selection-start-column="46" selection-end-line="141" selection-end-column="46" />
-          <folding>
-            <element signature="imports" expanded="false" />
-            <element signature="e#3023#3024#0" expanded="false" />
-            <element signature="e#3079#3080#0" expanded="false" />
-            <element signature="e#7136#7137#0" expanded="false" />
-            <element signature="e#7168#7169#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/bin/crawl-information.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2115">
@@ -1509,97 +1267,280 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java">
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Metadata.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11280">
-          <caret line="835" column="0" selection-start-line="835" selection-start-column="0" selection-end-line="835" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="false" />
-            <element signature="e#8823#8824#0" expanded="false" />
-            <element signature="e#8842#8843#0" expanded="false" />
-            <element signature="e#8868#8869#0" expanded="false" />
-            <element signature="e#8922#8923#0" expanded="false" />
-            <element signature="e#8953#8954#0" expanded="false" />
-            <element signature="e#8984#8985#0" expanded="false" />
-            <element signature="e#9027#9028#0" expanded="false" />
-            <element signature="e#9056#9057#0" expanded="false" />
-            <element signature="e#9099#9100#0" expanded="false" />
-            <element signature="e#9128#9129#0" expanded="false" />
-            <element signature="e#9167#9168#0" expanded="false" />
-            <element signature="e#9194#9195#0" expanded="false" />
-            <element signature="e#9235#9236#0" expanded="false" />
-            <element signature="e#9276#9277#0" expanded="false" />
-            <element signature="e#9320#9321#0" expanded="false" />
-            <element signature="e#9365#9366#0" expanded="false" />
-            <element signature="e#9396#9397#0" expanded="false" />
-            <element signature="e#9452#9453#0" expanded="false" />
-            <element signature="e#9483#9484#0" expanded="false" />
-            <element signature="e#9518#9519#0" expanded="false" />
-            <element signature="e#9550#9551#0" expanded="false" />
-            <element signature="e#9620#9621#0" expanded="false" />
-            <element signature="e#9685#9686#0" expanded="false" />
-            <element signature="e#9726#9727#0" expanded="false" />
-            <element signature="e#9793#9794#0" expanded="false" />
-            <element signature="e#9837#9838#0" expanded="false" />
-            <element signature="e#10702#10703#0" expanded="false" />
-            <element signature="e#10752#10753#0" expanded="false" />
-            <element signature="e#11501#11502#0" expanded="false" />
-            <element signature="e#11539#11540#0" expanded="false" />
-            <element signature="e#11588#11589#0" expanded="false" />
-            <element signature="e#11627#11628#0" expanded="false" />
-            <element signature="e#14035#14036#0" expanded="false" />
-            <element signature="e#14077#14078#0" expanded="false" />
-            <element signature="e#14113#14114#0" expanded="false" />
-            <element signature="e#14154#14155#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="360">
+          <caret line="53" column="0" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java">
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/FetchJob.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1215">
-          <caret line="119" column="0" selection-start-line="119" selection-start-column="0" selection-end-line="119" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="e#2502#2503#0" expanded="false" />
-            <element signature="e#2523#2524#0" expanded="false" />
-            <element signature="e#6553#6554#0" expanded="false" />
-            <element signature="e#6576#6577#0" expanded="false" />
-          </folding>
+        <state relative-caret-position="255">
+          <caret line="58" column="0" selection-start-line="58" selection-start-column="0" selection-end-line="58" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java">
+    <entry file="jar:///usr/lib/jvm/java-8-sun/src.zip!/java/lang/Float.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2055">
-          <caret line="160" column="0" selection-start-line="160" selection-start-column="0" selection-end-line="160" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="imports" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="99" column="0" selection-start-line="99" selection-start-column="0" selection-end-line="99" selection-end-column="0" />
+        <state relative-caret-position="624">
+          <caret line="742" column="22" selection-start-line="742" selection-start-column="22" selection-end-line="742" selection-end-column="22" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateJob.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="326" column="0" selection-start-line="326" selection-start-column="0" selection-end-line="326" selection-end-column="0" />
+        <state relative-caret-position="2251">
+          <caret line="251" column="0" selection-start-line="251" selection-start-column="0" selection-end-line="251" selection-end-column="0" />
+          <folding>
+            <element signature="e#6575#6576#0" expanded="true" />
+            <element signature="e#6629#6630#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/FetchMapper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="49" column="0" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/SeedBuilder.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="211">
+          <caret line="116" column="0" selection-start-line="116" selection-start-column="0" selection-end-line="116" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AdaptiveFetchSchedule.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="49" column="77" selection-start-line="49" selection-start-column="77" selection-end-line="49" selection-end-column="77" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/storage/WebPage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="301">
+          <caret line="813" column="23" selection-start-line="813" selection-start-column="23" selection-end-line="813" selection-end-column="23" />
+          <folding>
+            <element signature="e#43061#43062#0" expanded="false" />
+            <element signature="e#43086#43087#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/plugin/parse-html/src/java/org/apache/nutch/parse/html/HtmlParser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="274" column="44" selection-start-line="274" selection-start-column="44" selection-end-line="274" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar:///usr/lib/jvm/java-8-sun/src.zip!/java/util/stream/Collectors.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2751">
+          <caret line="228" column="29" selection-start-line="228" selection-start-column="29" selection-end-line="228" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/parse/Outlink.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="39" column="2" selection-start-line="39" selection-start-column="2" selection-end-line="39" selection-end-column="2" />
+          <folding>
+            <element signature="e#1245#1246#0" expanded="false" />
+            <element signature="e#1296#1297#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/metadata/Nutch.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="334">
+          <caret line="256" column="22" selection-start-line="256" selection-start-column="22" selection-end-line="256" selection-end-column="22" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoreDatum.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="46" column="15" selection-start-line="46" selection-start-column="15" selection-end-line="46" selection-end-column="15" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoringFilter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="95" column="25" selection-start-line="95" selection-start-column="25" selection-end-line="95" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/scoring/ScoringFilters.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="103" column="50" selection-start-line="103" selection-start-column="50" selection-end-line="103" selection-end-column="50" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/UrlWithScore.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-240">
+          <caret line="32" column="19" selection-start-line="32" selection-start-column="19" selection-end-line="32" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/MapDatumBuilder.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="499">
+          <caret line="186" column="0" selection-start-line="186" selection-start-column="0" selection-end-line="186" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/util/TableUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="210" column="26" selection-start-line="210" selection-start-column="26" selection-end-line="210" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/parse/OutlinkExtractor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="166">
+          <caret line="110" column="36" selection-start-line="110" selection-start-column="36" selection-end-line="110" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/parse/ParseUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="511">
+          <caret line="269" column="19" selection-start-line="269" selection-start-column="19" selection-end-line="269" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="92" column="23" selection-start-line="92" selection-start-column="23" selection-end-line="92" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/dbupdate/ReduceDatumBuilder.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="256" column="32" selection-start-line="256" selection-start-column="32" selection-end-line="256" selection-end-column="32" />
+          <folding>
+            <element signature="docComment;method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
+            <element signature="method#calculateInlinks#0;class#ReduceDatumBuilder#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/FetchSchedule.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="778">
+          <caret line="158" column="7" selection-start-line="158" selection-start-column="7" selection-end-line="158" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/fetch/TaskScheduler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="843" column="0" selection-start-line="843" selection-start-column="0" selection-end-line="843" selection-end-column="0" />
+          <folding>
+            <element signature="e#6010#6039#0" expanded="true" />
+            <element signature="e#8824#8825#0" expanded="true" />
+            <element signature="e#8843#8844#0" expanded="true" />
+            <element signature="e#8869#8870#0" expanded="true" />
+            <element signature="e#8923#8924#0" expanded="true" />
+            <element signature="e#8954#8955#0" expanded="true" />
+            <element signature="e#8985#8986#0" expanded="true" />
+            <element signature="e#9028#9029#0" expanded="true" />
+            <element signature="e#9057#9058#0" expanded="true" />
+            <element signature="e#9100#9101#0" expanded="true" />
+            <element signature="e#9129#9130#0" expanded="true" />
+            <element signature="e#9168#9169#0" expanded="true" />
+            <element signature="e#9195#9196#0" expanded="true" />
+            <element signature="e#9236#9237#0" expanded="true" />
+            <element signature="e#9277#9278#0" expanded="true" />
+            <element signature="e#9321#9322#0" expanded="true" />
+            <element signature="e#9366#9367#0" expanded="true" />
+            <element signature="e#9397#9398#0" expanded="true" />
+            <element signature="e#9453#9454#0" expanded="true" />
+            <element signature="e#9484#9485#0" expanded="true" />
+            <element signature="e#9519#9520#0" expanded="true" />
+            <element signature="e#9551#9552#0" expanded="true" />
+            <element signature="e#9621#9622#0" expanded="true" />
+            <element signature="e#9686#9687#0" expanded="true" />
+            <element signature="e#9727#9728#0" expanded="true" />
+            <element signature="e#9794#9795#0" expanded="true" />
+            <element signature="e#9838#9839#0" expanded="true" />
+            <element signature="e#10703#10704#0" expanded="true" />
+            <element signature="e#10753#10754#0" expanded="true" />
+            <element signature="e#11502#11503#0" expanded="true" />
+            <element signature="e#11540#11541#0" expanded="true" />
+            <element signature="e#11589#11590#0" expanded="true" />
+            <element signature="e#11628#11629#0" expanded="true" />
+            <element signature="e#14036#14037#0" expanded="true" />
+            <element signature="e#14078#14079#0" expanded="true" />
+            <element signature="e#14114#14115#0" expanded="true" />
+            <element signature="e#14155#14156#0" expanded="true" />
+            <element signature="e#26193#26223#0" expanded="true" />
+            <element signature="e#28457#28487#0" expanded="true" />
+            <element signature="e#29071#29101#0" expanded="true" />
+            <element signature="e#29732#29762#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateReducer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="556">
+          <caret line="151" column="0" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/mapreduce/GenerateMapper.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="245" column="0" selection-start-line="245" selection-start-column="0" selection-end-line="245" selection-end-column="0" />
+        <state relative-caret-position="331">
+          <caret line="161" column="0" selection-start-line="161" selection-start-column="0" selection-end-line="161" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/org/apache/nutch/crawl/AbstractFetchSchedule.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="769">
+          <caret line="216" column="0" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.idea/workspace.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>

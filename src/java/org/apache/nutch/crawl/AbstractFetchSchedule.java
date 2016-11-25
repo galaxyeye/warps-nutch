@@ -203,14 +203,16 @@ public abstract class AbstractFetchSchedule extends Configured implements
   @Override
   public void forceRefetch(String url, WebPage page, boolean asap) {
     // reduce fetchInterval so that it fits within the max value
-    if (page.getFetchInterval() > maxInterval)
+    if (page.getFetchInterval() > maxInterval) {
       page.setFetchInterval(Math.round(maxInterval * 0.9f));
+    }
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
     page.setRetriesSinceFetch(0);
     // TODO: row.setSignature(null) ??
     page.setModifiedTime(0L);
-    if (asap)
+    if (asap) {
       page.setFetchTime(System.currentTimeMillis());
+    }
   }
 
   public Set<WebPage.Field> getFields() {

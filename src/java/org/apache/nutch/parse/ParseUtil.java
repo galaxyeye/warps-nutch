@@ -46,6 +46,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.nutch.metadata.Nutch.VAR_ORDERED_OUTLINKS;
+
 /**
  * A Utility class containing methods to simply perform parsing utilities such
  * as iterating through a preferred list of {@link Parser}s to obtain
@@ -268,6 +270,8 @@ public class ParseUtil {
       validCount++;
       page.getOutlinks().put(utf8ToUrl, new Utf8(outlinks[i].getAnchor()));
     } // for
+
+    page.setTmporaryVariable(VAR_ORDERED_OUTLINKS, outlinks);
 
     // TODO : Marks should be set in mapper or reducer, not util methods
     Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);

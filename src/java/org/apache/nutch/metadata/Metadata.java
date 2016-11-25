@@ -48,9 +48,9 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
   public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
   public static final String META_IS_SEED = "IS-SEED";
   public static final String META_FROM_SEED = "FROM-SEED";
+  public static final String META_GENERATE_TIME = "generate.generate.time";
 
   public static final String META_CASH_KEY = "_csh_";
-  public static final Utf8 META_CASH_KEY_U8 = new Utf8("_csh_");
 
   /**
    * A map of all metadata attributes.

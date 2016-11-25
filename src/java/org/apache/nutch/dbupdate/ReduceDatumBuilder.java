@@ -4,12 +4,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
-import org.apache.nutch.mapreduce.DbUpdateReducer;
-import org.apache.nutch.mapreduce.FetchJob;
-import org.apache.nutch.mapreduce.NutchCounter;
-import org.apache.nutch.mapreduce.WebPageWritable;
+import org.apache.nutch.mapreduce.*;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.scoring.ScoreDatum;
@@ -27,7 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_TIME;
+import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
+import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
+import static org.apache.nutch.metadata.Metadata.META_GENERATE_TIME;
+import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_INDEX_PAGE;
 
 /**
  * Created by vincent on 16-9-25.
@@ -66,15 +66,16 @@ public class ReduceDatumBuilder {
     );
   }
 
-  public Params getParams() { return params; }
+  public Params getParams() {
+    return params;
+  }
 
   public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
     //check if page is already in the db
-    if(page == null && oldPage != null) {
+    if (page == null && oldPage != null) {
       // if we return here inlinks will not be updated
       page = oldPage;
-    }
-    else if (page == null) {
+    } else if (page == null) {
       // Here we got a new webpage from outlink
       if (!additionsAllowed) {
         return;
@@ -83,8 +84,7 @@ public class ReduceDatumBuilder {
       page = createNewRow(url);
 
       counter.increase(DbUpdateReducer.Counter.newRows);
-    }
-    else {
+    } else {
       // process the main page
       updateFetchSchedule(url, page);
     }
@@ -96,7 +96,7 @@ public class ReduceDatumBuilder {
    * The mapper phrase can set NutchWritable to be a WebPageWritable or a ScoreDatum,
    * the WebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * from that webpage
-   * */
+   */
   public WebPage calculateInlinks(String url, Iterable<NutchWritable> values) {
     WebPage page = null;
     inlinkedScoreData.clear();
@@ -129,15 +129,20 @@ public class ReduceDatumBuilder {
   }
 
   public WebPage createNewRow(String url) {
+    return createNewRow(url, FETCH_PRIORITY_DEFAULT, 0);
+  }
+
+  public WebPage createNewRow(String url, int priority, float score) {
     WebPage page = WebPage.newBuilder().build();
 
     fetchSchedule.initializeSchedule(url, page);
+    TableUtil.setFetchPriority(page, priority); // TODO : do it in fetchSchedule
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 
     try {
       scoringFilters.initialScore(url, page);
+      page.setScore(score);
     } catch (ScoringFilterException e) {
-      page.setScore(0.0f);
       counter.increase(NutchCounter.Counter.errors);
     }
 
@@ -182,15 +187,13 @@ public class ReduceDatumBuilder {
       page.setScore(0.0f);
       counter.increase(NutchCounter.Counter.errors);
     }
-
-    // if page contains date string of today, and it's an index page
-    // it should have a very high score
   }
 
   private void updateMetadata(WebPage page) {
     // Clear temporary metadata
-    TableUtil.clearMetadata(page, FetchJob.REDIRECT_DISCOVERED);
-    TableUtil.clearMetadata(page, PARAM_GENERATE_TIME);
+    TableUtil.clearMetadata(page, REDIRECT_DISCOVERED);
+    TableUtil.clearMetadata(page, META_GENERATE_TIME);
+    TableUtil.clearMetadata(page, META_FROM_SEED);
 
     // Clear markers
     Mark.INJECT_MARK.removeMarkIfExist(page);
@@ -247,6 +250,11 @@ public class ReduceDatumBuilder {
 
         if (maxInterval < page.getFetchInterval()) {
           fetchSchedule.forceRefetch(url, page, false);
+        }
+
+        int priority = TableUtil.getFetchPriority(page);
+        if (priority > FETCH_PRIORITY_MUST_FETCH) {
+          fetchSchedule.forceRefetch(url, page, true);
         }
         break;
       case CrawlStatus.STATUS_RETRY:
