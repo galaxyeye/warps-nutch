@@ -120,6 +120,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
           break;
         }
 
+        // do not count items must fetch
         if (priority < FETCH_PRIORITY_MUST_FETCH) {
           ++count;
         }
@@ -142,6 +143,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     TableUtil.setFetchPriority(page, priority);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.setGenerateTime(page, startTime);
+    TableUtil.clearMetadata(page, META_FROM_SEED);
 
     // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
     if (TableUtil.isSeed(page)) {

@@ -5,7 +5,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
 import org.apache.nutch.crawl.filters.CrawlFilters;
-import org.apache.nutch.mapreduce.*;
+import org.apache.nutch.mapreduce.DbUpdateReducer;
+import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.scoring.ScoreDatum;
@@ -24,10 +26,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
+import static org.apache.nutch.metadata.Metadata.META_FETCH_PRIORITY;
 import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
 import static org.apache.nutch.metadata.Metadata.META_GENERATE_TIME;
-import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_INDEX_PAGE;
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_DEFAULT;
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_MUST_FETCH;
 
 /**
  * Created by vincent on 16-9-25.
@@ -194,6 +197,7 @@ public class ReduceDatumBuilder {
     TableUtil.clearMetadata(page, REDIRECT_DISCOVERED);
     TableUtil.clearMetadata(page, META_GENERATE_TIME);
     TableUtil.clearMetadata(page, META_FROM_SEED);
+    TableUtil.clearMetadata(page, META_FETCH_PRIORITY);
 
     // Clear markers
     Mark.INJECT_MARK.removeMarkIfExist(page);

@@ -139,13 +139,8 @@ public class JITIndexer {
       doc = filter(doc, page);
       if (doc != null) {
         synchronized (indexWriters) {
-          try {
-            indexWriters.write(doc);
-            TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
-          }
-          catch (IOException e) {
-            LOG.error("Failed to index, " + e.getMessage());
-          }
+          indexWriters.write(doc);
+          TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
         }
       } // if
     }

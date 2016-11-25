@@ -209,6 +209,7 @@ public class GenerateJob extends NutchJob implements Tool {
       out.writeFloat(score);
     }
 
+    // The smaller items come first in reducer
     @Override
     public int compareTo(SelectorEntry other) {
       if (other.priority == priority) {
@@ -216,10 +217,10 @@ public class GenerateJob extends NutchJob implements Tool {
           return url.compareTo(other.url);
         }
 
-        return score < other.score ? -1 : 1;
+        return score > other.score ? -1 : 1;
       }
 
-      return priority < other.priority ? -1 : 1;
+      return priority > other.priority ? -1 : 1;
     }
 
     @Override

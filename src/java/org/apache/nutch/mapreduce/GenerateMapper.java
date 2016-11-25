@@ -38,7 +38,6 @@ import java.net.MalformedURLException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -184,6 +183,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     output(url, new SelectorEntry(url, priority, score), page, context);
 
     getCounter().updateAffectedRows(url);
+
+    context.setStatus(getCounter().getStatusString());
   }
 
   // Check Host
@@ -214,7 +215,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       // TODO : check this indicator to see if the scoring/schedule system is OK for seed urls
       counter = Counter.rowsAddedAsSeed;
     }
-    else if (TableUtil.isSeed(page)) {
+
+    if (TableUtil.isSeed(page)) {
       counter = Counter.rowsIsSeed;
     }
 
