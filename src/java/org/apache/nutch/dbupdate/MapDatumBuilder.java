@@ -152,11 +152,7 @@ public class MapDatumBuilder {
     // Do not dive too deep
     final Map<CharSequence, CharSequence> outlinks = sourcePage.getOutlinks();
 
-    if (depth > maxDistance) {
-      counter.increase(NutchCounter.Counter.tooDeepPages);
-    }
-
-    if (depth > maxDistance || outlinks == null || outlinks.isEmpty()) {
+    if (outlinks == null || outlinks.isEmpty()) {
       return new HashMap<>();
     }
 
@@ -172,6 +168,11 @@ public class MapDatumBuilder {
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = TableUtil.getDistance(sourcePage);
     final int limit = 1000;
+
+    if (depth >= maxDistance) {
+      counter.increase(NutchCounter.Counter.tooDeepPages);
+      return new HashMap<>();
+    }
 
     final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, depth, limit);
     List<ScoreDatum> scoreData = outlinks.entrySet().stream()
