@@ -149,7 +149,15 @@ public class CrawlFilter extends Configured {
   }
 
   public enum PageCategory {
-    INDEX, DETAIL, SEARCH, MEDIA, ANY
+    INDEX, DETAIL, SEARCH, MEDIA, ANY;
+
+    public boolean isIndex() {
+      return this == INDEX;
+    }
+
+    public boolean isDetail() {
+      return this == DETAIL;
+    }
   }
 
   @Expose

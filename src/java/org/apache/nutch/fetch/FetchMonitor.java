@@ -9,10 +9,7 @@ import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.Params;
-import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -197,8 +194,6 @@ public class FetchMonitor {
 
   public void cleanup() {
     try {
-      // LOG.info("Clean up reducer, job name : " + context.getJobName());
-
       if (fetchServer != null && fetchServer.isRunning()) {
         fetchServer.stop(true);
       }
@@ -300,26 +295,26 @@ public class FetchMonitor {
       long jobTime = now - startTime;
       long idleTime = now - taskScheduler.getLastTaskFinishTime();
 
-      /**
+      /*
        * In crowd sourcing mode, check if any fetch tasks are hung
        * */
       retuneFetchQueues(now, idleTime);
 
-      /**
+      /*
        * Dump the remainder fetch items if feeder thread is no available and fetch item is few
        * */
       if (fetchMonitor.getQueueCount() <= QUEUE_REMAINDER_LIMIT) {
         handleFewFetchItems();
       }
 
-      /**
+      /*
        * Check throughput(fetch speed)
        * */
       if (now > throughputCheckTimeLimit && status.pagesThroughputRate < minPageThroughputRate) {
         checkFetchEfficiency();
       }
 
-      /**
+      /*
        * Halt command is received
        * */
       if (isHalt()) {
@@ -327,7 +322,7 @@ public class FetchMonitor {
         break;
       }
 
-      /**
+      /*
        * Read local filesystem for control commands
        * */
       if (checkLocalFileCommandExists("finish " + jobName)) {
@@ -337,7 +332,7 @@ public class FetchMonitor {
         break;
       }
 
-      /**
+      /*
        * All fetch tasks are finished
        * */
       if (taskScheduler.isMissionComplete()) {
@@ -351,12 +346,20 @@ public class FetchMonitor {
         break;
       }
 
-      /**
+      /*
        * No new tasks for too long, some requests seem to hang. We exits the job.
        * */
       if (idleTime > fetchTaskTimeout) {
         handleFetchTaskTimeout();
         LOG.info("Hit fetch task timeout " + idleTime / 1000 + "s, exit the job ...");
+        break;
+      }
+
+      /*
+       * TODO : avoid the hard coding
+       * */
+      if (!NetUtil.testHttpNetwork("master", 8983)) {
+        LOG.info("Lost solr, exit the job");
         break;
       }
     } while (taskScheduler.getActiveFetchThreadCount() > 0);

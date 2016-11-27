@@ -73,7 +73,9 @@ public class TaskScheduler extends Configured {
     readyTasks, pendingTasks,
     pagesThou, mbThou,
     rowsRedirect,
-    rowsPeresist, newRowsPeresist, newDetailRows, existOutlinkRows
+    isSeed,
+    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthUpdated,
+    pagesPeresist, newPages, newDetailPages, existOutPages
   }
 
   public static final int QUEUE_REMAINDER_LIMIT = 5;
@@ -348,7 +350,6 @@ public class TaskScheduler extends Configured {
 
     WebPage page = seedBuiler.buildWebPage(urlLine);
     String url = page.getTemporaryVariableAsString("url");
-    TableUtil.setFetchPriority(page, FETCH_PRIORITY_SEED);
     // set score?
 
     Mark.INJECT_MARK.removeMarkIfExist(page);
@@ -707,7 +708,7 @@ public class TaskScheduler extends Configured {
       case ProtocolStatusCodes.EXCEPTION:
         logFetchFailure(ProtocolStatusUtils.getMessage(status));
 
-        /** FALL THROUGH **/
+      /* FALL THROUGH **/
       case ProtocolStatusCodes.RETRY:          // retry
       case ProtocolStatusCodes.BLOCKED:
         handleResult(fetchTask, null, status, CrawlStatus.STATUS_RETRY);
@@ -777,12 +778,12 @@ public class TaskScheduler extends Configured {
   private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
-    WebPage page = fetchTask.getPage();
+    WebPage mainPage = fetchTask.getPage();
 
-    FetchUtil.setStatus(page, status, pstatus);
-    FetchUtil.setContent(page, content);
-    FetchUtil.setFetchTime(page, status);
-    FetchUtil.setMarks(page);
+    FetchUtil.setStatus(mainPage, status, pstatus);
+    FetchUtil.setContent(mainPage, content);
+    FetchUtil.setFetchTime(mainPage, status);
+    FetchUtil.setMarks(mainPage);
 
     String reversedUrl = TableUtil.reverseUrl(url);
 
@@ -790,12 +791,12 @@ public class TaskScheduler extends Configured {
     // TODO : We should calculate the signature to know if a webpage is really NOTMODIFIED
     // For news, the signature must be calculated via the extracted content
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
-      if (!skipTruncated || !ParserMapper.isTruncated(url, page)) {
+      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
         synchronized (parseUtil) {
-          parseUtil.process(reversedUrl, page);
+          parseUtil.process(reversedUrl, mainPage);
         }
 
-        Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
+        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage);
         // JIT Index
         if (jitIndexer != null && parseMark != null) {
           jitIndexer.produce(fetchTask);
@@ -804,7 +805,7 @@ public class TaskScheduler extends Configured {
     }
 
     // Debug fetch time history
-    String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
+    String fetchTimeHistory = TableUtil.getFetchTimeHistory(mainPage, "");
     if (fetchTimeHistory.contains(",")) {
       String report = String.format("%60s", fetchTask.getUrl())
 //          + "\turlCategory : " +
@@ -818,111 +819,113 @@ public class TaskScheduler extends Configured {
     // Remove content if storingContent is false. Content is added to page above
     // for ParseUtil be able to parse it
     if (content != null && !storingContent) {
-      page.setContent(ByteBuffer.wrap(new byte[0]));
+      mainPage.setContent(ByteBuffer.wrap(new byte[0]));
     }
 
     // LOG.debug("ready to write hadoop : {}, {}", page.getStatus(), page.getMarkers());
 
     if (updateJIT()) {
-      outputWithDbUpdate(url, reversedUrl, page);
+      outputWithDbUpdate(url, reversedUrl, mainPage);
     }
     else {
-      context.write(reversedUrl, page);
-      counter.increase(Counter.rowsPeresist);
+      context.write(reversedUrl, mainPage);
+      counter.increase(Counter.pagesPeresist);
     }
 
-    updateStatus(fetchTask.getUrl(), page);
+    updateStatus(fetchTask.getUrl(), mainPage);
   }
 
   /**
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  @SuppressWarnings("unchecked")
-  private synchronized void outputWithDbUpdate(String url, String reversedUrl, WebPage page) throws IOException, InterruptedException {
-    boolean isSeed = TableUtil.isSeed(page);
+  private void outputWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
+    synchronized(mapDatumBuilder) {
+      // so we need check if there are unexpected marks, metadata, etc
+      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
 
-    // so we need check if there are unexpected marks, metadata, etc
-    Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, page);
-    outlinkRows.entrySet().stream()
-            .limit(maxDbUpdateNewRows)
-            .forEach(e -> outputOutlinkPage(url, page, e.getKey(), e.getValue(), isSeed));
+      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
 
-    outputMainPage(url, reversedUrl, page, outlinkRows);
+      outputMainPage(url, reversedUrl, mainPage);
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private void outputMainPage(String url, String reversedUrl, WebPage page, Map<UrlWithScore, NutchWritable> outlinkRows) {
-    counter.increase(Counter.rowsPeresist);
+  private void outputMainPage(String url, String reversedUrl, WebPage page) {
+    counter.increase(Counter.pagesPeresist);
+    if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
+      counter.increase(Counter.newDetailPages);
+    }
 
-    // Calculate inlinked score data, and return the main web page
-    reduceDatumBuilder.calculateInlinks(url, outlinkRows.values());
     // process the main page, update fetch schedule
     reduceDatumBuilder.updateFetchSchedule(url, page);
     reduceDatumBuilder.updateRow(url, page);
 
     try {
-      context.write(reversedUrl, page);
+      synchronized(context) {
+        context.write(reversedUrl, page);
+      }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private void outputOutlinkPage(String sourceUrl, WebPage mainPage, UrlWithScore urlWithScore, NutchWritable nutchWritable, boolean fromSeed) {
+  private void outputOutlinkPage(WebPage mainPage, UrlWithScore urlWithScore) {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-//    LOG.debug("Output outlink page " + url);
-
-    WebPage page = null;
-
-    Writable writable = nutchWritable.get();
-    if (writable instanceof WebPageWritable) {
-      page = ((WebPageWritable) writable).getWebPage();
+    int depth = TableUtil.getDepth(mainPage);
+    if (depth != MAX_DISTANCE) {
+      depth += 1;
     }
 
-    if (page == null) {
-      LOG.error("Failed to get web page, invalid nutchWritable");
-      return;
+    WebPage oldPage;
+    synchronized(context) {
+      oldPage = datastore.get(reversedUrl);
     }
 
-    // TODO : maintain a in-memory recent outlink list
-    WebPage oldPage = datastore.get(reversedUrl);
-
-    // The page is already in the db, we just return here
     if (oldPage != null) {
-      // In the original nutch-2.3.1, we write the page again to update inlinks
-      // but in our version, there is no need to update inlinks
       long publishTime = TableUtil.getPublishTime(oldPage);
       if (publishTime > 0) {
         TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
         TableUtil.increaseReferredPageCount(mainPage, 1);
       }
 
-      counter.increase(Counter.existOutlinkRows);
-      return;
+      // The old row might be updated
+      int oldDistance = TableUtil.getDistance(oldPage);
+      // TODO : check oldDistance == MAX_DISTANCE bug
+      if (oldDistance != MAX_DISTANCE && depth < oldDistance) {
+        TableUtil.setDistance(oldPage, depth);
+        output(reversedUrl, oldPage);
+
+        String report = oldDistance + " -> " + depth + ", " + url;
+        nutchMetrics.debugDepthUpdated(report, reportSuffix);
+
+        counter.increase(Counter.pagesDepthUpdated);
+      }
+
+      counter.increase(Counter.existOutPages);
     }
+    else {
+      WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
+      // Update distance/score
+      reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
 
-    page = reduceDatumBuilder.createNewRow(url);
-    reduceDatumBuilder.updateRow(url, page);
+      counter.increase(Counter.newPages);
+      if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
+        counter.increase(Counter.newDetailPages);
+      }
 
-    counter.increase(Counter.newRowsPeresist);
-    if (CrawlFilter.sniffPageCategoryByUrlPattern(url) == CrawlFilter.PageCategory.DETAIL) {
-      counter.increase(Counter.newDetailRows);
+      output(reversedUrl, newPage);
     }
+  }
 
-    /**
-     * We crawl pages from seed immediately the next loop starts
-     * TODO : we can do this using score/schedule mechanism
-     * */
-    if (fromSeed) {
-      TableUtil.markFromSeed(page);
-      nutchMetrics.reportUrlsFromSeed(url, sourceUrl, reportSuffix);
-    }
-
+  @SuppressWarnings("unchecked")
+  private void output(String reversedUrl, WebPage page) {
     try {
-      context.write(reversedUrl, page);
+      synchronized(context) {
+        context.write(reversedUrl, page);
+      }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
     }
@@ -934,12 +937,31 @@ public class TaskScheduler extends Configured {
     if (content != null) {
       pageLength = Bytes.getBytes(page.getContent()).length;
     }
-
-    counter.updateAffectedRows(url);
-    counter.increase(Counter.mbytes, Math.round(pageLength / 1024.0f));
-
     totalPages.incrementAndGet();
     totalBytes.addAndGet(pageLength);
+
+    int depth = TableUtil.getDepth(page);
+
+    if (TableUtil.isSeed(page)) {
+      counter.increase(Counter.isSeed);
+    }
+
+    if (depth == 0) {
+      counter.increase(Counter.pagesDepth0);
+    }
+    else if (depth == 1) {
+      counter.increase(Counter.pagesDepth1);
+    }
+    else if (depth == 2) {
+      counter.increase(Counter.pagesDepth2);
+    }
+    else if (depth == 3) {
+      counter.increase(Counter.pagesDepth3);
+    }
+
+    counter.increase(Counter.mbytes, Math.round(pageLength / 1024.0f));
+
+    counter.updateAffectedRows(url);
   }
 
   private void logFetchFailure(String message) {

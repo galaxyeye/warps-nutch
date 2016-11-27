@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
-import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_SEED;
 
 /**
  * Created by vincent on 16-9-24.
@@ -54,7 +53,7 @@ public class SeedBuilder {
     scoreFilters = new ScoringFilters(conf);
     fetchIntervalSec = getFetchIntervalSec();
     scoreInjected = conf.getFloat("db.score.injected", Float.MAX_VALUE);
-    currentTime = conf.getLong("injector.current.time", System.currentTimeMillis());
+    currentTime = System.currentTimeMillis();
   }
 
   public Params getParams() {
@@ -112,10 +111,8 @@ public class SeedBuilder {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
-    TableUtil.setFetchPriority(row, FETCH_PRIORITY_SEED);
-
-    // TODO : DISTANCE should be metadata
     TableUtil.setDistance(row, 0);
+
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);
 
     return row;

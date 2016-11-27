@@ -18,6 +18,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.util.SystemClock;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -70,6 +72,8 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
   private int MAX_INTERVAL;
 
+  private int SEED_MAX_INTERVAL;
+
   private int MIN_INTERVAL;
 
   private boolean SYNC_DELTA;
@@ -86,6 +90,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
     MIN_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.min_interval", 60);
     MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.max_interval", SECONDS_PER_DAY * 365); // 1 year
+    SEED_MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.seed_max_interval", SECONDS_PER_DAY); // 1 year
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
@@ -137,21 +142,25 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
    * */
   private int adjustFetchIntervalForArticle(String url, WebPage page, long fetchTime, int intervalSec) {
     long lastestReferredPublishTime = TableUtil.getLatestReferredPublishTime(page);
-    if (lastestReferredPublishTime < 0) {
+    // last referred publish time is 30 years ago, it means the variable is not initialized or it's a ill-formed variable
+    if (lastestReferredPublishTime <= Duration.ofDays(-365 * 30).toMillis()) {
       return intervalSec;
     }
 
     long diff = fetchTime - lastestReferredPublishTime;
-    if (diff < Duration.ofDays(1).toMillis()) {
-      // if there are updates in one day, keep re-fetch the page in every crawl loop
+    if (diff < Duration.ofDays(2).toMillis()) {
+      // if there are updates in two day, keep re-fetch the page in every crawl loop
       intervalSec = 1;
     }
-    else if (diff > Duration.ofDays(3).toMillis()) {
-      // if there is no any updates in 3 days, check the page again a hour later
-      intervalSec = (int)Duration.ofHours(1).toMinutes() * 60;
+    else {
+      // if there is no any updates in 2 days, check the page later
+      intervalSec *= (1.0f + INC_RATE);
+      if (intervalSec > SEED_MAX_INTERVAL) {
+        intervalSec = SEED_MAX_INTERVAL;
+      }
     }
 
-    if (CrawlFilter.sniffPageCategory(url, page) == CrawlFilter.PageCategory.DETAIL) {
+    if (CrawlFilter.sniffPageCategory(url, page).isDetail()) {
       // Never fetch detail again
       intervalSec = MAX_INTERVAL;
     }

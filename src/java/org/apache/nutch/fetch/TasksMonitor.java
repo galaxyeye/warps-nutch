@@ -7,6 +7,7 @@ import com.google.common.collect.TreeMultiset;
 import org.apache.commons.collections4.SortedBidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.gora.util.TimingUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.fetch.data.FetchQueue;
@@ -277,33 +278,39 @@ public class TasksMonitor {
 
     ++hostStat.urls;
 
+    String report = "[" + DateTimeUtil.now() + "]"
+        + "\tLastReferredPT : " + DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
+        + "\tReferredPC : " + TableUtil.getReferredPageCount(page)
+        + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
+        + "\t->\t" + url;
+
     if (crawlFilters.isIndexUrl(url)) {
       ++hostStat.indexUrls;
       if (debugUrls) {
-        nutchMetrics.debugIndexUrls(url, reportSuffix);
+        nutchMetrics.debugIndexUrls(report, reportSuffix);
       }
     }
     else if (crawlFilters.isSearchUrl(url)) {
       ++hostStat.searchUrls;
       if (debugUrls) {
-        nutchMetrics.debugSearchUrls(url, reportSuffix);
+        nutchMetrics.debugSearchUrls(report, reportSuffix);
       }
     }
     else if (crawlFilters.isDetailUrl(url)) {
       ++hostStat.detailUrls;
       if (debugUrls) {
-        nutchMetrics.debugDetailUrls(url, reportSuffix);
+        nutchMetrics.debugDetailUrls(report, reportSuffix);
       }
     }
     else if (crawlFilters.isMediaUrl(url)) {
       ++hostStat.mediaUrls;
       if (debugUrls) {
-        nutchMetrics.debugMediaUrls(url, reportSuffix);
+        nutchMetrics.debugMediaUrls(report, reportSuffix);
       }
     }
     else {
       if (debugUrls) {
-        nutchMetrics.debugUnknownTypeUrls(url, reportSuffix);
+        nutchMetrics.debugUnknownTypeUrls(report, reportSuffix);
       }
     }
 
@@ -326,7 +333,8 @@ public class TasksMonitor {
       }
     }
 
-    if (TableUtil.isFromSeed(page)) {
+    int depth = TableUtil.getDepth(page);
+    if (depth == 1) {
       ++hostStat.urlsFromSeed;
     }
 

@@ -18,6 +18,7 @@
 package org.apache.nutch.parse.html;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.crawl.filters.CrawlFilter;
@@ -194,7 +195,7 @@ public class HtmlParser implements Parser {
   private void tryGetValidOutlinks(WebPage page, String url, URL base, String text) {
     // TODO : do it during iterate the nodes
     if (text == null || text.isEmpty() || !crawlFilters.testTextSatisfied(text)) {
-      LOG.debug("Filtered by text content");
+      LOG.debug("Filtered by text content, length : " + StringUtils.length(text));
       return;
     }
 

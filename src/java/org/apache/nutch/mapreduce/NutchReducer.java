@@ -59,6 +59,8 @@ public class NutchReducer<K1, V1, K2, V2 extends Persistent> extends GoraReducer
       setup(context);
 
       doRun(context);
+
+      context.setStatus(getCounter().getStatusString());
     } catch (Throwable e) {
       LOG.error(StringUtils.stringifyException(e));
     }

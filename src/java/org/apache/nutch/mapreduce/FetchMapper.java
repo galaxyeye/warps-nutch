@@ -1,6 +1,7 @@
 package org.apache.nutch.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.Mark;
@@ -38,7 +39,11 @@ import static org.apache.nutch.metadata.Nutch.*;
  */
 public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, FetchEntry> {
 
-  public enum Counter { notGenerated, alreadyFetched, hostsUnreachable };
+  public enum Counter { 
+    notGenerated, alreadyFetched, hostsUnreachable,
+    rowsIsSeed, rowsInjected,
+    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3
+  };
 
   private boolean resume;
   private int limit = -1;
@@ -95,13 +100,11 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
 
     if (unreachableHosts.contains(URLUtil.getDomainName(url))) {
       getCounter().increase(Counter.hostsUnreachable);
-      // LOG.debug("Skipping " + url + ", host is in unreachable list");
       return;
     }
 
     if (!Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.notGenerated);
-      // LOG.debug("Skipping " + url + "; not generated yet");
       return;
     }
 
@@ -114,22 +117,49 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
      * */
     if (resume && Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.alreadyFetched);
-
-      if (LOG.isDebugEnabled()) {
-        // LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; already fetched");
-      }
-
       return;
     }
 
-    context.write(new IntWritable(random.nextInt(65536)), new FetchEntry(conf, key, page));
+    int priority = TableUtil.getFetchPriority(page, 0);
+    int shuffleOrder = random.nextInt(65536) - priority;
+    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page));
 
-    getCounter().updateAffectedRows(url);
-
-    // LOG.debug("SimpleFetcher mapper : " + key);
+    updateStatus(url, page);
 
     if (limit > 0 && ++count > limit) {
       stop("Hit limit " + limit + ", finish the mapper.");
     }
+  }
+  
+  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
+    int depth = TableUtil.getDepth(page);
+    Counter counter = null;
+
+    if (TableUtil.isSeed(page)) {
+      counter = Counter.rowsIsSeed;
+    }
+
+    if (Mark.INJECT_MARK.hasMark(page)) {
+      counter = Counter.rowsInjected;
+    }
+
+    if (depth == 0) {
+      counter = Counter.rowsDepth0;
+    }
+    else if (depth == 1) {
+      counter = Counter.rowsDepth1;
+    }
+    else if (depth == 2) {
+      counter = Counter.rowsDepth2;
+    }
+    else if (depth == 3) {
+      counter = Counter.rowsDepth3;
+    }
+
+    if (counter != null) {
+      getCounter().increase(counter);
+    }
+
+    getCounter().updateAffectedRows(url);
   }
 }

@@ -26,6 +26,9 @@ bin="`cd "$bin"; pwd`"
 
  . "$bin"/nutch-config.sh
 
+# url to test if solr is available, once solr is not available, we stop crawl anything
+SOLR_TEST_URL=http://master:8983
+
 SEEDDIR="$1"
 CRAWL_ID="$2"
 if [ "$#" -eq 3 ]; then
@@ -110,6 +113,10 @@ if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
   fi
 fi
 
+if [ ! -e "$NUTCH_HOME/logs" ]; then
+  mkdir "$NUTCH_HOME/logs"
+fi
+
 function __bin_nutch {
   # run $bin/nutch, exit if exit value indicates error
 
@@ -145,6 +152,13 @@ do
    break
   fi
 
+  wget -q --spider $SOLR_TEST_URL
+  RETCODE=$?
+  if [ ! $RETCODE -eq 0 ]; then
+    echo "Lost index server, exit."
+    exit $RETCODE
+  fi
+
   echo "\n\n\n"
   echo `date` ": Iteration $a of $LIMIT"
 
@@ -172,28 +186,6 @@ do
   echo "Fetching : "
   # __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
   __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
-
-  DATE=`date +%s`
-  HOUR=`date +%k`
-  # HOUR=1
-  if (($HOUR<=6)) || (($HOUR>=22)); then
-    echo "Good night, I will sleep for 30 minutes, to wake up me, use command : >>>"
-    echo "touch .AWAKE"
-    echo "<<<"
-
-    for i in {1..180}
-    do
-      if [ -e ".AWAKE" ] || [ -e ".KEEP_AWAKE" ]; then
-        echo "AWAKE file found"
-        if [ -e ".AWAKE" ]; then
-          mv .AWAKE ".AWAKE_EXECUTED_$DATE"
-        fi
-        break
-      else
-        sleep 10s
-      fi
-    done
-  fi
 
 done
 

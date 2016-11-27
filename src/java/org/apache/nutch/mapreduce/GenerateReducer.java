@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Metadata.META_FROM_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
@@ -47,7 +46,10 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
   public static final Logger LOG = GenerateJob.LOG;
 
-  private enum Counter { hosts, hostCountTooLarge, malformedUrl, pagesInjected, isSeed, isFromSeed }
+  private enum Counter { hosts, hostCountTooLarge, malformedUrl,
+    rowsInjected, rowsIsSeed, rowsIsFromSeed,
+    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3
+  }
 
   /**
    * Injector
@@ -119,19 +121,17 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
           break;
         }
 
-        // seed pages and pages from seeds are fetched imperative
-        // TODO : We must drop out seed pages who do not update for days, and an adaptive fetch scheduler is just OK
-        if (!TableUtil.isSeed(page)) {
+        int depth = TableUtil.getDepth(page);
+        // seed pages are fetched imperative, so we just ignore topN parameter for them
+        if (depth > 0) {
           ++count;
         }
 
-        // update status first
-        updateCounters(url, page, context);
-
-        // and then update the page
         page = updatePage(url, page);
 
         context.write(TableUtil.reverseUrl(url), page);
+
+        updateStatus(url, page, context);
       }
       catch (Throwable e) {
         LOG.error(StringUtil.stringifyException(e));
@@ -149,20 +149,36 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.setGenerateTime(page, startTime);
 
-    TableUtil.clearMetadata(page, META_FROM_SEED);
-
     Mark.INJECT_MARK.removeMarkIfExist(page);
     Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
 
     return page;
   }
 
-  private void updateCounters(String url, WebPage page, Context context) throws IOException {
-    if (TableUtil.isSeed(page)) {
-      getCounter().increase(Counter.isSeed);
+  private void updateStatus(String url, WebPage page, Context context) throws IOException {
+    int depth = TableUtil.getDepth(page);
+    Counter counter = null;
+
+    if (depth == 0) {
+      counter = Counter.pagesDepth0;
     }
-    else if (TableUtil.isFromSeed(page)) {
-      getCounter().increase(Counter.isFromSeed);
+    else if (depth == 1) {
+      counter = Counter.pagesDepth1;
+    }
+    else if (depth == 2) {
+      counter = Counter.pagesDepth2;
+    }
+    else if (depth == 3) {
+      counter = Counter.pagesDepth3;
+    }
+
+    // double check (depth == 0 or has IS-SEED metadata) , can be removed later
+    if (TableUtil.isSeed(page)) {
+      counter = Counter.rowsIsSeed;
+    }
+
+    if (counter != null) {
+      getCounter().increase(counter);
     }
 
     getCounter().updateAffectedRows(url);

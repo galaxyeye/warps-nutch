@@ -124,9 +124,9 @@ public class MapDatumBuilder {
   /**
    * Build map phrase datum
    * */
-  public Pair<UrlWithScore, NutchWritable> buildMainDatum(String reversedUrl, WebPage page) {
+  public Pair<UrlWithScore, NutchWritable> buildMainDatum(String reversedUrl, WebPage mainPage) {
     NutchWritable nutchWritable = new NutchWritable();
-    nutchWritable.set(new WebPageWritable(conf, page));
+    nutchWritable.set(new WebPageWritable(conf, mainPage));
     return Pair.of(new UrlWithScore(reversedUrl, Float.MAX_VALUE), nutchWritable);
   }
 
@@ -134,8 +134,7 @@ public class MapDatumBuilder {
    * Build map phrase datum
    * */
   public Pair<UrlWithScore, NutchWritable> createNewDatum(String url, WebPage sourcePage) {
-    int priority = TableUtil.calculatePriority(url, sourcePage, crawlFilters);
-    float score = calculatePageScore(url, priority, sourcePage);
+    float score = calculatePageScore(sourcePage);
 
     String reversedUrl = null;
     try {
@@ -148,11 +147,10 @@ public class MapDatumBuilder {
     return Pair.of(new UrlWithScore(reversedUrl, score), nutchWritable);
   }
 
-  public Map<CharSequence, CharSequence> getFilteredOutlinks(WebPage sourcePage, final int depth, final int limit) {
-    // Do not dive too deep
+  public Map<CharSequence, CharSequence> getFilteredOutlinks(WebPage sourcePage, final int limit) {
     final Map<CharSequence, CharSequence> outlinks = sourcePage.getOutlinks();
 
-    if (outlinks == null || outlinks.isEmpty()) {
+    if (outlinks == null) {
       return new HashMap<>();
     }
 
@@ -166,7 +164,7 @@ public class MapDatumBuilder {
    * TODO : Write the result into hdfs directly to deduce memory consumption
    * */
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
-    final int depth = TableUtil.getDistance(sourcePage);
+    final int depth = TableUtil.getDepth(sourcePage);
     final int limit = 1000;
 
     if (depth >= maxDistance) {
@@ -174,7 +172,7 @@ public class MapDatumBuilder {
       return new HashMap<>();
     }
 
-    final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, depth, limit);
+    final Map<CharSequence, CharSequence> outlinks = getFilteredOutlinks(sourcePage, limit);
     List<ScoreDatum> scoreData = outlinks.entrySet().stream()
         .map(e -> createScoreDatum(e.getKey(), e.getValue(), depth))
         .collect(Collectors.toList());
@@ -200,7 +198,7 @@ public class MapDatumBuilder {
   /**
    * TODO : We calculate page score mainly in reduer
    * */
-  private float calculatePageScore(String url, int priority, WebPage page) {
-    return priority * 1.0f;
+  private float calculatePageScore(WebPage page) {
+    return 1.0f;
   }
 }

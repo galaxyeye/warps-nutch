@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
-import static org.apache.nutch.metadata.Nutch.DISTANCE;
 
 public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, String, WebPage> {
 
@@ -204,12 +203,12 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
 
     if (smallestDist != Integer.MAX_VALUE) {
       int oldDistance = Integer.MAX_VALUE;
-      CharSequence oldDistUtf8 = page.getMarkers().get(DISTANCE);
+      CharSequence oldDistUtf8 = page.getMarkers().get(new Utf8("dist"));
       if (oldDistUtf8 != null)
         oldDistance = Integer.parseInt(oldDistUtf8.toString());
       int newDistance = smallestDist + 1;
       if (newDistance < oldDistance) {
-        page.getMarkers().put(DISTANCE, new Utf8(Integer.toString(newDistance)));
+        page.getMarkers().put(new Utf8("dist"), new Utf8(Integer.toString(newDistance)));
       }
     }
 

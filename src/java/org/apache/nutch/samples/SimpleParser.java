@@ -19,6 +19,7 @@ package org.apache.nutch.samples;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.avro.io.parsing.Symbol;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;

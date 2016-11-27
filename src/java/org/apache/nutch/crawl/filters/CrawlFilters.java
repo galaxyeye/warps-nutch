@@ -248,7 +248,7 @@ public class CrawlFilters extends Configured {
 
     PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
 
-    if (pageType == PageCategory.INDEX) {
+    if (pageType.isIndex()) {
       return true;
     }
 

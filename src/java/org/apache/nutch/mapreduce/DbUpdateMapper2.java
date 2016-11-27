@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static org.apache.nutch.metadata.Nutch.DISTANCE;
 import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
 
 public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, NutchWritable> {
@@ -74,7 +73,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
     if (outlinks != null) {
       for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
         int depth = Integer.MAX_VALUE;
-        CharSequence depthUtf8 = page.getMarkers().get(DISTANCE);
+        CharSequence depthUtf8 = page.getMarkers().get(new Utf8("dist"));
         if (depthUtf8 != null)
           depth = Integer.parseInt(depthUtf8.toString());
         scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue()

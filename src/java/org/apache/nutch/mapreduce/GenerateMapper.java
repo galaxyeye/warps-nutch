@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SeedBuilder;
@@ -46,20 +47,17 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
-    malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed, rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
+    malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed,
+    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3,
+    rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsFiltered, oldUrlDate,
     tieba, bbs, news, blog,
-    pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, pagesNeverFetch
+    pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, seedsFetchLater, pagesNeverFetch
   }
 
   private NutchMetrics nutchMetrics;
+  private String reportSuffix;
   private final Set<String> unreachableHosts = new HashSet<>();
-
-  /**
-   * Injector
-   */
-  private SeedBuilder seedBuiler;
-  private Set<String> seedUrls = new HashSet<>();
 
   private String batchId;
   private URLUtil.HostGroupMode hostGroupMode;
@@ -97,6 +95,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
+    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
     urlFilters = filter ? new URLFilters(conf) : null;
@@ -112,9 +111,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     scoringFilters = new ScoringFilters(conf);
     crawlFilters = CrawlFilters.create(conf);
     keyRange = crawlFilters.getMaxReversedKeyRange();
-
-    this.seedBuiler = new SeedBuilder(conf);
-    seedUrls = HadoopFSUtil.loadSeeds(PATH_ALL_SEED_FILE, conf.get(PARAM_NUTCH_JOB_NAME), conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -136,8 +132,6 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
         "unreachableHosts", unreachableHosts.size()
     ));
-
-    createSeedRows(context);
   }
 
   @Override
@@ -150,39 +144,12 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return;
     }
 
-    if (handleSpecialCases(url, page, context)) {
-      return;
-    }
-
-    if (Mark.GENERATE_MARK.hasMark(page)) {
-      getCounter().increase(Counter.pagesAlreadyGenerated);
-
-      /*
-       * Fetch entries are generated, empty webpage entries are created in the database(HBase)
-       * case 1. another fetcher job is fetching the generated batch. In this case, we should not generate it.
-       * case 2. another fetcher job handled the generated batch, but failed, which means the pages are not fetched.
-       *
-       * There are three ways to fetch pages that are generated but not fetched nor fetching.
-       * 1. Restart a crawl with ignoreGenerated set to be false
-       * 2. Resume a FetchJob with resume set to be true
-       * */
-      if (ignoreGenerated) {
-        // LOG.debug("Skipping {}; already generated", url);
-        long generateTime = TableUtil.getGenerateTime(page);
-
-        // Do not re-generate pages in one day if it's marked as "GENERATED"
-        if (generateTime > 0 && generateTime < Duration.ofDays(1).toMillis()) {
-          return;
-        }
-      }
-    } // if
-
     // Url filter
     if (!shouldProcess(url, reversedUrl, page)) {
       return;
     }
 
-    // Fetch schedule, timing filter
+      // Fetch schedule, timing filter
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       if (page.getFetchTime() - pseudoCurrTime <= Duration.ofDays(30).toMillis()) {
         getCounter().increase(Counter.pagesFetchLater);
@@ -191,40 +158,41 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         getCounter().increase(Counter.pagesNeverFetch);
       }
 
+      int depth = TableUtil.getDepth(page);
+      if (depth == 0) {
+        getCounter().increase(Counter.seedsFetchLater);
+
+        String report = "CurrTime : " + DateTimeUtil.format(pseudoCurrTime)
+            + "\tLastReferredPT : " +  DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
+            + "\tReferredPC : " + TableUtil.getReferredPageCount(page)
+            + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
+            + "\tisSeed : " + TableUtil.isSeed(page)
+            + "\t->\t" + url;
+        nutchMetrics.debugFetchLaterSeeds(report, reportSuffix);
+      }
+
       return;
     }
 
+    int priority = TableUtil.calculateFetchPriority(page);
     float score = page.getScore();
     try {
       // Typically, we use OPIC scoring filter
-      // TODO : use a better scoring filter for information monitoring @vincent
       score = scoringFilters.generatorSortValue(url, page, score);
     } catch (ScoringFilterException ignored) {}
 
-    score = adjustScore(url, score);
-
-    output(url, new SelectorEntry(url, score), page, context);
-
-    getCounter().updateAffectedRows(url);
-  }
-
-  // TODO : Move to a ScoreFilter
-  // Detail pages comes first, but we still need some pages with other category
-  private float adjustScore(String url, float score) {
-    if (crawlFilters.isDetailUrl(url)) {
-      ++detailPages;
-
-      if (detailPages < maxDetailPageCount) {
-        score = SCORE_DETAIL_PAGE;
-      }
-    }
-    else if (crawlFilters.isIndexUrl(url)) {
-      if (score > SCORE_DETAIL_PAGE) {
-        LOG.debug("Too high score : " + score + ", index url : " + url);
-      }
+    /*
+     * Raise detail page's priority so them can be fetched sooner
+     * Detail pages comes first, but we still need keep chances for pages with other category
+     * */
+    if (crawlFilters.isDetailUrl(url) && ++detailPages < maxDetailPageCount) {
+      priority = FETCH_PRIORITY_DETAIL_PAGE;
+      score = SCORE_DETAIL_PAGE;
     }
 
-    return score;
+    output(url, new SelectorEntry(url, priority, score), page, context);
+
+    updateStatus(url, page);
   }
 
   // Check Host
@@ -244,93 +212,72 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     return true;
   }
 
-  /**
-   * TODO : special cases should be move to scoring/schedule module
-   * */
-  private boolean handleSpecialCases(String url, WebPage page, Context context) throws IOException, InterruptedException {
-    int priority = FETCH_PRIORITY_DEFAULT;
-    float score = -1.0f;
+  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
+    int depth = TableUtil.getDepth(page);
     Counter counter = null;
 
-    /*
-     * We crawl seed every time we start, AdaptiveScheduler is just works
-     * */
-    if (seedUrls.contains(url)) {
-      // TODO : check this indicator to see if the scoring/schedule system is OK for seed urls
-      counter = Counter.rowsAddedAsSeed;
-    }
-    else if (TableUtil.isSeed(page)) {
-      priority = FETCH_PRIORITY_SEED;
-      score = SCORE_SEED;
+    if (TableUtil.isSeed(page)) {
       counter = Counter.rowsIsSeed;
     }
-    else if (TableUtil.isFromSeed(page) && crawlFilters.isDetailUrl(url)) {
-      score = SCORE_PAGES_FROM_SEED;
-      counter = Counter.rowsDetailFromSeed;
-    }
-    else if (Mark.INJECT_MARK.hasMark(page)) {
-      // Page is injected, this is a seed url and has the highest fetch priority
-      // INJECT_MARK will be removed in DbUpdate stage
 
-      score = SCORE_INJECTED;
+    if (Mark.INJECT_MARK.hasMark(page)) {
       counter = Counter.rowsInjected;
     }
 
-    // TODO : handle tieba, bbs and blog
-
-    if (score > 0) {
-      output(url, new SelectorEntry(url, priority, score), page, context);
+    if (depth == 0) {
+      counter = Counter.rowsDepth0;
+    }
+    else if (depth == 1) {
+      counter = Counter.rowsDepth1;
+      if (crawlFilters.isDetailUrl(url)) {
+        counter = Counter.rowsDetailFromSeed;
+      }
+    }
+    else if (depth == 2) {
+      counter = Counter.rowsDepth2;
+    }
+    else if (depth == 3) {
+      counter = Counter.rowsDepth3;
     }
 
     if (counter != null) {
       getCounter().increase(counter);
     }
 
-    return score > 0;
-  }
-
-  /**
-   * Seed rows creation should be done in mapper phrase because there might be much fewer reducers in the cluster
-   *
-   * TODO : The code can be refined and removed by enhancing scoring/schedule system
-   * This is a temporary solution to ensure every seed page can be checked each time the crawl loop starts
-   *
-   * */
-  private void createSeedRows(Context context) throws IOException, InterruptedException {
-    for (String urlLine : seedUrls) {
-      if (urlLine == null || urlLine.isEmpty()) {
-        continue;
-      }
-
-      urlLine = urlLine.trim();
-      if (urlLine.startsWith("#")) {
-        continue;
-      }
-
-      getCounter().increase(rows);
-
-      WebPage page = seedBuiler.buildWebPage(urlLine);
-
-      // TODO : Check the difference between hbase.url and page.baseUrl
-      String url = page.getTemporaryVariableAsString("url");
-
-      output(url, new SelectorEntry(url, Float.MAX_VALUE), page, context);
-
-      getCounter().increase(Counter.rowsInjected);
-      getCounter().updateAffectedRows(url);
-    }
+    getCounter().updateAffectedRows(url);
   }
 
   private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     context.write(entry, page);
   }
 
-  // Url filter
   private boolean shouldProcess(String url, String reversedUrl, WebPage page) {
+    if (Mark.GENERATE_MARK.hasMark(page)) {
+      getCounter().increase(Counter.pagesAlreadyGenerated);
+
+      /*
+       * Fetch entries are generated, empty webpage entries are created in the database(HBase)
+       * case 1. another fetcher job is fetching the generated batch. In this case, we should not generate it.
+       * case 2. another fetcher job handled the generated batch, but failed, which means the pages are not fetched.
+       *
+       * There are three ways to fetch pages that are generated but not fetched nor fetching.
+       * 1. Restart a crawl with ignoreGenerated set to be false
+       * 2. Resume a FetchJob with resume set to be true
+       * */
+      if (ignoreGenerated) {
+        // LOG.debug("Skipping {}; already generated", url);
+        long generateTime = TableUtil.getGenerateTime(page);
+
+        // Do not re-generate pages in one day if it's marked as "GENERATED"
+        if (generateTime > 0 && (startTime - generateTime) < Duration.ofDays(1).toMillis()) {
+          return false;
+        }
+      }
+    } // if
+
     // Filter on distance
-    // TODO : We have already filtered urls on dbupdate phrase, check if that is right @vincent
     if (maxDistance > -1) {
-      int distance = TableUtil.getDistance(page);
+      int distance = TableUtil.getDepth(page);
       if (distance > maxDistance) {
         getCounter().increase(Counter.pagesTooDeep);
         return false;

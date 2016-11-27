@@ -1,10 +1,10 @@
 package org.apache.nutch.dbupdate;
 
+import org.apache.avro.io.parsing.Symbol;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.DbUpdateReducer;
 import org.apache.nutch.mapreduce.FetchJob;
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.apache.nutch.metadata.Nutch.MAX_DISTANCE;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_TIME;
 
 /**
@@ -43,7 +44,6 @@ public class ReduceDatumBuilder {
   private final int maxLinks;
   private final FetchSchedule fetchSchedule;
   private final ScoringFilters scoringFilters;
-  private final CrawlFilters crawlFilters;
   private final List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
   private final Params params;
 
@@ -55,7 +55,6 @@ public class ReduceDatumBuilder {
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
-    crawlFilters = CrawlFilters.create(conf);
 
     params = Params.of(
         "retryMax", retryMax,
@@ -80,7 +79,7 @@ public class ReduceDatumBuilder {
         return;
       }
 
-      page = createNewRow(url);
+      page = createNewRow(url, MAX_DISTANCE);
 
       counter.increase(DbUpdateReducer.Counter.newRows);
     }
@@ -97,7 +96,7 @@ public class ReduceDatumBuilder {
    * the WebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * from that webpage
    * */
-  public WebPage calculateInlinks(String url, Iterable<NutchWritable> values) {
+  public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
     WebPage page = null;
     inlinkedScoreData.clear();
 
@@ -109,7 +108,7 @@ public class ReduceDatumBuilder {
         inlinkedScoreData.add((ScoreDatum) val);
 
         if (inlinkedScoreData.size() >= maxLinks) {
-          LOG.info("Limit reached, skipping further inlinks for " + url);
+          LOG.info("Limit reached, skipping further inlinks for " + sourceUrl);
           break;
         }
       }
@@ -119,7 +118,7 @@ public class ReduceDatumBuilder {
   }
 
   public void updateRow(String url, WebPage page) {
-    calculateInlinksAndDistance(page);
+    calculateDistance(page);
 
     updateScore(url, page);
 
@@ -128,11 +127,13 @@ public class ReduceDatumBuilder {
     updateStatusCounter(page);
   }
 
-  public WebPage createNewRow(String url) {
+  public WebPage createNewRow(String url, int depth) {
     WebPage page = WebPage.newBuilder().build();
 
     fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
+
+    TableUtil.setDistance(page, depth);
 
     try {
       scoringFilters.initialScore(url, page);
@@ -144,6 +145,14 @@ public class ReduceDatumBuilder {
     return page;
   }
 
+  public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
+    updateScore(url, newPage);
+
+    updateMetadata(newPage);
+
+    updateStatusCounter(newPage);
+  }
+
   /**
    * Distance calculation.
    * Retrieve smallest distance from all inlinks distances
@@ -151,22 +160,25 @@ public class ReduceDatumBuilder {
    * If the new distance is smaller than old one (or if old did not exist yet),
    * write it to the page.
    * */
-  private void calculateInlinksAndDistance(WebPage page) {
+  private void calculateDistance(WebPage page) {
     if (page.getInlinks() != null) {
       page.getInlinks().clear();
     }
 
-    int smallestDist = Integer.MAX_VALUE;
+    int smallestDist = MAX_DISTANCE;
     for (ScoreDatum inlink : inlinkedScoreData) {
       int inlinkDist = inlink.getDistance();
       if (inlinkDist < smallestDist) {
         smallestDist = inlinkDist;
       }
+
+      LOG.debug("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getUrl());
+
       page.getInlinks().put(new Utf8(inlink.getUrl()), new Utf8(inlink.getAnchor()));
     }
 
-    if (smallestDist != Integer.MAX_VALUE) {
-      int oldDistance = TableUtil.getDistance(page);
+    if (smallestDist != MAX_DISTANCE) {
+      int oldDistance = TableUtil.getDepth(page);
       int newDistance = smallestDist + 1;
 
       if (newDistance < oldDistance) {

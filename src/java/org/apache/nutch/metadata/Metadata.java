@@ -47,10 +47,12 @@ public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHead
   public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
   public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
   public static final String META_IS_SEED = "IS-SEED";
-  public static final String META_FROM_SEED = "FROM-SEED";
 
   public static final String META_CASH_KEY = "_csh_";
   public static final Utf8 META_CASH_KEY_U8 = new Utf8("_csh_");
+
+  public static final String META_DISTANCE = "DIST";
+  public static final Utf8 DISTANCE_U8 = new Utf8("dist");
 
   /**
    * A map of all metadata attributes.

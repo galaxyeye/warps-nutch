@@ -88,7 +88,7 @@ public class NutchMetrics implements AutoCloseable {
 
   public void loadUnreachableHosts(Set<String> unreachableHosts) {
     try {
-      Files.readAllLines(unreachableHostsPath).stream().forEach(unreachableHosts::add);
+      Files.readAllLines(unreachableHostsPath).forEach(unreachableHosts::add);
     } catch (IOException e) {
       LOG.error(e.toString());
     }
@@ -116,40 +116,48 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report, "generate-hosts-" + postfix + ".txt", true);
   }
 
-  public void debugIndexUrls(String indexUrl, String reportSuffix) {
-    writeReport(indexUrl + "\n", "urls-index-" + reportSuffix + ".txt");
+  public void debugFetchLaterSeeds(String report, String reportSuffix) {
+    writeReport(report + "\n", "seeds-fetch-later-" + reportSuffix + ".txt");
   }
 
-  public void debugSearchUrls(String searchUrl, String reportSuffix) {
-    writeReport(searchUrl + "\n", "urls-search-" + reportSuffix + ".txt");
+  public void debugDepthUpdated(String report, String reportSuffix) {
+    writeReport(report + "\n", "depth-updated-" + reportSuffix + ".txt");
   }
 
-  public void debugDetailUrls(String detailUrl, String reportSuffix) {
-    writeReport(detailUrl + "\n", "urls-detail-" + reportSuffix + ".txt");
+  public void debugIndexUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-index-" + reportSuffix + ".txt");
   }
 
-  public void debugLongUrls(String longUrl, String reportSuffix) {
-    writeReport(longUrl + "\n", "urls-long-" + reportSuffix + ".txt");
+  public void debugSearchUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-search-" + reportSuffix + ".txt");
   }
 
-  public void debugMediaUrls(String url, String reportSuffix) {
-    writeReport(url + "\n", "urls-media-" + reportSuffix + ".txt");
+  public void debugDetailUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-detail-" + reportSuffix + ".txt");
   }
 
-  public void debugBBSUrls(String url, String reportSuffix) {
-    writeReport(url + "\n", "urls-bbs-" + reportSuffix + ".txt");
+  public void debugLongUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-long-" + reportSuffix + ".txt");
   }
 
-  public void debugBlogUrls(String url, String reportSuffix) {
-    writeReport(url + "\n", "urls-blog-" + reportSuffix + ".txt");
+  public void debugMediaUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-media-" + reportSuffix + ".txt");
   }
 
-  public void debugTiebaUrls(String url, String reportSuffix) {
-    writeReport(url + "\n", "urls-tieba-" + reportSuffix + ".txt");
+  public void debugBBSUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-bbs-" + reportSuffix + ".txt");
   }
 
-  public void debugUnknownTypeUrls(String url, String reportSuffix) {
-    writeReport(url + "\n", "urls-unknown-" + reportSuffix + ".txt");
+  public void debugBlogUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-blog-" + reportSuffix + ".txt");
+  }
+
+  public void debugTiebaUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-tieba-" + reportSuffix + ".txt");
+  }
+
+  public void debugUnknownTypeUrls(String report, String reportSuffix) {
+    writeReport(report + "\n", "urls-unknown-" + reportSuffix + ".txt");
   }
 
   public void debugIndexDocTime(String timeStrings, String reportSuffix) {

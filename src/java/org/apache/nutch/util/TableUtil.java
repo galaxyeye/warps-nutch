@@ -28,6 +28,7 @@ import org.apache.nutch.storage.WebPage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
 
@@ -175,42 +176,25 @@ public class TableUtil {
     return hasMetadata(page, META_IS_SEED);
   }
 
-  public static boolean isFromSeed(WebPage page) {
-    return hasMetadata(page, META_FROM_SEED);
-  }
-
-  public static void markFromSeed(WebPage page) {
-    putMetadata(page, META_FROM_SEED, YES_STRING);
+  public static int getDepth(WebPage page) {
+    return getDistance(page);
   }
 
   public static int getDistance(WebPage page) {
-    int depth = Integer.MAX_VALUE;
-    CharSequence depthUtf8 = page.getMarkers().get(Nutch.DISTANCE);
-
-    if (depthUtf8 != null) {
-      depth = Integer.parseInt(depthUtf8.toString());
-    }
-
-    return depth;
+    String ds = getMetadata(page, META_DISTANCE);
+    return StringUtil.tryParseInt(ds, MAX_DISTANCE);
   }
 
   public static void setDistance(WebPage page, int newDistance) {
-    page.getMarkers().put(DISTANCE, new Utf8(Integer.toString(newDistance)));
+    putMetadata(page, META_DISTANCE, String.valueOf(newDistance));
   }
 
-  /**
-   * basically, if a page looks more like a detail page,
-   * the page should be fetched with higher priority
-   * @author vincent
-   * */
-  public static int calculatePriority(String url, WebPage page, CrawlFilters crawlFilters) {
+  public static int calculateFetchPriority(WebPage page) {
+    int depth = getDepth(page);
     int priority = FETCH_PRIORITY_DEFAULT;
 
-    if (isSeed(page)) {
-      priority = FETCH_PRIORITY_SEED;
-    }
-    else if (crawlFilters.isDetailUrl(url)) {
-      priority = FETCH_PRIORITY_DETAIL_PAGE;
+    if (depth < FETCH_PRIORITY_DEPTH_BASE) {
+      priority = FETCH_PRIORITY_DEPTH_BASE - depth;
     }
 
     setFetchPriorityIfAbsent(page, priority);
@@ -282,12 +266,12 @@ public class TableUtil {
   }
 
   public static void setReferredPageCount(WebPage page, long count) {
-    putMetadata(page, META_PUBLISH_TIME, String.valueOf(count));
+    putMetadata(page, META_REFERRED_PAGES, String.valueOf(count));
   }
 
   public static void increaseReferredPageCount(WebPage page, long count) {
     long oldCount = getReferredPageCount(page);
-    putMetadata(page, META_PUBLISH_TIME, String.valueOf(oldCount + count));
+    putMetadata(page, META_REFERRED_PAGES, String.valueOf(oldCount + count));
   }
 
   public static long getLatestReferredPublishTime(WebPage page) {
@@ -300,8 +284,12 @@ public class TableUtil {
   }
 
   public static boolean updateLatestReferredPublishTime(WebPage page, long newPublishTime) {
-    long latestTime = getLatestReferredPublishTime(page);
+    if (newPublishTime <= Duration.ofDays(-365 * 30).toMillis()) {
+      NutchUtil.LOG.warn("Publish time out of range for page " + page.getBaseUrl());
+      return false;
+    }
 
+    long latestTime = getLatestReferredPublishTime(page);
     if (latestTime < newPublishTime) {
       setLatestReferredPublishTime(page, newPublishTime);
       return true;

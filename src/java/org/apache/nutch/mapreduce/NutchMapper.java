@@ -57,6 +57,8 @@ public class NutchMapper<K1, V1 extends Persistent, K2, V2> extends GoraMapper<K
       setup(context);
 
       doRun(context);
+
+      context.setStatus(getCounter().getStatusString());
     } catch (Throwable e) {
       LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
     }

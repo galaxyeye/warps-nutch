@@ -933,6 +933,7 @@
 +http://net.chinabyte.com/(.+)
 +http://net.yesky.com/(.+)
 +http://net.zdnet.com.cn/(.+)
++http://news.baidu.com/(.+)
 +http://news.163.com/(.+)
 +http://news.17173.com/(.+)
 +http://news.21cn.com/(.+)
