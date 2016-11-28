@@ -79,11 +79,11 @@ public class CrawlFilter extends Configured {
 
     if (textContent.isEmpty()) {
       if (_a > 30) {
-        pageCategory = CrawlFilter.PageCategory.INDEX;
+        pageCategory = PageCategory.INDEX;
       }
     }
     else {
-      return CrawlFilter.sniffPageCategory(url, _char, _a);
+      return sniffPageCategory(url, _char, _a);
     }
 
     return pageCategory;

@@ -18,7 +18,6 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.util.SystemClock;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:

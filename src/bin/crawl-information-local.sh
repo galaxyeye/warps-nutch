@@ -45,7 +45,7 @@ function __bin_nutch {
 CONFIG_DIR=conf/configsets/information/local
 SEEDDIR=conf/configsets/information/local/seeds/all.txt
 CRAWL_ID=information_tmp
-SOLR_URL=http://master:8983/solr/information_tmp/
+SOLR_URL=http://master:8983/solr/information_1101_integration_test
 LIMIT=20
 
 __bin_nutch inject -c="$CONFIG_DIR" "$SEEDDIR" -crawlId "$CRAWL_ID"

@@ -8,7 +8,6 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
@@ -16,7 +15,10 @@ import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchResult;
-import org.apache.nutch.mapreduce.*;
+import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.mapreduce.ParserJob;
+import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
@@ -40,7 +42,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -889,12 +894,20 @@ public class TaskScheduler extends Configured {
       if (publishTime > 0) {
         TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
         TableUtil.increaseReferredPageCount(mainPage, 1);
+        // TableUtil.increaseReferredContentLength(mainPage, 1);
       }
 
       // The old row might be updated
       int oldDistance = TableUtil.getDistance(oldPage);
       // TODO : check oldDistance == MAX_DISTANCE bug
       if (oldDistance != MAX_DISTANCE && depth < oldDistance) {
+        // We need a page rank like algorithm to decide the importance of each page
+//        long latestReferredPublishTime = TableUtil.getLatestReferredPublishTime(oldPage);
+//        TableUtil.updateLatestReferredPublishTime(mainPage, latestReferredPublishTime);
+//
+//        long referredPageCount = TableUtil.getReferredPageCount(oldPage);
+//        TableUtil.increaseReferredPageCount(mainPage, referredPageCount);
+
         TableUtil.setDistance(oldPage, depth);
         output(reversedUrl, oldPage);
 
