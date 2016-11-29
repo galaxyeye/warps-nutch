@@ -149,6 +149,12 @@ public class HtmlParser implements Parser {
       TableUtil.putMetadata(page, CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
+    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
+    TableUtil.setPageCategory(page, pageCategory);
+    if (pageCategory.isDetail()) {
+      TableUtil.setDetailPageLikelihood(page, 0.9f);
+    }
+
     return parse;
   }
 
@@ -217,19 +223,6 @@ public class HtmlParser implements Parser {
 
     page.setTmporaryVariable("outlinks_count", outlinks.size());
 
-    boolean noFollowDetailPage = conf.getBoolean("parser.no.follow.detail.page", false);
-    if (noFollowDetailPage) {
-      // sniffPageCategoryByTextDensity to see if this is a detail page, do not extract outlinks from detail pages
-
-      int _a = outlinks.size();
-      int _char = text.length();
-      if (sniffPageCategoryByTextDensity(_a, _char) == CrawlFilter.PageCategory.DETAIL) {
-        // Do not follow links from detail page
-        outlinks.clear();
-        return;
-      }
-    }
-
     if (LOG.isTraceEnabled()) {
       LOG.trace("found " + outlinks.size() + " outlinks in " + url);
     }
@@ -285,7 +278,7 @@ public class HtmlParser implements Parser {
         TableUtil.setPublishTime(page, publishTime);
       }
 
-    } catch (ProcessingException |SAXException e) {
+    } catch (ProcessingException|SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
     }
   }

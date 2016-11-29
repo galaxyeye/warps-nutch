@@ -846,29 +846,30 @@ public class TaskScheduler extends Configured {
    * */
   private void outputWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
-      // so we need check if there are unexpected marks, metadata, etc
-      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
-
-      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
+      if (!TableUtil.veryLiklyDetailPage(mainPage)) {
+        // For information monitoring, do not follow detail pages
+        Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
+        outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
+      }
 
       outputMainPage(url, reversedUrl, mainPage);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private void outputMainPage(String url, String reversedUrl, WebPage page) {
+  private void outputMainPage(String url, String reversedUrl, WebPage mainPage) {
     counter.increase(Counter.pagesPeresist);
-    if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
+    if (TableUtil.veryLiklyDetailPage(mainPage)) {
       counter.increase(Counter.newDetailPages);
     }
 
     // process the main page, update fetch schedule
-    reduceDatumBuilder.updateFetchSchedule(url, page);
-    reduceDatumBuilder.updateRow(url, page);
+    reduceDatumBuilder.updateFetchSchedule(url, mainPage);
+    reduceDatumBuilder.updateRow(url, mainPage);
 
     try {
       synchronized(context) {
-        context.write(reversedUrl, page);
+        context.write(reversedUrl, mainPage);
       }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
@@ -893,22 +894,16 @@ public class TaskScheduler extends Configured {
       long publishTime = TableUtil.getPublishTime(oldPage);
       if (publishTime > 0) {
         TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
-        TableUtil.increaseReferredPageCount(mainPage, 1);
-        // TableUtil.increaseReferredContentLength(mainPage, 1);
+        TableUtil.increaseReferredArticles(mainPage, 1);
+        TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
       }
 
       // The old row might be updated
       int oldDistance = TableUtil.getDistance(oldPage);
-      // TODO : check oldDistance == MAX_DISTANCE bug
-      if (oldDistance != MAX_DISTANCE && depth < oldDistance) {
-        // We need a page rank like algorithm to decide the importance of each page
-//        long latestReferredPublishTime = TableUtil.getLatestReferredPublishTime(oldPage);
-//        TableUtil.updateLatestReferredPublishTime(mainPage, latestReferredPublishTime);
-//
-//        long referredPageCount = TableUtil.getReferredPageCount(oldPage);
-//        TableUtil.increaseReferredPageCount(mainPage, referredPageCount);
-
+      if (depth < oldDistance) {
+        TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
         TableUtil.setDistance(oldPage, depth);
+
         output(reversedUrl, oldPage);
 
         String report = oldDistance + " -> " + depth + ", " + url;

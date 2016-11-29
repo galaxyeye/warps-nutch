@@ -19,7 +19,9 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.nutch.mapreduce.GenerateMapper;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,6 +177,11 @@ public abstract class AbstractFetchSchedule extends Configured implements
    */
   @Override
   public boolean shouldFetch(String url, WebPage page, long curTime) {
+    // pages are marked as never fetch again
+    if (TableUtil.isNoMoreFetch(page)) {
+      return false;
+    }
+
     // pages are never truly GONE - we have to check them from time to time.
     // pages with too long fetchInterval are adjusted so that they fit within
     // maximum fetchInterval (batch retention period).

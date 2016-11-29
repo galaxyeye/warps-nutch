@@ -146,6 +146,8 @@ public class ReduceDatumBuilder {
   }
 
   public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
+    TableUtil.setReferrer(sourcePage, sourcePage.getBaseUrl().toString());
+
     updateScore(url, newPage);
 
     updateMetadata(newPage);
@@ -257,7 +259,7 @@ public class ReduceDatumBuilder {
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        if (maxInterval < page.getFetchInterval()) {
+        if (!TableUtil.isNoMoreFetch(page) && maxInterval < page.getFetchInterval()) {
           fetchSchedule.forceRefetch(url, page, false);
         }
         break;

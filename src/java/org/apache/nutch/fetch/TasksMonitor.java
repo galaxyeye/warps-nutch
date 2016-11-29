@@ -7,7 +7,6 @@ import com.google.common.collect.TreeMultiset;
 import org.apache.commons.collections4.SortedBidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.gora.util.TimingUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.fetch.data.FetchQueue;
@@ -280,7 +279,7 @@ public class TasksMonitor {
 
     String report = "[" + DateTimeUtil.now() + "]"
         + "\tLastReferredPT : " + DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
-        + "\tReferredPC : " + TableUtil.getReferredPageCount(page)
+        + "\tReferredPC : " + TableUtil.getReferredArticles(page)
         + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
         + "\t->\t" + url;
 

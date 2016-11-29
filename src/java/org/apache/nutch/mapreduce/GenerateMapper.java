@@ -16,10 +16,8 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
@@ -140,37 +138,38 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!checkHost(url)) {
+    /*
+     * TODO : use hbase query filter directly
+     * */
+    if (TableUtil.isNoMoreFetch(page)) {
+      getCounter().increase(Counter.pagesNeverFetch);
       return;
     }
 
-    // Url filter
-    if (!shouldProcess(url, reversedUrl, page)) {
-      return;
-    }
-
+    int depth = TableUtil.getDepth(page);
       // Fetch schedule, timing filter
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       if (page.getFetchTime() - pseudoCurrTime <= Duration.ofDays(30).toMillis()) {
         getCounter().increase(Counter.pagesFetchLater);
       }
-      else {
-        getCounter().increase(Counter.pagesNeverFetch);
-      }
 
-      int depth = TableUtil.getDepth(page);
       if (depth == 0) {
         getCounter().increase(Counter.seedsFetchLater);
 
         String report = "CurrTime : " + DateTimeUtil.format(pseudoCurrTime)
             + "\tLastReferredPT : " +  DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
-            + "\tReferredPC : " + TableUtil.getReferredPageCount(page)
+            + "\tReferredPC : " + TableUtil.getReferredArticles(page)
             + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
             + "\tisSeed : " + TableUtil.isSeed(page)
             + "\t->\t" + url;
         nutchMetrics.debugFetchLaterSeeds(report, reportSuffix);
       }
 
+      return;
+    }
+
+    // Url filter
+    if (!shouldProcess(url, reversedUrl, page)) {
       return;
     }
 
@@ -187,7 +186,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
      * */
     if (crawlFilters.isDetailUrl(url) && ++detailPages < maxDetailPageCount) {
       priority = FETCH_PRIORITY_DETAIL_PAGE;
-      score = SCORE_DETAIL_PAGE;
+      score = SCORE_DETAIL_PAGE - depth;
     }
 
     output(url, new SelectorEntry(url, priority, score), page, context);
@@ -252,6 +251,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   }
 
   private boolean shouldProcess(String url, String reversedUrl, WebPage page) {
+    if (!checkHost(url)) {
+      return false;
+    }
+
     if (Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.pagesAlreadyGenerated);
 

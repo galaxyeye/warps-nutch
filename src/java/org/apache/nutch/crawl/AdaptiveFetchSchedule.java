@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.Year;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -124,7 +125,13 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       refetchTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
     }
 
-    intervalSec = adjustFetchIntervalForArticle(url, page, fetchTime, intervalSec);
+    if (TableUtil.veryLiklyDetailPage(page)) {
+      TableUtil.setNoMoreFetch(page);
+    }
+
+    if (TableUtil.isSeed(page)) {
+      intervalSec = adjustFetchIntervalForArticle(page, fetchTime, intervalSec);
+    }
 
     if (intervalSec < MIN_INTERVAL) intervalSec = MIN_INTERVAL;
     if (intervalSec > MAX_INTERVAL) intervalSec = MAX_INTERVAL;
@@ -138,17 +145,17 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private int adjustFetchIntervalForArticle(String url, WebPage page, long fetchTime, int intervalSec) {
+  private int adjustFetchIntervalForArticle(WebPage page, long fetchTime, int intervalSec) {
     long lastestReferredPublishTime = TableUtil.getLatestReferredPublishTime(page);
-    // last referred publish time is 30 years ago, it means the variable is not initialized or it's a ill-formed variable
-    if (lastestReferredPublishTime <= Duration.ofDays(-365 * 30).toMillis()) {
+    // Ignore articles published before 1995
+    if (lastestReferredPublishTime <= Year.parse("1995").getValue()) {
       return intervalSec;
     }
 
     long diff = fetchTime - lastestReferredPublishTime;
     if (diff < Duration.ofDays(2).toMillis()) {
       // if there are updates in two day, keep re-fetch the page in every crawl loop
-      intervalSec = 1;
+      intervalSec *= (1.0f - DEC_RATE);
     }
     else {
       // if there is no any updates in 2 days, check the page later
@@ -156,11 +163,6 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       if (intervalSec > SEED_MAX_INTERVAL) {
         intervalSec = SEED_MAX_INTERVAL;
       }
-    }
-
-    if (CrawlFilter.sniffPageCategory(url, page).isDetail()) {
-      // Never fetch detail again
-      intervalSec = MAX_INTERVAL;
     }
 
     return intervalSec;

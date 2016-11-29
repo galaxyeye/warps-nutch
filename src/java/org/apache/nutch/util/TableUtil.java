@@ -17,18 +17,18 @@
 package org.apache.nutch.util;
 
 import com.google.common.collect.Maps;
+import com.j256.ormlite.stmt.query.In;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.time.Duration;
+import java.time.Year;
 import java.util.Date;
 import java.util.Map;
 
@@ -176,6 +176,77 @@ public class TableUtil {
     return hasMetadata(page, META_IS_SEED);
   }
 
+  public static float getFloatMetadata(WebPage page, String key, float defaultValue) {
+    ByteBuffer cashRaw = page.getMetadata().get(new Utf8(key));
+    float value = defaultValue;
+    if (cashRaw != null) {
+      value = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
+    }
+    return value;
+  }
+
+  public static void setFloatMetadata(WebPage page, float value) {
+    page.getMetadata().put(new Utf8(META_CASH_KEY), ByteBuffer.wrap(Bytes.toBytes(value)));
+  }
+
+  public static int sniffTextLength(WebPage page) {
+    Object obj = page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT_LENGTH);
+    if (obj != null && obj instanceof Integer) {
+      return ((Integer)obj);
+    }
+
+    obj = page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
+    if (obj != null && obj instanceof String) {
+      return ((String)obj).length();
+    }
+
+    CharSequence text = page.getText();
+    if (text != null) {
+      return text.length();
+    }
+
+    return 0;
+  }
+
+  public static float getDetailPageLikelihood(WebPage page) {
+    return getFloatMetadata(page, META_DETAIL_PAGE_LIKELIHOOD, 0f);
+  }
+
+  public static boolean isDetailPage(WebPage page, float threshold) {
+    return getDetailPageLikelihood(page) >= threshold;
+  }
+
+  public static boolean veryLiklyDetailPage(WebPage page) {
+    return isDetailPage(page, 0.85f);
+  }
+
+  public static void setDetailPageLikelihood(WebPage page, float likelihood) {
+    setFloatMetadata(page, likelihood);
+  }
+
+  public static void setPageCategory(WebPage page, CrawlFilter.PageCategory pageCategory) {
+    putMetadata(page, META_PAGE_CATEGORY, pageCategory.name());
+  }
+
+  public static CrawlFilter.PageCategory getPageCategory(WebPage page) {
+    String pageCategoryStr = getMetadata(page, META_PAGE_CATEGORY);
+
+    try {
+      return CrawlFilter.PageCategory.valueOf(pageCategoryStr);
+    }
+    catch (Throwable e) {
+      return CrawlFilter.PageCategory.ANY;
+    }
+  }
+
+  public static void setNoMoreFetch(WebPage page) {
+    putMetadata(page, META_NO_MORE_FETCH, YES_STRING);
+  }
+
+  public static boolean isNoMoreFetch(WebPage page) {
+    return getMetadata(page, META_NO_MORE_FETCH) != null;
+  }
+
   public static int getDepth(WebPage page) {
     return getDistance(page);
   }
@@ -231,16 +302,11 @@ public class TableUtil {
   }
 
   public static float getCash(WebPage page) {
-    ByteBuffer cashRaw = page.getMetadata().get(new Utf8(META_CASH_KEY));
-    float cash = 0.0f;
-    if (cashRaw != null) {
-      cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
-    }
-    return cash;
+    return getFloatMetadata(page, META_CASH_KEY, 0f);
   }
 
   public static void setCash(WebPage page, float cash) {
-    page.getMetadata().put(new Utf8(META_CASH_KEY), ByteBuffer.wrap(Bytes.toBytes(cash)));
+    setFloatMetadata(page, cash);
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {
@@ -260,18 +326,40 @@ public class TableUtil {
     return DateTimeUtil.parseTime(publishTimeStr);
   }
 
-  public static long getReferredPageCount(WebPage page) {
-    String referredPages = getMetadata(page, META_REFERRED_PAGES);
+  public static String getReferrer(WebPage page) {
+    return getMetadata(page, META_REFERRER);
+  }
+
+  public static void setReferrer(WebPage page, String referrer) {
+    putMetadata(page, META_REFERRER, referrer);
+  }
+
+  public static long getReferredArticles(WebPage page) {
+    String referredPages = getMetadata(page, META_REFERRED_ARTICLES);
     return StringUtil.tryParseLong(referredPages, 0);
   }
 
-  public static void setReferredPageCount(WebPage page, long count) {
-    putMetadata(page, META_REFERRED_PAGES, String.valueOf(count));
+  public static void setReferredArticles(WebPage page, long count) {
+    putMetadata(page, META_REFERRED_ARTICLES, String.valueOf(count));
   }
 
-  public static void increaseReferredPageCount(WebPage page, long count) {
-    long oldCount = getReferredPageCount(page);
-    putMetadata(page, META_REFERRED_PAGES, String.valueOf(oldCount + count));
+  public static void increaseReferredArticles(WebPage page, long count) {
+    long oldCount = getReferredArticles(page);
+    putMetadata(page, META_REFERRED_ARTICLES, String.valueOf(oldCount + count));
+  }
+
+  public static long getReferredChars(WebPage page) {
+    String referredPages = getMetadata(page, META_REFERRED_CHARS);
+    return StringUtil.tryParseLong(referredPages, 0);
+  }
+
+  public static void setReferredChars(WebPage page, long count) {
+    putMetadata(page, META_REFERRED_CHARS, String.valueOf(count));
+  }
+
+  public static void increaseReferredChars(WebPage page, long count) {
+    long oldCount = getReferredArticles(page);
+    putMetadata(page, META_REFERRED_CHARS, String.valueOf(oldCount + count));
   }
 
   public static long getLatestReferredPublishTime(WebPage page) {
@@ -284,8 +372,9 @@ public class TableUtil {
   }
 
   public static boolean updateLatestReferredPublishTime(WebPage page, long newPublishTime) {
-    if (newPublishTime <= Duration.ofDays(-365 * 30).toMillis()) {
-      NutchUtil.LOG.warn("Publish time out of range for page " + page.getBaseUrl());
+    // Ignore articles published before 1995
+    if (newPublishTime <= Year.parse("1995").getValue()) {
+      NutchUtil.LOG.warn("Publish time is out of range for page " + page.getBaseUrl());
       return false;
     }
 

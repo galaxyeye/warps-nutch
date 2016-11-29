@@ -17,10 +17,7 @@
 
 package org.apache.nutch.scoring.opic;
 
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
@@ -32,13 +29,10 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.apache.nutch.metadata.Metadata.META_CASH_KEY_U8;
 
 /**
  * This plugin implements a variant of an Online Page Importance Computation
@@ -130,10 +124,14 @@ public class OPICScoringFilter implements ScoringFilter {
   }
 
   private float adjustScoreForArticle(WebPage row, float adjust) {
-    long count = TableUtil.getReferredPageCount(row);
-    if (count > 0) {
-      return adjust + (10000 + count);
-    }
+    float f1 = 1.0f;
+    float f2 = 2.0f;
+
+    long ra = TableUtil.getReferredArticles(row);
+    long rc = TableUtil.getReferredChars(row);
+
+    adjust += f1 * ra + f2 * ((rc - 1000) / 1000);
+
     return adjust;
   }
 

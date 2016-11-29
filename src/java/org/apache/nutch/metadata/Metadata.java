@@ -38,15 +38,20 @@ import java.util.Properties;
 public class Metadata implements Writable, CreativeCommons, DublinCore, HttpHeaders, Nutch, Feed {
 
   /** Fetch time history, comma seperated fetch timestamp */
-  public static final String META_FETCH_TIME_HISTORY = "NUTCH-FETCH-TIME-HISTORY";
-  public static final String META_INDEX_TIME_HISTORY = "NUTCH-INDEX-TIME-HISTORY";
-  public static final String META_PUBLISH_TIME = "PUBLISH-TIME";
+  public static final String META_FETCH_TIME_HISTORY = "FETCH_TIME_HISTORY";
+  public static final String META_INDEX_TIME_HISTORY = "INDEX_TIME_HISTORY";
+  public static final String META_PUBLISH_TIME = "PUBLISH_TIME";
+  public static final String META_REFERRER = "REFERRER";
   public static final String META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME = "LRAPT";
-  public static final String META_REFERRED_PAGES = "REFERRED_PAGES";
-  public static final String META_TMP = "TMP-";
+  public static final String META_REFERRED_ARTICLES = "REFERRED_ARTICLES";
+  public static final String META_REFERRED_CHARS = "REFERRED_CHARS";
+  public static final String META_TMP = "TMP_";
   public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
-  public static final String META_IS_NAVIGATOR = "IS-NAVIGATOR";
-  public static final String META_IS_SEED = "IS-SEED";
+  public static final String META_IS_NAVIGATOR = "IS_NAVIGATOR";
+  public static final String META_IS_SEED = "IS_SEED";
+  public static final String META_DETAIL_PAGE_LIKELIHOOD = "DETAIL_PAGE_LIKELIHOOD";
+  public static final String META_NO_MORE_FETCH = "NO_MORE_FETCH";
+  public static final String META_PAGE_CATEGORY = "PAGE_CATEGORY";
 
   public static final String META_CASH_KEY = "_csh_";
   public static final Utf8 META_CASH_KEY_U8 = new Utf8("_csh_");

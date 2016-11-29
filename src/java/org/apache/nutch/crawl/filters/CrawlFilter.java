@@ -60,14 +60,19 @@ public class CrawlFilter extends Configured {
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
-  public static CrawlFilter.PageCategory sniffPageCategory(String url, WebPage page) {
+  public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
     CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
+
+    if (page.getBaseUrl() == null) {
+      return pageCategory;
+    }
 
     String textContent = (String)page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
     if (textContent == null) {
       return pageCategory;
     }
 
+    String url = page.getBaseUrl().toString();
     double _char = textContent.length();
     double _a = page.getOutlinks().size();
     if (_a == 0) {
@@ -158,6 +163,8 @@ public class CrawlFilter extends Configured {
     public boolean isDetail() {
       return this == DETAIL;
     }
+
+    public boolean isAny() { return this == ANY; }
   }
 
   @Expose
