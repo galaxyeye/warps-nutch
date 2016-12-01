@@ -15,18 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.nutch.crawl;
+package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.filters.CrawlFilter;
+import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.time.Year;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -62,22 +60,21 @@ import java.time.Year;
  * @author Andrzej Bialecki
  */
 public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
-  // Loggg
   public static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
-  private float INC_RATE;
+  protected float INC_RATE;
 
-  private float DEC_RATE;
+  protected float DEC_RATE;
 
-  private int MAX_INTERVAL;
+  protected long MAX_INTERVAL;
 
-  private int SEED_MAX_INTERVAL;
+  protected long SEED_MAX_INTERVAL;
 
-  private int MIN_INTERVAL;
+  protected int MIN_INTERVAL;
 
-  private boolean SYNC_DELTA;
+  protected boolean SYNC_DELTA;
 
-  private double SYNC_DELTA_RATE;
+  protected double SYNC_DELTA_RATE;
 
   public void setConf(Configuration conf) {
     super.setConf(conf);
@@ -88,84 +85,54 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
     MIN_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.min_interval", 60);
-    MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.max_interval", SECONDS_PER_DAY * 365); // 1 year
-    SEED_MAX_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.seed_max_interval", SECONDS_PER_DAY); // 1 year
+    MAX_INTERVAL = conf.getLong("db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365).getSeconds()); // 1 year
+    SEED_MAX_INTERVAL = conf.getLong("db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1).getSeconds());
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
 
   @Override
   public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
-      long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
+                               long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    long refetchTime = fetchTime;
+    long refTime = fetchTime;
     if (modifiedTime <= 0) {
       modifiedTime = fetchTime;
     }
 
-    int intervalSec = page.getFetchInterval();
+    long interval = page.getFetchInterval();
     switch (state) {
-    case FetchSchedule.STATUS_MODIFIED:
-      intervalSec *= (1.0f - DEC_RATE);
-      break;
-    case FetchSchedule.STATUS_NOTMODIFIED:
-      intervalSec *= (1.0f + INC_RATE);
-      break;
-    case FetchSchedule.STATUS_UNKNOWN:
-      break;
+      case FetchSchedule.STATUS_MODIFIED:
+        interval *= (1.0f - DEC_RATE);
+        break;
+      case FetchSchedule.STATUS_NOTMODIFIED:
+        interval *= (1.0f + INC_RATE);
+        break;
+      case FetchSchedule.STATUS_UNKNOWN:
+        break;
     }
 
     if (SYNC_DELTA) {
       // try to synchronize with the time of change
       // TODO: different from normal class (is delta in seconds)?
       int delta = (int) ((fetchTime - modifiedTime) / 1000L);
-      if (delta > intervalSec) {
-        intervalSec = delta;
+      if (delta > interval) {
+        interval = delta;
       }
-      refetchTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
+      refTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
     }
 
-    if (TableUtil.veryLiklyDetailPage(page)) {
-      TableUtil.setNoMoreFetch(page);
-    }
+    if (interval < MIN_INTERVAL) interval = MIN_INTERVAL;
+    if (interval > MAX_INTERVAL) interval = MAX_INTERVAL;
 
-    if (TableUtil.isSeed(page)) {
-      intervalSec = adjustFetchIntervalForArticle(page, fetchTime, intervalSec);
-    }
-
-    if (intervalSec < MIN_INTERVAL) intervalSec = MIN_INTERVAL;
-    if (intervalSec > MAX_INTERVAL) intervalSec = MAX_INTERVAL;
-
-    page.setFetchInterval(intervalSec);
-    page.setFetchTime(refetchTime + intervalSec * 1000L);
-    page.setModifiedTime(modifiedTime);
-    page.setPrevModifiedTime(prevModifiedTime);
+    updateRefetchTime(page, interval, refTime, prevModifiedTime, modifiedTime);
   }
 
-  /**
-   * Adjust fetch interval for article pages
-   * */
-  private int adjustFetchIntervalForArticle(WebPage page, long fetchTime, int intervalSec) {
-    long lastestReferredPublishTime = TableUtil.getLatestReferredPublishTime(page);
-    // Ignore articles published before 1995
-    if (lastestReferredPublishTime <= Year.parse("1995").getValue()) {
-      return intervalSec;
-    }
-
-    long diff = fetchTime - lastestReferredPublishTime;
-    if (diff < Duration.ofDays(2).toMillis()) {
-      // if there are updates in two day, keep re-fetch the page in every crawl loop
-      intervalSec *= (1.0f - DEC_RATE);
-    }
-    else {
-      // if there is no any updates in 2 days, check the page later
-      intervalSec *= (1.0f + INC_RATE);
-      if (intervalSec > SEED_MAX_INTERVAL) {
-        intervalSec = SEED_MAX_INTERVAL;
-      }
-    }
-
-    return intervalSec;
+  protected void updateRefetchTime(WebPage page, long interval, long refTime, long prevModifiedTime, long modifiedTime) {
+    page.setFetchInterval((int)interval);
+    page.setFetchTime(refTime + interval * 1000L);
+    page.setModifiedTime(modifiedTime);
+    page.setPrevModifiedTime(prevModifiedTime);
   }
 
   public static void main(String[] args) throws Exception {
@@ -204,7 +171,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
       LOG.info(i + ". " + changed + "\twill fetch at "
           + (p.getFetchTime() / delta) + "\tinterval "
-          + (p.getFetchInterval() / SECONDS_PER_DAY) + " days" + "\t missed "
+          + (p.getFetchInterval() / Duration.ofDays(365).getSeconds()) + " days" + "\t missed "
           + miss);
       if (p.getFetchTime() <= curTime) {
         fetchCnt++;
@@ -214,7 +181,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
         LOG.info("\tfetched & adjusted: " + "\twill fetch at "
             + (p.getFetchTime() / delta) + "\tinterval "
-            + (p.getFetchInterval() / SECONDS_PER_DAY) + " days");
+            + (p.getFetchInterval() / Duration.ofDays(365).getSeconds()) + " days");
 
         if (!changed) miss++;
         if (miss > maxMiss) maxMiss = miss;

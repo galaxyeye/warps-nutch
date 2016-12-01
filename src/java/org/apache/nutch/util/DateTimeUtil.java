@@ -24,6 +24,7 @@ import org.apache.nutch.net.protocols.HttpDateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -160,19 +161,19 @@ public class DateTimeUtil {
 
     NumberFormat nf = NumberFormat.getInstance();
     nf.setMinimumIntegerDigits(2);
-    StringBuffer buf = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < elapsedTime.length; i++) {
       if (i > 0) {
-        buf.append(":");
+        sb.append(":");
       }
-      buf.append(nf.format(elapsedTime[i]));
+      sb.append(nf.format(elapsedTime[i]));
     }
 
-    return buf.toString();
+    return sb.toString();
   }
 
   public static long parseTime(String date) {
-    long time = -1;
+    long time = Instant.EPOCH.toEpochMilli();
 
     if (date == null) {
       return time;
@@ -186,6 +187,7 @@ public class DateTimeUtil {
         time = parsedDate.getTime();
       } catch (Exception ignored) {}
     }
+
     return time;
   }
 

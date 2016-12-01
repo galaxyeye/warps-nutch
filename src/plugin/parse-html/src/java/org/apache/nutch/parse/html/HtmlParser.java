@@ -54,7 +54,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.apache.nutch.crawl.filters.CrawlFilter.sniffPageCategoryByTextDensity;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class HtmlParser implements Parser {
@@ -273,6 +272,7 @@ public class HtmlParser implements Parser {
 //      LOG.info("Text content length : " + doc.getTextContent().length()
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
+      TableUtil.setTextContentLength(page, doc.getTextContent().length());
       String publishTime = doc.getField(DOC_FIELD_PUBLISH_TIME);
       if (publishTime != null) {
         TableUtil.setPublishTime(page, publishTime);

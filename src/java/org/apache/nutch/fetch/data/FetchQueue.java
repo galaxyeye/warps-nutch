@@ -25,7 +25,7 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   /** Queue id */
   private final String id;
-  /** Queue priority */
+  /** Queue priority, bigger item comes first **/
   private final int priority;
 
   private final long crawlDelay;    // millisecond
@@ -345,8 +345,9 @@ public class FetchQueue implements Comparable<FetchQueue> {
     }
   }
 
+  /**
+   * Bigger item comes first
+   * */
   @Override
-  public int compareTo(FetchQueue other) {
-    return other.getPriority() - getPriority();
-  }
+  public int compareTo(FetchQueue other) { return other.getPriority() - getPriority(); }
 }

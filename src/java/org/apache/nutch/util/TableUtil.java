@@ -17,7 +17,6 @@
 package org.apache.nutch.util;
 
 import com.google.common.collect.Maps;
-import com.j256.ormlite.stmt.query.In;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,7 +27,7 @@ import org.apache.nutch.storage.WebPage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.time.Year;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
@@ -189,7 +188,21 @@ public class TableUtil {
     page.getMetadata().put(new Utf8(META_CASH_KEY), ByteBuffer.wrap(Bytes.toBytes(value)));
   }
 
+  public static void setTextContentLength(WebPage page, int length) {
+    putMetadata(page, META_TEXT_CONTENT_LENGTH, String.valueOf(length));
+  }
+
+  public static int getTextContentLength(WebPage page) {
+    String ds = getMetadata(page, META_TEXT_CONTENT_LENGTH);
+    return StringUtil.tryParseInt(ds, -1);
+  }
+
   public static int sniffTextLength(WebPage page) {
+    int length = getTextContentLength(page);
+    if (length >= 0) {
+      return length;
+    }
+
     Object obj = page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT_LENGTH);
     if (obj != null && obj instanceof Integer) {
       return ((Integer)obj);
@@ -359,28 +372,27 @@ public class TableUtil {
 
   public static void increaseReferredChars(WebPage page, long count) {
     long oldCount = getReferredArticles(page);
-    putMetadata(page, META_REFERRED_CHARS, String.valueOf(oldCount + count));
+    setReferredChars(page, oldCount + count);
   }
 
-  public static long getLatestReferredPublishTime(WebPage page) {
-    String publishTimeStr = getMetadata(page, META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME);
+  public static long getReferredPublishTime(WebPage page) {
+    String publishTimeStr = getMetadata(page, META_REFERRED_PUBLISH_TIME);
     return DateTimeUtil.parseTime(publishTimeStr);
   }
 
-  public static void setLatestReferredPublishTime(WebPage page, long publishTime) {
-    putMetadata(page, META_LATEST_REFERRED_ARTICLE_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+  public static void setReferredPublishTime(WebPage page, long publishTime) {
+    putMetadata(page, META_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
-  public static boolean updateLatestReferredPublishTime(WebPage page, long newPublishTime) {
-    // Ignore articles published before 1995
-    if (newPublishTime <= Year.parse("1995").getValue()) {
-      NutchUtil.LOG.warn("Publish time is out of range for page " + page.getBaseUrl());
+  public static boolean updateReferredPublishTime(WebPage page, long newPublishTime) {
+    if (newPublishTime <= Instant.EPOCH.toEpochMilli()) {
+      NutchUtil.LOG.warn("Publish time is out of range, url : " + page.getBaseUrl());
       return false;
     }
 
-    long latestTime = getLatestReferredPublishTime(page);
+    long latestTime = getReferredPublishTime(page);
     if (latestTime < newPublishTime) {
-      setLatestReferredPublishTime(page, newPublishTime);
+      setReferredPublishTime(page, newPublishTime);
       return true;
     }
 

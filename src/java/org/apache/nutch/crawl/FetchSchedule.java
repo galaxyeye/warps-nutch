@@ -37,8 +37,6 @@ public interface FetchSchedule extends Configurable {
   /** Page is known to remain unmodified since our last visit. */
   int STATUS_NOTMODIFIED = 2;
 
-  int SECONDS_PER_DAY = 3600 * 24;
-
   /**
    * Initialize fetch schedule related data. Implementations should at least set
    * the <code>fetchTime</code> and <code>fetchInterval</code>. The default

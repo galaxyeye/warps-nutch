@@ -56,6 +56,9 @@ public class FetchQueues {
     return priorityWorkingQueues.peek();
   }
 
+  /**
+   * Null queue id means the queue with top priority
+   * */
   public FetchQueue getOrPeek(String queueId) {
     FetchQueue queue = get(queueId);
 

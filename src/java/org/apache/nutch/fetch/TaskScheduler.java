@@ -368,15 +368,12 @@ public class TaskScheduler extends Configured {
     return 1;
   }
 
-  public void produce(FetchResult result) {
-    fetchResultQueue.add(result);
-  }
+  public void produce(FetchResult result) { fetchResultQueue.add(result); }
 
-  public List<FetchTask> schedule(int number) {
-    return schedule(null, number);
-  }
+  public List<FetchTask> schedule(int number) { return schedule(null, number); }
 
   /**
+   * Null queue id means the queue with top priority
    * Multiple threaded
    */
   public FetchTask schedule(String queueId) {
@@ -385,6 +382,7 @@ public class TaskScheduler extends Configured {
   }
 
   /**
+   * Null queue id means the queue with top priority
    * Consume a fetch item and try to download the target web page
    */
   public List<FetchTask> schedule(String queueId, int number) {
@@ -395,7 +393,7 @@ public class TaskScheduler extends Configured {
     }
 
     if (tasksMonitor.pendingItemCount() * avePageLength.get() * 8 > 30 * this.getBandwidth()) {
-      LOG.info("Bandwidth exhausted, slows down scheduling");
+      LOG.info("Bandwidth exhausted, slows down the scheduling");
       return fetchTasks;
     }
 
@@ -863,7 +861,7 @@ public class TaskScheduler extends Configured {
       counter.increase(Counter.newDetailPages);
     }
 
-    // process the main page, update fetch schedule
+    // Process the main page, update fetch schedule
     reduceDatumBuilder.updateFetchSchedule(url, mainPage);
     reduceDatumBuilder.updateRow(url, mainPage);
 
@@ -890,15 +888,16 @@ public class TaskScheduler extends Configured {
       oldPage = datastore.get(reversedUrl);
     }
 
+    // TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
     if (oldPage != null) {
       long publishTime = TableUtil.getPublishTime(oldPage);
-      if (publishTime > 0) {
-        TableUtil.updateLatestReferredPublishTime(mainPage, publishTime);
+      if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
+        TableUtil.updateReferredPublishTime(mainPage, publishTime);
         TableUtil.increaseReferredArticles(mainPage, 1);
         TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
       }
 
-      // The old row might be updated
+      // Updated the old row if necessary
       int oldDistance = TableUtil.getDistance(oldPage);
       if (depth < oldDistance) {
         TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());

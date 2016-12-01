@@ -157,7 +157,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         getCounter().increase(Counter.seedsFetchLater);
 
         String report = "CurrTime : " + DateTimeUtil.format(pseudoCurrTime)
-            + "\tLastReferredPT : " +  DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
+            + "\tLastReferredPT : " +  DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
             + "\tReferredPC : " + TableUtil.getReferredArticles(page)
             + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
             + "\tisSeed : " + TableUtil.isSeed(page)

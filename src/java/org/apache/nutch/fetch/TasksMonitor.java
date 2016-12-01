@@ -142,6 +142,9 @@ public class TasksMonitor {
     return TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
   }
 
+  /**
+   * Null queue id means the queue with top priority
+   * */
   public synchronized FetchTask consume(String queueId) {
     FetchQueue queue = workingQueues.getOrPeek(queueId);
     return doConsume(queue);
@@ -278,7 +281,7 @@ public class TasksMonitor {
     ++hostStat.urls;
 
     String report = "[" + DateTimeUtil.now() + "]"
-        + "\tLastReferredPT : " + DateTimeUtil.format(TableUtil.getLatestReferredPublishTime(page))
+        + "\tLastReferredPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
         + "\tReferredPC : " + TableUtil.getReferredArticles(page)
         + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
         + "\t->\t" + url;

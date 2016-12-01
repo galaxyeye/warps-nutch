@@ -87,7 +87,7 @@ public class OPICScoringFilter implements ScoringFilter {
   @Override
   public void initialScore(String url, WebPage row) throws ScoringFilterException {
     row.setScore(0.0f);
-//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
+    // row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
     TableUtil.setCash(row, 0.0f);
   }
 
@@ -107,7 +107,7 @@ public class OPICScoringFilter implements ScoringFilter {
       adjust += scoreDatum.getScore();
     }
 
-    adjust = adjustScoreForArticle(row, adjust);
+    adjust = adjustArticlePageScore(row, adjust);
 
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
@@ -123,7 +123,7 @@ public class OPICScoringFilter implements ScoringFilter {
     TableUtil.setCash(row, cash + factor * adjust);
   }
 
-  private float adjustScoreForArticle(WebPage row, float adjust) {
+  private float adjustArticlePageScore(WebPage row, float adjust) {
     float f1 = 1.0f;
     float f2 = 2.0f;
 

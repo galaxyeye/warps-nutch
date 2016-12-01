@@ -17,6 +17,7 @@
 
 package org.apache.nutch.crawl;
 
+import org.apache.nutch.crawl.schedulers.AbstractFetchSchedule;
 import org.apache.nutch.storage.WebPage;
 
 /**

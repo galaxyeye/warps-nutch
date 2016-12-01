@@ -39,6 +39,15 @@
   </property>
 
   <property>
+    <name>db.fetch.schedule.class</name>
+    <value>org.apache.nutch.crawl.schedulers.SeedFirstFetchSchedule</value>
+    <description>The implementation of fetch schedule. DefaultFetchSchedule simply
+      adds the original fetchInterval to the last fetch time, regardless of
+      page changes.
+    </description>
+  </property>
+
+  <property>
     <name>fetcher.store.content</name>
     <value>true</value>
     <description>since every content is index into solr, we do not store the content</description>

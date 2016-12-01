@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.nutch.crawl;
+package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.mapreduce.GenerateMapper;
+import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -34,10 +35,8 @@ import java.util.Set;
  * 
  * @author Andrzej Bialecki
  */
-public abstract class AbstractFetchSchedule extends Configured implements
-    FetchSchedule {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(AbstractFetchSchedule.class);
+public abstract class AbstractFetchSchedule extends Configured implements FetchSchedule {
+  protected static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
   protected int defaultInterval;
   protected int maxInterval;

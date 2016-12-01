@@ -1,11 +1,9 @@
 package org.apache.nutch.dbupdate;
 
-import org.apache.avro.io.parsing.Symbol;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.mapreduce.DbUpdateReducer;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
@@ -259,9 +257,11 @@ public class ReduceDatumBuilder {
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        if (!TableUtil.isNoMoreFetch(page) && maxInterval < page.getFetchInterval()) {
-          fetchSchedule.forceRefetch(url, page, false);
-        }
+        // Vincent : no force re-fetch for opinion monitoring
+//        if (!TableUtil.isNoMoreFetch(page) && maxInterval < page.getFetchInterval()) {
+//          fetchSchedule.forceRefetch(url, page, false);
+//        }
+
         break;
       case CrawlStatus.STATUS_RETRY:
         fetchSchedule.setPageRetrySchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());

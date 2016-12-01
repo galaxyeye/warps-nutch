@@ -168,7 +168,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
       }
     }
     else {
-      // null queue id means any queue
+      // null queue id means the queue with top priority
       fetchTask = taskScheduler.schedule(currQueueId);
     }
 
