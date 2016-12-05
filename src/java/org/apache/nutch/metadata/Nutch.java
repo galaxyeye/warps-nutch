@@ -257,7 +257,7 @@ public interface Nutch {
    * */
   String DOC_FIELD_PAGE_TITLE = "page_title";
   String DOC_FIELD_ARTICLE_TITLE = "article_title";
-  String DOC_FIELD_TEXT_CONTENT_LENGTH = "text_content";
+  String DOC_FIELD_TEXT_CONTENT_LENGTH = "text_content_length";
   String DOC_FIELD_TEXT_CONTENT = "text_content";
   String DOC_FIELD_HTML_CONTENT = "html_content";
   String DOC_FIELD_PAGE_CATEGORY = "page_category";
@@ -266,6 +266,7 @@ public interface Nutch {
   /**
    * Variable holders
    * */
+  String VAR_ORDERED_OUTLINKS = "ordered_outlinks";
 
   /**
    * Program keys
