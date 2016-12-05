@@ -138,10 +138,9 @@ public class JITIndexer {
       IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
       doc = filter(doc, page);
       if (doc != null) {
-        TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
-
         synchronized (indexWriters) {
           indexWriters.write(doc);
+          TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
         }
       } // if
     }

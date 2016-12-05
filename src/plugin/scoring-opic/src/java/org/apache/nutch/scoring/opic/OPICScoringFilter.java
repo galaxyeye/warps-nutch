@@ -159,17 +159,20 @@ public class OPICScoringFilter implements ScoringFilter {
     float internalScore = scoreUnit * internalScoreFactor;
     float externalScore = scoreUnit * externalScoreFactor;
     for (ScoreDatum scoreDatum : scoreData) {
+      float score = scoreDatum.getScore();
+
       try {
         String toHost = new URL(scoreDatum.getUrl()).getHost();
         String fromHost = new URL(fromUrl).getHost();
+
         if (toHost.equalsIgnoreCase(fromHost)) {
-          scoreDatum.setScore(internalScore);
+          scoreDatum.setScore(score + internalScore);
         } else {
-          scoreDatum.setScore(externalScore);
+          scoreDatum.setScore(score + externalScore);
         }
       } catch (MalformedURLException e) {
         LOG.error("Failed with the following MalformedURLException: ", e);
-        scoreDatum.setScore(externalScore);
+        scoreDatum.setScore(score + externalScore);
       }
     }
 

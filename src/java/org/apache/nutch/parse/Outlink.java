@@ -34,10 +34,15 @@ public class Outlink implements Writable {
   public Outlink() {
   }
 
-  public Outlink(String toUrl, String anchor) throws MalformedURLException {
+  public Outlink(CharSequence toUrl, CharSequence anchor) {
+    this(toUrl.toString(), anchor.toString());
+  }
+
+  public Outlink(String toUrl, String anchor) {
     this.toUrl = toUrl;
-    if (anchor == null)
+    if (anchor == null) {
       anchor = "";
+    }
     this.anchor = anchor;
   }
 

@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.nutch.parse.Outlink;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -37,6 +38,10 @@ public class ScoreDatum implements Writable {
   private Map<String, byte[]> metaData = new HashMap<>();
 
   public ScoreDatum() {
+  }
+
+  public ScoreDatum(float score, Outlink outlink, int depth) {
+    this(score, outlink.getToUrl(), outlink.getAnchor(), depth);
   }
 
   public ScoreDatum(float score, String url, String anchor, int depth) {
