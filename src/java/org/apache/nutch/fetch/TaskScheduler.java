@@ -98,7 +98,7 @@ public class TaskScheduler extends Configured {
   private final Queue<FetchResult> fetchResultQueue = new ConcurrentLinkedQueue<>();
 
   /**
-   * Our own Hardware bandwidth in Mbytes, if exceed the limit, slows down the task scheduling.
+   * Our own Hardware bandwidth in mbytes, if exceed the limit, slows down the task scheduling.
    * TODO : automatically adjust
    */
   private final int bandwidth;

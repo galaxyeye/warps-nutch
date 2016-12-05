@@ -39,6 +39,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/scoring-opic/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/scoring-link/src/java" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/runtime" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />

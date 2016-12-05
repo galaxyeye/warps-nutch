@@ -26,6 +26,7 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -140,7 +141,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   @Override
   public void setPageRetrySchedule(String url, WebPage page,
       long prevFetchTime, long prevModifiedTime, long fetchTime) {
-    page.setFetchTime(fetchTime + SECONDS_PER_DAY * 1000L);
+    page.setFetchTime(fetchTime + Duration.ofDays(1).toMillis());
     page.setRetriesSinceFetch(page.getRetriesSinceFetch() + 1);
   }
 
