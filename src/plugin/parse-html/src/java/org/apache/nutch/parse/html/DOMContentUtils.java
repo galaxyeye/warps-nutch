@@ -19,7 +19,7 @@ package org.apache.nutch.parse.html;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.util.DomUtil;
 import org.apache.nutch.util.NodeWalker;

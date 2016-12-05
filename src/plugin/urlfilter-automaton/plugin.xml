@@ -34,9 +34,9 @@
 
    <extension id="org.apache.nutch.net.urlfilter.automaton"
               name="Nutch Automaton URL Filter"
-              point="org.apache.nutch.net.URLFilter">
+              point="org.apache.nutch.filter.URLFilter">
       <implementation id="AutomatonURLFilter"
-                      class="org.apache.nutch.urlfilter.automaton.AutomatonURLFilter"/>
+                      class="org.apache.nutch.filter.urlfilter.automaton.AutomatonURLFilter"/>
    </extension>
 
 </plugin>

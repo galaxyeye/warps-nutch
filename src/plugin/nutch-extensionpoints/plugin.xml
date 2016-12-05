@@ -45,11 +45,11 @@
       name="Nutch Protocol"/>
 
 <extension-point
-      id="org.apache.nutch.net.URLFilter"
+      id="org.apache.nutch.filter.URLFilter"
       name="Nutch URL Filter"/>
 
 <extension-point
-      id="org.apache.nutch.net.URLNormalizer"
+      id="org.apache.nutch.filter.URLNormalizer"
       name="Nutch URL Normalizer"/>
 
 <extension-point

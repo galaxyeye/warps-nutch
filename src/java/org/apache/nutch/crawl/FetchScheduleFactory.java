@@ -18,6 +18,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

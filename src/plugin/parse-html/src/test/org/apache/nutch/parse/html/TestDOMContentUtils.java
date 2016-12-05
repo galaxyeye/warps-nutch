@@ -17,17 +17,8 @@
 
 package org.apache.nutch.parse.html;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayInputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
-import org.apache.nutch.crawl.filters.CrawlFilters;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.util.NutchConfiguration;
 import org.cyberneko.html.parsers.DOMFragmentParser;
@@ -36,6 +27,14 @@ import org.junit.Test;
 import org.w3c.dom.DocumentFragment;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayInputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for DOMContentUtils.

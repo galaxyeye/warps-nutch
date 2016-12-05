@@ -43,7 +43,7 @@ public class TestAnything {
     Files.write(Paths.get("/tmp/regex-urlfilter.txt"), StringUtils.join(lines2, "\n").getBytes());
 
     System.out.println(lines2.size());
-    System.out.println(StringUtils.join(lines2));
+    System.out.println(StringUtils.join(lines2, ","));
   }
 
   @Test

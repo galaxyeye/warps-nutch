@@ -360,7 +360,7 @@
 
 <property>
   <name>db.fetch.schedule.class</name>
-  <value>org.apache.nutch.crawl.DefaultFetchSchedule</value>
+  <value>org.apache.nutch.crawl.schedulers.DefaultFetchSchedule</value>
   <description>The implementation of fetch schedule. DefaultFetchSchedule simply
   adds the original fetchInterval to the last fetch time, regardless of
   page changes.</description>
@@ -815,7 +815,8 @@
 
 <property>
   <name>urlnormalizer.order</name>
-  <value>org.apache.nutch.net.urlnormalizer.basic.BasicURLNormalizer org.apache.nutch.net.urlnormalizer.regex.RegexURLNormalizer</value>
+  <value>org.apache.nutch.filter.urlnormalizer.basic.BasicURLNormalizer
+    org.apache.nutch.filter.urlnormalizer.regex.RegexURLNormalizer</value>
   <description>Order in which normalizers will run. If any of these isn't
   activated it will be silently skipped. If other normalizers not on the
   list are activated, they will run in random order after the ones
@@ -1037,15 +1038,15 @@
   <name>urlfilter.order</name>
   <value></value>
   <description>The order by which url filters are applied.
-  If empty, all available url filters (as dictated by properties
-  plugin-includes and plugin-excludes above) are loaded and applied in system
-  defined order. If not empty, only named filters are loaded and applied
-  in given order. For example, if this property has value:
-  org.apache.nutch.urlfilter.regex.RegexURLFilter org.apache.nutch.urlfilter.prefix.PrefixURLFilter
-  then RegexURLFilter is applied first, and PrefixURLFilter second.
-  Since all filters are AND'ed, filter ordering does not have impact
-  on end result, but it may have performance implication, depending
-  on relative expensiveness of filters.
+    If empty, all available url filters (as dictated by properties
+    plugin-includes and plugin-excludes above) are loaded and applied in system
+    defined order. If not empty, only named filters are loaded and applied
+    in given order. For example, if this property has value:
+    org.apache.nutch.filter.urlfilter.regex.RegexURLFilter org.apache.nutch.filter.urlfilter.prefix.PrefixURLFilter
+    then RegexURLFilter is applied first, and PrefixURLFilter second.
+    Since all filters are AND'ed, filter ordering does not have impact
+    on end result, but it may have performance implication, depending
+    on relative expensiveness of filters.
   </description>
 </property>
 

@@ -31,11 +31,11 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlnormalizer.pass"
+   <extension id="org.apache.nutch.filter.urlnormalizer.pass"
               name="Nutch Pass-through URL Normalizer"
-              point="org.apache.nutch.net.URLNormalizer">
+              point="org.apache.nutch.filter.URLNormalizer">
       <implementation id="PassURLNormalizer"
-                      class="org.apache.nutch.net.urlnormalizer.pass.PassURLNormalizer"/>
+                      class="org.apache.nutch.filter.urlnormalizer.pass.PassURLNormalizer"/>
    </extension>
 
 </plugin>

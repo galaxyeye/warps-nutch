@@ -31,11 +31,11 @@
     <include file="${nutch.root}/ivy/ivy-configurations.xml"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlnormalizer.regex"
+   <extension id="org.apache.nutch.filter.urlnormalizer.regex"
               name="Nutch Regex URL Normalizer"
-              point="org.apache.nutch.net.URLNormalizer">
+              point="org.apache.nutch.filter.URLNormalizer">
       <implementation id="RegexURLNormalizer"
-                      class="org.apache.nutch.net.urlnormalizer.regex.RegexURLNormalizer"/>
+                      class="org.apache.nutch.filter.urlnormalizer.regex.RegexURLNormalizer"/>
    </extension>
 
 </plugin>

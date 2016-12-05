@@ -26,6 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.Year;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Set;
@@ -33,15 +34,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * TODO : use apache's DateUtils, DateFormatUtils
- * */
 public class DateTimeUtil {
 
   public static final int CURRENT_YEAR = Year.now().getValue();
   public static final String CURRENT_YEAR_STR = String.valueOf(CURRENT_YEAR);
-  public static final int CURRENT_MONTH = new Date().getMonth();
-  public static final String CURRENT_MONTH_STR = String.valueOf(CURRENT_MONTH);
+  public static final int CURRENT_MONTH = YearMonth.now().getMonthValue();
   public static final int YEAR_LOWER_BOUND = 1990;
 
   public static Set<String> OLD_YEARS;

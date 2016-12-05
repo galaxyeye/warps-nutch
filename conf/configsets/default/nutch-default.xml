@@ -845,8 +845,8 @@
 
     <property>
         <name>urlnormalizer.order</name>
-        <value>org.apache.nutch.net.urlnormalizer.basic.BasicURLNormalizer
-            org.apache.nutch.net.urlnormalizer.regex.RegexURLNormalizer
+        <value>org.apache.nutch.filter.urlnormalizer.basic.BasicURLNormalizer
+            org.apache.nutch.filter.urlnormalizer.regex.RegexURLNormalizer
         </value>
         <description>Order in which normalizers will run. If any of these isn't
             activated it will be silently skipped. If other normalizers not on the
@@ -1084,7 +1084,8 @@
             plugin-includes and plugin-excludes above) are loaded and applied in system
             defined order. If not empty, only named filters are loaded and applied
             in given order. For example, if this property has value:
-            org.apache.nutch.urlfilter.regex.RegexURLFilter org.apache.nutch.urlfilter.prefix.PrefixURLFilter
+            org.apache.nutch.filter.urlfilter.regex.RegexURLFilter
+            org.apache.nutch.filter.urlfilter.prefix.PrefixURLFilter
             then RegexURLFilter is applied first, and PrefixURLFilter second.
             Since all filters are AND'ed, filter ordering does not have impact
             on end result, but it may have performance implication, depending

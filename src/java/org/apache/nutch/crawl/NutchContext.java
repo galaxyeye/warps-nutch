@@ -6,6 +6,7 @@ import java.io.IOException;
 
 /**
  * Created by vincent on 16-9-24.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public interface NutchContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
   Configuration getConfiguration();

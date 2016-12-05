@@ -16,21 +16,11 @@
  */
 package org.apache.nutch.metadata;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.Properties;
 
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * JUnit based tests of class {@link org.apache.nutch.metadata.Metadata}.
@@ -52,7 +42,6 @@ public class TestMetadata {
     met.add(CONTENTTYPE, null);
     met.add(CONTENTTYPE, "text/bogus");
     met.add(CONTENTTYPE, "text/bogus2");
-    met = writeRead(met);
 
     assertNotNull(met);
     assertEquals(met.size(), 1);
@@ -247,41 +236,4 @@ public class TestMetadata {
     meta2.add("name-two", "value-2.x");
     assertFalse(meta1.equals(meta2));
   }
-
-  /** Test for <code>Writable</code> implementation. */
-  @Test
-  public void testWritable() {
-    Metadata result = null;
-    Metadata meta = new Metadata();
-    result = writeRead(meta);
-    assertEquals(0, result.size());
-    meta.add("name-one", "value-1.1");
-    result = writeRead(meta);
-    assertEquals(1, result.size());
-    assertEquals(1, result.getValues("name-one").length);
-    assertEquals("value-1.1", result.get("name-one"));
-    meta.add("name-two", "value-2.1");
-    meta.add("name-two", "value-2.2");
-    result = writeRead(meta);
-    assertEquals(2, result.size());
-    assertEquals(1, result.getValues("name-one").length);
-    assertEquals("value-1.1", result.getValues("name-one")[0]);
-    assertEquals(2, result.getValues("name-two").length);
-    assertEquals("value-2.1", result.getValues("name-two")[0]);
-    assertEquals("value-2.2", result.getValues("name-two")[1]);
-  }
-
-  private Metadata writeRead(Metadata meta) {
-    Metadata readed = new Metadata();
-    try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      meta.write(new DataOutputStream(out));
-      readed.readFields(new DataInputStream(new ByteArrayInputStream(out
-          .toByteArray())));
-    } catch (IOException ioe) {
-      fail(ioe.toString());
-    }
-    return readed;
-  }
-
 }

@@ -31,11 +31,11 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlnormalizer.basic"
+   <extension id="org.apache.nutch.filter.urlnormalizer.basic"
               name="Nutch Basic URL Normalizer"
-              point="org.apache.nutch.net.URLNormalizer">
+              point="org.apache.nutch.filter.URLNormalizer">
       <implementation id="BasicURLNormalizer"
-                      class="org.apache.nutch.net.urlnormalizer.basic.BasicURLNormalizer"/>
+                      class="org.apache.nutch.filter.urlnormalizer.basic.BasicURLNormalizer"/>
    </extension>
 
 </plugin>

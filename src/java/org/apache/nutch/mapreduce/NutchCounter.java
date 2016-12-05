@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;

@@ -29,14 +29,4 @@ public interface SolrConstants {
   String USERNAME = SOLR_PREFIX + "auth.username";
 
   String PASSWORD = SOLR_PREFIX + "auth.password";
-
-  String ID_FIELD = "id";
-
-  String URL_FIELD = "url";
-
-  String BOOST_FIELD = "boost";
-
-  String TIMESTAMP_FIELD = "tstamp";
-
-  String DIGEST_FIELD = "digest";
 }

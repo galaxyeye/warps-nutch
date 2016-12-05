@@ -18,12 +18,12 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.crawl.filters.CrawlFilter;
-import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
-import org.apache.nutch.net.URLFilterException;
-import org.apache.nutch.net.URLFilters;
-import org.apache.nutch.net.URLNormalizers;
+import org.apache.nutch.filter.URLFilterException;
+import org.apache.nutch.filter.URLFilters;
+import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;

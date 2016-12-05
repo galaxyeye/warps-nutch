@@ -30,6 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -196,7 +197,7 @@ public class TestGoraStorage extends AbstractNutchTest {
             int exit = process.waitFor();
             // print the output of the process
             System.out.println("===Process stream for "
-                + Thread.currentThread() + "\n" + IOUtils.toString(in)
+                + Thread.currentThread() + "\n" + IOUtils.toString(in, Charset.defaultCharset())
                 + "===End of process stream.");
             in.close();
             // process should exit with zero code

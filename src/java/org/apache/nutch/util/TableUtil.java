@@ -20,7 +20,7 @@ import com.google.common.collect.Maps;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.filters.CrawlFilter;
+import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 

@@ -18,7 +18,6 @@
 package org.apache.nutch.indexer.basic;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.filters.CrawlFilter;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
@@ -30,7 +29,6 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_PAGE_CATEGORY;
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 
 // import org.apache.solr.common.util.DateUtil;
 

@@ -70,7 +70,8 @@ public class SolrDeleteDuplicates
     extends
     Reducer<Text, SolrDeleteDuplicates.SolrRecord, Text, SolrDeleteDuplicates.SolrRecord>
     implements Tool {
-  
+
+  @SuppressWarnings("deprecation")
   private static HttpClient HTTP_CLIENT = new SystemDefaultHttpClient();
   
   /**

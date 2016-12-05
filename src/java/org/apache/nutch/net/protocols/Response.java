@@ -17,11 +17,12 @@
 package org.apache.nutch.net.protocols;
 
 // JDK imports
+import org.apache.nutch.metadata.HttpHeaders;
+import org.apache.nutch.metadata.Metadata;
+
 import java.net.URL;
 
 // Nutch imports
-import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Metadata;
 
 /**
  * A response interface. Makes all protocols model HTTP.
@@ -29,18 +30,17 @@ import org.apache.nutch.metadata.Metadata;
 public interface Response extends HttpHeaders {
 
   /** Returns the URL used to retrieve this response. */
-  public URL getUrl();
+  URL getUrl();
 
   /** Returns the response code. */
-  public int getCode();
+  int getCode();
 
   /** Returns the value of a named header. */
-  public String getHeader(String name);
+  String getHeader(String name);
 
   /** Returns all the headers. */
-  public Metadata getHeaders();
+  Metadata getHeaders();
 
   /** Returns the full content of the response. */
-  public byte[] getContent();
-
+  byte[] getContent();
 }

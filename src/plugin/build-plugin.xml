@@ -16,13 +16,12 @@
  limitations under the License.
 -->
 <!-- Imported by plugin build.xml files to define default targets. -->
-<project xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="NutchPlugin" xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <property name="name" value="${ant.project.name}" />
   <property name="root" value="${basedir}" />
 
   <!-- load plugin-specific properties first -->
-  <property file="${user.home}/${name}.build.properties" />
   <property file="${root}/build.properties" />
 
   <property name="nutch.root" location="${root}/../../.."/>
@@ -41,7 +40,7 @@
   <property name="deploy.dir" location="${nutch.root}/build/plugins/${name}"/>
 
   <!-- load nutch defaults last so that they can be overridden above -->
-  <property file="${nutch.root}/default.properties" />
+  <property file="${nutch.root}/build.properties" />
 
   <ivy:settings id="ivy.instance" file="${nutch.root}/ivy/ivysettings.xml" />
 
@@ -72,6 +71,12 @@
     <pathelement location="${nutch.root}/build"/>
     <path refid="classpath"/>
   </path>
+
+  <target name="info">
+    <echo>Apache Ant version is ${ant.version} - You are at ${sitename} </echo>
+    <echo>Name : ${name}, root : ${root}, nutch.root : ${nutch.root} </echo>
+    <echo>ivy:settings : ${ivy:settings} </echo>
+  </target>
 
   <!-- ====================================================== -->
   <!-- Stuff needed by all targets                            -->
@@ -121,7 +126,6 @@
 
   <target name="compile-core">
     <ant target="compile-core" inheritall="false" dir="${nutch.root}"/>
-    <ant target="compile"/>
   </target>
   
   <!-- ================================================================== -->

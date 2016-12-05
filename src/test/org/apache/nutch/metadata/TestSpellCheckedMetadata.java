@@ -16,21 +16,11 @@
  */
 package org.apache.nutch.metadata;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.Properties;
 
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * JUnit based tests of class
@@ -232,60 +222,6 @@ public class TestSpellCheckedMetadata {
     assertFalse(meta1.equals(meta2));
     meta2.add("name-two", "value-2.x");
     assertFalse(meta1.equals(meta2));
-  }
-
-  /** Test for <code>Writable</code> implementation. */
-  @Test
-  public void testWritable() {
-    SpellCheckedMetadata result = null;
-    SpellCheckedMetadata meta = new SpellCheckedMetadata();
-    result = writeRead(meta);
-    assertEquals(0, result.size());
-    meta.add("name-one", "value-1.1");
-    result = writeRead(meta);
-    meta.add("Contenttype", "text/html");
-    assertEquals(1, result.size());
-    assertEquals(1, result.getValues("name-one").length);
-    assertEquals("value-1.1", result.get("name-one"));
-    meta.add("name-two", "value-2.1");
-    meta.add("name-two", "value-2.2");
-    result = writeRead(meta);
-    assertEquals(3, result.size());
-    assertEquals(1, result.getValues("name-one").length);
-    assertEquals("value-1.1", result.getValues("name-one")[0]);
-    assertEquals(2, result.getValues("name-two").length);
-    assertEquals("value-2.1", result.getValues("name-two")[0]);
-    assertEquals("value-2.2", result.getValues("name-two")[1]);
-    assertEquals("text/html", result.get(Metadata.CONTENT_TYPE));
-  }
-
-  /**
-   * IO Test method, usable only when you plan to do changes in metadata to
-   * measure relative performance impact.
-   */
-  @Test
-  public final void testHandlingSpeed() {
-    SpellCheckedMetadata result;
-    long start = System.currentTimeMillis();
-    for (int i = 0; i < NUM_ITERATIONS; i++) {
-      SpellCheckedMetadata scmd = constructSpellCheckedMetadata();
-      result = writeRead(scmd);
-    }
-    System.out.println(NUM_ITERATIONS + " spellchecked metadata I/O time:"
-        + (System.currentTimeMillis() - start) + "ms.");
-  }
-
-  private SpellCheckedMetadata writeRead(SpellCheckedMetadata meta) {
-    SpellCheckedMetadata readed = new SpellCheckedMetadata();
-    try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      meta.write(new DataOutputStream(out));
-      readed.readFields(new DataInputStream(new ByteArrayInputStream(out
-          .toByteArray())));
-    } catch (IOException ioe) {
-      fail(ioe.toString());
-    }
-    return readed;
   }
 
   /**

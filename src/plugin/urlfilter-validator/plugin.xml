@@ -33,9 +33,9 @@
 
    <extension id="org.apache.nutch.net.urlfilter.validator"
               name="Nutch URL Validatorr"
-              point="org.apache.nutch.net.URLFilter">
+              point="org.apache.nutch.filter.URLFilter">
       <implementation id="URLValidator"
-                      class="org.apache.nutch.urlfilter.validator.UrlValidator"/>
+                      class="org.apache.nutch.filter.urlfilter.validator.UrlValidator"/>
    </extension>
 
 </plugin>

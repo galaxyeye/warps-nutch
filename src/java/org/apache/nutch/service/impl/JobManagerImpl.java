@@ -18,7 +18,7 @@ package org.apache.nutch.service.impl;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.crawl.filters.CrawlFilters;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.ConfManager;
