@@ -60,9 +60,7 @@ public class TestAnything {
       }
     });
     uniqueSeedUrls.addAll(seedUrls);
-    uniqueSeedUrls.stream().forEach(seedUrl -> {
-      System.out.println(seedUrl.getUrl());
-    });
+    uniqueSeedUrls.stream().map(SeedUrl::getUrl).forEach(System.out::println);
   }
 
   @Test

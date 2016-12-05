@@ -29,7 +29,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
@@ -190,44 +189,47 @@ public class TestDOMContentUtils {
       }
       testDOMs[i] = node;
     }
-    try {
-      answerOutlinks = new Outlink[][] {
-          { new Outlink("http://www.nutch.org", "anchor"), },
-          { new Outlink("http://www.nutch.org/", "home"),
-              new Outlink("http://www.nutch.org/docs/bot.html", "bots"), },
-          { new Outlink("http://www.nutch.org/", "separate this"),
-              new Outlink("http://www.nutch.org/docs/ok", "from this"), },
-          { new Outlink("http://www.nutch.org/", "home"),
-              new Outlink("http://www.nutch.org/docs/1", "1"),
-              new Outlink("http://www.nutch.org/docs/2", "2"), },
-          { new Outlink("http://www.nutch.org/frames/top.html", ""),
-              new Outlink("http://www.nutch.org/frames/left.html", ""),
-              new Outlink("http://www.nutch.org/frames/invalid.html", ""),
-              new Outlink("http://www.nutch.org/frames/right.html", ""), },
-          { new Outlink("http://www.nutch.org/maps/logo.gif", ""),
-              new Outlink("http://www.nutch.org/index.html", ""),
-              new Outlink("http://www.nutch.org/maps/#bottom", ""),
-              new Outlink("http://www.nutch.org/bot.html", ""),
-              new Outlink("http://www.nutch.org/docs/index.html", ""), },
-          { new Outlink("http://www.nutch.org/index.html", "whitespace test"), },
-          {},
-          { new Outlink("http://www.nutch.org/dummy.jsp", "test2"), },
-          {},
-          { new Outlink("http://www.nutch.org/;x", "anchor1"),
-              new Outlink("http://www.nutch.org/g;x", "anchor2"),
-              new Outlink("http://www.nutch.org/g;x?y#s", "anchor3") },
-          {
-              // this is tricky - see RFC3986 section 5.4.1 example 7
-              new Outlink("http://www.nutch.org/g", "anchor1"),
-              new Outlink("http://www.nutch.org/g?y#s", "anchor2"),
-              new Outlink("http://www.nutch.org/;something?y=1", "anchor3"),
-              new Outlink("http://www.nutch.org/;something?y=1#s", "anchor4"),
-              new Outlink("http://www.nutch.org/;something?y=1;somethingelse",
-                  "anchor5") } };
 
-    } catch (MalformedURLException e) {
-
-    }
+    answerOutlinks = new Outlink[][] {
+        { new Outlink("http://www.nutch.org", "anchor"), },
+        { new Outlink("http://www.nutch.org/", "home"),
+            new Outlink("http://www.nutch.org/docs/bot.html", "bots"),
+        },
+        { new Outlink("http://www.nutch.org/", "separate this"),
+            new Outlink("http://www.nutch.org/docs/ok", "from this"),
+        },
+        { new Outlink("http://www.nutch.org/", "home"),
+            new Outlink("http://www.nutch.org/docs/1", "1"),
+            new Outlink("http://www.nutch.org/docs/2", "2"),
+        },
+        { new Outlink("http://www.nutch.org/frames/top.html", ""),
+            new Outlink("http://www.nutch.org/frames/left.html", ""),
+            new Outlink("http://www.nutch.org/frames/invalid.html", ""),
+            new Outlink("http://www.nutch.org/frames/right.html", ""),
+        },
+        { new Outlink("http://www.nutch.org/maps/logo.gif", ""),
+            new Outlink("http://www.nutch.org/index.html", ""),
+            new Outlink("http://www.nutch.org/maps/#bottom", ""),
+            new Outlink("http://www.nutch.org/bot.html", ""),
+            new Outlink("http://www.nutch.org/docs/index.html", ""),
+        },
+        { new Outlink("http://www.nutch.org/index.html", "whitespace test"), },
+        {},
+        { new Outlink("http://www.nutch.org/dummy.jsp", "test2"), },
+        {},
+        { new Outlink("http://www.nutch.org/;x", "anchor1"),
+            new Outlink("http://www.nutch.org/g;x", "anchor2"),
+            new Outlink("http://www.nutch.org/g;x?y#s", "anchor3")
+        },
+        {
+            // this is tricky - see RFC3986 section 5.4.1 example 7
+            new Outlink("http://www.nutch.org/g", "anchor1"),
+            new Outlink("http://www.nutch.org/g?y#s", "anchor2"),
+            new Outlink("http://www.nutch.org/;something?y=1", "anchor3"),
+            new Outlink("http://www.nutch.org/;something?y=1#s", "anchor4"),
+            new Outlink("http://www.nutch.org/;something?y=1;somethingelse", "anchor5")
+        }
+    };
   }
 
   private static boolean equalsIgnoreWhitespace(String s1, String s2) {
