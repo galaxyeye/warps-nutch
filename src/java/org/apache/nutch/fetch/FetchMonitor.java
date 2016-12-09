@@ -419,7 +419,7 @@ public class FetchMonitor {
    * */
   private void retuneFetchQueues(long now, long idleTime) {
     // TODO : use a smarter schedule strategy
-    if (fetchMonitor.readyItemCount() + fetchMonitor.pendingItemCount() < 10) {
+    if (fetchMonitor.readyTaskCount() + fetchMonitor.pendingTaskCount() < 10) {
       pendingTimeout = 2 * 60 * 1000;
     }
 

@@ -45,10 +45,14 @@ function __bin_nutch {
 CONFIG_DIR=conf/configsets/information/local
 SEEDDIR=conf/configsets/information/local/seeds/all.txt
 CRAWL_ID=information_tmp
-SOLR_URL=http://master:8983/solr/information_1101_integration_test
-LIMIT=20
+SOLR_URL=http://master:8983/solr/information_tmp
+LIMIT=2
 
-__bin_nutch inject -c="$CONFIG_DIR" "$SEEDDIR" -crawlId "$CRAWL_ID"
+# initial injection
+# echo "Injecting seed URLs"
+if [ $SEEDDIR != "false" ]; then
+  __bin_nutch inject -c="$CONFIG_DIR" "$SEEDDIR" -crawlId "$CRAWL_ID"
+fi
 
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))

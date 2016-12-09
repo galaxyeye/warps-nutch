@@ -80,11 +80,14 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
     else if (hours <= 72) {
       // If there is not updates in 24 hours but there are updates in 72 hours, re-fetch the page a hour later
-      intervalSec = (int)Duration.ofHours(1).getSeconds();
+      intervalSec = SECONDS_OF_HOUR;
     }
     else {
       // If there is no any updates in 72 hours, check the page later
       intervalSec *= (1.0f + INC_RATE);
+      if (intervalSec < SECONDS_OF_HOUR) {
+        intervalSec = SECONDS_OF_HOUR;
+      }
       // TODO : log see pages without updates for long time
     }
 

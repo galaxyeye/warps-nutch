@@ -55,6 +55,8 @@ public interface HttpHeaders {
 
   String Q_JOB_ID = "Q-Job-Id";
 
+  String Q_PRIORITY = "Q-Priority";
+
   String Q_QUEUE_ID = "Q-Queue-Id";
 
   String Q_ITEM_ID = "Q-Item-Id";

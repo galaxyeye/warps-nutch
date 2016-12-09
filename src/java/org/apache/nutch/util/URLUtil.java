@@ -30,7 +30,7 @@ public class URLUtil {
 
   public static final Logger LOG = LoggerFactory.getLogger(URLUtil.class);
 
-  public static String DUMMY_HOST_NAME = "example.com";
+  public static String EXAMPLE_HOST_NAME = "example.com";
 
   /**
    * @see URLUtil

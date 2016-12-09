@@ -8,12 +8,13 @@ import java.io.IOException;
 
 /**
  * Created by vincent on 16-9-24.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
-public class ReduerContextWrapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> implements NutchContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
+public class ReducerContextWrapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT> implements NutchContext<KEYIN, VALUEIN, KEYOUT, VALUEOUT> {
 
   private Reducer<KEYIN, VALUEIN, KEYOUT, VALUEOUT>.Context context;
 
-  public ReduerContextWrapper(Reducer<KEYIN, VALUEIN, KEYOUT, VALUEOUT>.Context context) {
+  public ReducerContextWrapper(Reducer<KEYIN, VALUEIN, KEYOUT, VALUEOUT>.Context context) {
     this.context = context;
   }
 

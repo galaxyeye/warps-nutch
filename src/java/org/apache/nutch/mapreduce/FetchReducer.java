@@ -39,7 +39,7 @@ class FetchReducer extends NutchReducer<IntWritable, FetchEntry, String, WebPage
 
     jobName = context.getJobName();
 
-    NutchContext nutchContext = new ReduerContextWrapper<IntWritable, FetchEntry, String, WebPage>(context);
+    NutchContext nutchContext = new ReducerContextWrapper<IntWritable, FetchEntry, String, WebPage>(context);
 
     fetchMonitor = new FetchMonitor(jobName, getCounter(), nutchContext);
   }

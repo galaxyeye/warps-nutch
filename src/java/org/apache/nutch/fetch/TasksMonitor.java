@@ -8,10 +8,10 @@ import org.apache.commons.collections4.SortedBidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
 import org.apache.nutch.fetch.data.FetchTask;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.Host;
 import org.apache.nutch.storage.WebPage;
@@ -24,18 +24,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static org.apache.nutch.fetch.TaskScheduler.QUEUE_REMAINDER_LIMIT;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.util.URLUtil.DUMMY_HOST_NAME;
+import static org.apache.nutch.util.URLUtil.EXAMPLE_HOST_NAME;
 
 /**
- * Keeps track of the all fetch items
- *
- * TODO : synchronize on workingQueues, not functions
+ * Tasks Monitor
  */
 public class TasksMonitor {
   public static final Logger LOG = FetchMonitor.LOG;
@@ -43,12 +43,13 @@ public class TasksMonitor {
 
   private static final int THREAD_SEQUENCE_POS = "FetchThread-".length();
 
-  private final FetchQueues workingQueues = new FetchQueues();
+  private final FetchQueues fetchQueues = new FetchQueues();
+  private int lastTaskPriority = Integer.MIN_VALUE;
 
   /**
    * Tracking time cost of each queue
    */
-  private final SortedBidiMap<String, Double> queueTimeCosts = new DualTreeBidiMap<>();
+  private final SortedBidiMap<FetchQueue.Key, Double> queueTimeCosts = new DualTreeBidiMap<>();
   private final Multimap<String, String> queueServedThreads = TreeMultimap.create();
   private final Map<String, HostStat> availableHosts = new TreeMap<>();
   private final Set<String> unreachableHosts = new TreeSet<>();
@@ -57,9 +58,9 @@ public class TasksMonitor {
   private final int maxUrlLength;
   private final boolean debugUrls;
 
-  private final AtomicInteger readyItemCount = new AtomicInteger(0);
-  private final AtomicInteger pendingItemCount = new AtomicInteger(0);
-  private final AtomicInteger finishedItemCount = new AtomicInteger(0);
+  private final AtomicInteger readyTaskCount = new AtomicInteger(0);
+  private final AtomicInteger pendingTaskCount = new AtomicInteger(0);
+  private final AtomicInteger finishedTaskCount = new AtomicInteger(0);
 
   private final long crawlDelay;
   private final long minCrawlDelay;
@@ -74,8 +75,8 @@ public class TasksMonitor {
 
   /**
    * Once timeout, the pending items should be put to the ready queue again.
-   * */
-  private long pendingTimeout = 3 * 60 * 1000;
+   */
+  private long pendingTimeout = Duration.ofMinutes(3).toMillis();
 
   private HostDb hostDb = null;
 
@@ -96,7 +97,8 @@ public class TasksMonitor {
 
     this.crawlDelay = (long) (conf.getFloat("fetcher.server.delay", 1.0f) * 1000);
     this.minCrawlDelay = (long) (conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000);
-    this.pendingTimeout = conf.getLong("fetcher.pending.timeout", 3 * 60 * 1000);
+    this.pendingTimeout = conf.getLong("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis());
+    // this.pendingTimeout = conf.getTimeDuration("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis(), TimeUnit.MILLISECONDS);
 
     this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
     this.nutchMetrics = NutchMetrics.getInstance(conf);
@@ -109,7 +111,7 @@ public class TasksMonitor {
         "maxThreadsPerQueue", maxQueueThreads,
         "hostGroupMode", hostGroupMode,
         "useHostSettings", useHostSettings,
-        "crawlDelay(n)", df.format(crawlDelay / 60.0 / 1000.0),
+        "crawlDelay(m)", df.format(crawlDelay / 60.0 / 1000.0),
         "minCrawlDelay(m)", df.format(minCrawlDelay / 60.0 / 1000.0),
         "pendingTimeout(m)", df.format(pendingTimeout / 60.0 / 1000.0),
         "unreachableHosts", unreachableHosts.size(),
@@ -117,40 +119,70 @@ public class TasksMonitor {
     ));
   }
 
-  public final URLUtil.HostGroupMode getHostGroupMode() { return hostGroupMode; }
+  public final URLUtil.HostGroupMode getHostGroupMode() {
+    return hostGroupMode;
+  }
 
   public synchronized void produce(FetchTask item) {
-    doProduce(item, FETCH_PRIORITY_DEFAULT);
+    doProduce(item);
   }
 
   public synchronized void produce(int jobID, String url, WebPage page) {
-    final FetchTask it = FetchTask.create(jobID, url, page, hostGroupMode);
-    if (it != null) {
-      // int priority = Integer.getInteger(TableUtil.getMetadata(page, META_FETCH_PRIORITY));
-      doProduce(it, getPriority(page));
+    int priority = TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+    FetchTask task = FetchTask.create(jobID, priority, url, page, hostGroupMode);
+
+    if (task != null) {
+      produce(task);
     }
   }
 
-  private void doProduce(FetchTask item, int priority) {
-    FetchQueue queue = getOrCreateFetchQueue(item.getQueueID(), priority);
-    queue.produce(item);
-    readyItemCount.incrementAndGet();
-    queueTimeCosts.put(queue.getId(), 0.0);
-  }
+  private void doProduce(FetchTask item) {
+    int priority = item.getPriority();
+    String queueId = item.getQueueId();
+    FetchQueue queue = fetchQueues.find(FetchQueue.Key.create(priority, queueId));
 
-  private int getPriority(WebPage page) {
-    return TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+    if (queue == null) {
+      queue = createFetchQueue(priority, queueId);
+      fetchQueues.add(queue);
+    }
+    queue.produce(item);
+
+    readyTaskCount.incrementAndGet();
+    queueTimeCosts.put(queue.getKey(), 0.0);
   }
 
   /**
-   * Null queue id means the queue with top priority
+   * Find out the FetchQueue with top priority,
+   * wait for all pending tasks with higher priority are finished
    * */
-  public synchronized FetchTask consume(String queueId) {
-    FetchQueue queue = workingQueues.getOrPeek(queueId);
-    return doConsume(queue);
+  public synchronized FetchTask consume() {
+    if (fetchQueues.isEmpty()) {
+      return null;
+    }
+
+    final int nextPriority = fetchQueues.peek().getPriority();
+    final boolean priorityChanged = nextPriority < lastTaskPriority;
+    if (priorityChanged && fetchQueues.hasPriorPendingTasks(nextPriority)) {
+      // Waiting for all pending tasks with higher priority be finished
+      return null;
+    }
+
+    FetchQueue queue = null;
+    while (queue == null && !fetchQueues.isEmpty()) {
+      queue = checkFetchQueue(fetchQueues.peek());
+    }
+
+    return consumeUnchecked(queue);
   }
 
-  private FetchTask doConsume(FetchQueue queue) {
+  public synchronized FetchTask consume(int priority, String queueId) {
+    FetchQueue queue = fetchQueues.find(FetchQueue.Key.create(priority, queueId));
+    return consumeUnchecked(checkFetchQueue(queue));
+  }
+
+  public synchronized FetchTask consume(FetchQueue queue) { return consumeUnchecked(checkFetchQueue(queue)); }
+
+  private FetchTask consumeUnchecked(FetchQueue queue) {
     if (queue == null) {
       return null;
     }
@@ -158,48 +190,92 @@ public class TasksMonitor {
     FetchTask item = queue.consume(unreachableHosts);
 
     if (item != null) {
-      readyItemCount.decrementAndGet();
-      pendingItemCount.incrementAndGet();
+      readyTaskCount.decrementAndGet();
+      pendingTaskCount.incrementAndGet();
+      lastTaskPriority = queue.getPriority();
     }
 
     return item;
   }
 
-  public synchronized void finish(String queueId, int itemId, boolean asap) {
-    doFinish(queueId, itemId, asap);
+  private FetchQueue checkFetchQueue(FetchQueue queue) {
+    if (queue == null) {
+      return null;
+    }
+
+    boolean changed = maintainFetchQueueLifeTime(queue);
+
+    return changed ? null : queue;
+  }
+
+  /** Maintain queue life time, return true if the life time status is changed, false otherwise */
+  private boolean maintainFetchQueueLifeTime(FetchQueue queue) {
+    if (queue == null) {
+      return false;
+    }
+
+    if (queue.isActive() && !queue.hasReadyTasks()) {
+      // There are still some pending tasks, the queue do not serve new requests, but should finish pending tasks
+      fetchQueues.disable(queue);
+//      LOG.debug("FetchQueue " + queue.getKey() + " is disabled");
+      LOG.debug("FetchQueue " + queue.getKey() + " is disabled "
+          + ", ready tasks : " + queue.readyCount()
+          + ", pending tasks : " + queue.pendingCount());
+      return true;
+    }
+    else if (queue.isInactive() && !queue.hasTasks()) {
+      // All tasks are finished, including pending tasks, we can remove the queue from the queues safely
+      retire(queue);
+//      LOG.debug("FetchQueue " + queue.getKey() + " is retired");
+      LOG.debug("FetchQueue " + queue.getKey() + " is retired"
+          + ", ready tasks : " + queue.readyCount()
+          + ", pending tasks : " + queue.pendingCount());
+      return true;
+    }
+
+    return false;
+  }
+
+  public synchronized void finish(int priority, String queueId, int itemId, boolean asap) {
+    doFinish(priority, queueId, itemId, asap);
   }
 
   public synchronized void finish(FetchTask item) {
-    doFinish(item.getQueueID(), item.getItemID(), false);
+    doFinish(item.getPriority(), item.getQueueId(), item.getItemId(), false);
   }
 
   public synchronized void finishAsap(FetchTask item) {
-    finish(item.getQueueID(), item.getItemID(), true);
+    finish(item.getPriority(), item.getQueueId(), item.getItemId(), true);
   }
 
-  private void doFinish(String queueId, int itemId, boolean asap) {
-    FetchQueue queue = workingQueues.getMore(queueId);
+  private void doFinish(int priority, String queueId, int itemId, boolean asap) {
+    FetchQueue queue = fetchQueues.findLenient(FetchQueue.Key.create(priority, queueId));
 
     if (queue == null) {
-      LOG.warn("Attemp to finish item from unknown queue: " + queueId);
+      LOG.warn("Attemp to finish item from unknown queue: <{}, {}>", priority, queueId);
       return;
     }
 
     if (!queue.pendingTaskExist(itemId)) {
-      // If the working queue is empty, the tasks might be abandoned by a plan
-      if (!workingQueues.isEmpty() && isResourceUnreachable(queueId)) {
-        LOG.warn("Attemp to finish unknown item: [{} - {}]", queueId, itemId);
+      if (!fetchQueues.isEmpty() && isResourceUnreachable(queueId)) {
+        LOG.warn("Attemp to finish unknown item: <{}, {}, {}>", priority, queueId, itemId);
       }
 
       return;
     }
 
     queue.finish(itemId, asap);
-    pendingItemCount.decrementAndGet();
-    finishedItemCount.incrementAndGet();
 
-    queueTimeCosts.put(queueId, queue.averageTimeCost());
+    pendingTaskCount.decrementAndGet();
+    finishedTaskCount.incrementAndGet();
+
+    queueTimeCosts.put(FetchQueue.Key.create(priority, queueId), queue.averageTimeCost());
     queueServedThreads.put(queueId, Thread.currentThread().getName().substring(THREAD_SEQUENCE_POS));
+  }
+
+  private void retire(FetchQueue queue) {
+    queue.retire();
+    fetchQueues.remove(queue);
   }
 
   public synchronized void report() {
@@ -223,41 +299,33 @@ public class TasksMonitor {
    * @param force reload all pending fetch items immediately
    * */
   public synchronized void retune(boolean force) {
-    // LOG.info("Retune task queues ...");
+    List<FetchQueue> unreachableQueues = fetchQueues.stream()
+        .filter(queue -> unreachableHosts.contains(queue.getHost())).collect(toList());
+    unreachableQueues.stream().forEach(this::retire);
 
-    int readyCount = 0;
-    int pendingCount = 0;
+    String unreachableQueueIds = unreachableQueues.stream().map(FetchQueue::getId).collect(joining(", "));
+    if (!unreachableQueueIds.isEmpty()) {
+      LOG.info("Retired queues for host unreachable : " + unreachableQueueIds);
+    }
 
-    List<FetchQueue> detachedQueues = new ArrayList<>();
-    for (FetchQueue queue : workingQueues.values()) {
-      if (unreachableHosts.contains(queue.getHost())) {
-        queue.clearAndDetach();
-        detachedQueues.add(queue);
-        continue;
-      }
-
+    int[] counter = {0, 0};
+    fetchQueues.forEach(queue -> {
       queue.retune(force);
-
-      readyCount += queue.readyCount();
-      pendingCount += queue.pendingCount();
-    }
-
-    if (!detachedQueues.isEmpty()) {
-      LOG.info("Detached queues, host unreachable : " +
-          detachedQueues.stream().map(FetchQueue::getId).collect(Collectors.joining(", ")));
-    }
-
-    readyItemCount.set(readyCount);
-    pendingItemCount.set(pendingCount);
+      counter[0] += queue.readyCount();
+      counter[1] += queue.pendingCount();
+    });
+    readyTaskCount.set(counter[0]);
+    pendingTaskCount.set(counter[1]);
   }
 
   /** Get a pending task, the task can be in working queues or in detached queues */
-  public synchronized FetchTask getPendingTask(String queueId, int itemID) {
-    return workingQueues.getPendingTask(queueId, itemID);
+  public synchronized FetchTask findPendingTask(int priority, String queueId, int itemID) {
+    FetchQueue queue = fetchQueues.findLenient(FetchQueue.Key.create(priority, queueId));
+    return queue != null ? queue.getPendingTask(itemID) : null;
   }
 
   public synchronized void dump(int limit) {
-    workingQueues.dump(limit);
+    fetchQueues.dump(limit);
   }
 
   /**
@@ -268,7 +336,7 @@ public class TasksMonitor {
       return;
     }
 
-    String host = URLUtil.getHost(url, URLUtil.DUMMY_HOST_NAME, getHostGroupMode());
+    String host = URLUtil.getHost(url, EXAMPLE_HOST_NAME, getHostGroupMode());
     if (host == null || host.isEmpty()) {
       return;
     }
@@ -355,7 +423,7 @@ public class TasksMonitor {
       return;
     }
 
-    String host = URLUtil.getHost(url, URLUtil.DUMMY_HOST_NAME, getHostGroupMode());
+    String host = URLUtil.getHost(url, EXAMPLE_HOST_NAME, getHostGroupMode());
     if (host == null || host.isEmpty()) {
       return;
     }
@@ -376,7 +444,7 @@ public class TasksMonitor {
   }
 
   public synchronized boolean isResourceUnreachable(String url) {
-    return url != null && unreachableHosts.contains(URLUtil.getHost(url, DUMMY_HOST_NAME, hostGroupMode));
+    return url != null && unreachableHosts.contains(URLUtil.getHost(url, EXAMPLE_HOST_NAME, hostGroupMode));
   }
 
   public synchronized int clearSlowestQueue() {
@@ -386,7 +454,8 @@ public class TasksMonitor {
       return 0;
     }
 
-    workingQueues.detach(queue);
+    // slowest queues should retire as soon as possible
+    retire(queue);
 
     final int minPendingSlowTasks = 2;
     clearPendingTasksIfFew(queue, minPendingSlowTasks);
@@ -395,7 +464,7 @@ public class TasksMonitor {
 
     DecimalFormat df = new DecimalFormat("0.##");
 
-    LOG.warn("Detach slowest queue : " + queue.getId()
+    LOG.warn("Retire slowest queue : " + queue.getId()
         + ", served tasks : " + queue.getFinishedTaskCount()
         + ", slow tasks : " + queue.getSlowTaskCount()
           + ", " + df.format(queue.averageTimeCost()) + "s/p"
@@ -407,16 +476,15 @@ public class TasksMonitor {
   }
 
   public synchronized void cleanup() {
-    workingQueues.clear();
-    readyItemCount.set(0);
+    fetchQueues.clear();
+    readyTaskCount.set(0);
   }
 
   public synchronized int clearReadyTasks() {
     int count = 0;
 
     Map<Double, String> costRecorder = new TreeMap<>(Comparator.reverseOrder());
-    for (String queueId : workingQueues.keySet()) {
-      FetchQueue queue = workingQueues.get(queueId);
+    for (FetchQueue queue : fetchQueues) {
       costRecorder.put(queue.averageTimeCost(), queue.getId());
 
       if (queue.readyCount() == 0) {
@@ -433,57 +501,46 @@ public class TasksMonitor {
 
   private int clearPendingTasksIfFew(FetchQueue queue, int limit) {
     int deleted = queue.clearPendingTasksIfFew(limit);
-    pendingItemCount.addAndGet(-deleted);
+    pendingTaskCount.addAndGet(-deleted);
     return deleted;
   }
 
   private int clearReadyTasks(FetchQueue queue) {
     int deleted = queue.clearReadyQueue();
 
-    readyItemCount.addAndGet(-deleted);
-    if (readyItemCount.get() <= 0 && workingQueues.size() == 0) {
-      readyItemCount.set(0);
+    readyTaskCount.addAndGet(-deleted);
+    if (readyTaskCount.get() <= 0 && fetchQueues.size() == 0) {
+      readyTaskCount.set(0);
     }
 
     return deleted;
   }
 
   public synchronized int getQueueCount() {
-    return workingQueues.size();
+    return fetchQueues.size();
   }
 
-  public int readyItemCount() { return readyItemCount.get(); }
+  public int readyTaskCount() { return readyTaskCount.get(); }
 
-  public int pendingItemCount() { return pendingItemCount.get(); }
+  public int pendingTaskCount() { return pendingTaskCount.get(); }
 
-  public int getFinishedItemCount() {return finishedItemCount.get(); }
+  public int getFinishedTaskCount() {return finishedTaskCount.get(); }
 
   private FetchQueue getSlowestQueue() {
     FetchQueue queue = null;
 
-    while (!workingQueues.isEmpty() && queue == null) {
+    while (!fetchQueues.isEmpty() && queue == null) {
       double maxCost = queueTimeCosts.inverseBidiMap().lastKey();
-      String slowestQueueId = queueTimeCosts.inverseBidiMap().get(maxCost);
-      queueTimeCosts.remove(slowestQueueId);
+      FetchQueue.Key slowestQueueKey = queueTimeCosts.inverseBidiMap().get(maxCost);
+      queueTimeCosts.remove(slowestQueueKey);
 
-      queue = workingQueues.get(slowestQueueId);
+      queue = fetchQueues.find(slowestQueueKey);
     }
 
     return queue;
   }
 
-  private FetchQueue getOrCreateFetchQueue(String queueId, int priority) {
-    FetchQueue queue = workingQueues.get(queueId);
-
-    if (queue == null) {
-      queue = createFetchQueue(queueId, priority);
-      workingQueues.add(queue);
-    }
-
-    return queue;
-  }
-
-  private FetchQueue createFetchQueue(String queueId, int priority) {
+  private FetchQueue createFetchQueue(int priority, String queueId) {
     FetchQueue queue = null;
 
     // Create a new queue
@@ -493,8 +550,9 @@ public class TasksMonitor {
         String hostname = queueId.substring(queueId.indexOf("://") + 3);
         Host host = hostDb.getByHostName(hostname);
         if (host != null) {
-          queue = new FetchQueue(queueId,
+          queue = new FetchQueue(
               priority,
+              queueId,
               host.getInt("q_mt", maxQueueThreads),
               host.getLong("q_cd", crawlDelay),
               host.getLong("q_mcd", minCrawlDelay),
@@ -507,7 +565,7 @@ public class TasksMonitor {
 
     if (queue == null) {
       // Use queue defaults
-      queue = new FetchQueue(queueId, priority, maxQueueThreads, crawlDelay, minCrawlDelay, pendingTimeout);
+      queue = new FetchQueue(priority, queueId, maxQueueThreads, crawlDelay, minCrawlDelay, pendingTimeout);
     }
 
     return queue;
@@ -536,7 +594,7 @@ public class TasksMonitor {
 
     String hosts = unreachableDomainSet.stream()
         .map(StringUtil::reverse).sorted().map(StringUtil::reverse)
-        .collect(Collectors.joining("\n"));
+        .collect(joining("\n"));
     report += hosts;
     report += "\n";
     REPORT_LOG.info(report);
@@ -563,7 +621,7 @@ public class TasksMonitor {
             "searchUrls : " + hostInfo.searchUrls,
             "detailUrls : " + hostInfo.detailUrls,
             "urlsTooLong : " + hostInfo.urlsTooLong))
-        .collect(Collectors.joining("\n"));
+        .collect(joining("\n"));
 
     report += hostsReport;
     report += "\n";
@@ -594,10 +652,9 @@ public class TasksMonitor {
   }
 
   private void reportCost() {
-    String report = "Top slow hosts : \n" + workingQueues.getCostReport();
+    String report = "Top slow hosts : \n" + fetchQueues.getCostReport();
     report += "\n";
     REPORT_LOG.info(report);
     nutchMetrics.writeReport(report, "queue-costs-" + reportSuffix + ".txt", true);
   }
-
 }

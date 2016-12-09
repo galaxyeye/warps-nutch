@@ -45,9 +45,9 @@ public class FetchResult implements HttpHeaders {
     return StringUtil.tryParseInt(headers.get(Q_JOB_ID));
   }
 
-  public String getQueueId() {
-    return headers.get(Q_QUEUE_ID);
-  }
+  public int getPriority() { return StringUtil.tryParseInt(headers.get(Q_PRIORITY), -1); }
+
+  public String getQueueId() { return headers.get(Q_QUEUE_ID); }
 
   public int getItemId() {
     return StringUtil.tryParseInt(headers.get(Q_ITEM_ID));

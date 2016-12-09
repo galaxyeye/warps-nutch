@@ -108,7 +108,7 @@ public class TaskSchedulers {
     try {
       TaskScheduler taskScheduler = fetchSchedulers.get(id);
       if (taskScheduler == null) {
-        LOG.error("Failed to find a fetch manager using id #" + id);
+        LOG.error("Failed to find out the fetch scheduler with id #" + id);
 
         remove(id);
         return Lists.newArrayList();

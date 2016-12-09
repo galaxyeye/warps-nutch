@@ -372,6 +372,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/conf" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/bin" type="java-resource" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -263,49 +263,27 @@ public class TaskScheduler extends Configured {
     return getClass().getSimpleName() + "-" + id;
   }
 
-  public int getBandwidth() {
-    return this.bandwidth;
-  }
+  public int getBandwidth() { return this.bandwidth; }
 
-  public FetchMonitor getFetchMonitor() {
-    return fetchMonitor;
-  }
+  public FetchMonitor getFetchMonitor() { return fetchMonitor; }
 
-  public TasksMonitor getTasksMonitor() {
-    return tasksMonitor;
-  }
+  public TasksMonitor getTasksMonitor() { return tasksMonitor; }
 
-  public JITIndexer getJitIndexer() {
-    return jitIndexer;
-  }
+  public JITIndexer getJitIndexer() { return jitIndexer; }
 
-  public long getLastTaskFinishTime() {
-    return lastTaskFinishTime.get();
-  }
+  public long getLastTaskFinishTime() { return lastTaskFinishTime.get(); }
 
-  public int getActiveFetchThreadCount() {
-    return activeFetchThreadCount.get();
-  }
+  public int getActiveFetchThreadCount() { return activeFetchThreadCount.get(); }
 
-  public int getFeedLimit() {
-    return initFetchThreadCount * maxFeedPerThread;
-  }
+  public int getFeedLimit() { return initFetchThreadCount * maxFeedPerThread; }
 
-  public boolean indexJIT() {
-    return jitIndexer != null;
-  }
+  public boolean indexJIT() { return jitIndexer != null; }
 
-  public boolean updateJIT() {
-    return mapDatumBuilder != null && reduceDatumBuilder != null;
-  }
+  public boolean updateJIT() { return mapDatumBuilder != null && reduceDatumBuilder != null; }
 
-  public void registerFeederThread(FeederThread feederThread) {
-    feederThreads.add(feederThread);
-  }
+  public void registerFeederThread(FeederThread feederThread) { feederThreads.add(feederThread); }
 
-  public void unregisterFeederThread(FeederThread feederThread) {
-    feederThreads.remove(feederThread);
-  }
+  public void unregisterFeederThread(FeederThread feederThread) { feederThreads.remove(feederThread); }
 
   public void registerFetchThread(FetchThread fetchThread) {
     activeFetchThreads.add(fetchThread);
@@ -370,36 +348,53 @@ public class TaskScheduler extends Configured {
 
   public void produce(FetchResult result) { fetchResultQueue.add(result); }
 
-  public List<FetchTask> schedule(int number) { return schedule(null, number); }
+  /**
+   * Schedule a queue with top priority
+   * */
+  public FetchTask schedule() { return schedule(FETCH_PRIORITY_ANY, null); }
 
   /**
-   * Null queue id means the queue with top priority
-   * Multiple threaded
-   */
-  public FetchTask schedule(String queueId) {
-    List<FetchTask> fetchTasks = schedule(queueId, 1);
+   * Schedule a queue with the given priority and given queueId
+   * */
+  public FetchTask schedule(int priority, String queueId) {
+    List<FetchTask> fetchTasks = schedule(priority, queueId, 1);
     return fetchTasks.isEmpty() ? null : fetchTasks.iterator().next();
   }
+
+  /**
+   * Schedule the queues with top priority
+   * */
+  public List<FetchTask> schedule(int number) { return schedule(FETCH_PRIORITY_ANY, null, number); }
 
   /**
    * Null queue id means the queue with top priority
    * Consume a fetch item and try to download the target web page
    */
-  public List<FetchTask> schedule(String queueId, int number) {
+  public List<FetchTask> schedule(int priority, String queueId, int number) {
     List<FetchTask> fetchTasks = Lists.newArrayList();
     if (number <= 0) {
       LOG.warn("Required no fetch item");
       return fetchTasks;
     }
 
-    if (tasksMonitor.pendingItemCount() * avePageLength.get() * 8 > 30 * this.getBandwidth()) {
+    if (tasksMonitor.pendingTaskCount() * avePageLength.get() * 8 > 30 * this.getBandwidth()) {
       LOG.info("Bandwidth exhausted, slows down the scheduling");
       return fetchTasks;
     }
 
     while (number-- > 0) {
-      FetchTask fetchTask = tasksMonitor.consume(queueId);
-      if (fetchTask != null) fetchTasks.add(fetchTask);
+      FetchTask fetchTask;
+
+      if (priority < 0 || queueId == null) {
+        fetchTask = tasksMonitor.consume();
+      }
+      else {
+        fetchTask = tasksMonitor.consume(priority, queueId);
+      }
+
+      if (fetchTask != null) {
+        fetchTasks.add(fetchTask);
+      }
     }
 
     if (!fetchTasks.isEmpty()) {
@@ -422,12 +417,12 @@ public class TaskScheduler extends Configured {
    * <p>
    * Multiple threaded, non-synchronized class member variables are not allowed inside this method.
    */
-  public void finish(String queueID, int itemID, ProtocolOutput output) {
-    FetchTask fetchTask = tasksMonitor.getPendingTask(queueID, itemID);
+  public void finish(int priority, String queueId, int itemId, ProtocolOutput output) {
+    FetchTask fetchTask = tasksMonitor.findPendingTask(priority, queueId, itemId);
 
     if (fetchTask == null) {
       // Can not find task to finish, The queue might be retuned or cleared up
-      LOG.info("Can not find task to finish [{} - {}]", queueID, itemID);
+      LOG.info("Can not find task to finish <{}, {}, {}>", priority, queueId, itemId);
 
       return;
     }
@@ -435,7 +430,7 @@ public class TaskScheduler extends Configured {
     try {
       doFinishFetchTask(fetchTask, output);
     } catch (final Throwable t) {
-      LOG.error("Unexpected error for " + fetchTask.getUrl(), t);
+      LOG.error("Unexpected error for " + fetchTask.getUrl() + StringUtil.stringifyException(t));
 
       tasksMonitor.finish(fetchTask);
       fetchErrors.incrementAndGet();
@@ -443,7 +438,7 @@ public class TaskScheduler extends Configured {
       try {
         handleResult(fetchTask, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
       } catch (IOException | InterruptedException e) {
-        LOG.error("Unexpected fetcher exception {}", e);
+        LOG.error("Unexpected fetcher exception, " + StringUtil.stringifyException(e));
       } finally {
         tasksMonitor.finish(fetchTask);
       }
@@ -464,7 +459,7 @@ public class TaskScheduler extends Configured {
   }
 
   public boolean isMissionComplete() {
-    return !isFeederAlive() && tasksMonitor.readyItemCount() == 0 && tasksMonitor.pendingItemCount() == 0;
+    return !isFeederAlive() && tasksMonitor.readyTaskCount() == 0 && tasksMonitor.pendingTaskCount() == 0;
   }
 
   public void cleanup() {
@@ -508,8 +503,8 @@ public class TaskScheduler extends Configured {
     float pagesThrouRate = (totalPages.get() - pagesLastSec) / reportIntervalSec;
     float bytesThrouRate = (totalBytes.get() - bytesLastSec) / reportIntervalSec;
 
-    int readyFetchItems = tasksMonitor.readyItemCount();
-    int pendingFetchItems = tasksMonitor.pendingItemCount();
+    int readyFetchItems = tasksMonitor.readyTaskCount();
+    int pendingFetchItems = tasksMonitor.pendingTaskCount();
 
     counter.setValue(Counter.readyTasks, readyFetchItems);
     counter.setValue(Counter.pendingTasks, pendingFetchItems);

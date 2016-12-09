@@ -76,6 +76,8 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
   protected double SYNC_DELTA_RATE;
 
+  protected final int SECONDS_OF_HOUR = (int)Duration.ofHours(1).getSeconds();
+
   public void setConf(Configuration conf) {
     super.setConf(conf);
     if (conf == null) {

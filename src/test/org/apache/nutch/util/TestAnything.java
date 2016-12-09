@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created by vincent on 16-7-20.
@@ -105,6 +107,54 @@ public class TestAnything {
     ints.put(5, "5");
 
     System.out.println(ints.keySet().iterator().next());
+  }
+
+  @Test
+  public void testTreeSet() {
+    TreeSet<Integer> integers = IntStream.range(0, 30).boxed().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+    integers.stream().forEach(System.out::print);
+    integers.pollLast();
+    System.out.println();
+    integers.stream().forEach(System.out::print);
+  }
+
+  @Test
+  public void testOrderedStream() {
+    int[] counter = {0, 0};
+
+    TreeSet<Integer> orderedIntegers = IntStream.range(0, 1000000).boxed().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+    long startTime = System.currentTimeMillis();
+    int result = orderedIntegers.stream().filter(i -> {counter[0]++; return i < 1000; }).map(i -> i * 2).reduce(0, (x, y) -> x + 2 * y);
+    long endTime = System.currentTimeMillis();
+    System.out.println("Compute over ordered integers, time elapsed : " + (endTime - startTime) / 1000.0 + "s");
+    System.out.println("Result : " + result);
+
+    startTime = System.currentTimeMillis();
+    result = 0;
+    int a = 0;
+    int b = 0;
+    for (Integer i : orderedIntegers) {
+      if (i < 1000) {
+        b = i;
+        b *= 2;
+        result += a + 2 * b;
+      }
+      else {
+        break;
+      }
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println("Compute over ordered integers, handy code, time elapsed : " + (endTime - startTime) / 1000.0 + "s");
+    System.out.println("Result : " + result);
+
+    List<Integer> unorderedIntegers = IntStream.range(0, 1000000).boxed().collect(Collectors.toList());
+    startTime = System.currentTimeMillis();
+    result = unorderedIntegers.stream().filter(i -> {counter[1]++; return i < 1000; }).map(i -> i * 2).reduce(0, (x, y) -> x + 2 * y);
+    endTime = System.currentTimeMillis();
+    System.out.println("Compute over unordered integers, time elapsed : " + (endTime - startTime) / 1000.0 + "s");
+    System.out.println("Result : " + result);
+
+    System.out.println("Filter loops : " + counter[0] + ", " + counter[1]);
   }
 
   @Test

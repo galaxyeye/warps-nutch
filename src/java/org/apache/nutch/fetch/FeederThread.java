@@ -112,7 +112,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
           continue;
         } // if
 
-        int feedCapacity = feedLimit - tasksMonitor.readyItemCount() - tasksMonitor.pendingItemCount();
+        int feedCapacity = feedLimit - tasksMonitor.readyTaskCount() - tasksMonitor.pendingTaskCount();
         if (feedCapacity <= 0) {
           // fetchMonitor are full - spin-wait until they have some free space
           try {

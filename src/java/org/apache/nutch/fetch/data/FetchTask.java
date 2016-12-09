@@ -1,9 +1,7 @@
 package org.apache.nutch.fetch.data;
 
-import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
-import org.slf4j.Logger;
 
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,8 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FetchTask implements Comparable<FetchTask> {
 
-  private static final Logger LOG = FetchMonitor.LOG;
-
   /**
    * The initial value is the current timestamp in second, to make it 
    * an unique id in the current host
@@ -23,54 +19,48 @@ public class FetchTask implements Comparable<FetchTask> {
 
   public class Key implements Comparable<Key> {
 
-    Key(int jobID, String queueID, String url) {
+    public Key(int jobID, int priority, String queueId, String url) {
       this.jobID = jobID;
-      this.queueID = queueID;
-      this.itemID = nextId();
+      this.priority = priority;
+      this.queueId = queueId;
+      this.itemId = nextId();
       this.url = url;
     }
 
     public int jobID;
-    public String queueID;
-    public int itemID;
+    public int priority;
+    public String queueId;
+    public int itemId;
     public String url;
 
     @Override
     public int compareTo(Key key) {
-      return itemID - key.itemID;
+      return itemId - key.itemId;
     }
   }
 
-  Key key;
-  WebPage page;
-  URL u;
-  long pendingStartTime = -1;
+  private Key key;
+  private WebPage page;
+  private URL u;
+  private long pendingStartTime = -1;
 
-  public FetchTask(int jobID, String url, WebPage page, URL u, String queueID) {
+  public FetchTask(int jobID, int priority, String url, WebPage page, URL u, String queueId) {
     this.page = page;
-    this.key = new Key(jobID, queueID, url);
+    this.key = new Key(jobID, priority, queueId, url);
     this.u = u;
   }
 
-  public WebPage getPage() {
-    return page;
-  }
+  public WebPage getPage() { return page; }
 
-  public void setPage(WebPage page) {
-    this.page = page;
-  }
+  public void setPage(WebPage page) { this.page = page; }
 
-  public String getQueueID() {
-    return key.queueID;
-  }
+  public int getPriority() { return key.priority; }
 
-  public int getItemID() {
-    return key.itemID;
-  }
+  public String getQueueId() { return key.queueId; }
 
-  public String getUrl() {
-    return key.url;
-  }
+  public int getItemId() { return key.itemId; }
+
+  public String getUrl() { return key.url; }
 
   public URL getU() {
     return u;
@@ -93,7 +83,7 @@ public class FetchTask implements Comparable<FetchTask> {
    * argument, either as a protocol + hostname pair, protocol + IP
    * address pair or protocol+domain pair.
    */
-  public static FetchTask create(int jobID, String url, WebPage page, URLUtil.HostGroupMode hostGroupMode) {
+  public static FetchTask create(int jobId, int priority, String url, WebPage page, URLUtil.HostGroupMode hostGroupMode) {
     final URL u = URLUtil.getUrl(url);
 
     if (u == null) {
@@ -107,9 +97,9 @@ public class FetchTask implements Comparable<FetchTask> {
       return null;
     }
 
-    final String queueID = proto.toLowerCase() + "://" + host.toLowerCase();
+    final String queueId = proto.toLowerCase() + "://" + host.toLowerCase();
 
-    return new FetchTask(jobID, url, page, u, queueID);
+    return new FetchTask(jobId, priority, url, page, u, queueId);
   }
 
   /**
@@ -124,7 +114,7 @@ public class FetchTask implements Comparable<FetchTask> {
 
   @Override
   public String toString() {
-    return "FetchTask [queueID=" + key.queueID + ", id=" + key.itemID + ", url=" + key.url + ", u=" + u
+    return "FetchTask [queueID=" + key.queueId + ", id=" + key.itemId + ", url=" + key.url + ", u=" + u
         + ", page=" + page + "]";
   }
 

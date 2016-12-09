@@ -10,6 +10,7 @@ import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.protocol.ProtocolNotFound;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -60,7 +61,8 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
   private String reprUrl;
 
   /** Fix the thread to a specified queue as possible as we can */
-  private String currQueueId;
+  private int currPriority = -1;
+  private String currQueueId = null;
   private AtomicBoolean halted = new AtomicBoolean(false);
   private Set<String> servedHosts = new TreeSet<>();
   private int taskCount = 0;
@@ -115,7 +117,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
         ++taskCount;
       } // while
     } catch (final Throwable e) {
-      LOG.error("Unexpected throwable : " + e.toString());
+      LOG.error("Unexpected throwable : " + StringUtil.stringifyException(e));
     } finally {
       if (fetchItem != null && fetchItem.task != null) {
         taskScheduler.finishUnchecked(fetchItem.task);
@@ -160,7 +162,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
       fetchResult = taskScheduler.pollFetchResut();
 
       if (fetchResult != null) {
-        fetchTask = taskScheduler.getTasksMonitor().getPendingTask(fetchResult.getQueueId(), fetchResult.getItemId());
+        fetchTask = taskScheduler.getTasksMonitor().findPendingTask(fetchResult.getPriority(), fetchResult.getQueueId(), fetchResult.getItemId());
 
         if (fetchTask == null) {
           LOG.warn("Bad fetch item id {}-{}", fetchResult.getQueueId(), fetchResult.getItemId());
@@ -168,18 +170,24 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
       }
     }
     else {
-      // null queue id means the queue with top priority
-      fetchTask = taskScheduler.schedule(currQueueId);
-    }
+      if (currPriority < 0 || currQueueId == null) {
+        fetchTask = taskScheduler.schedule();
+      }
+      else {
+        fetchTask = taskScheduler.schedule(currPriority, currQueueId);
+      }
 
-    if (fetchTask != null) {
-      // the next time, we fetch items from the same queue as this time
-      currQueueId = fetchTask.getQueueID();
-      servedHosts.add(currQueueId);
-    }
-    else {
-      // fetch item from any queue next time
-      currQueueId = null;
+      if (fetchTask != null) {
+        // the next time, we fetch items from the same queue as this time
+        currPriority = fetchTask.getPriority();
+        currQueueId = fetchTask.getQueueId();
+        servedHosts.add(currQueueId);
+      }
+      else {
+        // The current queue is empty, fetch item from top queue the next time
+        currPriority = -1;
+        currQueueId = null;
+      }
     }
 
     return new FetchItem(fetchTask, fetchResult);
@@ -198,9 +206,11 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
       return FetchStatus.Failed;
     }
 
+    LOG.debug("About to fetch <{}, {}>", task.getPriority(), task.getUrl());
+
     // Blocking until the target web page is loaded
     final ProtocolOutput output = protocol.getProtocolOutput(task.getUrl(), task.getPage());
-    taskScheduler.finish(task.getQueueID(), task.getItemID(), output);
+    taskScheduler.finish(task.getPriority(), task.getQueueId(), task.getItemId(), output);
 
     if (debugContent) {
       cacheContent(result.getUrl(), result.getContent());
@@ -211,7 +221,6 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
 
   /**
    * Get network protocol, for example : http, ftp, sftp, and crowd protocol, etc
-   *
    * */
   private Protocol getProtocol(FetchItem fetchItem) throws ProtocolNotFound {
     FetchTask task = fetchItem.task;
@@ -219,7 +228,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
 
     Protocol protocol;
     if (fetchMode.equals(FetchMode.CROWDSOURCING)) {
-      protocol = protocolFactory.getCustomProtocol("crowd://" + task.getQueueID() + "/" + task.getItemID());
+      protocol = protocolFactory.getCustomProtocol("crowd://" + task.getQueueId() + "/" + task.getItemId());
 
       protocol.setResult(result.getStatusCode(), result.getHeaders(), result.getContent());
     } else {

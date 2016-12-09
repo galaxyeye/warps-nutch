@@ -20,16 +20,19 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * Created by vincent on 16-9-24.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class SeedBuilder {
 
   public static final Logger LOG = LoggerFactory.getLogger(SeedBuilder.class);
 
   // The shortest url
-  public static final String ShortestValidUrl = "ftp://t.tt";
+  public static final String SHORTEST_VALID_URL = "ftp://t.tt";
+  public static final int SHORTEST_VALID_URL_LENGTH = SHORTEST_VALID_URL.length();
 
   /**
    * metadata key reserved for setting a custom fetchIntervalSec for a specific URL
@@ -69,7 +72,7 @@ public class SeedBuilder {
     WebPage row = WebPage.newBuilder().build();
 
       /* Ignore line that start with # */
-    if (urlLine.length() < ShortestValidUrl.length() || urlLine.startsWith("#")) {
+    if (urlLine.length() < SHORTEST_VALID_URL_LENGTH || urlLine.startsWith("#")) {
       return null;
     }
 
@@ -119,10 +122,7 @@ public class SeedBuilder {
   }
 
   public int getFetchIntervalSec() {
-    // Fetch fetchIntervalSec, the default value is 30 days
-    // int fetchIntervalSec = conf.getInt("db.fetch.fetchIntervalSec.default", DateTimeUtil.MONTH);
-
-    // For seeds, we re-fetch it every time we start the loop
+    // Crawl seed pages as soon as possible
     int fetchInterval = (int)Duration.ofMinutes(1).getSeconds();
 
     if (customFetchIntervalSec != -1) {
@@ -134,7 +134,7 @@ public class SeedBuilder {
 
   private Map<String, String> buildMetadata(String seedUrl) {
     Map<String, String> metadata = new TreeMap<>();
-    metadata.put(META_IS_SEED, Nutch.YES_STRING);
+    metadata.put(META_IS_SEED, YES_STRING);
 
     // if tabs : metadata that could be stored
     // must be name=value and separated by \t
