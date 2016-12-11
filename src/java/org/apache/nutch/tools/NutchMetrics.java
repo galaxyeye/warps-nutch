@@ -176,7 +176,7 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(reportFile, report, printPath, true);
   }
 
-  public void writeReport(Path reportFile, String report, boolean printPath, boolean buffered) {
+  public synchronized void writeReport(Path reportFile, String report, boolean printPath, boolean buffered) {
     try {
       if (!Files.exists(reportFile)) {
         Files.createDirectories(reportFile.getParent());

@@ -214,10 +214,10 @@ public class SimpleParser extends Configured {
 
     Content content = protocolOutput.getContent();
 
-    FetchUtil.setStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
-    FetchUtil.setContent(page, content);
-    FetchUtil.setFetchTime(page, CrawlStatus.STATUS_FETCHED);
-    FetchUtil.setMarks(page);
+    FetchUtil.updateStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
+    FetchUtil.updateContent(page, content);
+    FetchUtil.updateFetchTime(page, CrawlStatus.STATUS_FETCHED);
+    FetchUtil.updateMarks(page);
 
     if (content == null) {
       LOG.error("No content for " + url);

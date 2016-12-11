@@ -185,14 +185,19 @@ public class FetchQueue implements Comparable<FetchQueue> {
   /**
    * Note : We have set response time for each page, @see {HttpBase#getProtocolOutput}
    * */
-  public void finish(FetchTask item, boolean asap) {
-    pendingTasks.remove(item.getItemId());
+  public boolean finish(FetchTask fetchTask, boolean asap) {
+    int itemId = fetchTask.getItemId();
+    fetchTask = pendingTasks.remove(itemId);
+    if (fetchTask == null) {
+      LOG.warn("Failed to remove FetchTask : " + itemId);
+      return false;
+    }
 
     long endTime = System.currentTimeMillis();
     setEndTime(endTime, asap);
 
     // Record fetch time cost
-    long fetchTime = endTime - item.getPendingStartTime();
+    long fetchTime = endTime - fetchTask.getPendingStartTime();
 
     if (fetchTime > slowTaskThreshold) {
       // TODO : use a window-fixed queue (first in, first out)
@@ -211,13 +216,17 @@ public class FetchQueue implements Comparable<FetchQueue> {
       totalFinishedTasks = 0;
       totalFetchTime = 0;
     }
+
+    return true;
   }
 
-  public void finish(int itemId, boolean asap) {
+  public boolean finish(int itemId, boolean asap) {
     FetchTask item = pendingTasks.get(itemId);
     if (item != null) {
-      finish(item, asap);
+      return finish(item, asap);
     }
+
+    return false;
   }
 
   public FetchTask getPendingTask(int itemID) {

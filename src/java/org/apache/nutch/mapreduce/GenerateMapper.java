@@ -35,6 +35,9 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,9 +49,9 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
   private enum Counter {
     malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed,
-    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3,
+    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3, rowsDepthN,
     rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
-    rowsNormalisedToNull, rowsFiltered, oldUrlDate,
+    rowsNormalisedToNull, rowsUrlFiltered, oldUrlDate,
     tieba, bbs, news, blog,
     pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, seedsFetchLater, pagesNeverFetch
   }
@@ -67,6 +70,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private CrawlFilters crawlFilters;
   private FetchSchedule fetchSchedule;
   private long pseudoCurrTime;
+  private float generatedDetailPageRate;
   private long maxDetailPageCount;
   private int maxDistance;
   private String[] keyRange;
@@ -103,7 +107,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime);
     long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
-    maxDetailPageCount = Math.round(topN * 0.667);
+    generatedDetailPageRate = 0.667f;
+    maxDetailPageCount = Math.round(topN * generatedDetailPageRate);
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
@@ -138,38 +143,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
 
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    /*
-     * TODO : use hbase query filter directly
-     * */
-    if (TableUtil.isNoMoreFetch(page)) {
-      getCounter().increase(Counter.pagesNeverFetch);
-      return;
-    }
-
-    int depth = TableUtil.getDepth(page);
-      // Fetch schedule, timing filter
-    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
-      if (page.getFetchTime() - pseudoCurrTime <= Duration.ofDays(30).toMillis()) {
-        getCounter().increase(Counter.pagesFetchLater);
-      }
-
-      if (depth == 0) {
-        getCounter().increase(Counter.seedsFetchLater);
-
-        String report = "CurrTime : " + DateTimeUtil.format(pseudoCurrTime)
-            + "\tLastReferredPT : " +  DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
-            + "\tReferredPC : " + TableUtil.getReferredArticles(page)
-            + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
-            + "\tisSeed : " + TableUtil.isSeed(page)
-            + "\t->\t" + url;
-        nutchMetrics.debugFetchLaterSeeds(report, reportSuffix);
-      }
-
-      return;
-    }
-
-    // Url filter
-    if (!shouldProcess(url, reversedUrl, page)) {
+    if (!shouldFetch(url, reversedUrl, page)) {
       return;
     }
 
@@ -184,9 +158,9 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
      * Raise detail page's priority so them can be fetched sooner
      * Detail pages comes first, but we still need keep chances for pages with other category
      * */
-    if (crawlFilters.isDetailUrl(url) && ++detailPages < maxDetailPageCount) {
+    if (crawlFilters.veryLikelyBeDetailUrl(url) && ++detailPages < maxDetailPageCount) {
       priority = FETCH_PRIORITY_DETAIL_PAGE;
-      score = SCORE_DETAIL_PAGE - depth;
+      score = SCORE_DETAIL_PAGE - TableUtil.getDepth(page);
     }
 
     output(url, new SelectorEntry(url, priority, score), page, context);
@@ -194,63 +168,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     updateStatus(url, page);
   }
 
-  // Check Host
-  private boolean checkHost(String url) {
-    String host = URLUtil.getHost(url, hostGroupMode);
-
-    if (host == null) {
-      getCounter().increase(Counter.malformedUrl);
-      return false;
-    }
-
-    if (unreachableHosts.contains(host)) {
-      getCounter().increase(Counter.rowsHostUnreachable);
-      return false;
-    }
-
-    return true;
-  }
-
-  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
-    int depth = TableUtil.getDepth(page);
-    Counter counter = null;
-
-    if (TableUtil.isSeed(page)) {
-      counter = Counter.rowsIsSeed;
-    }
-
-    if (Mark.INJECT_MARK.hasMark(page)) {
-      counter = Counter.rowsInjected;
-    }
-
-    if (depth == 0) {
-      counter = Counter.rowsDepth0;
-    }
-    else if (depth == 1) {
-      counter = Counter.rowsDepth1;
-      if (crawlFilters.isDetailUrl(url)) {
-        counter = Counter.rowsDetailFromSeed;
-      }
-    }
-    else if (depth == 2) {
-      counter = Counter.rowsDepth2;
-    }
-    else if (depth == 3) {
-      counter = Counter.rowsDepth3;
-    }
-
-    if (counter != null) {
-      getCounter().increase(counter);
-    }
-
-    getCounter().updateAffectedRows(url);
-  }
-
-  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
-    context.write(entry, page);
-  }
-
-  private boolean shouldProcess(String url, String reversedUrl, WebPage page) {
+  /*
+   * TODO : We may move some filters to hbase query filters directly
+   * */
+  private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
     if (!checkHost(url)) {
       return false;
     }
@@ -278,10 +199,10 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
     } // if
 
+    int depth = TableUtil.getDepth(page);
     // Filter on distance
     if (maxDistance > -1) {
-      int distance = TableUtil.getDepth(page);
-      if (distance > maxDistance) {
+      if (depth > maxDistance) {
         getCounter().increase(Counter.pagesTooDeep);
         return false;
       }
@@ -320,7 +241,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
 
       if (filter && urlFilters.filter(url) == null) {
-        getCounter().increase(Counter.rowsFiltered);
+        getCounter().increase(Counter.rowsUrlFiltered);
         return false;
       }
     } catch (URLFilterException | MalformedURLException e) {
@@ -328,7 +249,103 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return false;
     }
 
+    // Fetch schedule, timing filter
+    return checkFetchSchedule(url, page, depth);
+  }
+
+  private boolean checkFetchSchedule(String url, WebPage page, int depth) {
+    // Fetch schedule, timing filter
+    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
+      Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
+      Instant pseudoNow = Instant.ofEpochMilli(pseudoCurrTime);
+
+      long days = ChronoUnit.DAYS.between(fetchTime, pseudoNow);
+      if (days < 30) {
+        getCounter().increase(Counter.pagesFetchLater);
+      }
+      else if (days > 3650) {
+        getCounter().increase(Counter.pagesNeverFetch);
+      }
+
+      if (depth == 0) {
+        getCounter().increase(Counter.seedsFetchLater);
+        debugFetchLaterSeeds(page);
+      }
+
+      return false;
+    }
+
     return true;
   }
 
+  // Check Host
+  private boolean checkHost(String url) {
+    String host = URLUtil.getHost(url, hostGroupMode);
+
+    if (host == null) {
+      getCounter().increase(Counter.malformedUrl);
+      return false;
+    }
+
+    if (unreachableHosts.contains(host)) {
+      getCounter().increase(Counter.rowsHostUnreachable);
+      return false;
+    }
+
+    return true;
+  }
+
+  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
+    context.write(entry, page);
+  }
+
+  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
+    if (TableUtil.isSeed(page)) {
+      getCounter().increase(Counter.rowsIsSeed);
+    }
+
+    if (Mark.INJECT_MARK.hasMark(page)) {
+      getCounter().increase(Counter.rowsInjected);
+    }
+
+    int depth = TableUtil.getDepth(page);
+    Counter counter = null;
+
+    if (depth == 0) {
+      counter = Counter.rowsDepth0;
+    }
+    else if (depth == 1) {
+      counter = Counter.rowsDepth1;
+      if (crawlFilters.veryLikelyBeDetailUrl(url)) {
+        counter = Counter.rowsDetailFromSeed;
+      }
+    }
+    else if (depth == 2) {
+      counter = Counter.rowsDepth2;
+    }
+    else if (depth == 3) {
+      counter = Counter.rowsDepth3;
+    }
+    else {
+      counter = Counter.rowsDepthN;
+    }
+
+    getCounter().increase(counter);
+
+    getCounter().updateAffectedRows(url);
+  }
+
+  private void debugFetchLaterSeeds(WebPage page) {
+    String report = Params.formatAsLine(
+        "CurrTime", DateTimeUtil.format(pseudoCurrTime),
+        "LastReferredPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
+        "ReferredPC", TableUtil.getReferredArticles(page),
+        "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
+        "FetchTime", DateTimeUtil.format(page.getFetchTime()),
+        "isSeed", TableUtil.isSeed(page),
+        "->\t", page.getBaseUrl()
+    );
+
+    nutchMetrics.debugFetchLaterSeeds(report, reportSuffix);
+  }
 }

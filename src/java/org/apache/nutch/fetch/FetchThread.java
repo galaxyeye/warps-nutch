@@ -206,7 +206,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
       return FetchStatus.Failed;
     }
 
-    LOG.debug("About to fetch <{}, {}>", task.getPriority(), task.getUrl());
+    LOG.trace("Fetching <{}, {}>", task.getPriority(), task.getUrl());
 
     // Blocking until the target web page is loaded
     final ProtocolOutput output = protocol.getProtocolOutput(task.getUrl(), task.getPage());

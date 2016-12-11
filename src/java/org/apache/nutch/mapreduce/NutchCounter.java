@@ -64,7 +64,7 @@ public class NutchCounter {
     stFetched,
     stRedirTemp,
     stRedirPerm,
-    stNotmodified,
+    stNotModified,
     stRetry,
     stUnfetched,
     stGone
@@ -172,10 +172,10 @@ public class NutchCounter {
   public void updateAffectedRows(String url) throws IOException {
     // Counters
 
-    if (crawlFilters.isDetailUrl(url)) {
+    if (crawlFilters.veryLikelyBeDetailUrl(url)) {
       increase(getIndex(Counter.detailPages));
     }
-    else if (crawlFilters.isIndexUrl(url)) {
+    else if (crawlFilters.veryLikelyBeIndexUrl(url)) {
       increase(getIndex(Counter.indexPages));
     }
 

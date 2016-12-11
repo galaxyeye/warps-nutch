@@ -59,10 +59,15 @@ public class CrawlFilter extends Configured {
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
+  /** TODO : need carefully test */
   public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
-    CrawlFilter.PageCategory pageCategory = CrawlFilter.PageCategory.ANY;
-
     if (page.getBaseUrl() == null) {
+      return CrawlFilter.PageCategory.UNKNOWN;
+    }
+
+    String url = page.getBaseUrl().toString();
+    CrawlFilter.PageCategory pageCategory = sniffPageCategoryByUrlPattern(url);
+    if (pageCategory.isDetail()) {
       return pageCategory;
     }
 
@@ -71,8 +76,7 @@ public class CrawlFilter extends Configured {
       return pageCategory;
     }
 
-    String url = page.getBaseUrl().toString();
-    double _char = textContent.length();
+    double _char = TableUtil.sniffTextLength(page);
     double _a = page.getOutlinks().size();
     if (_a == 0) {
       Object count = page.getTemporaryVariable("outlinks_count");
@@ -81,7 +85,7 @@ public class CrawlFilter extends Configured {
       }
     }
 
-    if (textContent.isEmpty()) {
+    if (_char < 100) {
       if (_a > 30) {
         pageCategory = PageCategory.INDEX;
       }
@@ -96,12 +100,12 @@ public class CrawlFilter extends Configured {
   public static PageCategory sniffPageCategory(String url, double _char, double _a) {
     PageCategory pageCategory = sniffPageCategoryByTextDensity(_char, _a);
 
-    return pageCategory == PageCategory.ANY ? sniffPageCategoryByUrlPattern(url) : pageCategory;
+    return pageCategory == PageCategory.UNKNOWN ? sniffPageCategoryByUrlPattern(url) : pageCategory;
   }
 
   /* TODO : use machine learning to calculate the parameters */
   public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
-    PageCategory pageCategory = PageCategory.ANY;
+    PageCategory pageCategory = PageCategory.UNKNOWN;
 
     if (_a < 1) {
       _a = 1;
@@ -124,7 +128,7 @@ public class CrawlFilter extends Configured {
   public static PageCategory sniffPageCategoryByUrlPattern(String urlString) {
     Objects.requireNonNull(urlString);
 
-    PageCategory pageCategory = PageCategory.ANY;
+    PageCategory pageCategory = PageCategory.UNKNOWN;
 
     final String url = urlString.toLowerCase();
 
@@ -153,7 +157,7 @@ public class CrawlFilter extends Configured {
   }
 
   public enum PageCategory {
-    INDEX, DETAIL, SEARCH, MEDIA, ANY;
+    INDEX, DETAIL, SEARCH, MEDIA, UNKNOWN;
 
     public boolean isIndex() {
       return this == INDEX;
@@ -163,11 +167,11 @@ public class CrawlFilter extends Configured {
       return this == DETAIL;
     }
 
-    public boolean isAny() { return this == ANY; }
+    public boolean isAny() { return this == UNKNOWN; }
   }
 
   @Expose
-  private PageCategory pageCategory = PageCategory.ANY;
+  private PageCategory pageCategory = PageCategory.UNKNOWN;
   @Expose
   private String urlRegexRule;
   @Expose

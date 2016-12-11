@@ -42,7 +42,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
   public enum Counter { 
     notGenerated, alreadyFetched, hostsUnreachable,
     rowsIsSeed, rowsInjected,
-    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3
+    rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3, rowsDepthN
   };
 
   private boolean resume;
@@ -120,29 +120,20 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
       return;
     }
 
-    int priority = TableUtil.getFetchPriority(page, 0);
-    int shuffleOrder = random.nextInt(65536) - priority;
+    int priority = TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+    // Higher priority, comes first
+    int shuffleOrder = random.nextInt(65536) - 65536 * priority;
     context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page));
-
     updateStatus(url, page);
 
     if (limit > 0 && ++count > limit) {
       stop("Hit limit " + limit + ", finish the mapper.");
     }
   }
-  
+
   private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
+    Counter counter;
     int depth = TableUtil.getDepth(page);
-    Counter counter = null;
-
-    if (TableUtil.isSeed(page)) {
-      counter = Counter.rowsIsSeed;
-    }
-
-    if (Mark.INJECT_MARK.hasMark(page)) {
-      counter = Counter.rowsInjected;
-    }
-
     if (depth == 0) {
       counter = Counter.rowsDepth0;
     }
@@ -155,9 +146,18 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     else if (depth == 3) {
       counter = Counter.rowsDepth3;
     }
+    else {
+      counter = Counter.rowsDepthN;
+    }
 
-    if (counter != null) {
-      getCounter().increase(counter);
+    getCounter().increase(counter);
+
+    if (TableUtil.isSeed(page)) {
+      getCounter().increase(Counter.rowsIsSeed);
+    }
+
+    if (Mark.INJECT_MARK.hasMark(page)) {
+      getCounter().increase(Counter.rowsInjected);
     }
 
     getCounter().updateAffectedRows(url);

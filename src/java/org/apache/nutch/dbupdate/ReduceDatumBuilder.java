@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_DEPTH_0;
 import static org.apache.nutch.metadata.Nutch.MAX_DISTANCE;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_TIME;
 
@@ -132,6 +133,7 @@ public class ReduceDatumBuilder {
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 
     TableUtil.setDistance(page, depth);
+    TableUtil.setFetchTimes(page, 0);
 
     try {
       scoringFilters.initialScore(url, page);
@@ -258,7 +260,7 @@ public class ReduceDatumBuilder {
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
         // Vincent : no force re-fetch for opinion monitoring
-//        if (!TableUtil.isNoMoreFetch(page) && maxInterval < page.getFetchInterval()) {
+//        if (!TableUtil.isNoFetch(page) && maxInterval < page.getFetchInterval()) {
 //          fetchSchedule.forceRefetch(url, page, false);
 //        }
 
@@ -291,7 +293,7 @@ public class ReduceDatumBuilder {
         counter.increase(NutchCounter.Counter.stRedirPerm);
         break;
       case CrawlStatus.STATUS_NOTMODIFIED:
-        counter.increase(NutchCounter.Counter.stNotmodified);
+        counter.increase(NutchCounter.Counter.stNotModified);
         break;
       case CrawlStatus.STATUS_RETRY:
         counter.increase(NutchCounter.Counter.stRetry);

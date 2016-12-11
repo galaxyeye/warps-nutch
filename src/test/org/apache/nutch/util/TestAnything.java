@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.Period;
+import java.time.Year;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -36,7 +40,7 @@ public class TestAnything {
     }
 
     Set<String> lines2 = Sets.newHashSet();
-    lines.stream().forEach(url -> {
+    lines.forEach(url -> {
       String pattern = StringUtils.substringBetween(url, "://", "/");
       pattern = "+http://" + pattern + "/(.+)";
       lines2.add(pattern);
@@ -112,10 +116,10 @@ public class TestAnything {
   @Test
   public void testTreeSet() {
     TreeSet<Integer> integers = IntStream.range(0, 30).boxed().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
-    integers.stream().forEach(System.out::print);
+    integers.forEach(System.out::print);
     integers.pollLast();
     System.out.println();
-    integers.stream().forEach(System.out::print);
+    integers.forEach(System.out::print);
   }
 
   @Test
@@ -158,7 +162,15 @@ public class TestAnything {
   }
 
   @Test
-  public void testTime() {
+  public void testDateTime() {
+    Instant t1 = Instant.EPOCH;
+    Instant t2 = Instant.now();
+
+    long days = ChronoUnit.DAYS.between(t1, t2);
+    System.out.println(days);
+
+    System.out.println(Duration.ofDays(365 * 100).getSeconds());
+
     System.out.println(Duration.ofMinutes(60).toMillis());
   }
 
@@ -166,7 +178,7 @@ public class TestAnything {
   public void testAtomic() {
     AtomicInteger counter = new AtomicInteger(100);
     int deleted = 10;
-    counter.addAndGet(0 - deleted);
+    counter.addAndGet(-deleted);
     System.out.println(counter);
   }
 }

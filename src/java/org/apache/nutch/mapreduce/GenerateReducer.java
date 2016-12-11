@@ -48,7 +48,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
   private enum Counter { hosts, hostCountTooLarge, malformedUrl,
     rowsInjected, rowsIsSeed, rowsIsFromSeed,
-    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3
+    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN
   }
 
   /**
@@ -148,6 +148,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     page.setBatchId(batchId);
     // Generate time, we will use this mark to decide if we re-generate this page
     TableUtil.setGenerateTime(page, startTime);
+    TableUtil.setFetchPriority(page, TableUtil.calculateFetchPriority(page));
 
     Mark.INJECT_MARK.removeMarkIfExist(page);
     Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
@@ -156,9 +157,8 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
   }
 
   private void updateStatus(String url, WebPage page, Context context) throws IOException {
+    Counter counter;
     int depth = TableUtil.getDepth(page);
-    Counter counter = null;
-
     if (depth == 0) {
       counter = Counter.pagesDepth0;
     }
@@ -171,14 +171,14 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     else if (depth == 3) {
       counter = Counter.pagesDepth3;
     }
+    else {
+      counter = Counter.pagesDepthN;
+    }
+    getCounter().increase(counter);
 
     // double check (depth == 0 or has IS-SEED metadata) , can be removed later
     if (TableUtil.isSeed(page)) {
-      counter = Counter.rowsIsSeed;
-    }
-
-    if (counter != null) {
-      getCounter().increase(counter);
+      getCounter().increase(Counter.rowsIsSeed);
     }
 
     getCounter().updateAffectedRows(url);

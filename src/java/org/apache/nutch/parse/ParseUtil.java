@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -65,6 +67,7 @@ public class ParseUtil {
   private static final int DEFAULT_MAX_PARSE_TIME = 30;
 
   private final Configuration conf;
+  private final Set<CharSequence> unparsableTypes = new HashSet<>();
   private final Signature sig;
   private final URLFilters filters;
   private final URLNormalizers normalizers;
@@ -132,21 +135,6 @@ public class ParseUtil {
     return ParseStatusUtils.getEmptyParse(new ParseException("Unable to parse content"), null);
   }
 
-  private Parse runParser(Parser p, String url, WebPage page) {
-    ParseCallable pc = new ParseCallable(p, page, url);
-    Future<Parse> task = executorService.submit(pc);
-
-    Parse res = null;
-    try {
-      res = task.get(maxParseTime, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      LOG.warn("Failed to parsing " + url, e);
-      task.cancel(true);
-    }
-
-    return res;
-  }
-
   /**
    * Parses given web page and stores parsed content within page. Puts a
    * meta-redirect to outlinks.
@@ -168,8 +156,11 @@ public class ParseUtil {
     try {
       parse = parse(url, page);
     } catch (ParserNotFound e) {
-      // do not print stacktrace for the fact that some types are not mapped.
-      LOG.warn("No suitable parser found: " + e.getMessage());
+      CharSequence contentType = page.getContentType();
+      if (!unparsableTypes.contains(contentType)) {
+        unparsableTypes.add(contentType);
+        LOG.warn("No suitable parser found: " + e.getMessage());
+      }
       return null;
     } catch (final Exception e) {
       LOG.warn("Failed to parse : " + url + ": " + StringUtils.stringifyException(e));
@@ -191,6 +182,23 @@ public class ParseUtil {
     }
 
     return parse;
+  }
+
+  public Set<CharSequence> getUnparsableTypes() { return unparsableTypes; }
+
+  private Parse runParser(Parser p, String url, WebPage page) {
+    ParseCallable pc = new ParseCallable(p, page, url);
+    Future<Parse> task = executorService.submit(pc);
+
+    Parse res = null;
+    try {
+      res = task.get(maxParseTime, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.warn("Failed to parsing " + url, e);
+      task.cancel(true);
+    }
+
+    return res;
   }
 
   private void processSuccess(String url, WebPage page, org.apache.nutch.storage.ParseStatus pstatus, Parse parse) {
@@ -270,8 +278,6 @@ public class ParseUtil {
       validCount++;
       page.getOutlinks().put(utf8ToUrl, new Utf8(outlinks[i].getAnchor()));
     } // for
-
-    page.setTmporaryVariable(VAR_ORDERED_OUTLINKS, outlinks);
 
     // TODO : Marks should be set in mapper or reducer, not util methods
     Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);

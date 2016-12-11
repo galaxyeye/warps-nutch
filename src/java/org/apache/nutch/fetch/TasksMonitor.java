@@ -167,6 +167,10 @@ public class TasksMonitor {
       return null;
     }
 
+    if (priorityChanged) {
+      LOG.info("Fetch priority changed : " + lastTaskPriority + " -> " + nextPriority);
+    }
+
     FetchQueue queue = null;
     while (queue == null && !fetchQueues.isEmpty()) {
       queue = checkFetchQueue(fetchQueues.peek());
@@ -301,7 +305,7 @@ public class TasksMonitor {
   public synchronized void retune(boolean force) {
     List<FetchQueue> unreachableQueues = fetchQueues.stream()
         .filter(queue -> unreachableHosts.contains(queue.getHost())).collect(toList());
-    unreachableQueues.stream().forEach(this::retire);
+    unreachableQueues.forEach(this::retire);
 
     String unreachableQueueIds = unreachableQueues.stream().map(FetchQueue::getId).collect(joining(", "));
     if (!unreachableQueueIds.isEmpty()) {
@@ -354,25 +358,25 @@ public class TasksMonitor {
         + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
         + "\t->\t" + url;
 
-    if (crawlFilters.isIndexUrl(url)) {
+    if (crawlFilters.veryLikelyBeIndexUrl(url)) {
       ++hostStat.indexUrls;
       if (debugUrls) {
         nutchMetrics.debugIndexUrls(report, reportSuffix);
       }
     }
-    else if (crawlFilters.isSearchUrl(url)) {
+    else if (crawlFilters.veryLikelyBeSearchUrl(url)) {
       ++hostStat.searchUrls;
       if (debugUrls) {
         nutchMetrics.debugSearchUrls(report, reportSuffix);
       }
     }
-    else if (crawlFilters.isDetailUrl(url)) {
+    else if (crawlFilters.veryLikelyBeDetailUrl(url)) {
       ++hostStat.detailUrls;
       if (debugUrls) {
         nutchMetrics.debugDetailUrls(report, reportSuffix);
       }
     }
-    else if (crawlFilters.isMediaUrl(url)) {
+    else if (crawlFilters.veryLikelyBeMediaUrl(url)) {
       ++hostStat.mediaUrls;
       if (debugUrls) {
         nutchMetrics.debugMediaUrls(report, reportSuffix);
@@ -590,14 +594,13 @@ public class TasksMonitor {
       return;
     }
 
-    String report = "# Unreachable hosts : \n";
-
+    String report = "";
     String hosts = unreachableDomainSet.stream()
         .map(StringUtil::reverse).sorted().map(StringUtil::reverse)
         .collect(joining("\n"));
     report += hosts;
     report += "\n";
-    REPORT_LOG.info(report);
+    REPORT_LOG.info("# Unreachable hosts : \n" + report);
 
     try {
       Path unreachableHostsPath = nutchMetrics.getUnreachableHostsPath();

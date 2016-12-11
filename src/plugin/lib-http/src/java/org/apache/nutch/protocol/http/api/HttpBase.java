@@ -49,6 +49,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 // crawler-commons imports
 
@@ -124,6 +125,9 @@ public abstract class HttpBase implements Protocol {
 
   /** Which TLS/SSL cipher suites to support */
   protected Set<String> tlsPreferredCipherSuites;
+
+  /** Prevent multiple threads generate the same log unnecessary */
+  private static AtomicBoolean parametersReported = new AtomicBoolean(false);
 
   /** Creates a new instance of HttpBase */
   public HttpBase() {
@@ -213,16 +217,19 @@ public abstract class HttpBase implements Protocol {
     tlsPreferredProtocols = new HashSet<>(Arrays.asList(protocols));
     tlsPreferredCipherSuites = new HashSet<>(Arrays.asList(ciphers));
 
-    LOG.info(Params.formatAsLine(
-        "fetchMode", fetchMode,
-        "proxyHost", proxyHost,
-        "proxyPort", proxyPort,
-        "httpTimeout", timeout,
-        "maxContent", maxContent,
-        "userAgent", userAgent,
-        "httpAcceptLanguage", acceptLanguage,
-        "httpAccept", accept
-    ));
+    if (!parametersReported.get()) {
+      LOG.info(Params.formatAsLine(
+          "fetchMode", fetchMode,
+          "proxyHost", proxyHost,
+          "proxyPort", proxyPort,
+          "httpTimeout", timeout,
+          "maxContent", maxContent,
+          "userAgent", userAgent,
+          "httpAcceptLanguage", acceptLanguage,
+          "httpAccept", accept
+      ));
+      parametersReported.set(true);
+    }
   }
 
   // Inherited Javadoc

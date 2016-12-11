@@ -19,6 +19,7 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -39,7 +40,6 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
                                long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
     long refetchTime = fetchTime;
     long intervalSec = page.getFetchInterval();
-
     if (modifiedTime <= 0) {
       modifiedTime = fetchTime;
     }
@@ -51,8 +51,8 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
     else if (TableUtil.veryLiklyDetailPage(page)) {
       // Detail pages are fetched only once
-      TableUtil.setNoMoreFetch(page);
-      intervalSec = (int) Duration.ofDays(365 * 100).getSeconds();
+      TableUtil.setNoFetch(page);
+      intervalSec = (int) Duration.ofDays(365 * 10).getSeconds();
       changed = true;
     }
     else {
@@ -71,7 +71,17 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
    * Adjust fetch interval for article pages
    * */
   private long adjustSeedFetchInterval(WebPage page, long fetchTime, long intervalSec) {
+    int fetchTimes = TableUtil.getFetchTimes(page);
+    if (fetchTimes <= 1) {
+      // Referred publish time is not initialized yet for this seed page
+      intervalSec = 1;
+      return intervalSec;
+    }
+
     long referredPublishTime = TableUtil.getReferredPublishTime(page);
+    if (referredPublishTime <= 0) {
+      LOG.warn("Unexpected referred publish time : " + DateTimeUtil.format(referredPublishTime) + ", " + page.getBaseUrl());
+    }
 
     long hours = Duration.ofMillis(fetchTime - referredPublishTime).toHours();
     if (hours <= 24) {

@@ -11,6 +11,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
+import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -27,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
-import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -95,7 +94,7 @@ public class MapDatumBuilder {
         url = temporaryUrlFilter(url, mainPage);
 
         // We explicitly follow detail urls from seed page TODO : this can be avoid
-        if (TableUtil.isSeed(mainPage) && crawlFilters.isDetailUrl(url)) {
+        if (TableUtil.isSeed(mainPage) && crawlFilters.veryLikelyBeDetailUrl(url)) {
           return url;
         }
 
@@ -110,7 +109,7 @@ public class MapDatumBuilder {
 
   // TODO : make it a plugin
   private String temporaryUrlFilter(String url, WebPage mainPage) {
-    if (crawlFilters.isSearchUrl(url) || crawlFilters.isMediaUrl(url)) {
+    if (crawlFilters.veryLikelyBeSearchUrl(url) || crawlFilters.veryLikelyBeMediaUrl(url)) {
       url = null;
     }
 
@@ -168,7 +167,6 @@ public class MapDatumBuilder {
     final int limit = 1000;
 
     if (depth >= maxDistance) {
-      counter.increase(NutchCounter.Counter.tooDeepPages);
       return new HashMap<>();
     }
 

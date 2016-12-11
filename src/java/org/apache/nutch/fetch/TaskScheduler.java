@@ -42,16 +42,14 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.stream.Collectors.joining;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class TaskScheduler extends Configured {
@@ -79,7 +77,7 @@ public class TaskScheduler extends Configured {
     pagesThou, mbThou,
     rowsRedirect,
     isSeed,
-    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthUpdated,
+    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
     pagesPeresist, newPages, newDetailPages, existOutPages
   }
 
@@ -277,6 +275,8 @@ public class TaskScheduler extends Configured {
 
   public int getFeedLimit() { return initFetchThreadCount * maxFeedPerThread; }
 
+  public Set<CharSequence> getUnparsableTypes() { return parseUtil == null ? new HashSet<>() : parseUtil.getUnparsableTypes(); }
+
   public boolean indexJIT() { return jitIndexer != null; }
 
   public boolean updateJIT() { return mapDatumBuilder != null && reduceDatumBuilder != null; }
@@ -385,7 +385,7 @@ public class TaskScheduler extends Configured {
     while (number-- > 0) {
       FetchTask fetchTask;
 
-      if (priority < 0 || queueId == null) {
+      if (priority <= FETCH_PRIORITY_ANY || queueId == null) {
         fetchTask = tasksMonitor.consume();
       }
       else {
@@ -474,6 +474,8 @@ public class TaskScheduler extends Configured {
     if (jitIndexer != null) {
       jitIndexer.cleanup();
     }
+
+    report();
 
     tasksMonitor.report();
     REPORT_LOG.info("[End Report]");
@@ -778,16 +780,16 @@ public class TaskScheduler extends Configured {
     String url = fetchTask.getUrl();
     WebPage mainPage = fetchTask.getPage();
 
-    FetchUtil.setStatus(mainPage, status, pstatus);
-    FetchUtil.setContent(mainPage, content);
-    FetchUtil.setFetchTime(mainPage, status);
-    FetchUtil.setMarks(mainPage);
+    FetchUtil.updateContent(mainPage, content);
+    FetchUtil.updateStatus(mainPage, status, pstatus);
+    FetchUtil.updateFetchTime(mainPage, status);
+    FetchUtil.updateMarks(mainPage);
+
+    debugFetchHistory(fetchTask, mainPage, status);
 
     String reversedUrl = TableUtil.reverseUrl(url);
 
     // Only STATUS_FETCHED can be parsed
-    // TODO : We should calculate the signature to know if a webpage is really NOTMODIFIED
-    // For news, the signature must be calculated via the extracted content
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
       if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
         synchronized (parseUtil) {
@@ -802,25 +804,11 @@ public class TaskScheduler extends Configured {
       }
     }
 
-    // Debug fetch time history
-    String fetchTimeHistory = TableUtil.getFetchTimeHistory(mainPage, "");
-    if (fetchTimeHistory.contains(",")) {
-      String report = String.format("%60s", fetchTask.getUrl())
-//          + "\turlCategory : " +
-          + "\tfetchTimeHistory : " + fetchTimeHistory
-          + "\tstatus : " + CrawlStatus.getName(status)
-//          + "\tsignature : " + StringUtil.toHexString(page.getSignature())
-          + "\n";
-      nutchMetrics.reportFetchTimeHistory(report, reportSuffix);
-    }
-
     // Remove content if storingContent is false. Content is added to page above
     // for ParseUtil be able to parse it
     if (content != null && !storingContent) {
       mainPage.setContent(ByteBuffer.wrap(new byte[0]));
     }
-
-    // LOG.debug("ready to write hadoop : {}, {}", page.getStatus(), page.getMarkers());
 
     if (updateJIT()) {
       outputWithDbUpdate(url, reversedUrl, mainPage);
@@ -885,6 +873,7 @@ public class TaskScheduler extends Configured {
 
     // TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
     if (oldPage != null) {
+      // TODO : Update just once, so a update phrase is required
       long publishTime = TableUtil.getPublishTime(oldPage);
       if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
         TableUtil.updateReferredPublishTime(mainPage, publishTime);
@@ -960,10 +949,27 @@ public class TaskScheduler extends Configured {
     else if (depth == 3) {
       counter.increase(Counter.pagesDepth3);
     }
+    else {
+      counter.increase(Counter.pagesDepthN);
+    }
 
     counter.increase(Counter.mbytes, Math.round(pageLength / 1024.0f));
 
     counter.updateAffectedRows(url);
+  }
+
+  private void debugFetchHistory(FetchTask fetchTask, WebPage mainPage, byte status) {
+    // Debug fetch time history
+    String fetchTimeHistory = TableUtil.getFetchTimeHistory(mainPage, "");
+    if (fetchTimeHistory.contains(",")) {
+      String report = String.format("%60s", fetchTask.getUrl())
+//          + "\turlCategory : " +
+          + "\tfetchTimeHistory : " + fetchTimeHistory
+          + "\tstatus : " + CrawlStatus.getName(status)
+//          + "\tsignature : " + StringUtil.toHexString(page.getSignature())
+          + "\n";
+      nutchMetrics.reportFetchTimeHistory(report, reportSuffix);
+    }
   }
 
   private void logFetchFailure(String message) {
@@ -979,5 +985,15 @@ public class TaskScheduler extends Configured {
 
     fetchErrors.incrementAndGet();
     counter.increase(NutchCounter.Counter.errors);
+  }
+
+  private void report() {
+    if (!getUnparsableTypes().isEmpty()) {
+      String report = "";
+      String hosts = getUnparsableTypes().stream().sorted().collect(joining("\n"));
+      report += hosts;
+      report += "\n";
+      REPORT_LOG.info("# UnparsableTypes : \n" + report);
+    }
   }
 }

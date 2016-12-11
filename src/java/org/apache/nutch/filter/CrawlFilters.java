@@ -222,7 +222,7 @@ public class CrawlFilters extends Configured {
     return DateTimeUtil.containsOldDate(url);
   }
 
-  public boolean isDetailUrl(String url) {
+  public boolean veryLikelyBeDetailUrl(String url) {
     if (url == null) {
       return false;
     }
@@ -242,7 +242,7 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
-  public boolean isIndexUrl(String url) {
+  public boolean veryLikelyBeIndexUrl(String url) {
     if (url == null) return false;
 
     PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
@@ -260,7 +260,7 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
-  public boolean isMediaUrl(String url) {
+  public boolean veryLikelyBeMediaUrl(String url) {
     if (url == null) return false;
 
     PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
@@ -281,7 +281,7 @@ public class CrawlFilters extends Configured {
   /**
    * Notice : index url is not a search url even if it contains "search"
    * */
-  public boolean isSearchUrl(String url) {
+  public boolean veryLikelyBeSearchUrl(String url) {
     if (url == null) {
       return false;
     }
@@ -329,7 +329,7 @@ public class CrawlFilters extends Configured {
     CrawlFilters crawlFilters = CrawlFilters.create(conf);
     System.out.println(crawlFilters);
 
-    boolean detail = crawlFilters.isDetailUrl("http://item.yhd.com/item/12342134134.html");
+    boolean detail = crawlFilters.veryLikelyBeDetailUrl("http://item.yhd.com/item/12342134134.html");
     System.out.println("detail " + detail);
 
     System.out.println("----------------");

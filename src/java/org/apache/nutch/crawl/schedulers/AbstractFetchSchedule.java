@@ -178,7 +178,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   @Override
   public boolean shouldFetch(String url, WebPage page, long curTime) {
     // pages are marked as never fetch again
-    if (TableUtil.isNoMoreFetch(page)) {
+    if (TableUtil.isNoFetch(page)) {
       return false;
     }
 

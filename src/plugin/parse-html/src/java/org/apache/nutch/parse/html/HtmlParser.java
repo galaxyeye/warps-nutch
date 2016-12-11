@@ -151,7 +151,7 @@ public class HtmlParser implements Parser {
     CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
     TableUtil.setPageCategory(page, pageCategory);
     if (pageCategory.isDetail()) {
-      TableUtil.setDetailPageLikelihood(page, 0.9f);
+      TableUtil.setPageCategoryLikelihood(page, 0.9f);
     }
 
     return parse;
@@ -208,7 +208,7 @@ public class HtmlParser implements Parser {
      * @vincent : We ignore all search links
      * TODO : This is a temporary solution, and should be configurated
      * */
-    if (crawlFilters.isSearchUrl(url)) {
+    if (crawlFilters.veryLikelyBeSearchUrl(url)) {
       return;
     }
 

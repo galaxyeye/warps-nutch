@@ -43,10 +43,40 @@ function __bin_nutch {
 }
 
 CONFIG_DIR=conf/configsets/information/local
-SEEDDIR=conf/configsets/information/local/seeds/all.txt
-CRAWL_ID=information_tmp
-SOLR_URL=http://master:8983/solr/information_tmp
-LIMIT=2
+
+SEEDDIR="$1"
+CRAWL_ID="$2"
+if [ "$#" -eq 3 ]; then
+    LIMIT="$3"
+elif [ "$#" -eq 4 ]; then
+     SOLR_URL="$3"
+     LIMIT="$4"
+else
+    echo "Unknown # of arguments $#"
+    echo "Usage: crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$SEEDDIR" = "" ]; then
+    echo "Missing seedDir : crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$CRAWL_ID" = "" ]; then
+    echo "Missing crawlID : crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$SOLR_URL" = "" ]; then
+    # echo "No SOLRURL specified. Skipping indexing."
+    echo "Missing solrUrl : crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$LIMIT" = "" ]; then
+    echo "Missing numberOfRounds : crawl <seedDir> <crawlID> [<solrUrl>] <numberOfRounds>"
+    exit -1;
+fi
 
 # initial injection
 # echo "Injecting seed URLs"

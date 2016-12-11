@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
+import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_DEPTH_0;
+import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL_LENGTH;
 import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
@@ -29,10 +31,6 @@ import static org.apache.nutch.metadata.Nutch.YES_STRING;
 public class SeedBuilder {
 
   public static final Logger LOG = LoggerFactory.getLogger(SeedBuilder.class);
-
-  // The shortest url
-  public static final String SHORTEST_VALID_URL = "ftp://t.tt";
-  public static final int SHORTEST_VALID_URL_LENGTH = SHORTEST_VALID_URL.length();
 
   /**
    * metadata key reserved for setting a custom fetchIntervalSec for a specific URL
@@ -114,6 +112,7 @@ public class SeedBuilder {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
+    TableUtil.setFetchTimes(row, 0);
     TableUtil.setDistance(row, 0);
 
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);

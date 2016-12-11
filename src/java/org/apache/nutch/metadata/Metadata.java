@@ -43,16 +43,17 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
   public static final String META_PUBLISH_TIME = "PUBLISH_TIME";
   public static final String META_TEXT_CONTENT_LENGTH = "TEXT_CONTENT_LENGTH";
 
+  public static final String META_TMP = "TMP_";
+  public static final String META_FETCH_TIMES = "FETCH_TIMES";
+  public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
   public static final String META_REFERRER = "REFERRER";
   public static final String META_REFERRED_PUBLISH_TIME = "REF_PUB_TIME";
   public static final String META_REFERRED_ARTICLES = "REF_ARTICLES";
   public static final String META_REFERRED_CHARS = "REF_CHARS";
-  public static final String META_TMP = "TMP_";
-  public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
   public static final String META_IS_NAVIGATOR = "IS_NAVIGATOR";
   public static final String META_IS_SEED = "IS_SEED";
-  public static final String META_DETAIL_PAGE_LIKELIHOOD = "DETAIL_PAGE_LIKELIHOOD";
-  public static final String META_NO_MORE_FETCH = "NO_MORE_FETCH";
+  public static final String META_PAGE_CATEGORY_LIKELIHOOD = "PAGE_CATEGORY_LIKELIHOOD";
+  public static final String META_NO_FETCH = "NO_FETCH";
   public static final String META_PAGE_CATEGORY = "PAGE_CATEGORY";
 
   public static final String META_CASH_KEY = "_csh_";

@@ -209,6 +209,9 @@ public class GenerateJob extends NutchJob implements Tool {
       out.writeFloat(score);
     }
 
+    /**
+     * Items with higher <priority, score> comes first in reduce phrase
+     * */
     @Override
     public int compareTo(SelectorEntry se) {
       if (se.priority == priority) {
@@ -248,7 +251,6 @@ public class GenerateJob extends NutchJob implements Tool {
       }
 
       return priority != other.priority;
-
     }
 
     /**

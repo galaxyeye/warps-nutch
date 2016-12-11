@@ -16,29 +16,31 @@ import java.nio.ByteBuffer;
  */
 public class FetchUtil {
 
-  static public void setStatus(WebPage page, byte status) {
-    setStatus(page, status, null);
+  static public void updateStatus(WebPage page, byte status) {
+    updateStatus(page, status, null);
   }
 
-  static public void setStatus(WebPage page, byte status, ProtocolStatus pstatus) {
+  static public void updateStatus(WebPage page, byte status, ProtocolStatus pstatus) {
     page.setStatus((int) status);
     if (pstatus != null) {
       page.setProtocolStatus(pstatus);
     }
+
+    TableUtil.increaseFetchTimes(page);
   }
 
-  static public void setMarks(WebPage page) {
+  static public void updateMarks(WebPage page) {
     /** Set fetch mark */
     Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
     /** Unset index mark if exist, this page should be re-indexed */
     Mark.INDEX_MARK.removeMarkIfExist(page);
   }
 
-  static public void setContent(WebPage page, Content content) {
-    setContent(page, content, null);
+  static public void updateContent(WebPage page, Content content) {
+    updateContent(page, content, null);
   }
 
-  static public void setContent(WebPage page, Content content, String contentType) {
+  static public void updateContent(WebPage page, Content content, String contentType) {
     if (content == null) {
       return;
     }
@@ -59,13 +61,14 @@ public class FetchUtil {
     }
   }
 
-  static public void setFetchTime(WebPage page, byte status) {
+  static public void updateFetchTime(WebPage page, byte status) {
     final long prevFetchTime = page.getFetchTime();
     final long fetchTime = System.currentTimeMillis();
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(fetchTime);
 
-    if (status == CrawlStatus.STATUS_FETCHED)
-    TableUtil.putFetchTimeHistory(page, fetchTime);
+    if (status == CrawlStatus.STATUS_FETCHED) {
+      TableUtil.putFetchTimeHistory(page, fetchTime);
+    }
   }
 }

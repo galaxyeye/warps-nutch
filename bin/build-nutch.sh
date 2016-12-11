@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-usage="Usage: build-nutch.sh [--add-config <dir>] [--target <runtime|local|deploy>] [--start]"
+usage="Usage: build-nutch.sh [--add-config <dir>] [--target <runtime|local|deploy>] [--version <version>] [--start]"
 
 # if no args specified, show usage
 if [ $# -le 1 ]; then
@@ -10,6 +10,7 @@ fi
 
 ADD_CONFIG_DIR=
 ANT_TARGET=runtime
+VERSION=
 START_NUTCH=false
 #check to see if the conf dir or hbase home are given as an optional arguments
 while [ $# -gt 1 ]
@@ -22,6 +23,10 @@ do
   then
     shift
     ANT_TARGET=$1
+  elif [ "--version" = "$1" ]
+  then
+    shift
+    VERSION=$1
   elif [ "--start" = "$1" ]
   then
     shift
@@ -69,6 +74,12 @@ NUTCH_RUNTIME=$NUTCH_SRC_HOME/runtime
 NUTCH_DEPLOGY=$NUTCH_RUNTIME/deploy
 NUTCH_LOCAL=$NUTCH_RUNTIME/local
 
+if [ -n "$VERSION" ]; then
+  echo $VERSION > $NUTCH_SRC_HOME/VERSION
+else
+  VERSION=`cat $NUTCH_SRC_HOME/VERSION`
+fi
+
 if [[ ! -e $BUILD_DIR ]]; then
   mkdir $BUILD_DIR
 fi
@@ -79,9 +90,8 @@ echo "Log file : $BUILD_LOGOUT_PATH"
 
 [[ -d $ADD_CONFIG_DIR ]] && cp -r $NUTCH_SRC_HOME/$ADD_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/
 
-# TODO : select local, deploy, both mode
 # TODO : deploy to test environment
-$ANT $ANT_TARGET -logfile $BUILD_LOGOUT_PATH -buildfile $BUILD_FILE
+$ANT -Dversion=$VERSION $ANT_TARGET -logfile $BUILD_LOGOUT_PATH -buildfile $BUILD_FILE
 echo "Last build message : "
 echo "..........................................................."
 tail -n 15 $BUILD_LOGOUT_PATH
@@ -90,4 +100,3 @@ echo "..........................................................."
 if $START_NUTCH; then
   $NUTCH_LOCAL/bin/start-nutch.sh
 fi
-

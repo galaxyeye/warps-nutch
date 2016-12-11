@@ -33,6 +33,9 @@ import java.util.Map;
 
 import static org.apache.nutch.metadata.Metadata.*;
 
+/**
+ * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency
+ * */
 public class TableUtil {
 
   /**
@@ -184,8 +187,8 @@ public class TableUtil {
     return value;
   }
 
-  public static void setFloatMetadata(WebPage page, float value) {
-    page.getMetadata().put(new Utf8(META_CASH_KEY), ByteBuffer.wrap(Bytes.toBytes(value)));
+  public static void setFloatMetadata(WebPage page, String key, float value) {
+    page.getMetadata().put(new Utf8(key), ByteBuffer.wrap(Bytes.toBytes(value)));
   }
 
   public static void setTextContentLength(WebPage page, int length) {
@@ -221,20 +224,20 @@ public class TableUtil {
     return 0;
   }
 
-  public static float getDetailPageLikelihood(WebPage page) {
-    return getFloatMetadata(page, META_DETAIL_PAGE_LIKELIHOOD, 0f);
+  public static float getPageCategoryLikelihood(WebPage page) {
+    return getFloatMetadata(page, META_PAGE_CATEGORY_LIKELIHOOD, 0f);
+  }
+
+  public static void setPageCategoryLikelihood(WebPage page, float likelihood) {
+    setFloatMetadata(page, META_PAGE_CATEGORY_LIKELIHOOD, likelihood);
   }
 
   public static boolean isDetailPage(WebPage page, float threshold) {
-    return getDetailPageLikelihood(page) >= threshold;
+    return getPageCategory(page).isDetail() && getPageCategoryLikelihood(page) >= threshold;
   }
 
   public static boolean veryLiklyDetailPage(WebPage page) {
     return isDetailPage(page, 0.85f);
-  }
-
-  public static void setDetailPageLikelihood(WebPage page, float likelihood) {
-    setFloatMetadata(page, likelihood);
   }
 
   public static void setPageCategory(WebPage page, CrawlFilter.PageCategory pageCategory) {
@@ -248,16 +251,16 @@ public class TableUtil {
       return CrawlFilter.PageCategory.valueOf(pageCategoryStr);
     }
     catch (Throwable e) {
-      return CrawlFilter.PageCategory.ANY;
+      return CrawlFilter.PageCategory.UNKNOWN;
     }
   }
 
-  public static void setNoMoreFetch(WebPage page) {
-    putMetadata(page, META_NO_MORE_FETCH, YES_STRING);
+  public static void setNoFetch(WebPage page) {
+    putMetadata(page, META_NO_FETCH, YES_STRING);
   }
 
-  public static boolean isNoMoreFetch(WebPage page) {
-    return getMetadata(page, META_NO_MORE_FETCH) != null;
+  public static boolean isNoFetch(WebPage page) {
+    return getMetadata(page, META_NO_FETCH) != null;
   }
 
   public static int getDepth(WebPage page) {
@@ -273,6 +276,13 @@ public class TableUtil {
     putMetadata(page, META_DISTANCE, String.valueOf(newDistance));
   }
 
+  public static void increaseDistance(WebPage page, int distance) {
+    int oldDistance = getDistance(page);
+    if (oldDistance < MAX_DISTANCE - distance) {
+      putMetadata(page, META_DISTANCE, String.valueOf(oldDistance + distance));
+    }
+  }
+
   public static int calculateFetchPriority(WebPage page) {
     int depth = getDepth(page);
     int priority = FETCH_PRIORITY_DEFAULT;
@@ -281,23 +291,11 @@ public class TableUtil {
       priority = FETCH_PRIORITY_DEPTH_BASE - depth;
     }
 
-    setFetchPriorityIfAbsent(page, priority);
-
     return priority;
   }
 
-  /**
-   * TODO : use a standalone field for page
-   * */
   public static void setFetchPriority(WebPage page, int priority) {
     TableUtil.putMetadata(page, META_FETCH_PRIORITY, String.valueOf(priority));
-  }
-
-  public static void setFetchPriorityIfAbsent(WebPage page, int priority) {
-    String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
-    if (s == null) {
-      setFetchPriority(page, priority);
-    }
   }
 
   public static int getFetchPriority(WebPage page, int defaultPriority) {
@@ -319,7 +317,7 @@ public class TableUtil {
   }
 
   public static void setCash(WebPage page, float cash) {
-    setFloatMetadata(page, cash);
+    setFloatMetadata(page, META_CASH_KEY, cash);
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {
@@ -345,6 +343,20 @@ public class TableUtil {
 
   public static void setReferrer(WebPage page, String referrer) {
     putMetadata(page, META_REFERRER, referrer);
+  }
+
+  public static int getFetchTimes(WebPage page) {
+    String referredPages = getMetadata(page, META_FETCH_TIMES);
+    return StringUtil.tryParseInt(referredPages, 0);
+  }
+
+  public static void setFetchTimes(WebPage page, int count) {
+    putMetadata(page, META_FETCH_TIMES, String.valueOf(count));
+  }
+
+  public static void increaseFetchTimes(WebPage page) {
+    int count = getFetchTimes(page);
+    putMetadata(page, META_FETCH_TIMES, String.valueOf(count + 1));
   }
 
   public static long getReferredArticles(WebPage page) {
