@@ -67,17 +67,18 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
       return;
     }
 
-    url = datumFilter.filterUrl(page, url);
-    if (url == null) {
-      getCounter().increase(Counter.urlFiltered);
-      return;
-    }
+    // No need to apply a url filtering
+//    url = datumFilter.filterUrl(page, url);
+//    if (url == null) {
+//      getCounter().increase(Counter.urlFiltered);
+//      return;
+//    }
 
     Map<UrlWithScore, NutchWritable> updateData = datumFilter.createRowsFromOutlink(url, page);
     updateData.entrySet().forEach(e -> output(e.getKey(), e.getValue(), context));
     getCounter().increase(Counter.newRowsMapped, updateData.size());
 
-    Pair<UrlWithScore, NutchWritable> mapDatum = datumFilter.buildMainDatum(reversedUrl, page);
+    Pair<UrlWithScore, NutchWritable> mapDatum = datumFilter.createMainDatum(reversedUrl, page);
     output(mapDatum.getKey(), mapDatum.getValue(), context);
     getCounter().increase(Counter.rowsMapped);
   }

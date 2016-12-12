@@ -79,8 +79,6 @@ public class ReduceDatumBuilder {
       }
 
       page = createNewRow(url, MAX_DISTANCE);
-
-      counter.increase(DbUpdateReducer.Counter.newRows);
     }
     else {
       // process the main page
@@ -146,7 +144,7 @@ public class ReduceDatumBuilder {
   }
 
   public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
-    TableUtil.setReferrer(sourcePage, sourcePage.getBaseUrl().toString());
+    TableUtil.setReferrer(newPage, sourcePage.getBaseUrl().toString());
 
     updateScore(url, newPage);
 

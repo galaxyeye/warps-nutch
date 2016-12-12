@@ -106,8 +106,7 @@ public class OPICScoringFilter implements ScoringFilter {
     for (ScoreDatum scoreDatum : inlinkedScoreData) {
       adjust += scoreDatum.getScore();
     }
-
-    adjust = adjustArticlePageScore(row, adjust);
+    adjust += adjustArticlePageScore(row);
 
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
@@ -121,18 +120,6 @@ public class OPICScoringFilter implements ScoringFilter {
     float cash = TableUtil.getCash(row);
 //    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(cash + factor * adjust)));
     TableUtil.setCash(row, cash + factor * adjust);
-  }
-
-  private float adjustArticlePageScore(WebPage row, float adjust) {
-    float f1 = 1.0f;
-    float f2 = 2.0f;
-
-    long ra = TableUtil.getReferredArticles(row);
-    long rc = TableUtil.getReferredChars(row);
-
-    adjust += f1 * ra + f2 * ((rc - 1000) / 1000);
-
-    return adjust;
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
@@ -179,6 +166,16 @@ public class OPICScoringFilter implements ScoringFilter {
     // reset cash to zero
 //    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
     TableUtil.setCash(row, 0.0f);
+  }
+
+  private float adjustArticlePageScore(WebPage row) {
+    float f1 = 1.0f;
+    float f2 = 2.0f;
+
+    long ra = TableUtil.getReferredArticles(row);
+    long rc = TableUtil.getReferredChars(row);
+
+    return f1 * ra + f2 * ((rc - 1000) / 1000);
   }
 
   /** Dampen the boost value by scorePower. */

@@ -59,6 +59,9 @@ public class CrawlFilter extends Configured {
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
+  /** TODO : use suffix-urlfilter instead */
+  public static final String[] MEDIA_URL_SUFFIXES = {"js", "css", "jpg", "png", "jpeg", "gif"};
+
   /** TODO : need carefully test */
   public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
     if (page.getBaseUrl() == null) {

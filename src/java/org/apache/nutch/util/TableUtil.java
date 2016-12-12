@@ -29,6 +29,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.nutch.metadata.Metadata.*;
@@ -52,6 +53,14 @@ public class TableUtil {
    */
   public static String reverseUrl(String urlString) throws MalformedURLException {
     return reverseUrl(new URL(urlString));
+  }
+
+  public static String reverseUrlOrEmpty(String urlString) {
+    try {
+      return reverseUrl(new URL(urlString));
+    } catch (MalformedURLException e) {
+      return "";
+    }
   }
 
   /**
@@ -172,6 +181,10 @@ public class TableUtil {
 
   public static String toString(CharSequence utf8, String defaultValue) {
     return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
+  }
+
+  public static Map<CharSequence, CharSequence> getOutlinks(WebPage page) {
+    return page.getOutlinks() == null ? new HashMap<>() : page.getOutlinks();
   }
 
   public static Instant getFetchTime(WebPage page) {

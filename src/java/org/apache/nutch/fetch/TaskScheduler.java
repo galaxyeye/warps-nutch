@@ -793,7 +793,7 @@ public class TaskScheduler extends Configured {
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
       if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
         synchronized (parseUtil) {
-          parseUtil.process(reversedUrl, mainPage);
+          parseUtil.process(url, mainPage);
         }
 
         Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage);
@@ -828,9 +828,10 @@ public class TaskScheduler extends Configured {
   private void outputWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
       if (!TableUtil.veryLiklyDetailPage(mainPage)) {
-        // For information monitoring, do not follow detail pages
+        // For public opinion monitoring, do not follow detail pages
         Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
         outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
+        reduceDatumBuilder.calculateInlinks(url, outlinkRows.values());
       }
 
       outputMainPage(url, reversedUrl, mainPage);
@@ -871,53 +872,68 @@ public class TaskScheduler extends Configured {
       oldPage = datastore.get(reversedUrl);
     }
 
-    // TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
     if (oldPage != null) {
-      boolean changed = false;
-      // TODO : Update just once, so a update phrase is required
-      boolean voted = TableUtil.isVoted(oldPage);
-      if (!voted) {
-        long publishTime = TableUtil.getPublishTime(oldPage);
-        if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
-          TableUtil.updateReferredPublishTime(mainPage, publishTime);
-          TableUtil.increaseReferredArticles(mainPage, 1);
-          TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
-        }
-        TableUtil.setVoted(oldPage);
-        changed = true;
-      }
-
-      // Updated the old row if necessary
-      int oldDistance = TableUtil.getDistance(oldPage);
-      if (depth < oldDistance) {
-        TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
-        TableUtil.setDistance(oldPage, depth);
-        changed = true;
-
-        String report = oldDistance + " -> " + depth + ", " + url;
-        nutchMetrics.debugDepthUpdated(report, reportSuffix);
-
-        counter.increase(Counter.pagesDepthUpdated);
-      }
-
-      if (changed) {
-        output(reversedUrl, oldPage);
-      }
-
-      counter.increase(Counter.existOutPages);
+      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, depth);
     }
     else {
-      WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
-      // Update distance/score
-      reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
-
-      counter.increase(Counter.newPages);
-      if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
-        counter.increase(Counter.newDetailPages);
-      }
-
-      output(reversedUrl, newPage);
+      createNewPage(url, reversedUrl, mainPage, depth);
     }
+  }
+
+  /**
+   * Updated the old row if necessary
+   * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
+   * */
+  private boolean tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int depth) {
+    boolean changed = false;
+
+    long publishTime = TableUtil.getPublishTime(oldPage);
+    if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
+      TableUtil.updateReferredPublishTime(mainPage, publishTime);
+      changed = true;
+    }
+
+    // TODO : not fair, only the first seed page is updated, but it's enough to find out the most active seed pages
+    boolean voted = TableUtil.isVoted(oldPage);
+    if (!voted) {
+      TableUtil.increaseReferredArticles(mainPage, 1);
+      TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
+      TableUtil.setVoted(oldPage);
+      changed = true;
+    }
+
+    int oldDistance = TableUtil.getDistance(oldPage);
+    if (depth < oldDistance) {
+      TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
+      TableUtil.setDistance(oldPage, depth);
+      changed = true;
+
+      String report = oldDistance + " -> " + depth + ", " + url;
+      nutchMetrics.debugDepthUpdated(report, reportSuffix);
+
+      counter.increase(Counter.pagesDepthUpdated);
+    }
+
+    if (changed) {
+      output(reversedUrl, oldPage);
+    }
+
+    counter.increase(Counter.existOutPages);
+
+    return changed;
+  }
+
+  private void createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
+    WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
+    // Update distance/score
+    reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
+
+    counter.increase(Counter.newPages);
+    if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
+      counter.increase(Counter.newDetailPages);
+    }
+
+    output(reversedUrl, newPage);
   }
 
   @SuppressWarnings("unchecked")

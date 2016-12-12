@@ -56,13 +56,9 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
   private WebPageWritable pageWritable;
 
   @Override
-  public void map(String key, WebPage page, Context context)
-      throws IOException, InterruptedException {
+  public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
     if (Mark.GENERATE_MARK.checkMark(page) == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping " + TableUtil.unreverseUrl(key)
-            + "; not generated yet");
-      }
+      LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; not generated yet");
       return;
     }
 
@@ -72,12 +68,8 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
     Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
     if (outlinks != null) {
       for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-        int depth = Integer.MAX_VALUE;
-        CharSequence depthUtf8 = page.getMarkers().get(new Utf8("dist"));
-        if (depthUtf8 != null)
-          depth = Integer.parseInt(depthUtf8.toString());
-        scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue()
-            .toString(), depth));
+        int depth = TableUtil.getDepth(page);
+        scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), depth));
       }
     }
 
@@ -85,8 +77,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
     try {
       scoringFilters.distributeScoreToOutlinks(url, page, scoreData, (outlinks == null ? 0 : outlinks.size()));
     } catch (ScoringFilterException e) {
-      LOG.warn("Distributing score failed for URL: " + key + " exception:"
-          + StringUtils.stringifyException(e));
+      LOG.warn("Distributing score failed for URL: " + key + " exception:" + StringUtils.stringifyException(e));
     }
 
     urlWithScore.setReversedUrl(key);

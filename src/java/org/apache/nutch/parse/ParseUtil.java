@@ -18,13 +18,16 @@ package org.apache.nutch.parse;
 
 // Commons Logging imports
 
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.filter.URLFilterException;
@@ -35,20 +38,24 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.VAR_ORDERED_OUTLINKS;
+import static org.apache.nutch.filter.CrawlFilter.MEDIA_URL_SUFFIXES;
+import static org.apache.nutch.mapreduce.NutchCounter.Counter.outlinks;
 
 /**
  * A Utility class containing methods to simply perform parsing utilities such
@@ -69,8 +76,9 @@ public class ParseUtil {
   private final Configuration conf;
   private final Set<CharSequence> unparsableTypes = new HashSet<>();
   private final Signature sig;
-  private final URLFilters filters;
-  private final URLNormalizers normalizers;
+  private final URLFilters urlFilters;
+  private final URLNormalizers urlNormalizers;
+  private final CrawlFilters crawlFilters;
   private final int maxOutlinks;
   private final boolean ignoreExternalLinks;
   private final ParserFactory parserFactory;
@@ -88,8 +96,9 @@ public class ParseUtil {
     parserFactory = new ParserFactory(conf);
     maxParseTime = conf.getInt("parser.timeout", DEFAULT_MAX_PARSE_TIME);
     sig = SignatureFactory.getSignature(conf);
-    filters = new URLFilters(conf);
-    normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
+    urlFilters = new URLFilters(conf);
+    urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
+    crawlFilters = CrawlFilters.create(conf);
     int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
     maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
     ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
@@ -139,11 +148,10 @@ public class ParseUtil {
    * Parses given web page and stores parsed content within page. Puts a
    * meta-redirect to outlinks.
    *
-   * @param reverseUrl
+   * @param url
    * @param page
    */
-  public Parse process(String reverseUrl, WebPage page) {
-    String url = TableUtil.unreverseUrl(reverseUrl);
+  public Parse process(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
     if (status != CrawlStatus.STATUS_FETCHED) {
       if (LOG.isDebugEnabled()) {
@@ -177,7 +185,7 @@ public class ParseUtil {
       if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
         processRedirect(url, page, pstatus);
       } else {
-        processSuccess(url, page, pstatus, parse);
+        processSuccess(url, page, parse);
       }
     }
 
@@ -201,7 +209,7 @@ public class ParseUtil {
     return res;
   }
 
-  private void processSuccess(String url, WebPage page, org.apache.nutch.storage.ParseStatus pstatus, Parse parse) {
+  private void processSuccess(String url, WebPage page, Parse parse) {
     page.setText(new Utf8(parse.getText()));
     page.setTitle(new Utf8(parse.getTitle()));
     ByteBuffer prevSig = page.getSignature();
@@ -211,73 +219,42 @@ public class ParseUtil {
 
     final byte[] signature = sig.calculate(page);
     page.setSignature(ByteBuffer.wrap(signature));
-    if (page.getOutlinks() != null) {
-      page.getOutlinks().clear();
-    }
 
-    final Outlink[] outlinks = parse.getOutlinks();
-    int outlinksToStore = Math.min(maxOutlinks, outlinks.length);
-    String fromHost;
-    if (ignoreExternalLinks) {
-      try {
-        fromHost = new URL(url).getHost().toLowerCase();
-      } catch (final MalformedURLException e) {
-        fromHost = null;
-      }
-    } else {
-      fromHost = null;
-    }
+    String sourceHost = getSourceHost(url);
+    Map<CharSequence, CharSequence> outlinks = Stream.of(parse.getOutlinks())
+        .map(l -> Pair.of(new Utf8(normalizeUrlToEmpty(page, l.getToUrl())), new Utf8(l.getAnchor())))
+        .filter(p -> p.getKey().length() != 0)
+        .distinct()
+        .limit(maxOutlinks)
+        .filter(p -> getDestHost(p.getKey().toString(), sourceHost) != null)
+        .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+    page.setOutlinks(outlinks);
 
-    int validCount = 0;
-    for (int i = 0; validCount < outlinksToStore && i < outlinks.length; i++) {
-      String toUrl = outlinks[i].getToUrl();
-      try {
-        toUrl = normalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
-        toUrl = filters.filter(toUrl);
-      } catch (MalformedURLException e2) {
-        continue;
-      } catch (URLFilterException e) {
-        continue;
-      }
-
-      // TODO : use suffix-urlfilter intead, this is a quick dirty fix
-      final String[] filterSuffixes = {"js", "css", "jpg", "png", "jpeg", "gif"};
-      if (toUrl != null) {
-        for (String filterSuffix : filterSuffixes) {
-          if (toUrl.endsWith(filterSuffix)) {
-            toUrl = null;
-            break;
-          }
-        }
-      }
-
-      if (toUrl == null) {
-        // LOG.debug("Violate filter or normalizers");
-        continue;
-      }
-
-      Utf8 utf8ToUrl = new Utf8(toUrl);
-      if (page.getOutlinks().get(utf8ToUrl) != null) {
-        // skip duplicate outlinks
-        continue;
-      }
-
-      String toHost;
-      if (ignoreExternalLinks) {
-        try {
-          toHost = new URL(toUrl).getHost().toLowerCase();
-        } catch (final MalformedURLException e) {
-          toHost = null;
-        }
-
-        if (toHost == null || !toHost.equals(fromHost)) { // external links
-          continue; // skip it
-        }
-      }
-
-      validCount++;
-      page.getOutlinks().put(utf8ToUrl, new Utf8(outlinks[i].getAnchor()));
-    } // for
+//    if (page.getOutlinks() != null) {
+//      page.getOutlinks().clear();
+//    }
+//    int outlinksToStore = Math.min(maxOutlinks, outlinks.length);
+//    int validCount = 0;
+//    for (int i = 0; validCount < outlinksToStore && i < outlinks.length; i++) {
+//      String toUrl = normalizeUrl(page, outlinks[i].getToUrl());
+//      if (toUrl == null) {
+//        // LOG.debug("Violate filter or urlNormalizers");
+//        continue;
+//      }
+//
+//      Utf8 toUrlU8 = new Utf8(toUrl);
+//      if (page.getOutlinks().containsKey(toUrlU8)) {
+//        continue;
+//      }
+//
+//      String toHost = getToHost(toUrl);
+//      if (toHost == null || toHost.equals(fromHost)) {
+//        continue;
+//      }
+//
+//      validCount++;
+//      page.getOutlinks().put(toUrlU8, new Utf8(outlinks[i].getAnchor()));
+//    }
 
     // TODO : Marks should be set in mapper or reducer, not util methods
     Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
@@ -290,14 +267,14 @@ public class ParseUtil {
     String newUrl = ParseStatusUtils.getMessage(pstatus);
     int refreshTime = StringUtil.tryParseInt(ParseStatusUtils.getArg(pstatus, 1), 0);
     try {
-      newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
+      newUrl = urlNormalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
       if (newUrl == null) {
         LOG.warn("Redirect normalized to null " + url);
         return;
       }
 
       try {
-        newUrl = filters.filter(newUrl);
+        newUrl = urlFilters.filter(newUrl);
       } catch (URLFilterException e) {
         return;
       }
@@ -324,5 +301,78 @@ public class ParseUtil {
         page.setReprUrl(new Utf8(reprUrl));
       }
     }
+  }
+
+  @Nullable
+  private String getSourceHost(String sourceUrl) {
+    String fromHost = null;
+
+    if (ignoreExternalLinks) {
+      try {
+        fromHost = new URL(sourceUrl).getHost().toLowerCase();
+      } catch (MalformedURLException ignored) {}
+    }
+
+    return fromHost;
+  }
+
+  @Nullable
+  private String getDestHost(String destUrl, String fromHost) {
+    String toHost = null;
+
+    if (ignoreExternalLinks) {
+      try {
+        toHost = new URL(destUrl).getHost().toLowerCase();
+      } catch (MalformedURLException e) {
+        toHost = null;
+      }
+
+      if (toHost == null || toHost.equals(fromHost)) { // external links
+        return null;
+      }
+    }
+
+    return toHost;
+  }
+
+  @Contract("_, null -> !null")
+  private String normalizeUrlToEmpty(WebPage page, final String url) {
+    if (url == null) {
+      return "";
+    }
+
+    // TODO : use suffix-urlfilter instead, this is a quick dirty fix
+    if (Stream.of(MEDIA_URL_SUFFIXES).anyMatch(url::endsWith)) {
+      return "";
+    }
+
+    String filteredUrl = temporaryUrlFilter(url);
+
+    // We explicitly follow detail urls from seed page
+    // TODO : this can be avoid
+    if (TableUtil.isSeed(page) && crawlFilters.veryLikelyBeDetailUrl(filteredUrl)) {
+      return filteredUrl == null ? "" : filteredUrl;
+    }
+
+    try {
+      filteredUrl = urlFilters.filter(filteredUrl);
+      filteredUrl = urlNormalizers.normalize(url, URLNormalizers.SCOPE_OUTLINK);
+    } catch (URLFilterException|MalformedURLException e) {
+      LOG.error(e.toString());
+    }
+
+    return filteredUrl == null ? "" : filteredUrl;
+  }
+
+  private String temporaryUrlFilter(String url) {
+    if (crawlFilters.veryLikelyBeSearchUrl(url) || crawlFilters.veryLikelyBeMediaUrl(url)) {
+      url = "";
+    }
+
+    if (crawlFilters.containsOldDateString(url)) {
+      url = "";
+    }
+
+    return url;
   }
 }

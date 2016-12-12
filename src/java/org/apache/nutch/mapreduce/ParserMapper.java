@@ -76,7 +76,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
         return;
       }
 
-      Parse parse = parseUtil.process(reverseUrl, page);
+      Parse parse = parseUtil.process(url, page);
       if (parse == null) {
         getCounter().increase(Counter.parseFailed);
         return;

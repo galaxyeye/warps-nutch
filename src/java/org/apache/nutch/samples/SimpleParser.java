@@ -134,7 +134,7 @@ public class SimpleParser extends Configured {
       ParseUtil parseUtil = new ParseUtil(getConf());
       if (page != null && page.getBaseUrl() != null) {
         String reverseUrl = TableUtil.reverseUrl(page.getBaseUrl().toString());
-        parse = parseUtil.process(reverseUrl, page);
+        parse = parseUtil.process(url, page);
       }
     } catch (MalformedURLException e) {
       LOG.error(e.getMessage());
