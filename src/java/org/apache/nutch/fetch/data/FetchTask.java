@@ -4,6 +4,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
 
 import java.net.URL;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,7 +43,7 @@ public class FetchTask implements Comparable<FetchTask> {
   private Key key;
   private WebPage page;
   private URL u;
-  private long pendingStartTime = -1;
+  private Instant pendingStart = Instant.EPOCH;
 
   public FetchTask(int jobID, int priority, String url, WebPage page, URL u, String queueId) {
     this.page = page;
@@ -70,13 +71,9 @@ public class FetchTask implements Comparable<FetchTask> {
     return key;
   }
 
-  public long getPendingStartTime() {
-    return pendingStartTime;
-  }
+  public Instant getPendingStart() { return pendingStart; }
 
-  public void setPendingStartTime(long pendingStartTime) {
-    this.pendingStartTime = pendingStartTime;
-  }
+  public void setPendingStart(Instant pendingStart) { this.pendingStart = pendingStart; }
 
   /** 
    * Create an item. Queue id will be created based on <code>hostGroupMode</code>

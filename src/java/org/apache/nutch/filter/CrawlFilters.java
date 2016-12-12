@@ -242,6 +242,10 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
+  public PageCategory sniffPageCategory(String url) {
+    return CrawlFilter.sniffPageCategoryByUrlPattern(url);
+  }
+
   public boolean veryLikelyBeIndexUrl(String url) {
     if (url == null) return false;
 

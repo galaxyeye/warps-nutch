@@ -2,6 +2,7 @@ package org.apache.nutch.fetch.data;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
@@ -11,6 +12,8 @@ import org.slf4j.Logger;
 
 import java.net.MalformedURLException;
 import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -22,6 +25,8 @@ import java.util.*;
 public class FetchQueue implements Comparable<FetchQueue> {
 
   private static final Logger LOG = FetchMonitor.LOG;
+
+  private final int RECENT_TASKS_COUNT_LIMIT = 100;
 
   public enum Status { ACTIVITY, INACTIVITY, RETIRED }
 
@@ -83,44 +88,42 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   private Key key;
 
-  private final long crawlDelay;    // millisecond
-  private final long minCrawlDelay; // millisecond
+  private final Duration crawlDelay;
+  private final Duration minCrawlDelay;
+
   /** Max thread count for this queue */
   private final int maxThreads;
-  /** If a task costs more then 10 milliseconds, it's a slow task */
-  private final long slowTaskThreshold = 10;
-
   /** Hold all tasks ready to fetch */
   private final Queue<FetchTask> readyTasks = new LinkedList<>();
   /** Hold all tasks are fetching */
   private final Map<Integer, FetchTask> pendingTasks = new TreeMap<>();
-  /**
-   * Once timeout, the pending items should be put to the ready queue again.
-   * time unit : milliseconds
-   * */
-  private final long pendingTimeout;
-  private long nextFetchTime;
+  /** Once timeout, the pending items should be put to the ready queue again */
+  private final Duration pendingTimeout;
+  /** Next fetch time */
+  private Instant nextFetchTime;
 
+  /** If a task costs more then 0.5 seconds, it's a slow task */
+  private final Duration slowTaskThreshold = Duration.ofMillis(500);
   /** Record timing cost of slow tasks */
-  private final TreeSet<Long> costRecorder = new TreeSet<>();
-  private int totalFinishedTasks = 1;
-  private int totalFetchTime = 0;
+  private final CircularFifoQueue<Duration> slowTasksRecorder = new CircularFifoQueue<>(RECENT_TASKS_COUNT_LIMIT);
+  private int recentFinishedTasks = 0;
+  private Duration recentFetchTime = Duration.ZERO;
+  private int totalFinishedTasks = 0;
+  private Duration totalFetchTime = Duration.ZERO;
 
   /**
-   * Detach from the fetch queues, the queue does not accept any tasks, nor serve any requests,
-   * but still hold pending tasks, waiting for finish
+   * If a fetch queue is inactive, the queue does not accept any tasks, nor serve any requests,
+   * but still hold pending tasks, waiting to finish
    * */
   private Status status = Status.ACTIVITY;
 
-  public FetchQueue(int priority, String id, int maxThreads, long crawlDelay, long minCrawlDelay, long pendingTimeout) {
+  public FetchQueue(int priority, String id, int maxThreads, Duration crawlDelay, Duration minCrawlDelay, Duration pendingTimeout) {
     this.key = new Key(priority, id);
     this.maxThreads = maxThreads;
     this.crawlDelay = crawlDelay;
     this.minCrawlDelay = minCrawlDelay;
     this.pendingTimeout = pendingTimeout;
-
-    // ready to start
-    setEndTime(System.currentTimeMillis() - crawlDelay);
+    this.nextFetchTime = Instant.now();
   }
 
   public Key getKey() { return key; }
@@ -148,8 +151,8 @@ public class FetchQueue implements Comparable<FetchQueue> {
       return null;
     }
 
-    final long now = System.currentTimeMillis();
-    if (nextFetchTime > now) {
+    Instant now = Instant.now();
+    if (now.isBefore(nextFetchTime)) {
       return null;
     }
 
@@ -193,29 +196,26 @@ public class FetchQueue implements Comparable<FetchQueue> {
       return false;
     }
 
-    long endTime = System.currentTimeMillis();
-    setEndTime(endTime, asap);
+//    long endTime = System.currentTimeMillis();
+    Instant endTime = Instant.now();
+    setNextFetchTime(endTime, asap);
 
     // Record fetch time cost
-    long fetchTime = endTime - fetchTask.getPendingStartTime();
+    // long fetchTime = endTime - fetchTask.getPendingStart();
+    Duration fetchTime = Duration.between(fetchTask.getPendingStart(), endTime);
+    if (fetchTime.compareTo(slowTaskThreshold) > 0) {
+      slowTasksRecorder.add(fetchTime);
+    }
 
-    if (fetchTime > slowTaskThreshold) {
-      // TODO : use a window-fixed queue (first in, first out)
-      if (costRecorder.size() > 100) {
-        costRecorder.clear();
-      }
-
-      costRecorder.add(fetchTime);
+    ++recentFinishedTasks;
+    recentFetchTime.plus(fetchTime);
+    if (recentFinishedTasks > RECENT_TASKS_COUNT_LIMIT) {
+      recentFinishedTasks = 0;
+      recentFetchTime = Duration.ZERO;
     }
 
     ++totalFinishedTasks;
-    totalFetchTime += fetchTime;
-
-    // TODO : why there is a 100 limitation?
-    if (totalFinishedTasks > 100) {
-      totalFinishedTasks = 0;
-      totalFetchTime = 0;
-    }
+    totalFetchTime.plus(fetchTime);
 
     return true;
   }
@@ -236,10 +236,10 @@ public class FetchQueue implements Comparable<FetchQueue> {
   /**
    * Hang up the task and wait for completion. Move the fetch task to pending queue.
    * */
-  private void hangUp(FetchTask fetchTask, long now) {
+  private void hangUp(FetchTask fetchTask, Instant now) {
     if (fetchTask == null) return;
 
-    fetchTask.setPendingStartTime(now);
+    fetchTask.setPendingStart(now);
     pendingTasks.put(fetchTask.getItemId(), fetchTask);
   }
 
@@ -259,25 +259,23 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   public int getFinishedTaskCount() { return totalFinishedTasks; }
 
-  public int getSlowTaskCount() { return costRecorder.size(); }
+  public int getSlowTaskCount() { return slowTasksRecorder.size(); }
 
-  public boolean isSlow() { return isSlow(1); }
+  public boolean isSlow() { return isSlow(Duration.ofSeconds(1)); }
 
-  public boolean isSlow(int costInSec) { return averageTimeCost() > costInSec; }
-
-  /**
-   * Avarage cost in seconds
-   * */
-  public double averageTimeCost() {
-    return totalFetchTime / 1000.0 / totalFinishedTasks;
-  }
+  public boolean isSlow(Duration threshold) { return averageRecentTimeCost() > threshold.getSeconds(); }
 
   /**
-   * Throught rate in seconds
+   * Average cost in seconds
    * */
-  public double averageThroughputRate() {
-    return totalFinishedTasks / (totalFetchTime / 1000.0);
-  }
+  public double averageTimeCost() { return 1.0 * totalFetchTime.getSeconds() / totalFinishedTasks; }
+  public double averageRecentTimeCost() { return 1.0 * recentFetchTime.getSeconds() / recentFinishedTasks; }
+
+  /**
+   * Throughput rate in seconds
+   * */
+  public double averageThroughputRate() { return 1.0 * totalFinishedTasks / totalFetchTime.getSeconds(); }
+  public double averageRecentThroughputRate() { return 1.0 * recentFinishedTasks / recentFetchTime.getSeconds(); }
 
   public void disable() { this.status = Status.INACTIVITY; }
 
@@ -300,25 +298,19 @@ public class FetchQueue implements Comparable<FetchQueue> {
    * @param force If force is true, reload all pending fetch items immediately, otherwise, reload only exceeds pendingTimeout
    * */
   public void retune(boolean force) {
-    long now = System.currentTimeMillis();
+    Instant now = Instant.now();
 
     final List<FetchTask> readyList = Lists.newArrayList();
     final Map<Integer, FetchTask> pendingList = Maps.newHashMap();
 
     pendingTasks.values().forEach(fetchTask -> {
-      if (force || now - fetchTask.getPendingStartTime() > this.pendingTimeout) {
+      if (force || fetchTask.getPendingStart().plus(pendingTimeout).isBefore(now)) {
         readyList.add(fetchTask);
       }
       else {
         pendingList.put(fetchTask.getItemId(), fetchTask);
       }
     });
-
-    // Another way to do it, it's much better if we have auto support
-//    Predicate<FetchTask> predicate = fetchTask -> (force || now - fetchTask.getPendingStartTime() > this.pendingTimeout);
-//    Stream<FetchTask> stream = pendingTasks.values().stream();
-//    List<FetchTask> readyList = stream.filter(predicate).collect(Collectors.toList());
-//    Map<Integer, FetchTask> pendingList = stream.filter(predicate.negate()).collect(Collectors.toMap());
 
     pendingTasks.clear();
     readyTasks.addAll(readyList);
@@ -338,7 +330,7 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   public String getCostReport() {
     return String.format("%1$40s -> aveTimeCost : %2$.2fs/p, avaThoPut : %3$.2fp/s",
-        key.queueId, averageTimeCost(), averageThroughputRate());
+        key.queueId, averageRecentTimeCost(), averageRecentThroughputRate());
   }
 
   public int clearReadyQueue() {
@@ -366,11 +358,12 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
     final String[] report = {"Clearing very slow pending items : "};
     final DecimalFormat df = new DecimalFormat("###0.##");
-    long now = System.currentTimeMillis();
+    final Instant now = Instant.now();
 
     pendingTasks.values().stream().limit(threshold).filter(Objects::nonNull).forEach(fetchItem -> {
-      double elapsed = (now - fetchItem.getPendingStartTime()) / 1000.0;
-      report[0] += String.format("\n%s -> pending for %ss", fetchItem.getUrl(), df.format(elapsed));
+//      double elapsed = (now - fetchItem.getPendingStart()) / 1000.0;
+      Duration elapsed = Duration.between(fetchItem.getPendingStart(), now);
+      report[0] += String.format("\n%s -> pending for %ss", fetchItem.getUrl(), df.format(elapsed.toMillis() / 1000.0));
     });
 
     pendingTasks.clear();
@@ -388,12 +381,12 @@ public class FetchQueue implements Comparable<FetchQueue> {
         "key", key,
         "maxThreads", maxThreads,
         "pendingTasks", pendingTasks.size(),
-        "crawlDelay(s)", df.format(crawlDelay / 1000),
-        "minCrawlDelay(s)", df.format(minCrawlDelay / 1000),
+        "crawlDelay(s)", df.format(crawlDelay.getSeconds()),
+        "minCrawlDelay(s)", df.format(minCrawlDelay.getSeconds()),
         "now", DateTimeUtil.now(),
         "nextFetchTime", DateTimeUtil.format(nextFetchTime),
-        "aveTimeCost(s)", df.format(averageTimeCost()),
-        "aveThoRate(s)", df.format(averageThroughputRate()),
+        "aveTimeCost(s)", df.format(averageRecentTimeCost()),
+        "aveThoRate(s)", df.format(averageRecentThroughputRate()),
         "readyTasks", readyTasks.size(),
         "pendingTasks", pendingTasks.size(),
         "status", status
@@ -408,13 +401,14 @@ public class FetchQueue implements Comparable<FetchQueue> {
     }
   }
 
-  private void setEndTime(long endTime) {
-    setEndTime(endTime, false);
+  private void setNextFetchTime(Instant endTime) {
+    setNextFetchTime(endTime, false);
   }
 
-  private void setEndTime(long endTime, boolean asap) {
+  private void setNextFetchTime(Instant endTime, boolean asap) {
     if (!asap) {
-      nextFetchTime = endTime + (maxThreads > 1 ? minCrawlDelay : crawlDelay);
+      // nextFetchTime = endTime + (maxThreads > 1 ? minCrawlDelay.toMillis() : crawlDelay.toMillis());
+      nextFetchTime = endTime.plus(maxThreads > 1 ? minCrawlDelay : crawlDelay);
     }
     else {
       nextFetchTime = endTime;

@@ -84,7 +84,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     String keyUrl = key.getReversedUrl();
 
     WebPage page = null;
-    //initialize old_page for checking if the outlink is already in the datastore
+    // Initialize old_page for checking if the outlink is already in the datastore
     WebPage old_page = null;
     inlinkedScoreData.clear();
 

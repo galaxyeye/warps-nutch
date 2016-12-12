@@ -11,6 +11,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
 import org.apache.nutch.fetch.data.FetchTask;
+import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.Host;
@@ -62,8 +63,8 @@ public class TasksMonitor {
   private final AtomicInteger pendingTaskCount = new AtomicInteger(0);
   private final AtomicInteger finishedTaskCount = new AtomicInteger(0);
 
-  private final long crawlDelay;
-  private final long minCrawlDelay;
+  private final Duration minCrawlDelay;
+  private final Duration crawlDelay;
 
   private final URLUtil.HostGroupMode hostGroupMode;
   private final int maxQueueThreads; // TODO : max pending tasks
@@ -76,7 +77,7 @@ public class TasksMonitor {
   /**
    * Once timeout, the pending items should be put to the ready queue again.
    */
-  private long pendingTimeout = Duration.ofMinutes(3).toMillis();
+  private Duration pendingTimeout = Duration.ofMinutes(3);
 
   private HostDb hostDb = null;
 
@@ -95,9 +96,9 @@ public class TasksMonitor {
     this.crawlFilters = CrawlFilters.create(conf);
     this.maxUrlLength = conf.getInt("nutch.url.filter.max.length", 1024);
 
-    this.crawlDelay = (long) (conf.getFloat("fetcher.server.delay", 1.0f) * 1000);
-    this.minCrawlDelay = (long) (conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000);
-    this.pendingTimeout = conf.getLong("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis());
+    this.crawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.delay", 1.0f) * 1000));
+    this.minCrawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000));
+    this.pendingTimeout = Duration.ofMillis(conf.getLong("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis()));
     // this.pendingTimeout = conf.getTimeDuration("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis(), TimeUnit.MILLISECONDS);
 
     this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
@@ -111,9 +112,9 @@ public class TasksMonitor {
         "maxThreadsPerQueue", maxQueueThreads,
         "hostGroupMode", hostGroupMode,
         "useHostSettings", useHostSettings,
-        "crawlDelay(m)", df.format(crawlDelay / 60.0 / 1000.0),
-        "minCrawlDelay(m)", df.format(minCrawlDelay / 60.0 / 1000.0),
-        "pendingTimeout(m)", df.format(pendingTimeout / 60.0 / 1000.0),
+        "crawlDelay(m)", df.format(crawlDelay.getSeconds() / 60.0),
+        "minCrawlDelay(m)", df.format(minCrawlDelay.getSeconds() / 60.0),
+        "pendingTimeout(m)", pendingTimeout.toMinutes(),
         "unreachableHosts", unreachableHosts.size(),
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath()
     ));
@@ -273,7 +274,7 @@ public class TasksMonitor {
     pendingTaskCount.decrementAndGet();
     finishedTaskCount.incrementAndGet();
 
-    queueTimeCosts.put(FetchQueue.Key.create(priority, queueId), queue.averageTimeCost());
+    queueTimeCosts.put(FetchQueue.Key.create(priority, queueId), queue.averageRecentTimeCost());
     queueServedThreads.put(queueId, Thread.currentThread().getName().substring(THREAD_SEQUENCE_POS));
   }
 
@@ -352,59 +353,32 @@ public class TasksMonitor {
 
     ++hostStat.urls;
 
+    CrawlFilter.PageCategory pageCategory = crawlFilters.sniffPageCategory(url);
+    if (pageCategory.isIndex()) {
+      ++hostStat.indexUrls;
+    } else if (pageCategory.isDetail()) {
+      ++hostStat.detailUrls;
+    } else if (pageCategory.isMedia()) {
+      ++hostStat.mediaUrls;
+    } else if (pageCategory.isSearch()) {
+      ++hostStat.searchUrls;
+    } else if (pageCategory.isBBS()) {
+      ++hostStat.bbsUrls;
+    } else if (pageCategory.isTieBa()) {
+      ++hostStat.tiebaUrls;
+    } else if (pageCategory.isBlog()) {
+      ++hostStat.blogUrls;
+    } else if (pageCategory.isUnknown()) {
+      ++hostStat.unknownUrls;
+    }
+
     String report = "[" + DateTimeUtil.now() + "]"
-        + "\tLastReferredPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
-        + "\tReferredPC : " + TableUtil.getReferredArticles(page)
+        + "\tLastRefPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
+        + "\tRefPC : " + TableUtil.getReferredArticles(page)
         + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
         + "\t->\t" + url;
-
-    if (crawlFilters.veryLikelyBeIndexUrl(url)) {
-      ++hostStat.indexUrls;
-      if (debugUrls) {
-        nutchMetrics.debugIndexUrls(report, reportSuffix);
-      }
-    }
-    else if (crawlFilters.veryLikelyBeSearchUrl(url)) {
-      ++hostStat.searchUrls;
-      if (debugUrls) {
-        nutchMetrics.debugSearchUrls(report, reportSuffix);
-      }
-    }
-    else if (crawlFilters.veryLikelyBeDetailUrl(url)) {
-      ++hostStat.detailUrls;
-      if (debugUrls) {
-        nutchMetrics.debugDetailUrls(report, reportSuffix);
-      }
-    }
-    else if (crawlFilters.veryLikelyBeMediaUrl(url)) {
-      ++hostStat.mediaUrls;
-      if (debugUrls) {
-        nutchMetrics.debugMediaUrls(report, reportSuffix);
-      }
-    }
-    else {
-      if (debugUrls) {
-        nutchMetrics.debugUnknownTypeUrls(report, reportSuffix);
-      }
-    }
-
-    if (url.contains("blog")) {
-      ++hostStat.blogUrls;
-      if (debugUrls) {
-        nutchMetrics.debugBlogUrls(url, reportSuffix);
-      }
-    }
-    if (url.contains("tieba")) {
-      ++hostStat.tiebaUrls;
-      if (debugUrls) {
-        nutchMetrics.debugTiebaUrls(url, reportSuffix);
-      }
-    }
-    if (url.contains("bbs")) {
-      ++hostStat.bbsUrls;
-      if (debugUrls) {
-        nutchMetrics.debugBBSUrls(url, reportSuffix);
-      }
+    if (debugUrls) {
+      nutchMetrics.debugUrls(report, pageCategory, reportSuffix);
     }
 
     int depth = TableUtil.getDepth(page);
@@ -489,7 +463,7 @@ public class TasksMonitor {
 
     Map<Double, String> costRecorder = new TreeMap<>(Comparator.reverseOrder());
     for (FetchQueue queue : fetchQueues) {
-      costRecorder.put(queue.averageTimeCost(), queue.getId());
+      costRecorder.put(queue.averageRecentTimeCost(), queue.getId());
 
       if (queue.readyCount() == 0) {
         continue;
@@ -558,8 +532,8 @@ public class TasksMonitor {
               priority,
               queueId,
               host.getInt("q_mt", maxQueueThreads),
-              host.getLong("q_cd", crawlDelay),
-              host.getLong("q_mcd", minCrawlDelay),
+              Duration.ofMillis(host.getLong("q_cd", crawlDelay.toMillis())),
+              Duration.ofMillis(host.getLong("q_mcd", minCrawlDelay.toMillis())),
               pendingTimeout);
         }
       } catch (IOException e) {

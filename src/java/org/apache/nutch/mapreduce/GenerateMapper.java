@@ -18,25 +18,23 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.filter.CrawlFilter;
-import org.apache.nutch.filter.CrawlFilters;
+import org.apache.nutch.filter.*;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
-import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.filter.URLFilters;
-import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.*;
+import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.Params;
+import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,7 +67,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private ScoringFilters scoringFilters;
   private CrawlFilters crawlFilters;
   private FetchSchedule fetchSchedule;
-  private long pseudoCurrTime;
+  private Instant pseudoCurrTime;
   private float generatedDetailPageRate;
   private long maxDetailPageCount;
   private int maxDistance;
@@ -105,7 +103,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     urlNormalizers = normalise ? new URLNormalizers(conf, URLNormalizers.SCOPE_GENERATE_HOST_COUNT) : null;
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
-    pseudoCurrTime = conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime);
+    pseudoCurrTime = Instant.ofEpochMilli(conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime));
     long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
     generatedDetailPageRate = 0.667f;
     maxDetailPageCount = Math.round(topN * generatedDetailPageRate);
@@ -168,7 +166,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     updateStatus(url, page);
   }
 
-  /*
+  /**
    * TODO : We may move some filters to hbase query filters directly
    * */
   private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
@@ -209,6 +207,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     // TODO : CrawlFilter may be move to be a plugin
+    // TODO : Url range filtering should be applied to HBase query filter
     // key before start key
     if (!CrawlFilter.keyGreaterEqual(reversedUrl, keyRange[0])) {
       getCounter().increase(Counter.rowsBeforeStart);
@@ -249,21 +248,21 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return false;
     }
 
-    // Fetch schedule, timing filter
     return checkFetchSchedule(url, page, depth);
   }
 
+  /**
+   * Fetch schedule, timing filter
+   * */
   private boolean checkFetchSchedule(String url, WebPage page, int depth) {
-    // Fetch schedule, timing filter
-    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
-      Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
-      Instant pseudoNow = Instant.ofEpochMilli(pseudoCurrTime);
+    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime.toEpochMilli())) {
+      Instant fetchTime = TableUtil.getFetchTime(page);
 
-      long days = ChronoUnit.DAYS.between(fetchTime, pseudoNow);
-      if (days < 30) {
+      long days = ChronoUnit.DAYS.between(fetchTime, pseudoCurrTime);
+      if (days <= 30) {
         getCounter().increase(Counter.pagesFetchLater);
       }
-      else if (days > 3650) {
+      else if (days >= 3650) {
         getCounter().increase(Counter.pagesNeverFetch);
       }
 
@@ -338,8 +337,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private void debugFetchLaterSeeds(WebPage page) {
     String report = Params.formatAsLine(
         "CurrTime", DateTimeUtil.format(pseudoCurrTime),
-        "LastReferredPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
-        "ReferredPC", TableUtil.getReferredArticles(page),
+        "LastRefPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
+        "RefPC", TableUtil.getReferredArticles(page),
         "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
         "FetchTime", DateTimeUtil.format(page.getFetchTime()),
         "isSeed", TableUtil.isSeed(page),

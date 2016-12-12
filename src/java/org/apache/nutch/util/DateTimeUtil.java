@@ -106,6 +106,10 @@ public class DateTimeUtil {
     return DateFormat.format(time);
   }
 
+  public static String format(Instant time) {
+    return DateFormat.format(time.toEpochMilli());
+  }
+
   public static String format(long time, String format) {
     return new SimpleDateFormat(format).format(time);
   }

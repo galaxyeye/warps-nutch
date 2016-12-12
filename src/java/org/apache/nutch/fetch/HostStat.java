@@ -21,6 +21,7 @@ public class HostStat implements Comparable<HostStat> {
   public int bbsUrls = 0;
   public int blogUrls = 0;
   public int tiebaUrls = 0;
+  public int unknownUrls = 0;
   public int urlsTooLong = 0;
   public int urlsFromSeed = 0;
 

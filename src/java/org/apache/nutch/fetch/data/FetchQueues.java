@@ -173,7 +173,7 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
   public String getCostReport() {
     StringBuilder sb = new StringBuilder();
     activeQueues.values().stream()
-        .sorted(Comparator.comparing(FetchQueue::averageTimeCost).reversed())
+        .sorted(Comparator.comparing(FetchQueue::averageRecentTimeCost).reversed())
         .limit(50)
         .forEach(queue -> sb.append(queue.getCostReport()).append('\n'));
     return sb.toString();

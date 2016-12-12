@@ -1,6 +1,7 @@
 package org.apache.nutch.tools;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.mapreduce.NutchReporter;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
@@ -124,40 +125,12 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report + "\n", "depth-updated-" + reportSuffix + ".txt");
   }
 
-  public void debugIndexUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-index-" + reportSuffix + ".txt");
-  }
-
-  public void debugSearchUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-search-" + reportSuffix + ".txt");
-  }
-
-  public void debugDetailUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-detail-" + reportSuffix + ".txt");
+  public void debugUrls(String report, CrawlFilter.PageCategory pageCategory, String reportSuffix) {
+    writeReport(report + "\n", "urls-" + pageCategory.name() + "-" + reportSuffix + ".txt");
   }
 
   public void debugLongUrls(String report, String reportSuffix) {
     writeReport(report + "\n", "urls-long-" + reportSuffix + ".txt");
-  }
-
-  public void debugMediaUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-media-" + reportSuffix + ".txt");
-  }
-
-  public void debugBBSUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-bbs-" + reportSuffix + ".txt");
-  }
-
-  public void debugBlogUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-blog-" + reportSuffix + ".txt");
-  }
-
-  public void debugTiebaUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-tieba-" + reportSuffix + ".txt");
-  }
-
-  public void debugUnknownTypeUrls(String report, String reportSuffix) {
-    writeReport(report + "\n", "urls-unknown-" + reportSuffix + ".txt");
   }
 
   public void debugIndexDocTime(String timeStrings, String reportSuffix) {

@@ -40,6 +40,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
   /** Fetch time history, comma seperated fetch timestamp */
   public static final String META_FETCH_TIME_HISTORY = "FETCH_TIME_HISTORY";
   public static final String META_INDEX_TIME_HISTORY = "INDEX_TIME_HISTORY";
+  public static final String META_VOTED = "VOTED";
   public static final String META_PUBLISH_TIME = "PUBLISH_TIME";
   public static final String META_TEXT_CONTENT_LENGTH = "TEXT_CONTENT_LENGTH";
 

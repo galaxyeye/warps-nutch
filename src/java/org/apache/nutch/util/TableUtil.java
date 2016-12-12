@@ -174,6 +174,10 @@ public class TableUtil {
     return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
   }
 
+  public static Instant getFetchTime(WebPage page) {
+    return Instant.ofEpochMilli(page.getFetchTime());
+  }
+
   public static boolean isSeed(WebPage page) {
     return hasMetadata(page, META_IS_SEED);
   }
@@ -318,6 +322,17 @@ public class TableUtil {
 
   public static void setCash(WebPage page, float cash) {
     setFloatMetadata(page, META_CASH_KEY, cash);
+  }
+
+  /**
+   * TODO : We need a better solution to track all voted pages
+   * */
+  public static void setVoted(WebPage page) {
+    putMetadata(page, META_VOTED, YES_STRING);
+  }
+
+  public static boolean isVoted(WebPage page) {
+    return getMetadata(page, META_VOTED) != null;
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {

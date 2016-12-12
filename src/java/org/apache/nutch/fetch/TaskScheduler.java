@@ -873,12 +873,18 @@ public class TaskScheduler extends Configured {
 
     // TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
     if (oldPage != null) {
+      boolean changed = false;
       // TODO : Update just once, so a update phrase is required
-      long publishTime = TableUtil.getPublishTime(oldPage);
-      if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
-        TableUtil.updateReferredPublishTime(mainPage, publishTime);
-        TableUtil.increaseReferredArticles(mainPage, 1);
-        TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
+      boolean voted = TableUtil.isVoted(oldPage);
+      if (!voted) {
+        long publishTime = TableUtil.getPublishTime(oldPage);
+        if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
+          TableUtil.updateReferredPublishTime(mainPage, publishTime);
+          TableUtil.increaseReferredArticles(mainPage, 1);
+          TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
+        }
+        TableUtil.setVoted(oldPage);
+        changed = true;
       }
 
       // Updated the old row if necessary
@@ -886,13 +892,16 @@ public class TaskScheduler extends Configured {
       if (depth < oldDistance) {
         TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
         TableUtil.setDistance(oldPage, depth);
-
-        output(reversedUrl, oldPage);
+        changed = true;
 
         String report = oldDistance + " -> " + depth + ", " + url;
         nutchMetrics.debugDepthUpdated(report, reportSuffix);
 
         counter.increase(Counter.pagesDepthUpdated);
+      }
+
+      if (changed) {
+        output(reversedUrl, oldPage);
       }
 
       counter.increase(Counter.existOutPages);
