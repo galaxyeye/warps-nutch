@@ -21,6 +21,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +114,7 @@ public class MapDatumBuilder {
   /**
    * Build map phrase datum
    * */
+  @NotNull
   private Pair<UrlWithScore, NutchWritable> createOutlinkDatum(String sourceUrl, ScoreDatum scoreDatum) {
     String reversedOutUrl = TableUtil.reverseUrlOrEmpty(scoreDatum.getUrl());
 
