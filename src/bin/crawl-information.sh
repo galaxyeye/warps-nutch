@@ -82,7 +82,7 @@ numTasks=`expr $numSlaves \* 2`
 sizeFetchlist=`expr $numSlaves \* 1000`
 
 # time limit for feching
-timeLimitFetch=180
+fetchJobTimeout=3h
 
 # Adds <days> to the current time to facilitate
 # crawling urls already fetched sooner then
@@ -184,8 +184,7 @@ do
   fi
 
   echo "Fetching : "
-  # __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50
-  __bin_nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch $commonOptions -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
 done
 

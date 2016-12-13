@@ -4,11 +4,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,7 +35,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
   private final TaskScheduler taskScheduler;
 
   private final int feedLimit;
-  private final long timeLimitMillis;
+  private final Instant fetchJobTimeLimit;
 
   private AtomicBoolean halted = new AtomicBoolean(false);
   private Iterator<FetchEntry> currentIter;
@@ -52,10 +55,8 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     this.setDaemon(true);
     this.setName(getClass().getSimpleName() + "-" + id);
 
-    // the value of the time limit is either -1 or the time where it should finish
-    int timeLimitMins = conf.getInt("fetcher.timelimit.mins", -1);
-    timeLimitMillis = timeLimitMins > 0 ? System.currentTimeMillis() + 1000 * 60 * timeLimitMins : -1;
-    // timeLimitMillis = conf.getTimeDuration("fetcher.timelimit.mins", Duration.ofMinutes(60).toMillis(), TimeUnit.MINUTES);
+    Duration fetchJobTimeout = NutchConfiguration.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
+    fetchJobTimeLimit = Instant.now().plus(fetchJobTimeout);
 
     LOG.info(Params.format(
         "className", getClass().getSimpleName(),
@@ -96,8 +97,8 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
       TasksMonitor tasksMonitor = taskScheduler.getTasksMonitor();
 
       while (!isHalted() && hasMore) {
-        long now = System.currentTimeMillis();
-        if (timeLimitMillis > 0 && now >= timeLimitMillis) {
+        Instant now = Instant.now();
+        if (now.isAfter(fetchJobTimeLimit)) {
           // enough .. lets' simply
           // read all the entries from the input without processing them
           while (currentIter.hasNext()) {
@@ -110,7 +111,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
             currentIter = context.getValues().iterator();
           }
           continue;
-        } // if
+        } // if time exceeds
 
         int feedCapacity = feedLimit - tasksMonitor.readyTaskCount() - tasksMonitor.pendingTaskCount();
         if (feedCapacity <= 0) {
@@ -133,10 +134,6 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
         if (currentIter.hasNext()) {
           continue; // finish items in current list before reading next key
         }
-
-//        if (LOG.isDebugEnabled()) {
-//          LOG.debug("Feeded " + feededCount + " input urls");
-//        }
 
         hasMore = context.nextKey();
         if (hasMore) {

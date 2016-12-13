@@ -60,15 +60,15 @@ public class TaskScheduler extends Configured {
   public static final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
 
   public class Status {
-    Status(float pagesThroughputRate, float bytesThroughputRate, int readyFetchItems, int pendingFetchItems) {
-      this.pagesThroughputRate = pagesThroughputRate;
-      this.bytesThroughputRate = bytesThroughputRate;
+    Status(float pagesThoRate, float bytesThoRate, int readyFetchItems, int pendingFetchItems) {
+      this.pagesThoRate = pagesThoRate;
+      this.bytesThoRate = bytesThoRate;
       this.readyFetchItems = readyFetchItems;
       this.pendingFetchItems = pendingFetchItems;
     }
 
-    public float pagesThroughputRate;
-    public float bytesThroughputRate;
+    public float pagesThoRate;
+    public float bytesThoRate;
     public int readyFetchItems;
     public int pendingFetchItems;
   }
@@ -76,7 +76,7 @@ public class TaskScheduler extends Configured {
   public enum Counter {
     mbytes, unknowHosts, rowsInjected,
     readyTasks, pendingTasks,
-    pagesThou, mbThou,
+    pagesTho, mbTho,
     rowsRedirect,
     isSeed,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
@@ -234,9 +234,9 @@ public class TaskScheduler extends Configured {
 
     this.nutchMetrics = NutchMetrics.getInstance(conf);
 
-    // TODO : inject initial seeds
-
     LOG.info(Params.format(
+        "className", this.getClass().getSimpleName(),
+
         "id", id,
 
         "bandwidth", bandwidth,
@@ -513,8 +513,8 @@ public class TaskScheduler extends Configured {
 
     counter.setValue(Counter.readyTasks, readyFetchItems);
     counter.setValue(Counter.pendingTasks, pendingFetchItems);
-    counter.setValue(Counter.pagesThou, Math.round(pagesThrouRate));
-    counter.setValue(Counter.mbThou, Math.round(bytesThrouRate / 1000));
+    counter.setValue(Counter.pagesTho, Math.round(pagesThrouRate));
+    counter.setValue(Counter.mbTho, Math.round(bytesThrouRate / 1000));
 
     String statusString = getStatusString(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
 

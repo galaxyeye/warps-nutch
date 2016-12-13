@@ -698,8 +698,8 @@
 </property>
 
 <property>
-  <name>fetcher.timelimit.mins</name>
-  <value>-1</value>
+  <name>fetcher.timelimit</name>
+  <value>-1m</value>
   <description>This is the number of minutes allocated to the fetching.
   Once this value is reached, any remaining entry from the input URL list is skipped 
   and all active fetchMonitor are emptied. The default value of -1 deactivates the time limit.
@@ -722,7 +722,7 @@
   <description>The threshold of minimum pages per second. If the fetcher downloads less
   pages per second than the configured threshold, the fetcher stops, preventing slow queue's
   from stalling the throughput. This threshold must be an integer. This can be useful when
-  fetcher.timelimit.mins is hard to determine. The default value of -1 disables this check.
+  fetcher.timelimit is hard to determine. The default value of -1 disables this check.
   </description>
 </property>
 

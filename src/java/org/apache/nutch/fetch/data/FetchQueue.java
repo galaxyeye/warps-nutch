@@ -106,9 +106,9 @@ public class FetchQueue implements Comparable<FetchQueue> {
   private final Duration slowTaskThreshold = Duration.ofMillis(500);
   /** Record timing cost of slow tasks */
   private final CircularFifoQueue<Duration> slowTasksRecorder = new CircularFifoQueue<>(RECENT_TASKS_COUNT_LIMIT);
-  private int recentFinishedTasks = 0;
+  private int recentFinishedTasks = 1;
   private Duration recentFetchTime = Duration.ZERO;
-  private int totalFinishedTasks = 0;
+  private int totalFinishedTasks = 1;
   private Duration totalFetchTime = Duration.ZERO;
 
   /**

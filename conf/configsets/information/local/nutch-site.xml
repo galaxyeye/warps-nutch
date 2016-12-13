@@ -68,8 +68,8 @@
   </property>
 
   <property>
-    <name>fetcher.timelimit.mins</name>
-    <value>60</value>
+    <name>fetcher.timelimit</name>
+    <value>1h</value>
     <description>The feeder does not feed any fetch tasks any more if time exceed</description>
   </property>
 

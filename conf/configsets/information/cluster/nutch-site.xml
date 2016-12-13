@@ -74,8 +74,8 @@
   </property>
 
   <property>
-    <name>fetcher.timelimit.mins</name>
-    <value>60</value>
+    <name>fetcher.timelimit</name>
+    <value>1h</value>
     <description>The feeder does not feed any fetch tasks any more if time exceed</description>
   </property>
 
@@ -88,7 +88,7 @@
       fetcher stops, preventing slow queue's
       from stalling the throughput.
       This threshold must be an integer. This can be useful when
-      fetcher.timelimit.mins is hard to determine. The default value of -1
+      fetcher.timelimit is hard to determine. The default value of -1
       disables this check.
     </description>
   </property>

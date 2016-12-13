@@ -153,7 +153,6 @@ public class ReduceDatumBuilder {
     updateStatusCounter(newPage);
   }
 
-
   /**
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system

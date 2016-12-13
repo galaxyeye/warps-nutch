@@ -44,7 +44,7 @@
             fetcher stops, preventing slow queue's
             from stalling the throughput.
             This threshold must be an integer. This can be useful when
-            fetcher.timelimit.mins is hard to determine. The default value of -1
+            fetcher.timelimit is hard to determine. The default value of -1
             disables this check.
         </description>
     </property>

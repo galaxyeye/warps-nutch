@@ -1,12 +1,19 @@
 package org.apache.nutch.dbupdate;
 
+import com.google.common.base.Strings;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.filter.URLFilterException;
+import org.apache.nutch.filter.URLFilters;
+import org.apache.nutch.filter.URLNormalizers;
+import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -15,15 +22,18 @@ import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -33,12 +43,16 @@ public class MapDatumBuilder {
 
   public static final Logger LOG = LoggerFactory.getLogger(MapDatumBuilder.class);
 
+  public static final String URL_FILTERING = "dbupdate.url.filters";
+  public static final String URL_NORMALIZING = "dbupdate.url.normalizers";
+  public static final String URL_NORMALIZING_SCOPE = "dbupdate.url.normalizers.scope";
+
   private NutchCounter counter;
   private Configuration conf;
 
   private final int maxDistance;
   private final int maxOutlinks = 1000;
-  private final ScoringFilters scoringFilters;
+  private ScoringFilters scoringFilters;
 
   public MapDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -52,7 +66,8 @@ public class MapDatumBuilder {
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
-        "maxDistance", maxDistance
+        "maxDistance", maxDistance,
+        "maxOutlinks", maxOutlinks
     ));
   }
 
@@ -109,12 +124,14 @@ public class MapDatumBuilder {
     // TODO : why set to be the source url?
     scoreDatum.setUrl(sourceUrl);
 
-//    String reversedOut = TableUtil.reverseUrl(scoreDatum.getUrl());
-//    scoreDatum.setUrl(url);
-//    urlWithScore.setReversedUrl(reversedOut);
+//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(scoreDatum.getUrl());
+//    scoreDatum.setUrl(sourceUrl);
+//    UrlWithScore urlWithScore = new UrlWithScore();
+//    urlWithScore.setReversedUrl(reversedOutUrl);
 //    urlWithScore.setScore(scoreDatum.getScore());
+//
+//    NutchWritable nutchWritable = new NutchWritable();
 //    nutchWritable.set(scoreDatum);
-//    context.write(urlWithScore, nutchWritable);
 
     return Pair.of(new UrlWithScore(reversedOutUrl, scoreDatum.getScore()), new NutchWritable(scoreDatum));
   }

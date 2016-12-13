@@ -97,7 +97,7 @@ public class NutchConfiguration {
 
   public static Duration getDuration(Configuration conf, String name, Duration defaultValue) {
     long value = conf.getTimeDuration(name, Long.MIN_VALUE, TimeUnit.MILLISECONDS);
-    if (value == Long.MIN_VALUE) {
+    if (value < 0) {
       return defaultValue;
     }
     return Duration.ofMillis(value);

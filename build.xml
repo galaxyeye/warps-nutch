@@ -25,7 +25,7 @@
 	<property name="release.dir" value="${build.dir}/release" />
 
 	<!-- define Maven coordinates, repository url and artifacts name etc -->
-	<property name="groupId" value="org.apache.nutch" />
+	<property name="groupId" value="org.warps.nutch" />
 	<property name="artifactId" value="nutch" />
 	<property name="maven-repository-url" value="https://repository.apache.org/service/local/staging/deploy/maven2" />
 	<property name="maven-repository-id" value="apache.releases.https" />
@@ -312,6 +312,7 @@
 	<target name="runtime" depends="jar, job" description="--> default target for running Nutch">
 		<mkdir dir="${runtime.dir}" />
 		<mkdir dir="${runtime.local}" />
+		<mkdir dir="${runtime.local}/logs" />
 		<mkdir dir="${runtime.deploy}" />
         <mkdir dir="${runtime.deploy}/conf" />
 		<mkdir dir="${runtime.deploy}/logs" />

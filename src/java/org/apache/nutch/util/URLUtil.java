@@ -110,6 +110,10 @@ public class URLUtil {
     return u;
   }
 
+  public static String getHost(CharSequence url, HostGroupMode hostGroupMode) {
+    return getHost(getUrl(url.toString()), hostGroupMode);
+  }
+
   public static String getHost(String url, HostGroupMode hostGroupMode) {
     return getHost(getUrl(url), hostGroupMode);
   }

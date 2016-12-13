@@ -21,6 +21,8 @@ package org.apache.nutch.parse;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
@@ -35,6 +37,7 @@ import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.NetUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
@@ -56,6 +59,7 @@ import java.util.stream.Stream;
 
 import static org.apache.nutch.filter.CrawlFilter.MEDIA_URL_SUFFIXES;
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.outlinks;
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_QUEUE_MODE;
 
 /**
  * A Utility class containing methods to simply perform parsing utilities such
@@ -79,6 +83,7 @@ public class ParseUtil {
   private final URLFilters urlFilters;
   private final URLNormalizers urlNormalizers;
   private final CrawlFilters crawlFilters;
+  private final URLUtil.HostGroupMode hostGroupMode;
   private final int maxOutlinks;
   private final boolean ignoreExternalLinks;
   private final ParserFactory parserFactory;
@@ -99,6 +104,7 @@ public class ParseUtil {
     urlFilters = new URLFilters(conf);
     urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     crawlFilters = CrawlFilters.create(conf);
+    hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
     maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
     ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
@@ -220,15 +226,17 @@ public class ParseUtil {
     final byte[] signature = sig.calculate(page);
     page.setSignature(ByteBuffer.wrap(signature));
 
-    String sourceHost = getSourceHost(url);
+    String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
     Map<CharSequence, CharSequence> outlinks = Stream.of(parse.getOutlinks())
         .map(l -> Pair.of(new Utf8(normalizeUrlToEmpty(page, l.getToUrl())), new Utf8(l.getAnchor())))
         .filter(p -> p.getKey().length() != 0)
         .distinct()
         .limit(maxOutlinks)
-        .filter(p -> getDestHost(p.getKey().toString(), sourceHost) != null)
+        .filter(p -> validateDestHost(sourceHost, URLUtil.getHost(p.getKey(), hostGroupMode)))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     page.setOutlinks(outlinks);
+
+    LOG.debug(url + " -> " + outlinks.keySet().stream().collect(Collectors.joining(", ")));
 
 //    if (page.getOutlinks() != null) {
 //      page.getOutlinks().clear();
@@ -303,36 +311,8 @@ public class ParseUtil {
     }
   }
 
-  @Nullable
-  private String getSourceHost(String sourceUrl) {
-    String fromHost = null;
-
-    if (ignoreExternalLinks) {
-      try {
-        fromHost = new URL(sourceUrl).getHost().toLowerCase();
-      } catch (MalformedURLException ignored) {}
-    }
-
-    return fromHost;
-  }
-
-  @Nullable
-  private String getDestHost(String destUrl, String fromHost) {
-    String toHost = null;
-
-    if (ignoreExternalLinks) {
-      try {
-        toHost = new URL(destUrl).getHost().toLowerCase();
-      } catch (MalformedURLException e) {
-        toHost = null;
-      }
-
-      if (toHost == null || toHost.equals(fromHost)) { // external links
-        return null;
-      }
-    }
-
-    return toHost;
+  private boolean validateDestHost(String sourceHost, String destHost) {
+    return sourceHost != null && destHost != null && (!ignoreExternalLinks || destHost.equals(sourceHost));
   }
 
   @Contract("_, null -> !null")
@@ -347,11 +327,14 @@ public class ParseUtil {
     }
 
     String filteredUrl = temporaryUrlFilter(url);
+    if (filteredUrl == null) {
+      return "";
+    }
 
     // We explicitly follow detail urls from seed page
     // TODO : this can be avoid
     if (TableUtil.isSeed(page) && crawlFilters.veryLikelyBeDetailUrl(filteredUrl)) {
-      return filteredUrl == null ? "" : filteredUrl;
+      return filteredUrl;
     }
 
     try {

@@ -77,46 +77,46 @@ public class TasksMonitor {
   /**
    * Once timeout, the pending items should be put to the ready queue again.
    */
-  private Duration pendingTimeout = Duration.ofMinutes(3);
+  private Duration queuePendingTimeout = Duration.ofMinutes(3);
 
   private HostDb hostDb = null;
 
   public TasksMonitor(Configuration conf) throws IOException {
     FetchMode fetchMode = conf.getEnum(PARAM_FETCH_MODE, FetchMode.NATIVE);
-    this.maxQueueThreads = (fetchMode == FetchMode.CROWDSOURCING) ? Integer.MAX_VALUE : conf.getInt(PARAM_FETCH_MAX_THREADS_PER_QUEUE, 1);
+    maxQueueThreads = (fetchMode == FetchMode.CROWDSOURCING) ? Integer.MAX_VALUE : conf.getInt(PARAM_FETCH_MAX_THREADS_PER_QUEUE, 1);
 
-    this.hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    this.useHostSettings = (hostGroupMode == URLUtil.HostGroupMode.BY_HOST) && conf.getBoolean("fetcher.queue.use.host.settings", false);
+    hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
+    useHostSettings = (hostGroupMode == URLUtil.HostGroupMode.BY_HOST) && conf.getBoolean("fetcher.queue.use.host.settings", false);
 
-    if (this.useHostSettings) {
+    if (useHostSettings) {
       LOG.info("Host specific queue settings enabled");
-      this.hostDb = new HostDb(conf);
+      hostDb = new HostDb(conf);
     }
 
-    this.crawlFilters = CrawlFilters.create(conf);
-    this.maxUrlLength = conf.getInt("nutch.url.filter.max.length", 1024);
+    crawlFilters = CrawlFilters.create(conf);
+    maxUrlLength = conf.getInt("nutch.url.filter.max.length", 1024);
 
-    this.crawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.delay", 1.0f) * 1000));
-    this.minCrawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000));
-    this.pendingTimeout = Duration.ofMillis(conf.getLong("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis()));
-    // this.pendingTimeout = conf.getTimeDuration("fetcher.pending.timeout", Duration.ofMinutes(3).toMillis(), TimeUnit.MILLISECONDS);
+    crawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.delay", 1.0f) * 1000));
+    minCrawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000));
+    queuePendingTimeout = NutchConfiguration.getDuration(conf, "fetcher.pending.timeout", Duration.ofMinutes(3));
 
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
-    this.nutchMetrics = NutchMetrics.getInstance(conf);
-    this.nutchMetrics.loadUnreachableHosts(unreachableHosts);
-    this.debugUrls = conf.getBoolean("fetcher.debug.urls", false);
+    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
+    nutchMetrics = NutchMetrics.getInstance(conf);
+    nutchMetrics.loadUnreachableHosts(unreachableHosts);
+    debugUrls = conf.getBoolean("fetcher.debug.urls", false);
 
     DecimalFormat df = new DecimalFormat("###0.0#");
-    LOG.info(Params.formatAsLine(
+    LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "maxThreadsPerQueue", maxQueueThreads,
         "hostGroupMode", hostGroupMode,
         "useHostSettings", useHostSettings,
         "crawlDelay(m)", df.format(crawlDelay.getSeconds() / 60.0),
         "minCrawlDelay(m)", df.format(minCrawlDelay.getSeconds() / 60.0),
-        "pendingTimeout(m)", pendingTimeout.toMinutes(),
+        "queuePendingTimeout(m)", queuePendingTimeout.toMinutes(),
         "unreachableHosts", unreachableHosts.size(),
-        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath()
+        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
+        "debugUrls", debugUrls
     ));
   }
 
@@ -164,7 +164,7 @@ public class TasksMonitor {
     final int nextPriority = fetchQueues.peek().getPriority();
     final boolean priorityChanged = nextPriority < lastTaskPriority;
     if (priorityChanged && fetchQueues.hasPriorPendingTasks(nextPriority)) {
-      // Waiting for all pending tasks with higher priority be finished
+      // Waiting for all pending tasks with higher priority to be finished
       return null;
     }
 
@@ -543,7 +543,7 @@ public class TasksMonitor {
               host.getInt("q_mt", maxQueueThreads),
               Duration.ofMillis(host.getLong("q_cd", crawlDelay.toMillis())),
               Duration.ofMillis(host.getLong("q_mcd", minCrawlDelay.toMillis())),
-              pendingTimeout);
+              queuePendingTimeout);
         }
       } catch (IOException e) {
         LOG.error("Error while trying to access host settings", e);
@@ -552,7 +552,7 @@ public class TasksMonitor {
 
     if (queue == null) {
       // Use queue defaults
-      queue = new FetchQueue(priority, queueId, maxQueueThreads, crawlDelay, minCrawlDelay, pendingTimeout);
+      queue = new FetchQueue(priority, queueId, maxQueueThreads, crawlDelay, minCrawlDelay, queuePendingTimeout);
     }
 
     return queue;

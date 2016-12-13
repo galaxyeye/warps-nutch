@@ -126,7 +126,7 @@ public class NutchMetrics implements AutoCloseable {
   }
 
   public void debugUrls(String report, CrawlFilter.PageCategory pageCategory, String reportSuffix) {
-    writeReport(report + "\n", "urls-" + pageCategory.name() + "-" + reportSuffix + ".txt");
+    writeReport(report + "\n", "urls-" + pageCategory.name().toLowerCase() + "-" + reportSuffix + ".txt");
   }
 
   public void debugLongUrls(String report, String reportSuffix) {
