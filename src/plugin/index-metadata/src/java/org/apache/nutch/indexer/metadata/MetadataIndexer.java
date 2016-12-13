@@ -29,6 +29,7 @@ import org.apache.nutch.util.URLUtil;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 
 import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
@@ -126,21 +127,21 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   private void addTime(IndexDocument doc, String url, WebPage page) {
-    Date now = new Date();
+    Instant now = Instant.now();
 
     String crawlTimeStr = DateTimeUtil.solrCompatibleFormat(now);
-    Date firstCrawlTime = TableUtil.getFirstCrawlTime(page, now);
+    Instant firstCrawlTime = TableUtil.getFirstCrawlTime(page, now);
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, crawlTimeStr);
 
-    doc.add("first_crawl_time", firstCrawlTime);
+    doc.add("first_crawl_time", DateTimeUtil.solrCompatibleFormat(firstCrawlTime));
     doc.add("last_crawl_time", crawlTimeStr);
     doc.add("fetch_time_history", fetchTimeHistory);
 
     String indexTimeStr = DateTimeUtil.solrCompatibleFormat(now);
-    Date firstIndexTime = TableUtil.getFirstIndexTime(page, now);
+    Instant firstIndexTime = TableUtil.getFirstIndexTime(page, now);
     String indexTimeHistory = TableUtil.getIndexTimeHistory(page, indexTimeStr);
 
-    doc.add("first_index_time", firstIndexTime);
+    doc.add("first_index_time", DateTimeUtil.solrCompatibleFormat(firstIndexTime));
     doc.add("last_index_time", indexTimeStr);
     doc.add("index_time_history", indexTimeHistory);
   }

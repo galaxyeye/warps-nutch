@@ -12,8 +12,8 @@ import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.oro.text.regex.*;
 
+import java.time.Instant;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 
 // import org.apache.solr.common.util.DateUtil;
@@ -59,22 +59,21 @@ public class MoreIndexingFilter implements IndexingFilter {
   // Add time related meta info. Add last-modified if present. Index date as
   // last-modified, or, if that's not present, use fetch time.
   private IndexDocument addTime(IndexDocument doc, WebPage page, String url) {
-    long time = -1;
+    Instant time = Instant.EPOCH;
 
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
       time = DateTimeUtil.parseTime(lastModified.toString()); // use as time
     }
 
-    if (time == -1) { // if no last-modified
-      time = page.getModifiedTime(); // use Modified time
+    if (time.toEpochMilli() > 0) { // if no last-modified
+      time = Instant.ofEpochMilli(page.getModifiedTime()); // use Modified time
     }
 
     // un-stored, indexed and un-tokenized
-    if (time > 0) {
-      Date date = new Date(time);
-      doc.add("header_last_modified", date);
-      doc.add("last_modified_s", DateTimeUtil.solrCompatibleFormat(date));
+    if (time.toEpochMilli() > 0) {
+      doc.add("header_last_modified", DateTimeUtil.solrCompatibleFormat(time));
+      doc.add("last_modified_s", DateTimeUtil.solrCompatibleFormat(time));
     }
 
     return doc;

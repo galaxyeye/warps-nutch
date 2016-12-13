@@ -8,12 +8,12 @@ import org.apache.nutch.service.model.request.SeedUrl;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Period;
-import java.time.Year;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -173,6 +173,28 @@ public class TestAnything {
     System.out.println(Duration.ofDays(365 * 100).getSeconds());
 
     System.out.println(Duration.ofMinutes(60).toMillis());
+  }
+
+  @Test
+  public void testURL() throws MalformedURLException {
+    List<String> urls = Lists.newArrayList(
+        "http://bond.eastmoney.com/news/1326,20160811671616734.html",
+        "http://bond.eastmoney.com/news/1326,20161011671616734.html",
+        "http://tech.huanqiu.com/photo/2016-09/2847279.html",
+        "http://tech.hexun.com/2016-09-12/186368492.html",
+        "http://opinion.cntv.cn/2016/04/17/ARTI1397735301366288.shtml",
+        "http://tech.hexun.com/2016-11-12/186368492.html",
+        "http://ac.cheaa.com/2016/0905/488888.shtml",
+        "http://ankang.hsw.cn/system/2016/0927/16538.shtml",
+        "http://auto.nbd.com.cn/articles/2016-09-28/1042037.html",
+        "http://bank.cnfol.com/pinglunfenxi/20160901/23399283.shtml",
+        "http://bank.cnfol.com/yinhanglicai/20160905/23418323.shtml"
+    );
+
+    for (String url : urls) {
+      URL u = new URL(url);
+      System.out.println(u.hashCode() + ", " + url.hashCode());
+    }
   }
 
   @Test

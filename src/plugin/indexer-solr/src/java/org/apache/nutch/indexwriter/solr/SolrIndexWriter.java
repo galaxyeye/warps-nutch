@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -146,6 +147,9 @@ public class SolrIndexWriter implements IndexWriter {
 
         if (val instanceof Date) {
           val2 = DateTimeUtil.solrCompatibleFormat((Date)val2);
+        }
+        else if (val instanceof Instant) {
+          val2 = DateTimeUtil.solrCompatibleFormat((Instant)val2);
         }
 
         String key = solrMapping.mapKeyIfExists(e.getKey());

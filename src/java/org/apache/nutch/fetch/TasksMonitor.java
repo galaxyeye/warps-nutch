@@ -223,18 +223,20 @@ public class TasksMonitor {
       // There are still some pending tasks, the queue do not serve new requests, but should finish pending tasks
       fetchQueues.disable(queue);
 //      LOG.debug("FetchQueue " + queue.getKey() + " is disabled");
-      LOG.debug("FetchQueue " + queue.getKey() + " is disabled "
-          + ", ready tasks : " + queue.readyCount()
-          + ", pending tasks : " + queue.pendingCount());
+      LOG.debug("FetchQueue " + queue.getKey() + " is disabled, task stat : "
+          + "ready : " + queue.readyCount()
+          + ", pending : " + queue.pendingCount()
+          + ", finished : " + queue.finishedCount());
       return true;
     }
     else if (queue.isInactive() && !queue.hasTasks()) {
       // All tasks are finished, including pending tasks, we can remove the queue from the queues safely
       retire(queue);
 //      LOG.debug("FetchQueue " + queue.getKey() + " is retired");
-      LOG.debug("FetchQueue " + queue.getKey() + " is retired"
-          + ", ready tasks : " + queue.readyCount()
-          + ", pending tasks : " + queue.pendingCount());
+      LOG.debug("FetchQueue " + queue.getKey() + " is retired, task stat : "
+          + "ready : " + queue.readyCount()
+          + ", pending : " + queue.pendingCount()
+          + ", finished : " + queue.finishedCount());
       return true;
     }
 
@@ -372,12 +374,17 @@ public class TasksMonitor {
       ++hostStat.unknownUrls;
     }
 
-    String report = "[" + DateTimeUtil.now() + "]"
-        + "\tLastRefPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
-        + "\tRefPC : " + TableUtil.getReferredArticles(page)
-        + "\tFetchTime : " + DateTimeUtil.format(page.getFetchTime())
-        + "\t->\t" + url;
     if (debugUrls) {
+      String report = "[" + DateTimeUtil.format(page.getPrevFetchTime())
+          + "] -> ["
+          + DateTimeUtil.format(page.getFetchTime()) + "]"
+          + ", FC : " + TableUtil.getFetchCount(page)
+          + ", RefPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
+          + ", RefPC : " + TableUtil.getReferredArticles(page)
+          + ", Score : " + page.getScore()
+          + ", Cash : " + TableUtil.getCash(page)
+          + "\t->\t" + url;
+
       nutchMetrics.debugUrls(report, pageCategory, reportSuffix);
     }
 
@@ -443,10 +450,12 @@ public class TasksMonitor {
     DecimalFormat df = new DecimalFormat("0.##");
 
     LOG.warn("Retire slowest queue : " + queue.getId()
-        + ", served tasks : " + queue.getFinishedTaskCount()
-        + ", slow tasks : " + queue.getSlowTaskCount()
-          + ", " + df.format(queue.averageTimeCost()) + "s/p"
-          + ", " + df.format(queue.averageThroughputRate()) + "p/s"
+        + ", task stat : ready : " + queue.readyCount()
+        + ", pending : " + queue.pendingCount()
+        + ", finished : " + queue.finishedCount()
+        + ", slow : " + queue.getSlowTaskCount()
+        + ", " + df.format(queue.averageTimeCost()) + "s/p"
+        + ", " + df.format(queue.averageThroughputRate()) + "p/s"
         + ", deleted : " + deleted
     );
 
@@ -591,13 +600,17 @@ public class TasksMonitor {
     report += "\n";
 
     String hostsReport = availableHosts.values().stream().sorted()
-        .map(hostInfo -> String.format("%40s -> %-20s %-20s %-20s %-20s %-20s",
+        .map(hostInfo -> String.format("%40s -> %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s",
             hostInfo.hostName,
-            "urls : " + hostInfo.urls,
-            "indexUrls : " + hostInfo.indexUrls,
-            "searchUrls : " + hostInfo.searchUrls,
-            "detailUrls : " + hostInfo.detailUrls,
-            "urlsTooLong : " + hostInfo.urlsTooLong))
+            "total : " + hostInfo.urls,
+            "index : " + hostInfo.indexUrls,
+            "detail : " + hostInfo.detailUrls,
+            "search : " + hostInfo.searchUrls,
+            "media : " + hostInfo.mediaUrls,
+            "bbs : " + hostInfo.bbsUrls,
+            "tieba : " + hostInfo.tiebaUrls,
+            "blog : " + hostInfo.blogUrls,
+            "long : " + hostInfo.urlsTooLong))
         .collect(joining("\n"));
 
     report += hostsReport;

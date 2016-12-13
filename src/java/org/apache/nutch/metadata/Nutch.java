@@ -75,6 +75,9 @@ public interface Nutch {
 
   int MAX_DISTANCE = Integer.MAX_VALUE;
 
+  int MAX_FETCH_INTERVAL_DAYS = 3 * 365;
+  int NEVER_FETCH_INTERVAL_DAYS = 10 * 365;
+
   // The shortest url
   String SHORTEST_VALID_URL = "ftp://t.tt";
   int SHORTEST_VALID_URL_LENGTH = SHORTEST_VALID_URL.length();

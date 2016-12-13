@@ -30,6 +30,7 @@ import java.util.TimeZone;
  * Modified from FastHttpDateFormat.java in jakarta-tomcat.
  * 
  * @author John Xing
+ *
  */
 public class HttpDateFormat {
 

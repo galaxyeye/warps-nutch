@@ -58,8 +58,6 @@ public class OPICScoringFilter implements ScoringFilter {
   private float scorePower;
   private float internalScoreFactor;
   private float externalScoreFactor;
-  @SuppressWarnings("unused")
-  private boolean countFiltered;
 
   public Configuration getConf() {
     return conf;
@@ -70,13 +68,11 @@ public class OPICScoringFilter implements ScoringFilter {
     scorePower = conf.getFloat("indexer.score.power", 0.5f);
     internalScoreFactor = conf.getFloat("db.score.link.internal", 1.0f);
     externalScoreFactor = conf.getFloat("db.score.link.external", 1.0f);
-    countFiltered = conf.getBoolean("db.score.count.filtered", false);
   }
 
   @Override
   public void injectedScore(String url, WebPage row) throws ScoringFilterException {
     float score = row.getScore();
-//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(score)));
     TableUtil.setCash(row, score);
   }
 
@@ -87,7 +83,6 @@ public class OPICScoringFilter implements ScoringFilter {
   @Override
   public void initialScore(String url, WebPage row) throws ScoringFilterException {
     row.setScore(0.0f);
-    // row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
     TableUtil.setCash(row, 0.0f);
   }
 
@@ -103,6 +98,7 @@ public class OPICScoringFilter implements ScoringFilter {
     float adjust = 0.0f;
     float factor = 1.0f;
 
+    // There is no inlinked score data in updateJIT mode
     for (ScoreDatum scoreDatum : inlinkedScoreData) {
       adjust += scoreDatum.getScore();
     }
@@ -111,30 +107,13 @@ public class OPICScoringFilter implements ScoringFilter {
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
 
-//    ByteBuffer cashRaw = row.getMetadata().get(META_CASH_KEY_U8);
-//    float cash = 0.0f;
-//    if (cashRaw != null) {
-//      cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
-//    }
-
     float cash = TableUtil.getCash(row);
-//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(cash + factor * adjust)));
     TableUtil.setCash(row, cash + factor * adjust);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row, Collection<ScoreDatum> scoreData, int allCount) {
-//    ByteBuffer cashRaw = row.getMetadata().get(META_CASH_KEY_U8);
-//    if (cashRaw == null) {
-//      return;
-//    }
-//
-//    float cash = Bytes.toFloat(cashRaw.array(), cashRaw.arrayOffset() + cashRaw.position());
-//    if (cash == 0) {
-//      return;
-//    }
-
     float cash = TableUtil.getCash(row);
     if (cash == 0) {
       return;
@@ -163,8 +142,6 @@ public class OPICScoringFilter implements ScoringFilter {
       }
     }
 
-    // reset cash to zero
-//    row.getMetadata().put(META_CASH_KEY_U8, ByteBuffer.wrap(Bytes.toBytes(0.0f)));
     TableUtil.setCash(row, 0.0f);
   }
 

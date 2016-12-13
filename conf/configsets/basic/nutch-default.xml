@@ -613,8 +613,8 @@
 </property>
 
 <property>
-  <name>fetcher.pending.timeout.mins</name>
-  <value>16</value>
+  <name>fetcher.pending.timeout</name>
+  <value>16m</value>
   <description>FetcherJob exists if there is no fetch result after the timeout</description>
 </property>
 

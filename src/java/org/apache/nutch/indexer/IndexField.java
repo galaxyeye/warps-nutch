@@ -22,6 +22,7 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -101,6 +102,8 @@ public class IndexField implements Writable {
         values.add(in.readLong());
       } else if (type.equals("java.util.Date")) {
         values.add(new Date(in.readLong()));
+      } else if (type.equals("java.time.Instant")) {
+        values.add(Instant.ofEpochMilli(in.readLong()));
       }
     }
   }
@@ -126,6 +129,9 @@ public class IndexField implements Writable {
       } else if (value instanceof Date) {
         Date date = (Date) value;
         out.writeLong(date.getTime());
+      } else if (value instanceof Instant) {
+        Instant date = (Instant) value;
+        out.writeLong(date.toEpochMilli());
       }
     }
   }

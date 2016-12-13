@@ -27,7 +27,9 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utility to create Hadoop {@link Configuration}s that include Nutch-specific
@@ -53,10 +55,11 @@ public class NutchConfiguration {
 
   /**
    * Get a unsigned integer, if the configured value is negative, return the default value
-   * @param name The property name
+   *
+   * @param name         The property name
    * @param defaultValue The default value return if the configured value is negative
    * @return a positive integer
-   * */
+   */
   public static Integer getUint(Configuration conf, String name, Integer defaultValue) {
     Integer value = conf.getInt(name, defaultValue);
     if (value < 0) {
@@ -67,10 +70,11 @@ public class NutchConfiguration {
 
   /**
    * Get a unsigned long integer, if the configured value is negative, return the default value
-   * @param name The property name
+   *
+   * @param name         The property name
    * @param defaultValue The default value return if the configured value is negative
    * @return a positive long integer
-   * */
+   */
   public static Long getUlong(Configuration conf, String name, Long defaultValue) {
     Long value = conf.getLong(name, defaultValue);
     if (value < 0) {
@@ -89,6 +93,14 @@ public class NutchConfiguration {
     if (StringUtils.isNoneEmpty(name) && StringUtils.isNoneEmpty(value)) {
       conf.set(name, value);
     }
+  }
+
+  public static Duration getDuration(Configuration conf, String name, Duration defaultValue) {
+    long value = conf.getTimeDuration(name, Long.MIN_VALUE, TimeUnit.MILLISECONDS);
+    if (value == Long.MIN_VALUE) {
+      return defaultValue;
+    }
+    return Duration.ofMillis(value);
   }
 
   public static Path getPath(Configuration conf, String name, Path defaultValue) throws IOException {

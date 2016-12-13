@@ -66,11 +66,11 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
   protected float DEC_RATE;
 
-  protected long MAX_INTERVAL;
+  protected Duration MAX_INTERVAL;
 
-  protected long SEED_MAX_INTERVAL;
+  protected Duration SEED_MAX_INTERVAL;
 
-  protected int MIN_INTERVAL;
+  protected Duration MIN_INTERVAL;
 
   protected boolean SYNC_DELTA;
 
@@ -86,9 +86,9 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
     INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
-    MIN_INTERVAL = conf.getInt("db.fetch.schedule.adaptive.min_interval", 60);
-    MAX_INTERVAL = conf.getLong("db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365).getSeconds()); // 1 year
-    SEED_MAX_INTERVAL = conf.getLong("db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1).getSeconds());
+    MIN_INTERVAL = Duration.ofSeconds(conf.getInt("db.fetch.schedule.adaptive.min_interval", 60));
+    MAX_INTERVAL = Duration.ofSeconds(conf.getLong("db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365).getSeconds())); // 1 year
+    SEED_MAX_INTERVAL = Duration.ofSeconds(conf.getLong("db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1).getSeconds()));
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
@@ -124,8 +124,8 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       refTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
     }
 
-    if (interval < MIN_INTERVAL) interval = MIN_INTERVAL;
-    if (interval > MAX_INTERVAL) interval = MAX_INTERVAL;
+    if (interval < MIN_INTERVAL.getSeconds()) interval = MIN_INTERVAL.getSeconds();
+    if (interval > MAX_INTERVAL.getSeconds()) interval = MAX_INTERVAL.getSeconds();
 
     updateRefetchTime(page, interval, refTime, prevModifiedTime, modifiedTime);
   }

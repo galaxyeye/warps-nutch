@@ -24,6 +24,10 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
+import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
 
 /**
  * @author Vincent Zhang
@@ -38,21 +42,21 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
   @Override
   public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
                                long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
-    long refetchTime = fetchTime;
-    long intervalSec = page.getFetchInterval();
+    Instant refetchTime = Instant.ofEpochMilli(fetchTime);
+    Duration interval = TableUtil.getFetchInterval(page);
     if (modifiedTime <= 0) {
       modifiedTime = fetchTime;
     }
 
     boolean changed = false;
     if (TableUtil.isSeed(page)) {
-      intervalSec = adjustSeedFetchInterval(page, fetchTime, intervalSec);
+      interval = adjustSeedFetchInterval(page, Instant.ofEpochMilli(fetchTime), interval);
       changed = true;
     }
-    else if (TableUtil.veryLiklyDetailPage(page)) {
+    else if (TableUtil.veryLikeDetailPage(page)) {
       // Detail pages are fetched only once
       TableUtil.setNoFetch(page);
-      intervalSec = (int) Duration.ofDays(365 * 10).getSeconds();
+      interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
       changed = true;
     }
     else {
@@ -60,7 +64,7 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     if (changed) {
-      updateRefetchTime(page, intervalSec, refetchTime, prevModifiedTime, modifiedTime);
+      updateRefetchTime(page, interval.getSeconds(), refetchTime.toEpochMilli(), prevModifiedTime, modifiedTime);
     }
     else {
       super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
@@ -70,41 +74,45 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private long adjustSeedFetchInterval(WebPage page, long fetchTime, long intervalSec) {
-    int fetchTimes = TableUtil.getFetchTimes(page);
-    if (fetchTimes <= 1) {
+  private Duration adjustSeedFetchInterval(WebPage page, Instant fetchTime, Duration interval) {
+    int fetchCount = TableUtil.getFetchCount(page);
+    if (fetchCount <= 1) {
       // Referred publish time is not initialized yet for this seed page
-      intervalSec = 1;
-      return intervalSec;
+      return Duration.ofSeconds(1);
     }
 
-    long referredPublishTime = TableUtil.getReferredPublishTime(page);
-    if (referredPublishTime <= 0) {
+    Instant referredPublishTime = TableUtil.getReferredPublishTime(page);
+    if (referredPublishTime.isBefore(Instant.EPOCH)) {
       LOG.warn("Unexpected referred publish time : " + DateTimeUtil.format(referredPublishTime) + ", " + page.getBaseUrl());
     }
 
-    long hours = Duration.ofMillis(fetchTime - referredPublishTime).toHours();
+    // long hours = Duration.ofMillis(fetchTime - referredPublishTime).toHours();
+    // long hours = Duration.between(referredPublishTime, fetchTime).toHours();
+    long hours = ChronoUnit.HOURS.between(referredPublishTime, fetchTime);
     if (hours <= 24) {
       // There are updates today, keep re-fetch the page in every crawl loop
-      intervalSec = 1;
+      interval = Duration.ofSeconds(1);
     }
     else if (hours <= 72) {
       // If there is not updates in 24 hours but there are updates in 72 hours, re-fetch the page a hour later
-      intervalSec = SECONDS_OF_HOUR;
+      interval = Duration.ofHours(1);
     }
     else {
-      // If there is no any updates in 72 hours, check the page later
-      intervalSec *= (1.0f + INC_RATE);
-      if (intervalSec < SECONDS_OF_HOUR) {
-        intervalSec = SECONDS_OF_HOUR;
+      // If there is no any updates in 72 hours, check the page at least 1 hour later
+      int adjust = (int)(interval.getSeconds() * INC_RATE);
+
+      interval.plusSeconds(adjust);
+      if (interval.toHours() < 1) {
+        interval = Duration.ofHours(1);
       }
       // TODO : log see pages without updates for long time
     }
 
-    if (intervalSec > SEED_MAX_INTERVAL) {
-      intervalSec = SEED_MAX_INTERVAL;
+    // No longer than SEED_MAX_INTERVAL
+    if (interval.compareTo(SEED_MAX_INTERVAL) > 0) {
+      interval = SEED_MAX_INTERVAL;
     }
 
-    return intervalSec;
+    return interval;
   }
 }

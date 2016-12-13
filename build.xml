@@ -281,6 +281,8 @@
 	<target name="local" depends="compile, jar, copy-test-resource" description="--> default target for running Nutch">
 		<mkdir dir="${runtime.dir}" />
 		<mkdir dir="${runtime.local}" />
+		<mkdir dir="${runtime.local}/logs" />
+
 		<!-- local area -->
 		<copy file="${build.dir}/${final.name}.jar" todir="${runtime.local}/lib" />
 		<copy file="${basedir}/VERSION" todir="${runtime.local}" />
@@ -312,6 +314,7 @@
 		<mkdir dir="${runtime.local}" />
 		<mkdir dir="${runtime.deploy}" />
         <mkdir dir="${runtime.deploy}/conf" />
+		<mkdir dir="${runtime.deploy}/logs" />
 
 		<!-- deploy area -->
 		<copy file="${build.dir}/${job.final.name}.jar" todir="${runtime.deploy}" />
@@ -330,7 +333,7 @@
 		<!-- local area -->
 		<copy file="${build.dir}/${final.name}.jar" todir="${runtime.local}/lib" />
 		<copy file="${basedir}/VERSION" todir="${runtime.local}" />
-		
+
 		<copy todir="${runtime.local}/lib/native">
 			<fileset dir="lib/native" />
 		</copy>

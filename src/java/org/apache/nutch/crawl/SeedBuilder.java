@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
-import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_DEPTH_0;
 import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL_LENGTH;
 import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
@@ -112,7 +111,7 @@ public class SeedBuilder {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
-    TableUtil.setFetchTimes(row, 0);
+    TableUtil.setFetchCount(row, 0);
     TableUtil.setDistance(row, 0);
 
     Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);

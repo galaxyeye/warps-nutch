@@ -102,13 +102,9 @@ public class DateTimeUtil {
 
   public static long[] TIME_FACTOR = { 60 * 60 * 1000, 60 * 1000, 1000 };
 
-  public static String format(long time) {
-    return DateFormat.format(time);
-  }
+  public static String format(long time) { return DateFormat.format(time); }
 
-  public static String format(Instant time) {
-    return DateFormat.format(time.toEpochMilli());
-  }
+  public static String format(Instant time) { return DateFormat.format(time.toEpochMilli()); }
 
   public static String format(long time, String format) {
     return new SimpleDateFormat(format).format(time);
@@ -124,6 +120,10 @@ public class DateTimeUtil {
 
   public static String solrCompatibleFormat(Date date) {
     return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
+  }
+
+  public static String solrCompatibleFormat(Instant time) {
+    return DateTimeFormatter.ISO_INSTANT.format(time);
   }
 
   public static String now(String format) {
@@ -173,19 +173,19 @@ public class DateTimeUtil {
     return sb.toString();
   }
 
-  public static long parseTime(String date) {
-    long time = Instant.EPOCH.toEpochMilli();
+  public static Instant parseTime(String date) {
+    Instant time = Instant.EPOCH;
 
     if (date == null) {
       return time;
     }
 
     try {
-      time = HttpDateFormat.toLong(date);
+      time = Instant.ofEpochMilli(HttpDateFormat.toLong(date));
     } catch (ParseException e) {
       try {
         Date parsedDate = DateUtils.parseDate(date, GENERAL_DATE_TIME_FORMATS);
-        time = parsedDate.getTime();
+        time = parsedDate.toInstant();
       } catch (Exception ignored) {}
     }
 

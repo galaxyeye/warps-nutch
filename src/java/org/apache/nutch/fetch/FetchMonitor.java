@@ -19,10 +19,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.apache.nutch.fetch.TaskScheduler.QUEUE_REMAINDER_LIMIT;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -39,7 +39,7 @@ public class FetchMonitor {
   private Configuration conf;
   private NutchContext context;
 
-  private long startTime = System.currentTimeMillis();
+  private Instant startTime = Instant.now();
 
   private String jobName;
   private FetchMode fetchMode = FetchMode.NATIVE;
@@ -55,22 +55,22 @@ public class FetchMonitor {
   private TasksMonitor fetchMonitor;
 
   /** Timing */
-  private long fetchJobTimeout;
-  private long fetchTaskTimeout;
-  private long pendingQueueCheckInterval;
-  private long pendingQueueLastCheckTime;
-  private long pendingTimeout;
+  private Duration fetchJobTimeout;
+  private Duration fetchTaskTimeout;
+  private Duration queueRetuneInterval;
+  private Duration queuePendingTimeout;
+  private Instant queueRetuneTime;
 
   /** Throughput control */
-  private int minPageThroughputRate;
-  private long throughputCheckTimeLimit;
-  private int maxLowThroughputCount;
-  private int maxTotalLowThroughputCount;
-  private int lowThroughputCount = 0;
-  private int totalLowThroughputCount = 0;
+  private int minPageThouRate;
+  private Instant throughputCheckTimeLimit;
+  private int maxLowThouCount;
+  private int maxTotalLowThouCount;
+  private int lowThouCount = 0;
+  private int totalLowThouCount = 0;
 
   /** Report */
-  private long reportInterval;
+  private Duration reportInterval;
 
   /** Scripts */
   private String finishScript;
@@ -88,21 +88,21 @@ public class FetchMonitor {
     fetchMode = conf.getEnum(PARAM_FETCH_MODE, FetchMode.NATIVE);
     fetchThreadCount = conf.getInt("fetcher.threads.fetch", 5);
 
-    fetchJobTimeout = 60 * 1000 * NutchConfiguration.getUint(conf, "fetcher.timelimit.mins", 60);
-    fetchTaskTimeout = conf.getTimeDuration("fetcher.task.timeout", Duration.ofMinutes(10).toMillis(), TimeUnit.MILLISECONDS);
-    // pendingQueueCheckInterval = 60 * 1000 * conf.getLong("fetcher.pending.queue.check.time", 8);
-    pendingQueueCheckInterval = conf.getTimeDuration("fetcher.pending.queue.check.time", Duration.ofMinutes(8).toMillis(), TimeUnit.MILLISECONDS);
-    pendingTimeout = 60 * 1000 * conf.getLong("fetcher.pending.timeout.mins", pendingQueueCheckInterval * 2);
-    pendingQueueLastCheckTime = startTime;
+    fetchJobTimeout = NutchConfiguration.getDuration(conf, "fetcher.timelimit.mins", Duration.ofMinutes(60));
+    fetchTaskTimeout = NutchConfiguration.getDuration(conf, "fetcher.task.timeout", Duration.ofMinutes(10));
+    queueRetuneInterval = NutchConfiguration.getDuration(conf, "fetcher.pending.queue.check.time", Duration.ofMinutes(8));
+    queuePendingTimeout = NutchConfiguration.getDuration(conf, "fetcher.pending.timeout", queueRetuneInterval.multipliedBy(2));
+    queueRetuneTime = startTime;
 
     /*
      * Used for threshold check, holds pages and bytes processed in the last sec
      * We should keep a minimal fetch speed
      * */
-    minPageThroughputRate = conf.getInt("fetcher.throughput.threshold.pages", -1);
-    maxLowThroughputCount = conf.getInt("fetcher.throughput.threshold.sequence", 10);
-    maxTotalLowThroughputCount = maxLowThroughputCount * 10;
-    throughputCheckTimeLimit = startTime + conf.getLong("fetcher.throughput.threshold.check.after", 30 * 1000);
+    minPageThouRate = conf.getInt("fetcher.throughput.threshold.pages", -1);
+    maxLowThouCount = conf.getInt("fetcher.throughput.threshold.sequence", 10);
+    maxTotalLowThouCount = maxLowThouCount * 10;
+    long throughputCheckAfter = conf.getLong("fetcher.throughput.threshold.check.after", 30);
+    throughputCheckTimeLimit = startTime.plus(throughputCheckAfter, ChronoUnit.SECONDS);
 
     // fetch scheduler
     taskSchedulers = TaskSchedulers.getInstance();
@@ -110,14 +110,13 @@ public class FetchMonitor {
     fetchMonitor = taskScheduler.getTasksMonitor();
 
     // report
-    reportInterval = conf.getTimeDuration("fetcher.report.interval", Duration.ofSeconds(20).toMillis(), TimeUnit.MILLISECONDS);
+    reportInterval = NutchConfiguration.getDuration(conf, "fetcher.report.interval", Duration.ofSeconds(20));
 
     // scripts
     Path nutchTmpDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_TMP_DIR, Paths.get(PATH_NUTCH_TMP_DIR));
     commandFile = PATH_LOCAL_COMMAND;
     finishScript = nutchTmpDir + "/scripts/finish_" + jobName + ".sh";
 
-    DecimalFormat df = new DecimalFormat("###0.0#");
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
@@ -128,17 +127,17 @@ public class FetchMonitor {
         "taskSchedulers", taskSchedulers.name(),
         "taskScheduler", taskScheduler.name(),
 
-        "fetchJobTimeout(m)", df.format(fetchJobTimeout / 60.0 / 1000),
-        "fetchTaskTimeout(m)", df.format(fetchTaskTimeout / 60.0 / 1000),
-        "pendingTimeout(m)", df.format(pendingTimeout / 60.0 / 1000),
-        "queueCheckInterval(m)", df.format(pendingQueueCheckInterval / 60.0 / 1000),
-        "queueLastCheckTime", DateTimeUtil.format(pendingQueueLastCheckTime),
+        "fetchJobTimeout(m)", fetchJobTimeout.toMinutes(),
+        "fetchTaskTimeout(m)", fetchTaskTimeout.toMinutes(),
+        "queuePendingTimeout(m)", queuePendingTimeout.toMinutes(),
+        "queueCheckInterval(m)", queueRetuneInterval.toMinutes(),
+        "queueLastCheckTime", DateTimeUtil.format(queueRetuneTime),
 
-        "minPageThroughputRate", minPageThroughputRate,
-        "maxLowThroughputCount", maxLowThroughputCount,
+        "minPageThouRate", minPageThouRate,
+        "maxLowThouCount", maxLowThouCount,
         "throughputCheckTimeLimit", DateTimeUtil.format(throughputCheckTimeLimit),
 
-        "reportInterval(s)", df.format(reportInterval / 1000.0),
+        "reportInterval(s)", reportInterval.getSeconds(),
 
         "nutchTmpDir", nutchTmpDir,
         "finishScript", finishScript
@@ -291,9 +290,9 @@ public class FetchMonitor {
 
       TaskScheduler.Status status = taskScheduler.waitAndReport(reportInterval);
 
-      long now = System.currentTimeMillis();
-      long jobTime = now - startTime;
-      long idleTime = now - taskScheduler.getLastTaskFinishTime();
+      Instant now = Instant.now();
+      Duration jobTime = Duration.between(startTime, now);
+      Duration idleTime = Duration.between(taskScheduler.getLastTaskFinishTime(), now);
 
       /*
        * In crowd sourcing mode, check if any fetch tasks are hung
@@ -310,7 +309,7 @@ public class FetchMonitor {
       /*
        * Check throughput(fetch speed)
        * */
-      if (now > throughputCheckTimeLimit && status.pagesThroughputRate < minPageThroughputRate) {
+      if (now.isAfter(throughputCheckTimeLimit) && status.pagesThroughputRate < minPageThouRate) {
         checkFetchEfficiency();
       }
 
@@ -340,18 +339,18 @@ public class FetchMonitor {
         break;
       }
 
-      if (jobTime > fetchJobTimeout) {
+      if (jobTime.getSeconds() > fetchJobTimeout.getSeconds()) {
         handleJobTimeout();
-        LOG.info("Hit fetch job timeout " + jobTime / 1000 + "s, exit the job ...");
+        LOG.info("Hit fetch job timeout " + jobTime.getSeconds() + "s, exit the job ...");
         break;
       }
 
       /*
        * No new tasks for too long, some requests seem to hang. We exits the job.
        * */
-      if (idleTime > fetchTaskTimeout) {
+      if (idleTime.getSeconds() > fetchTaskTimeout.getSeconds()) {
         handleFetchTaskTimeout();
-        LOG.info("Hit fetch task timeout " + idleTime / 1000 + "s, exit the job ...");
+        LOG.info("Hit fetch task timeout " + idleTime.getSeconds() + "s, exit the job ...");
         break;
       }
 
@@ -417,20 +416,19 @@ public class FetchMonitor {
   /**
    * Check queues to see if something is hung
    * */
-  private void retuneFetchQueues(long now, long idleTime) {
-    // TODO : use a smarter schedule strategy
-    if (fetchMonitor.readyTaskCount() + fetchMonitor.pendingTaskCount() < 10) {
-      pendingTimeout = 2 * 60 * 1000;
+  private void retuneFetchQueues(Instant now, Duration idleTime) {
+    if (fetchMonitor.readyTaskCount() + fetchMonitor.pendingTaskCount() < 20) {
+      queuePendingTimeout = Duration.ofMinutes(2);
     }
 
-    boolean shouldRetune = now > pendingQueueLastCheckTime + 2 * reportInterval;
-    if (shouldRetune) {
-      shouldRetune = idleTime > pendingTimeout || now - pendingQueueLastCheckTime > pendingQueueCheckInterval;
-    }
-
-    if (shouldRetune) {
-      fetchMonitor.retune(false);
-      pendingQueueLastCheckTime = now;
+    // Do not check in every report loop
+    Instant nextCheckTime = queueRetuneTime.plus(reportInterval.multipliedBy(2));
+    if (now.isAfter(nextCheckTime)) {
+      Instant nextRetuneTime = queueRetuneTime.plus(queueRetuneInterval);
+      if (now.isAfter(nextRetuneTime) || idleTime.compareTo(queuePendingTimeout) > 0) {
+        fetchMonitor.retune(false);
+        queueRetuneTime = now;
+      }
     }
   }
 
@@ -438,38 +436,38 @@ public class FetchMonitor {
    * Check if we're dropping below the threshold (we are too slow)
    * */
   private void checkFetchEfficiency() throws IOException {
-    lowThroughputCount++;
-    totalLowThroughputCount++;
+    lowThouCount++;
+    totalLowThouCount++;
 
     int removedSlowTasks = 0;
-    if (lowThroughputCount > maxLowThroughputCount) {
+    if (lowThouCount > maxLowThouCount) {
       // Clear slowest queues
       removedSlowTasks = fetchMonitor.clearSlowestQueue();
 
       LOG.info(Params.formatAsLine(
           "Unaccepted throughput", "clearing slowest queue, ",
-          "lowThoCount", lowThroughputCount,
-          "maxLowThoCount", maxLowThroughputCount,
-          "minPageThoRate(p/s)", minPageThroughputRate,
+          "lowThoCount", lowThouCount,
+          "maxLowThoCount", maxLowThouCount,
+          "minPageThoRate(p/s)", minPageThouRate,
           "removedSlowTasks", removedSlowTasks
       ));
 
-      lowThroughputCount = 0;
+      lowThouCount = 0;
     }
 
     // Quit if we dropped below threshold too many times
-    if (totalLowThroughputCount > maxTotalLowThroughputCount) {
+    if (totalLowThouCount > maxTotalLowThouCount) {
       // Clear all queues
       removedSlowTasks = fetchMonitor.clearReadyTasks();
       LOG.info(Params.formatAsLine(
           "Unaccepted throughput", "all queues cleared",
-          "lowThoCount", lowThroughputCount,
-          "maxLowThoCount", maxLowThroughputCount,
-          "minPageThoRate(p/s)", minPageThroughputRate,
+          "lowThoCount", lowThouCount,
+          "maxLowThoCount", maxLowThouCount,
+          "minPageThoRate(p/s)", minPageThouRate,
           "removedSlowTasks", removedSlowTasks
       ));
 
-      totalLowThroughputCount = 0;
+      totalLowThouCount = 0;
     }
 
     if (removedSlowTasks > 0) {

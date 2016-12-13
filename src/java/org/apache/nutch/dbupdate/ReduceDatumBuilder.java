@@ -4,7 +4,6 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.mapreduce.DbUpdateReducer;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
@@ -21,13 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.FETCH_PRIORITY_DEPTH_0;
-import static org.apache.nutch.metadata.Nutch.MAX_DISTANCE;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_TIME;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -39,25 +38,25 @@ public class ReduceDatumBuilder {
 
   private final NutchCounter counter;
   private final int retryMax;
-  private final int maxInterval;
+  private final Duration maxFetchInterval;
   private final int maxLinks;
   private final FetchSchedule fetchSchedule;
   private final ScoringFilters scoringFilters;
-  private final List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
   private final Params params;
+  private final List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
 
   public ReduceDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
 
     retryMax = conf.getInt("db.fetch.retry.max", 3);
-    maxInterval = conf.getInt("db.fetch.interval.max", 0);
+    maxFetchInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.max", 0));
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
 
     params = Params.of(
         "retryMax", retryMax,
-        "maxInterval", maxInterval,
+        "maxFetchInterval", maxFetchInterval,
         "maxLinks", maxLinks,
         "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
         "scoringFilters", Stream.of(scoringFilters.getScoringFilterNames())
@@ -88,10 +87,11 @@ public class ReduceDatumBuilder {
     updateRow(url, page);
   }
 
+  public void reset() { inlinkedScoreData.clear(); }
+
   /**
-   * The mapper phrase can set NutchWritable to be a WebPageWritable or a ScoreDatum,
+   * In the mapper phrase, NutchWritable is sets to be a WebPage or a ScoreDatum,
    * the WebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
-   * from that webpage
    * */
   public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
     WebPage page = null;
@@ -131,7 +131,7 @@ public class ReduceDatumBuilder {
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 
     TableUtil.setDistance(page, depth);
-    TableUtil.setFetchTimes(page, 0);
+    TableUtil.setFetchCount(page, 0);
 
     try {
       scoringFilters.initialScore(url, page);
@@ -151,6 +151,37 @@ public class ReduceDatumBuilder {
     updateMetadata(newPage);
 
     updateStatusCounter(newPage);
+  }
+
+
+  /**
+   * Updated the old row if necessary
+   * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
+   * */
+  public boolean updateExistOutlinkPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
+    boolean changed = false;
+    boolean veryLikeDetailPage = TableUtil.veryLikeDetailPage(oldPage);
+    Instant publishTime = TableUtil.getPublishTime(oldPage);
+
+    if (veryLikeDetailPage && publishTime.isAfter(Instant.EPOCH)) {
+      TableUtil.updateReferredPublishTime(mainPage, publishTime);
+      changed = true;
+    }
+
+    // Vote the main page if not voted
+    if (veryLikeDetailPage && TableUtil.voteIfAbsent(oldPage, mainPage)) {
+      TableUtil.increaseReferredArticles(mainPage, 1);
+      TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
+      changed = true;
+    }
+
+    if (depth < oldDepth) {
+      TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
+      TableUtil.setDistance(oldPage, depth);
+      changed = true;
+    }
+
+    return changed;
   }
 
   /**
@@ -224,7 +255,7 @@ public class ReduceDatumBuilder {
       case CrawlStatus.STATUS_FETCHED: // successful fetch
       case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
       case CrawlStatus.STATUS_REDIR_PERM:
-      case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, notmodified
+      case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, not modified
         int modified = FetchSchedule.STATUS_UNKNOWN;
         if (status == CrawlStatus.STATUS_NOTMODIFIED) {
           modified = FetchSchedule.STATUS_NOTMODIFIED;
@@ -257,10 +288,11 @@ public class ReduceDatumBuilder {
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        // Vincent : no force re-fetch for opinion monitoring
-//        if (!TableUtil.isNoFetch(page) && maxInterval < page.getFetchInterval()) {
-//          fetchSchedule.forceRefetch(url, page, false);
-//        }
+        // 10 years means for every
+        Duration fetchInterval = Duration.ofSeconds(page.getFetchInterval());
+        if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && maxFetchInterval.compareTo(fetchInterval) < 0) {
+          fetchSchedule.forceRefetch(url, page, false);
+        }
 
         break;
       case CrawlStatus.STATUS_RETRY:

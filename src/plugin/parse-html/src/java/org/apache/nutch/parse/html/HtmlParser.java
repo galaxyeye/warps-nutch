@@ -18,7 +18,6 @@
 package org.apache.nutch.parse.html;
 
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.filter.CrawlFilter;
@@ -128,13 +127,13 @@ public class HtmlParser implements Parser {
     if (!metaTags.getNoIndex()) { // okay to index
       // Get input source, again. It's not reusable
       InputSource input2 = getContentAsInputSource(page, encoding);
-      extractByScent(page, input2);
+      extract(page, input2);
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
     String textContent = page.getTemporaryVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
-    tryGetValidOutlinks(page, url, baseURL, textContent);
+    tryGetValidOutlinks(page, url, baseURL);
 
     ParseStatus status = getStatus(metaTags);
     Parse parse = new Parse(textContent, pageTitle, outlinks.toArray(new Outlink[0]), status);
@@ -197,16 +196,9 @@ public class HtmlParser implements Parser {
     return status;
   }
 
-  private void tryGetValidOutlinks(WebPage page, String url, URL base, String text) {
-    // TODO : do it during iterate the nodes
-    if (text == null || text.isEmpty() || !crawlFilters.testTextSatisfied(text)) {
-      LOG.debug("Filtered by text content, length : " + StringUtils.length(text));
-      return;
-    }
-
+  private void tryGetValidOutlinks(WebPage page, String url, URL base) {
     /*
-     * @vincent : We ignore all search links
-     * TODO : This is a temporary solution, and should be configurated
+     * TODO : This is a temporary solution, and should be configured
      * */
     if (crawlFilters.veryLikelyBeSearchUrl(url)) {
       return;
@@ -244,7 +236,7 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void extractByScent(WebPage page, InputSource input) {
+  private void extract(WebPage page, InputSource input) {
     LOG.trace("Try extract by Scent");
 
     if (page.getContent() == null) {

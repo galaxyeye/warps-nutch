@@ -27,6 +27,7 @@ import org.apache.nutch.storage.WebPage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -187,10 +188,6 @@ public class TableUtil {
     return page.getOutlinks() == null ? new HashMap<>() : page.getOutlinks();
   }
 
-  public static Instant getFetchTime(WebPage page) {
-    return Instant.ofEpochMilli(page.getFetchTime());
-  }
-
   public static boolean isSeed(WebPage page) {
     return hasMetadata(page, META_IS_SEED);
   }
@@ -253,7 +250,7 @@ public class TableUtil {
     return getPageCategory(page).isDetail() && getPageCategoryLikelihood(page) >= threshold;
   }
 
-  public static boolean veryLiklyDetailPage(WebPage page) {
+  public static boolean veryLikeDetailPage(WebPage page) {
     return isDetailPage(page, 0.85f);
   }
 
@@ -339,13 +336,47 @@ public class TableUtil {
 
   /**
    * TODO : We need a better solution to track all voted pages
+   * TODO : optimization, consider byte array to track vote history
    * */
-  public static void setVoted(WebPage page) {
-    putMetadata(page, META_VOTED, YES_STRING);
+  public static boolean voteIfAbsent(WebPage voter, WebPage candidate) {
+    String baseUrl = candidate.getBaseUrl().toString();
+    String hash;
+    try {
+      hash = String.valueOf(new URL(baseUrl).hashCode());
+    } catch (MalformedURLException e) {
+      return false;
+    }
+
+    String voteHistory = getVoteHistory(voter);
+    if (!voteHistory.contains(hash)) {
+      voteHistory += ",";
+      voteHistory += hash;
+      if (voteHistory.length() > 2000) {
+        voteHistory = StringUtils.substringAfter(voteHistory, ",");
+      }
+      putMetadata(voter, META_VOTE_HISTORY, voteHistory);
+
+      return true;
+    }
+
+    return false;
   }
 
-  public static boolean isVoted(WebPage page) {
-    return getMetadata(page, META_VOTED) != null;
+  public static boolean isVoted(WebPage voter, WebPage candidate) {
+    String baseUrl = candidate.getBaseUrl().toString();
+    String hash;
+    try {
+      hash = String.valueOf(new URL(baseUrl).hashCode());
+    } catch (MalformedURLException e) {
+      return false;
+    }
+
+    String voteHistory = getVoteHistory(voter);
+    return voteHistory.contains(hash);
+  }
+
+  public static String getVoteHistory(WebPage voter) {
+    return getMetadata(voter, META_VOTE_HISTORY);
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {
@@ -360,7 +391,7 @@ public class TableUtil {
     return getMetadata(page, META_PUBLISH_TIME);
   }
 
-  public static long getPublishTime(WebPage page) {
+  public static Instant getPublishTime(WebPage page) {
     String publishTimeStr = getPublishTimeStr(page);
     return DateTimeUtil.parseTime(publishTimeStr);
   }
@@ -373,17 +404,17 @@ public class TableUtil {
     putMetadata(page, META_REFERRER, referrer);
   }
 
-  public static int getFetchTimes(WebPage page) {
+  public static int getFetchCount(WebPage page) {
     String referredPages = getMetadata(page, META_FETCH_TIMES);
     return StringUtil.tryParseInt(referredPages, 0);
   }
 
-  public static void setFetchTimes(WebPage page, int count) {
+  public static void setFetchCount(WebPage page, int count) {
     putMetadata(page, META_FETCH_TIMES, String.valueOf(count));
   }
 
   public static void increaseFetchTimes(WebPage page) {
-    int count = getFetchTimes(page);
+    int count = getFetchCount(page);
     putMetadata(page, META_FETCH_TIMES, String.valueOf(count + 1));
   }
 
@@ -415,28 +446,36 @@ public class TableUtil {
     setReferredChars(page, oldCount + count);
   }
 
-  public static long getReferredPublishTime(WebPage page) {
+  public static Instant getReferredPublishTime(WebPage page) {
     String publishTimeStr = getMetadata(page, META_REFERRED_PUBLISH_TIME);
     return DateTimeUtil.parseTime(publishTimeStr);
   }
 
-  public static void setReferredPublishTime(WebPage page, long publishTime) {
+  public static void setReferredPublishTime(WebPage page, Instant publishTime) {
     putMetadata(page, META_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
-  public static boolean updateReferredPublishTime(WebPage page, long newPublishTime) {
-    if (newPublishTime <= Instant.EPOCH.toEpochMilli()) {
+  public static boolean updateReferredPublishTime(WebPage page, Instant newPublishTime) {
+    if (newPublishTime.isBefore(Instant.EPOCH)) {
       NutchUtil.LOG.warn("Publish time is out of range, url : " + page.getBaseUrl());
       return false;
     }
 
-    long latestTime = getReferredPublishTime(page);
-    if (latestTime < newPublishTime) {
+    Instant latestTime = getReferredPublishTime(page);
+    if (newPublishTime.isAfter(latestTime)) {
       setReferredPublishTime(page, newPublishTime);
       return true;
     }
 
     return false;
+  }
+
+  public static Instant getFetchTime(WebPage page) {
+    return Instant.ofEpochMilli(page.getFetchTime());
+  }
+
+  public static Duration getFetchInterval(WebPage page) {
+    return Duration.ofSeconds(page.getFetchInterval());
   }
 
   public static String getFetchTimeHistory(WebPage page, String defaultValue) {
@@ -450,15 +489,15 @@ public class TableUtil {
     TableUtil.putMetadata(page, Metadata.META_FETCH_TIME_HISTORY, fetchTimeHistory);
   }
 
-  public static Date getFirstCrawlTime(WebPage page, Date defaultValue) {
-    Date firstCrawlTime = null;
+  public static Instant getFirstCrawlTime(WebPage page, Instant defaultValue) {
+    Instant firstCrawlTime = null;
 
     String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
     if (!fetchTimeHistory.isEmpty()) {
       String[] times = fetchTimeHistory.split(",");
-      long time = DateTimeUtil.parseTime(times[0]);
-      if (time > 0) {
-        firstCrawlTime = new Date(time);
+      Instant time = DateTimeUtil.parseTime(times[0]);
+      if (time.isAfter(Instant.EPOCH)) {
+        firstCrawlTime = time;
       }
     }
 
@@ -470,21 +509,24 @@ public class TableUtil {
     return s == null ? defaultValue : s;
   }
 
+  /**
+   * TODO : consider hbase's record history feature
+   * */
   public static void putIndexTimeHistory(WebPage page, long indexTime) {
     String indexTimeHistory = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
     indexTimeHistory = DateTimeUtil.constructTimeHistory(indexTimeHistory, indexTime, 10);
     TableUtil.putMetadata(page, Metadata.META_INDEX_TIME_HISTORY, indexTimeHistory);
   }
 
-  public static Date getFirstIndexTime(WebPage page, Date defaultValue) {
-    Date firstIndexTime = null;
+  public static Instant getFirstIndexTime(WebPage page, Instant defaultValue) {
+    Instant firstIndexTime = null;
 
     String indexTimeHistory = TableUtil.getIndexTimeHistory(page, "");
     if (!indexTimeHistory.isEmpty()) {
       String[] times = indexTimeHistory.split(",");
-      long time = DateTimeUtil.parseTime(times[0]);
-      if (time > 0) {
-        firstIndexTime = new Date(time);
+      Instant time = DateTimeUtil.parseTime(times[0]);
+      if (time.isAfter(Instant.EPOCH)) {
+        firstIndexTime = time;
       }
     }
 

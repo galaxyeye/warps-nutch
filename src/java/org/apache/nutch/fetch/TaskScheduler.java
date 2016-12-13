@@ -9,20 +9,20 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchResult;
+import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.filter.URLFilterException;
+import org.apache.nutch.filter.URLFilters;
+import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.ParserJob;
 import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.filter.URLFilters;
-import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
@@ -42,6 +42,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -175,10 +177,11 @@ public class TaskScheduler extends Configured {
   private final NutchMetrics nutchMetrics;
 
   /**
-   * The reprUrl is the representative url of a redirect, we save a reprUrl for each thread,
+   * The reprUrl is the representative url of a redirect, we save a reprUrl for each thread
    * We use a concurrent skip list map to gain the best concurrency
+   *
+   * TODO : check why we store a reprUrl for each thread? @vincent
    */
-  // TODO : check why we store a reprUrl for each thread? @vincent
   private Map<Long, String> reprUrls = new ConcurrentSkipListMap<>();
 
   @SuppressWarnings("rawtypes")
@@ -269,7 +272,7 @@ public class TaskScheduler extends Configured {
 
   public JITIndexer getJitIndexer() { return jitIndexer; }
 
-  public long getLastTaskFinishTime() { return lastTaskFinishTime.get(); }
+  public Instant getLastTaskFinishTime() { return Instant.ofEpochMilli(lastTaskFinishTime.get()); }
 
   public int getActiveFetchThreadCount() { return activeFetchThreadCount.get(); }
 
@@ -489,19 +492,19 @@ public class TaskScheduler extends Configured {
   /**
    * Wait for a while and report task status
    *
-   * @param reportInterval Report interval in milliseconds
+   * @param reportInterval Report interval
    */
-  public Status waitAndReport(long reportInterval) throws IOException {
+  public Status waitAndReport(Duration reportInterval) throws IOException {
     // Used for threshold check, holds totalPages and totalBytes processed in the last sec
     float pagesLastSec = totalPages.get();
     long bytesLastSec = totalBytes.get();
 
     try {
-      Thread.sleep(reportInterval);
+      Thread.sleep(reportInterval.toMillis());
     } catch (InterruptedException ignored) {
     }
 
-    float reportIntervalSec = reportInterval / 1000.0f;
+    float reportIntervalSec = reportInterval.toMillis() / 1000.0f;
     float pagesThrouRate = (totalPages.get() - pagesLastSec) / reportIntervalSec;
     float bytesThrouRate = (totalBytes.get() - bytesLastSec) / reportIntervalSec;
 
@@ -827,11 +830,13 @@ public class TaskScheduler extends Configured {
    * */
   private void outputWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
-      if (!TableUtil.veryLiklyDetailPage(mainPage)) {
-        // For public opinion monitoring, do not follow detail pages
+      mapDatumBuilder.reset();
+      reduceDatumBuilder.reset();
+
+      // Do not follow detail pages for public opinion tracking
+      if (!TableUtil.veryLikeDetailPage(mainPage)) {
         Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
         outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
-        reduceDatumBuilder.calculateInlinks(url, outlinkRows.values());
       }
 
       outputMainPage(url, reversedUrl, mainPage);
@@ -841,7 +846,7 @@ public class TaskScheduler extends Configured {
   @SuppressWarnings("unchecked")
   private void outputMainPage(String url, String reversedUrl, WebPage mainPage) {
     counter.increase(Counter.pagesPeresist);
-    if (TableUtil.veryLiklyDetailPage(mainPage)) {
+    if (TableUtil.veryLikeDetailPage(mainPage)) {
       counter.increase(Counter.newDetailPages);
     }
 
@@ -862,9 +867,9 @@ public class TaskScheduler extends Configured {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    int depth = TableUtil.getDepth(mainPage);
-    if (depth != MAX_DISTANCE) {
-      depth += 1;
+    int newDepth = TableUtil.getDepth(mainPage);
+    if (newDepth != MAX_DISTANCE) {
+      newDepth += 1;
     }
 
     WebPage oldPage;
@@ -873,10 +878,10 @@ public class TaskScheduler extends Configured {
     }
 
     if (oldPage != null) {
-      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, depth);
+      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
     }
     else {
-      createNewPage(url, reversedUrl, mainPage, depth);
+      createNewPage(url, reversedUrl, mainPage, newDepth);
     }
   }
 
@@ -884,43 +889,19 @@ public class TaskScheduler extends Configured {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  private boolean tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int depth) {
-    boolean changed = false;
-
-    long publishTime = TableUtil.getPublishTime(oldPage);
-    if (publishTime > 0 && TableUtil.veryLiklyDetailPage(oldPage)) {
-      TableUtil.updateReferredPublishTime(mainPage, publishTime);
-      changed = true;
-    }
-
-    // TODO : not fair, only the first seed page is updated, but it's enough to find out the most active seed pages
-    boolean voted = TableUtil.isVoted(oldPage);
-    if (!voted) {
-      TableUtil.increaseReferredArticles(mainPage, 1);
-      TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
-      TableUtil.setVoted(oldPage);
-      changed = true;
-    }
-
-    int oldDistance = TableUtil.getDistance(oldPage);
-    if (depth < oldDistance) {
-      TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
-      TableUtil.setDistance(oldPage, depth);
-      changed = true;
-
-      String report = oldDistance + " -> " + depth + ", " + url;
-      nutchMetrics.debugDepthUpdated(report, reportSuffix);
-
-      counter.increase(Counter.pagesDepthUpdated);
-    }
+  private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
+    int oldDepth = TableUtil.getDepth(oldPage);
+    boolean changed = reduceDatumBuilder.updateExistOutlinkPage(mainPage, oldPage, newDepth, oldDepth);
 
     if (changed) {
       output(reversedUrl, oldPage);
+
+      String report = oldDepth + " -> " + newDepth + ", " + url;
+      nutchMetrics.debugDepthUpdated(report, reportSuffix);
+      counter.increase(Counter.pagesDepthUpdated);
     }
 
     counter.increase(Counter.existOutPages);
-
-    return changed;
   }
 
   private void createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {

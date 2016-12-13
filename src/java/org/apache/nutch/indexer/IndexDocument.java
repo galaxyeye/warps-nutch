@@ -36,6 +36,7 @@ import org.apache.nutch.util.TableUtil;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -237,6 +238,9 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
   private String format(Object obj) {
     if (obj instanceof Date) {
       return DateTimeUtil.solrCompatibleFormat((Date)obj);
+    }
+    else if (obj instanceof Instant) {
+      return DateTimeUtil.solrCompatibleFormat((Instant)obj);
     }
     else {
       return obj.toString();
