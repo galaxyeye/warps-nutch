@@ -93,6 +93,7 @@ public class GenerateJob extends NutchJob implements Tool {
     boolean norm = params.getBoolean(ARG_NORMALIZE, true);
     long pseudoCurrTime = params.getLong(ARG_CURTIME, startTime);
 
+    int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
 
     conf.set(PARAM_CRAWL_ID, crawlId);
@@ -109,6 +110,7 @@ public class GenerateJob extends NutchJob implements Tool {
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
+        "round", round,
         "crawlId", crawlId,
         "batchId", batchId,
         "filter", filter,
@@ -116,8 +118,8 @@ public class GenerateJob extends NutchJob implements Tool {
         "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "topN", topN,
         "reGenerate", reGenerate,
-        PARAM_GENERATOR_COUNT_MODE, hostGroupMode,
-        PARTITION_MODE_KEY, hostGroupMode,
+        "hostGroupMode", hostGroupMode,
+        "partitionMode", hostGroupMode,
         "nutchTmpDir", nutchTmpDir
     ));
 

@@ -100,6 +100,8 @@ public interface Nutch {
   float SCORE_DETAIL_PAGE = SCORE_SEED / 1000;
   float SCORE_PAGES_FROM_SEED = SCORE_SEED / 1000;
 
+  int FETCH_TASK_REMAINDER_NUMBER = 5;
+
   /**
    * All arguments from command line
    * */
@@ -210,6 +212,7 @@ public interface Nutch {
   String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
   String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
 
+  String PARAM_CRAWL_ROUND = "crawl.round";
   String PARAM_BATCH_ID = "nutch.batch.name";
   String PARAM_PARSE = "parser.parse";
   String PARAM_REPARSE = "parser.reparse";

@@ -46,12 +46,13 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
-    malformedUrl, rowsAddedAsSeed, rowsInjected, rowsIsSeed, rowsDetailFromSeed,
+    malformedUrl,
+    rowsAddedAsSeed, rowsIsSeed, rowsInjected, rowsDetailFromSeed,
     rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3, rowsDepthN,
     rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsUrlFiltered, oldUrlDate,
     tieba, bbs, news, blog,
-    pagesAlreadyGenerated, pagesTooDeep, pagesFetchLater, seedsFetchLater, pagesNeverFetch
+    pagesGenerated, pagesTooDeep, pagesFetchLater, pagesNeverFetch, seedsFetchLater
   }
 
   private NutchMetrics nutchMetrics;
@@ -68,7 +69,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   private CrawlFilters crawlFilters;
   private FetchSchedule fetchSchedule;
   private Instant pseudoCurrTime;
-  private float generatedDetailPageRate;
+  private float detailPageRate;
   private long maxDetailPageCount;
   private int maxDistance;
   private String[] keyRange;
@@ -105,8 +106,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = Instant.ofEpochMilli(conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime));
     long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
-    generatedDetailPageRate = 0.667f;
-    maxDetailPageCount = Math.round(topN * generatedDetailPageRate);
+    detailPageRate = 0.667f;
+    maxDetailPageCount = Math.round(topN * detailPageRate);
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
@@ -175,7 +176,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     if (Mark.GENERATE_MARK.hasMark(page)) {
-      getCounter().increase(Counter.pagesAlreadyGenerated);
+      getCounter().increase(Counter.pagesGenerated);
 
       /*
        * Fetch entries are generated, empty webpage entries are created in the database(HBase)
@@ -341,7 +342,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
         "RefPC", TableUtil.getReferredArticles(page),
         "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
         "FetchTime", DateTimeUtil.format(page.getFetchTime()),
-        "isSeed", TableUtil.isSeed(page),
+        "seeds", TableUtil.isSeed(page),
         "->\t", page.getBaseUrl()
     );
 

@@ -105,6 +105,8 @@ public class IndexJob extends NutchJob implements Tool {
     String zkHostString = params.get(PARAM_SOLR_ZK, conf.get(PARAM_SOLR_ZK));
     String solrCollection = params.get(PARAM_SOLR_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
 
+    int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
+
     /**
      * Re-set computed properties
      * */
@@ -123,6 +125,7 @@ public class IndexJob extends NutchJob implements Tool {
      * */
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
+        "round", round,
         "crawlId", crawlId,
         "batchId", batchId,
         "numTasks", numTasks,
@@ -139,8 +142,7 @@ public class IndexJob extends NutchJob implements Tool {
   @Override
   public void doRun(Map<String, Object> args) throws Exception {
     // TODO: Figure out why this needs to be here
-    currentJob.getConfiguration().setClass("mapred.output.key.comparator.class",
-        StringComparator.class, RawComparator.class);
+    currentJob.getConfiguration().setClass("mapred.output.key.comparator.class", StringComparator.class, RawComparator.class);
 
     Collection<WebPage.Field> fields = getFields(currentJob);
     MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);

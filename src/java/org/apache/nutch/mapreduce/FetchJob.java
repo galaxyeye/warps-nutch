@@ -113,6 +113,8 @@ public class FetchJob extends NutchJob implements Tool {
     String zkHostString = params.get(ARG_ZK, conf.get(PARAM_SOLR_ZK));
     String solrCollection = params.get(ARG_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
 
+    int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
+
     /** Set re-computed config variables */
     NutchConfiguration.setIfNotNull(conf, PARAM_CRAWL_ID, crawlId);
     conf.setEnum(PARAM_FETCH_MODE, fetchMode);
@@ -130,6 +132,7 @@ public class FetchJob extends NutchJob implements Tool {
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
+        "round", round,
         "crawlId", crawlId,
         "batchId", batchId,
         "fetchMode", fetchMode,

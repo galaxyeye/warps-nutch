@@ -1,19 +1,12 @@
 package org.apache.nutch.dbupdate;
 
-import com.google.common.base.Strings;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
-import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.filter.URLFilters;
-import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -22,18 +15,15 @@ import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
 
 /**
  * Created by vincent on 16-9-25.
@@ -90,7 +80,7 @@ public class MapDatumBuilder {
   public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = TableUtil.getDepth(sourcePage);
     if (depth >= maxDistance) {
-      return new HashMap<>();
+      return Collections.emptyMap();
     }
 
     // 1. Create scoreData

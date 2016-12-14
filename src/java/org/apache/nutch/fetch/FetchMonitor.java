@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static org.apache.nutch.fetch.TaskScheduler.QUEUE_REMAINDER_LIMIT;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
@@ -63,7 +62,7 @@ public class FetchMonitor {
 
   /** Throughput control */
   private int minPageThoRate;
-  private Instant thouCheckTime;
+  private Instant thoCheckTime;
   private int maxLowThoCount;
   private int maxTotalLowThoCount;
   private int lowThoCount = 0;
@@ -101,8 +100,8 @@ public class FetchMonitor {
     minPageThoRate = conf.getInt("fetcher.throughput.threshold.pages", -1);
     maxLowThoCount = conf.getInt("fetcher.throughput.threshold.sequence", 10);
     maxTotalLowThoCount = maxLowThoCount * 10;
-    long thouCheckAfter = conf.getLong("fetcher.throughput.threshold.check.after", 30);
-    thouCheckTime = startTime.plus(thouCheckAfter, ChronoUnit.SECONDS);
+    long thoCheckAfter = conf.getLong("fetcher.throughput.threshold.check.after", 30);
+    thoCheckTime = startTime.plus(thoCheckAfter, ChronoUnit.SECONDS);
 
     // fetch scheduler
     taskSchedulers = TaskSchedulers.getInstance();
@@ -135,7 +134,7 @@ public class FetchMonitor {
 
         "minPageThoRate", minPageThoRate,
         "maxLowThoCount", maxLowThoCount,
-        "thouCheckTime", DateTimeUtil.format(thouCheckTime),
+        "thoCheckTime", DateTimeUtil.format(thoCheckTime),
 
         "reportInterval(s)", reportInterval.getSeconds(),
 
@@ -302,15 +301,16 @@ public class FetchMonitor {
       /*
        * Dump the remainder fetch items if feeder thread is no available and fetch item is few
        * */
-      if (fetchMonitor.getQueueCount() <= QUEUE_REMAINDER_LIMIT) {
+      if (fetchMonitor.taskCount() <= FETCH_TASK_REMAINDER_NUMBER) {
+        LOG.info("Totally remains only " + fetchMonitor.taskCount() + " tasks");
         handleFewFetchItems();
       }
 
       /*
        * Check throughput(fetch speed)
        * */
-      if (now.isAfter(thouCheckTime) && status.pagesThoRate < minPageThoRate) {
-        checkFetchEfficiency();
+      if (now.isAfter(thoCheckTime) && status.pagesThoRate < minPageThoRate) {
+        checkFetchThroughput();
       }
 
       /*
@@ -386,7 +386,7 @@ public class FetchMonitor {
 
   private void handleFewFetchItems() {
     if (!taskScheduler.isFeederAlive()) {
-      fetchMonitor.dump(QUEUE_REMAINDER_LIMIT);
+      fetchMonitor.dump(FETCH_TASK_REMAINDER_NUMBER);
     }
   }
 
@@ -435,7 +435,7 @@ public class FetchMonitor {
   /**
    * Check if we're dropping below the threshold (we are too slow)
    * */
-  private void checkFetchEfficiency() throws IOException {
+  private void checkFetchThroughput() throws IOException {
     lowThoCount++;
     totalLowThoCount++;
 

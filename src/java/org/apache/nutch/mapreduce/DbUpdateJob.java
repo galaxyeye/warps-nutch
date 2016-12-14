@@ -84,11 +84,14 @@ public class DbUpdateJob extends NutchJob implements Tool {
 
     batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
 
+    int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
+
     conf.set(PARAM_BATCH_ID, batchId);
     conf.set(PARAM_CRAWL_ID, crawlId);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
+        "round", round,
         "crawlId", crawlId,
         "batchId", batchId
     ));

@@ -75,15 +75,13 @@ public class TaskScheduler extends Configured {
 
   public enum Counter {
     mbytes, unknowHosts, rowsInjected,
-    readyTasks, pendingTasks,
+    readyTasks, pendingTasks, finishedTasks,
     pagesTho, mbTho,
     rowsRedirect,
-    isSeed,
+    seeds,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
-    pagesPeresist, newPages, newDetailPages, existOutPages
+    pagesPeresist, existOutPages, newPages, newDetailPages
   }
-
-  public static final int QUEUE_REMAINDER_LIMIT = 5;
 
   private static final AtomicInteger objectSequence = new AtomicInteger(0);
 
@@ -278,7 +276,7 @@ public class TaskScheduler extends Configured {
 
   public int getFeedLimit() { return initFetchThreadCount * maxFeedPerThread; }
 
-  public Set<CharSequence> getUnparsableTypes() { return parseUtil == null ? new HashSet<>() : parseUtil.getUnparsableTypes(); }
+  public Set<CharSequence> getUnparsableTypes() { return parseUtil == null ? Collections.EMPTY_SET : parseUtil.getUnparsableTypes(); }
 
   public boolean indexJIT() { return jitIndexer != null; }
 
@@ -413,6 +411,7 @@ public class TaskScheduler extends Configured {
   public void finishUnchecked(FetchTask fetchTask) {
     tasksMonitor.finish(fetchTask);
     lastTaskFinishTime.set(System.currentTimeMillis());
+    counter.increase(Counter.finishedTasks);
   }
 
   /**
@@ -437,6 +436,7 @@ public class TaskScheduler extends Configured {
 
       tasksMonitor.finish(fetchTask);
       fetchErrors.incrementAndGet();
+      counter.increase(NutchCounter.Counter.errors);
 
       try {
         handleResult(fetchTask, null, ProtocolStatusUtils.STATUS_FAILED, CrawlStatus.STATUS_RETRY);
@@ -447,6 +447,8 @@ public class TaskScheduler extends Configured {
       }
     } finally {
       lastTaskFinishTime.set(System.currentTimeMillis());
+
+      counter.increase(Counter.finishedTasks);
     }
   }
 
@@ -940,7 +942,7 @@ public class TaskScheduler extends Configured {
     int depth = TableUtil.getDepth(page);
 
     if (TableUtil.isSeed(page)) {
-      counter.increase(Counter.isSeed);
+      counter.increase(Counter.seeds);
     }
 
     if (depth == 0) {

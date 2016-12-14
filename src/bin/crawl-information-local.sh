@@ -100,6 +100,8 @@ do
   echo "\n\n\n"
   echo `date` ": Iteration $a of $LIMIT"
 
+  commonOptions="$commonOptions -Dcrawl.round=$a"
+
   echo "Generating batchId"
   batchId=$DATE-$RANDOM
 

@@ -29,8 +29,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.nutch.metadata.Metadata.*;
@@ -185,7 +185,7 @@ public class TableUtil {
   }
 
   public static Map<CharSequence, CharSequence> getOutlinks(WebPage page) {
-    return page.getOutlinks() == null ? new HashMap<>() : page.getOutlinks();
+    return page.getOutlinks() == null ? Collections.EMPTY_MAP : page.getOutlinks();
   }
 
   public static boolean isSeed(WebPage page) {
@@ -349,7 +349,10 @@ public class TableUtil {
 
     String voteHistory = getVoteHistory(voter);
     if (!voteHistory.contains(hash)) {
-      voteHistory += ",";
+      if(voteHistory.length() > 0) {
+        voteHistory += ",";
+      }
+
       voteHistory += hash;
       if (voteHistory.length() > 2000) {
         voteHistory = StringUtils.substringAfter(voteHistory, ",");
@@ -376,7 +379,7 @@ public class TableUtil {
   }
 
   public static String getVoteHistory(WebPage voter) {
-    return getMetadata(voter, META_VOTE_HISTORY);
+    return getMetadata(voter, META_VOTE_HISTORY, "");
   }
 
   public static void setPublishTime(WebPage page, String publishTime) {

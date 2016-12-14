@@ -20,7 +20,7 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
   /** All fetch queues, indexed by queue id. */
   private final Map<FetchQueue.Key, FetchQueue> activeQueues = new HashMap<>();
 
-  /** Retired queues do not serve any more, but the tasks can be find out by findLenient. */
+  /** Retired queues do not serve any more, but the tasks can be find out by findExtend. */
   private final Map<FetchQueue.Key, FetchQueue> inactiveQueues = new HashMap<>();
 
   @Override
@@ -148,13 +148,9 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
     return hasPrior || inactiveQueues.values().stream().anyMatch(p);
   }
 
-  public FetchQueue find(FetchQueue.Key key) {
-    return search(key, false);
-  }
+  public FetchQueue find(FetchQueue.Key key) { return search(key, false); }
 
-  public FetchQueue findLenient(FetchQueue.Key key) {
-    return search(key, true);
-  }
+  public FetchQueue findExtend(FetchQueue.Key key) { return search(key, true); }
 
   public FetchQueue search(FetchQueue.Key key, boolean searchInactive) {
     FetchQueue queue = null;
@@ -173,39 +169,17 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
   public String getCostReport() {
     StringBuilder sb = new StringBuilder();
     activeQueues.values().stream()
-        .sorted(Comparator.comparing(FetchQueue::averageRecentTimeCost).reversed())
+        .sorted(Comparator.comparing(FetchQueue::averageTimeCost).reversed())
         .limit(50)
         .forEach(queue -> sb.append(queue.getCostReport()).append('\n'));
     return sb.toString();
   }
 
   public void dump(int limit) {
-    LOG.info("Total " + activeQueues.size() + " active fetch queues");
-
-    int i = 0;
-    for (FetchQueue.Key key : activeQueues.keySet()) {
-      if (i++ > limit) {
-        break;
-      }
-      FetchQueue queue = activeQueues.get(key);
-
-      if (queue.readyCount() > 0 || queue.pendingCount() > 0) {
-        LOG.info(i + "...........Active Fetch Queue..............");
-        queue.dump();
-      }
-    }
-
-    LOG.info("Total " + inactiveQueues.size() + " inactive fetch queues");
-    i = 0;
-    for (FetchQueue.Key key : inactiveQueues.keySet()) {
-      if (i++ > limit) {
-        break;
-      }
-      FetchQueue queue = inactiveQueues.get(key);
-      if (queue.pendingCount() > 0) {
-        LOG.info(i + "...........Inactive Fetch Queue..............");
-        queue.dump();
-      }
-    }
+    LOG.info("Start dump fetch queue status. "
+        + "Active : " + activeQueues.size() + ", inactive : " + inactiveQueues.size()+ " ...");
+    activeQueues.values().stream().limit(limit).filter(FetchQueue::hasTasks).forEach(FetchQueue::dump);
+    inactiveQueues.values().stream().limit(limit).filter(FetchQueue::hasPendingTasks).forEach(FetchQueue::dump);
+    LOG.info("Done.");
   }
 }

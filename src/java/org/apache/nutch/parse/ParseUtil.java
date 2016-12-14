@@ -18,11 +18,8 @@ package org.apache.nutch.parse;
 
 // Commons Logging imports
 
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
@@ -30,26 +27,25 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.filter.CrawlFilters;
-import org.apache.nutch.mapreduce.FetchJob;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
+import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NetUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -58,7 +54,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.apache.nutch.filter.CrawlFilter.MEDIA_URL_SUFFIXES;
-import static org.apache.nutch.mapreduce.NutchCounter.Counter.outlinks;
 import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_QUEUE_MODE;
 
 /**
@@ -233,10 +228,10 @@ public class ParseUtil {
         .distinct()
         .limit(maxOutlinks)
         .filter(p -> validateDestHost(sourceHost, URLUtil.getHost(p.getKey(), hostGroupMode)))
-        .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+        .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
     page.setOutlinks(outlinks);
 
-    LOG.debug(url + " -> " + outlinks.keySet().stream().collect(Collectors.joining(", ")));
+    // LOG.debug(url + " -> " + outlinks.keySet().stream().collect(Collectors.joining(", ")));
 
 //    if (page.getOutlinks() != null) {
 //      page.getOutlinks().clear();

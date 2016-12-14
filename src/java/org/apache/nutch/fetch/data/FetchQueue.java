@@ -107,9 +107,9 @@ public class FetchQueue implements Comparable<FetchQueue> {
   /** Record timing cost of slow tasks */
   private final CircularFifoQueue<Duration> slowTasksRecorder = new CircularFifoQueue<>(RECENT_TASKS_COUNT_LIMIT);
   private int recentFinishedTasks = 1;
-  private Duration recentFetchTime = Duration.ZERO;
+  private long recentFetchMillis = 1;
   private int totalFinishedTasks = 1;
-  private Duration totalFetchTime = Duration.ZERO;
+  private long totalFetchMillis = 1;
 
   /**
    * If a fetch queue is inactive, the queue does not accept any tasks, nor serve any requests,
@@ -196,26 +196,23 @@ public class FetchQueue implements Comparable<FetchQueue> {
       return false;
     }
 
-//    long endTime = System.currentTimeMillis();
-    Instant endTime = Instant.now();
-    setNextFetchTime(endTime, asap);
+    Instant finishTime = Instant.now();
+    setNextFetchTime(finishTime, asap);
 
-    // Record fetch time cost
-    // long fetchTime = endTime - fetchTask.getPendingStart();
-    Duration fetchTime = Duration.between(fetchTask.getPendingStart(), endTime);
-    if (fetchTime.compareTo(slowTaskThreshold) > 0) {
-      slowTasksRecorder.add(fetchTime);
+    Duration timeCost = Duration.between(fetchTask.getPendingStart(), finishTime);
+    if (timeCost.compareTo(slowTaskThreshold) > 0) {
+      slowTasksRecorder.add(timeCost);
     }
 
     ++recentFinishedTasks;
-    recentFetchTime.plus(fetchTime);
+    recentFetchMillis += timeCost.toMillis();
     if (recentFinishedTasks > RECENT_TASKS_COUNT_LIMIT) {
-      recentFinishedTasks = 0;
-      recentFetchTime = Duration.ZERO;
+      recentFinishedTasks = 1;
+      recentFetchMillis = 1;
     }
 
     ++totalFinishedTasks;
-    totalFetchTime.plus(fetchTime);
+    totalFetchMillis += timeCost.toMillis();
 
     return true;
   }
@@ -229,15 +226,15 @@ public class FetchQueue implements Comparable<FetchQueue> {
     return false;
   }
 
-  public FetchTask getPendingTask(int itemID) {
-    return pendingTasks.get(itemID);
-  }
+  public FetchTask getPendingTask(int itemID) { return pendingTasks.get(itemID); }
 
   /**
    * Hang up the task and wait for completion. Move the fetch task to pending queue.
    * */
   private void hangUp(FetchTask fetchTask, Instant now) {
-    if (fetchTask == null) return;
+    if (fetchTask == null) {
+      return;
+    }
 
     fetchTask.setPendingStart(now);
     pendingTasks.put(fetchTask.getItemId(), fetchTask);
@@ -259,7 +256,7 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   public int finishedCount() { return totalFinishedTasks; }
 
-  public int getSlowTaskCount() { return slowTasksRecorder.size(); }
+  public int slowTaskCount() { return slowTasksRecorder.size(); }
 
   public boolean isSlow() { return isSlow(Duration.ofSeconds(1)); }
 
@@ -268,14 +265,14 @@ public class FetchQueue implements Comparable<FetchQueue> {
   /**
    * Average cost in seconds
    * */
-  public double averageTimeCost() { return 1.0 * totalFetchTime.getSeconds() / totalFinishedTasks; }
-  public double averageRecentTimeCost() { return 1.0 * recentFetchTime.getSeconds() / recentFinishedTasks; }
+  public double averageTimeCost() { return totalFetchMillis / 1000.0 / totalFinishedTasks; }
+  public double averageRecentTimeCost() { return recentFetchMillis / 1000.0 / recentFinishedTasks; }
 
   /**
    * Throughput rate in seconds
    * */
-  public double averageThroughputRate() { return 1.0 * totalFinishedTasks / totalFetchTime.getSeconds(); }
-  public double averageRecentThroughputRate() { return 1.0 * recentFinishedTasks / recentFetchTime.getSeconds(); }
+  public double averageThoRate() { return totalFinishedTasks / (totalFetchMillis / 1000.0); }
+  public double averageRecentThoRate() { return recentFinishedTasks / (recentFetchMillis / 1000.0); }
 
   public void disable() { this.status = Status.INACTIVITY; }
 
@@ -329,8 +326,8 @@ public class FetchQueue implements Comparable<FetchQueue> {
   }
 
   public String getCostReport() {
-    return String.format("%1$40s -> aveTimeCost : %2$.2fs/p, avaThoPut : %3$.2fp/s",
-        key.queueId, averageRecentTimeCost(), averageRecentThroughputRate());
+    return String.format("%1$40s -> aveTimeCost : %2$.2fs/p, avaThoRate : %3$.2fp/s",
+        key.queueId, averageTimeCost(), averageThoRate());
   }
 
   public int clearReadyQueue() {
@@ -376,8 +373,9 @@ public class FetchQueue implements Comparable<FetchQueue> {
   public void dump() {
     final DecimalFormat df = new DecimalFormat("###0.##");
 
-    LOG.info(Params.format(
+    LOG.info(Params.formatAsLine(
         "className", getClass().getSimpleName(),
+        "status", status,
         "key", key,
         "maxThreads", maxThreads,
         "pendingTasks", pendingTasks.size(),
@@ -385,33 +383,30 @@ public class FetchQueue implements Comparable<FetchQueue> {
         "minCrawlDelay(s)", df.format(minCrawlDelay.getSeconds()),
         "now", DateTimeUtil.now(),
         "nextFetchTime", DateTimeUtil.format(nextFetchTime),
-        "aveTimeCost(s)", df.format(averageRecentTimeCost()),
-        "aveThoRate(s)", df.format(averageRecentThroughputRate()),
-        "readyTasks", readyTasks.size(),
-        "pendingTasks", pendingTasks.size(),
-        "status", status
+        "aveTimeCost(s)", df.format(averageTimeCost()),
+        "aveThoRate(s)", df.format(averageThoRate()),
+        "readyTasks", readyCount(),
+        "pendingTasks", pendingCount(),
+        "finsihedTasks", finishedCount()
     ));
 
     int i = 0;
     final int limit = 20;
+    String report = "\nDrop the following tasks : ";
     FetchTask fetchTask = readyTasks.poll();
     while (fetchTask != null && ++i <= limit) {
-      LOG.info("  " + i + ". " + fetchTask.getUrl());
+      report += "  " + i + ". " + fetchTask.getUrl() + "\t";
       fetchTask = readyTasks.poll();
     }
+    LOG.info(report);
   }
 
-  private void setNextFetchTime(Instant endTime) {
-    setNextFetchTime(endTime, false);
-  }
-
-  private void setNextFetchTime(Instant endTime, boolean asap) {
+  private void setNextFetchTime(Instant finishTime, boolean asap) {
     if (!asap) {
-      // nextFetchTime = endTime + (maxThreads > 1 ? minCrawlDelay.toMillis() : crawlDelay.toMillis());
-      nextFetchTime = endTime.plus(maxThreads > 1 ? minCrawlDelay : crawlDelay);
+      nextFetchTime = finishTime.plus(maxThreads > 1 ? minCrawlDelay : crawlDelay);
     }
     else {
-      nextFetchTime = endTime;
+      nextFetchTime = finishTime;
     }
   }
 

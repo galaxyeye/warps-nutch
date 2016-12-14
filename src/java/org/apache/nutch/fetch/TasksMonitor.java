@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static org.apache.nutch.fetch.TaskScheduler.QUEUE_REMAINDER_LIMIT;
 import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.util.URLUtil.EXAMPLE_HOST_NAME;
 
@@ -111,8 +110,8 @@ public class TasksMonitor {
         "maxThreadsPerQueue", maxQueueThreads,
         "hostGroupMode", hostGroupMode,
         "useHostSettings", useHostSettings,
-        "crawlDelay(m)", df.format(crawlDelay.getSeconds() / 60.0),
-        "minCrawlDelay(m)", df.format(minCrawlDelay.getSeconds() / 60.0),
+        "crawlDelay(s)", df.format(crawlDelay.toMillis() / 1000.0),
+        "minCrawlDelay(s)", df.format(minCrawlDelay.toMillis() / 1000.0),
         "queuePendingTimeout(m)", queuePendingTimeout.toMinutes(),
         "unreachableHosts", unreachableHosts.size(),
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
@@ -256,7 +255,7 @@ public class TasksMonitor {
   }
 
   private void doFinish(int priority, String queueId, int itemId, boolean asap) {
-    FetchQueue queue = fetchQueues.findLenient(FetchQueue.Key.create(priority, queueId));
+    FetchQueue queue = fetchQueues.findExtend(FetchQueue.Key.create(priority, queueId));
 
     if (queue == null) {
       LOG.warn("Attemp to finish item from unknown queue: <{}, {}>", priority, queueId);
@@ -286,7 +285,7 @@ public class TasksMonitor {
   }
 
   public synchronized void report() {
-    dump(QUEUE_REMAINDER_LIMIT);
+    dump(FETCH_TASK_REMAINDER_NUMBER);
 
     reportAndLogUnreachableHosts();
 
@@ -327,7 +326,7 @@ public class TasksMonitor {
 
   /** Get a pending task, the task can be in working queues or in detached queues */
   public synchronized FetchTask findPendingTask(int priority, String queueId, int itemID) {
-    FetchQueue queue = fetchQueues.findLenient(FetchQueue.Key.create(priority, queueId));
+    FetchQueue queue = fetchQueues.findExtend(FetchQueue.Key.create(priority, queueId));
     return queue != null ? queue.getPendingTask(itemID) : null;
   }
 
@@ -450,12 +449,13 @@ public class TasksMonitor {
     DecimalFormat df = new DecimalFormat("0.##");
 
     LOG.warn("Retire slowest queue : " + queue.getId()
-        + ", task stat : ready : " + queue.readyCount()
+        + ", task stat : \n"
+        + "\t\tready : " + queue.readyCount()
         + ", pending : " + queue.pendingCount()
         + ", finished : " + queue.finishedCount()
-        + ", slow : " + queue.getSlowTaskCount()
+        + ", slow : " + queue.slowTaskCount()
         + ", " + df.format(queue.averageTimeCost()) + "s/p"
-        + ", " + df.format(queue.averageThroughputRate()) + "p/s"
+        + ", " + df.format(queue.averageThoRate()) + "p/s"
         + ", deleted : " + deleted
     );
 
@@ -506,6 +506,8 @@ public class TasksMonitor {
   public synchronized int getQueueCount() {
     return fetchQueues.size();
   }
+
+  public int taskCount() { return readyTaskCount.get() + pendingTaskCount(); }
 
   public int readyTaskCount() { return readyTaskCount.get(); }
 
@@ -567,6 +569,7 @@ public class TasksMonitor {
       String line = String.format("%1$40s -> %2$s\n", queueId, threads);
       report.append(line);
     });
+
     REPORT_LOG.info("Served threads : \n" + report);
     nutchMetrics.writeReport("Served threads : \n" + report, "queue-served-threads-" + reportSuffix + ".txt", true);
   }
@@ -596,11 +599,10 @@ public class TasksMonitor {
 
   private void reportAndLogAvailableHosts() {
     String report = "# Total " + availableHosts.size() + " available hosts";
-    REPORT_LOG.info(report);
     report += "\n";
 
     String hostsReport = availableHosts.values().stream().sorted()
-        .map(hostInfo -> String.format("%40s -> %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s",
+        .map(hostInfo -> String.format("%40s -> %-15s %-15s %-15s %-15s %-15s %-15s %-15s %-15s %-15s",
             hostInfo.hostName,
             "total : " + hostInfo.urls,
             "index : " + hostInfo.indexUrls,
@@ -616,6 +618,7 @@ public class TasksMonitor {
     report += hostsReport;
     report += "\n";
 
+    REPORT_LOG.info(report);
     nutchMetrics.writeReport(report, "available-hosts-" + reportSuffix + ".txt", true);
   }
 
@@ -624,20 +627,15 @@ public class TasksMonitor {
 
     sb.append(String.format("\n%s\n", "---------------Queue Cost Report--------------"));
     sb.append(String.format("%25s %s\n", "Ava Time(s)", "Queue Id"));
-    int i = 0;
-    for (Map.Entry<Double, String> entry : costRecorder.entrySet()) {
-      if (i++ > 100) {
-        break;
-      }
-
-      sb.append(String.format("%1$,4d.%2$,20.2f", i, entry.getKey()));
+    final int[] i = {0};
+    costRecorder.entrySet().stream().limit(100).forEach(entry -> {
+      sb.append(String.format("%1$,4d.%2$,20.2f", ++i[0], entry.getKey()));
       sb.append(" <- ");
       sb.append(entry.getValue());
       sb.append("\n");
-    }
+    });
 
     REPORT_LOG.info(sb.toString());
-
     nutchMetrics.writeReport(sb.toString(), "queue-costs-" + reportSuffix + ".txt", true);
   }
 
