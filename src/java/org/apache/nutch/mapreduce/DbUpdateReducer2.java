@@ -23,7 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.net.protocols.HttpDateFormat;
+import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,23 +149,25 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
               modified = FetchSchedule.STATUS_NOTMODIFIED;
             }
           }
-          long fetchTime = page.getFetchTime();
-          long prevFetchTime = page.getPrevFetchTime();
-          long modifiedTime = page.getModifiedTime();
-          long prevModifiedTime = page.getPrevModifiedTime();
-          CharSequence lastModified = page.getHeaders().get(
-              new Utf8("Last-Modified"));
-          if (lastModified != null) {
-            try {
-              modifiedTime = HttpDateFormat.toLong(lastModified.toString());
-              prevModifiedTime = page.getModifiedTime();
-            } catch (Exception ignored) {
-            }
+
+          Instant prevFetchTime = Instant.ofEpochMilli(page.getPrevFetchTime());
+          Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
+
+          Instant prevModifiedTime = Instant.ofEpochMilli(page.getPrevModifiedTime());
+          Instant modifiedTime = Instant.ofEpochMilli(page.getModifiedTime());
+
+          Instant latestModifiedTime = TableUtil.getHeaderLastModifiedTime(page, modifiedTime);
+          if (latestModifiedTime.isAfter(modifiedTime)) {
+            modifiedTime = latestModifiedTime;
+            prevModifiedTime = modifiedTime;
           }
-          schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime,
-              fetchTime, modifiedTime, modified);
-          if (maxInterval < page.getFetchInterval())
-            schedule.forceRefetch(url, page, false);
+          else {
+            LOG.warn("Bad last modified time : {} -> {}", modifiedTime, page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED)));
+          }
+
+          schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
+
+          if (maxInterval < page.getFetchInterval()) schedule.forceRefetch(url, page, false);
           break;
         case CrawlStatus.STATUS_RETRY:
           schedule.setPageRetrySchedule(url, page, 0L,

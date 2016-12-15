@@ -89,7 +89,7 @@ public class OPICScoringFilter implements ScoringFilter {
   /** Use {@link WebPage#getScore()}. */
   @Override
   public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
-    return row.getScore() * initSort;
+    return initSort + row.getScore();
   }
 
   /** Increase the score by a sum of inlinked scores. */

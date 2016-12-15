@@ -21,10 +21,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.Instant;
+
+import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -62,21 +69,19 @@ import java.time.Duration;
 public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   public static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
-  protected float INC_RATE;
+  protected float INC_RATE = 0.2f;
 
-  protected float DEC_RATE;
+  protected float DEC_RATE = 0.2f;
 
-  protected Duration MAX_INTERVAL;
+  protected Duration MIN_INTERVAL = Duration.ofSeconds(1);
 
-  protected Duration SEED_MAX_INTERVAL;
+  protected Duration MAX_INTERVAL = Duration.ofDays(365);
 
-  protected Duration MIN_INTERVAL;
+  protected Duration SEED_MAX_INTERVAL = Duration.ofDays(1);
 
-  protected boolean SYNC_DELTA;
+  protected boolean SYNC_DELTA = true;
 
-  protected double SYNC_DELTA_RATE;
-
-  protected final int SECONDS_OF_HOUR = (int)Duration.ofHours(1).getSeconds();
+  protected double SYNC_DELTA_RATE = 0.2f;
 
   public void setConf(Configuration conf) {
     super.setConf(conf);
@@ -86,67 +91,67 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
     INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
-    MIN_INTERVAL = Duration.ofSeconds(conf.getInt("db.fetch.schedule.adaptive.min_interval", 60));
-    MAX_INTERVAL = Duration.ofSeconds(conf.getLong("db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365).getSeconds())); // 1 year
-    SEED_MAX_INTERVAL = Duration.ofSeconds(conf.getLong("db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1).getSeconds()));
+    MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.min_interval", Duration.ofSeconds(60));
+    MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365));
+    SEED_MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
 
   @Override
-  public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
-                               long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
+  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+                               Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    long refTime = fetchTime;
-    if (modifiedTime <= 0) {
+    if (modifiedTime.toEpochMilli() <= 0) {
       modifiedTime = fetchTime;
     }
 
-    long interval = page.getFetchInterval();
+    long adjustInterval = TableUtil.getFetchInterval(page).getSeconds();
     switch (state) {
       case FetchSchedule.STATUS_MODIFIED:
-        interval *= (1.0f - DEC_RATE);
+        adjustInterval *= (1.0f - DEC_RATE);
         break;
       case FetchSchedule.STATUS_NOTMODIFIED:
-        interval *= (1.0f + INC_RATE);
+        adjustInterval *= (1.0f + INC_RATE);
         break;
       case FetchSchedule.STATUS_UNKNOWN:
         break;
     }
 
     if (SYNC_DELTA) {
-      // try to synchronize with the time of change
-      // TODO: different from normal class (is delta in seconds)?
-      int delta = (int) ((fetchTime - modifiedTime) / 1000L);
-      if (delta > interval) {
-        interval = delta;
+      long delta = fetchTime.getEpochSecond() - modifiedTime.getEpochSecond();
+      if (delta > adjustInterval) {
+        adjustInterval = delta;
       }
-      refTime = fetchTime - Math.round(delta * SYNC_DELTA_RATE);
+      fetchTime = fetchTime.minusSeconds(Math.round(delta * SYNC_DELTA_RATE));
     }
 
-    if (interval < MIN_INTERVAL.getSeconds()) interval = MIN_INTERVAL.getSeconds();
-    if (interval > MAX_INTERVAL.getSeconds()) interval = MAX_INTERVAL.getSeconds();
+    if (adjustInterval < MIN_INTERVAL.getSeconds()) adjustInterval = MIN_INTERVAL.getSeconds();
+    if (adjustInterval > MAX_INTERVAL.getSeconds()) adjustInterval = MAX_INTERVAL.getSeconds();
 
-    updateRefetchTime(page, interval, refTime, prevModifiedTime, modifiedTime);
+    updateRefetchTime(page, Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
   }
 
-  protected void updateRefetchTime(WebPage page, long interval, long refTime, long prevModifiedTime, long modifiedTime) {
-    page.setFetchInterval((int)interval);
-    page.setFetchTime(refTime + interval * 1000L);
-    page.setModifiedTime(modifiedTime);
-    page.setPrevModifiedTime(prevModifiedTime);
+  protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
+    page.setFetchInterval((int) interval.getSeconds());
+    page.setFetchTime(fetchTime.toEpochMilli() + interval.toMillis());
+    page.setPrevModifiedTime(prevModifiedTime.toEpochMilli());
+    page.setModifiedTime(modifiedTime.toEpochMilli());
   }
 
   public static void main(String[] args) throws Exception {
-    FetchSchedule fs = new AdaptiveFetchSchedule();
+    FetchSchedule fs = new SeedFirstFetchSchedule();
     fs.setConf(NutchConfiguration.create());
-    // we start the time at 0, for simplicity
-    long curTime = 0;
-    long delta = 1000L * 3600L * 24L; // 2 hours
+
+    final Duration timeDelta = Duration.ofHours(2); // 2 hours
     // we trigger the update of the page every 30 days
-    long update = 1000L * 3600L * 24L * 30L; // 30 days
+    final Duration update = Duration.ofDays(1);
+
+    // we start the time at 0, for simplicity
+    Instant curTime = TCP_IP_STANDARDIZED_TIME;
+    Instant lastModified = TCP_IP_STANDARDIZED_TIME;
+
     boolean changed = true;
-    long lastModified = 0;
     int miss = 0;
     int totalMiss = 0;
     int maxMiss = 0;
@@ -156,14 +161,16 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     // WebPage p = new WebPage(1, 3600 * 24 * 30, 1.0f);
     WebPage p = WebPage.newBuilder().build();
     p.setStatus(0);
-    p.setFetchInterval(3600 * 24 * 30);
+    p.setFetchInterval((int) Duration.ofDays(1).getSeconds()); // 3600 * 24 * 30
     p.setScore(1.0f);
-    p.setFetchTime(0L);
+
+    p.setFetchTime(TCP_IP_STANDARDIZED_TIME.toEpochMilli());
+    TableUtil.putMetadata(p, META_IS_SEED, YES_STRING);
 
     LOG.info(p.toString());
     // let's move the timeline a couple of deltas
-    for (int i = 0; i < 10000; i++) {
-      if (lastModified + update < curTime) {
+    for (int i = 0; i < 1000; i++) {
+      if (lastModified.plus(update).isBefore(curTime)) {
         // System.out.println("i=" + i + ", lastModified=" + lastModified +
         // ", update=" + update + ", curTime=" + curTime);
         changed = true;
@@ -171,22 +178,38 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
         lastModified = curTime;
       }
 
-      LOG.info(i + ". " + changed + "\twill fetch at "
-          + (p.getFetchTime() / delta) + "\tinterval "
-          + (p.getFetchInterval() / Duration.ofDays(365).getSeconds()) + " days" + "\t missed "
-          + miss);
-      if (p.getFetchTime() <= curTime) {
-        fetchCnt++;
-        fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified,
-            changed ? FetchSchedule.STATUS_MODIFIED
-                : FetchSchedule.STATUS_NOTMODIFIED);
+      LOG.info("");
+      LOG.info(i + ". " + (changed ? "[changed] " : "[no-change] ")
+          + "Last Modified : " + getRoundNumber(p, p.getModifiedTime(), timeDelta) + ", "
+          + "Next fetch : " + getRoundNumber(p, p.getFetchTime(), timeDelta) + ", "
+          + "Interval : " + getRound(p, timeDelta) + " round, "
+          + "Score : " + p.getScore() + ", "
+          + "Missed " + miss);
 
-        LOG.info("\tfetched & adjusted: " + "\twill fetch at "
-            + (p.getFetchTime() / delta) + "\tinterval "
-            + (p.getFetchInterval() / Duration.ofDays(365).getSeconds()) + " days");
+      if (p.getFetchTime() <= curTime.toEpochMilli()) {
+        fetchCnt++;
+        fs.setFetchSchedule("http://www.example.com", p,
+            Instant.ofEpochMilli(p.getFetchTime()),
+            Instant.ofEpochMilli(p.getModifiedTime()),
+            curTime,
+            lastModified,
+            changed ? FetchSchedule.STATUS_MODIFIED : FetchSchedule.STATUS_NOTMODIFIED);
+
+        LOG.info("\tFetched & Adjusted: " + ", "
+            + "Last Modified : " + getRoundNumber(p, p.getModifiedTime(), timeDelta) + ", "
+            + "Next fetch : " + getRoundNumber(p, p.getFetchTime(), timeDelta) + ", "
+            + "Score : " + p.getScore() + ", "
+            + "Interval : " + getRound(p, timeDelta) + " round");
+
+        TableUtil.updateReferredPublishTime(p, curTime);
+        TableUtil.increaseFetchCount(p);
+        TableUtil.increaseReferredArticles(p, 1);
+        TableUtil.increaseReferredChars(p, 2500);
+        setScore(p);
 
         if (!changed) miss++;
         if (miss > maxMiss) maxMiss = miss;
+
         changed = false;
         totalMiss += miss;
         miss = 0;
@@ -195,9 +218,31 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       if (changed) {
         miss++;
       }
-      curTime += delta;
+
+      // move time line
+      curTime = curTime.plus(timeDelta);
     }
     LOG.info("Total missed: " + totalMiss + ", max miss: " + maxMiss);
     LOG.info("Page changed " + changeCnt + " times, fetched " + fetchCnt + " times.");
+  }
+
+  private static long getRoundNumber(WebPage p, long time, Duration timeDelta) {
+    return (time - TCP_IP_STANDARDIZED_TIME.toEpochMilli()) / timeDelta.toMillis();
+  }
+
+  private static String getRound(WebPage p, Duration timeDelta) {
+    final DecimalFormat df = new DecimalFormat("0.0");
+
+    return df.format(1.0 * TableUtil.getFetchInterval(p).toMillis()  / timeDelta.toMillis());
+  }
+
+  private static void setScore(WebPage p) {
+    float f1 = 1.0f;
+    float f2 = 2.0f;
+
+    long ra = TableUtil.getReferredArticles(p);
+    long rc = TableUtil.getReferredChars(p);
+
+    p.setScore(f1 * ra + f2 * ((rc - 1000) / 1000));
   }
 }

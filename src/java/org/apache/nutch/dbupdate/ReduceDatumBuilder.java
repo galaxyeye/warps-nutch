@@ -8,7 +8,6 @@ import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -157,18 +156,18 @@ public class ReduceDatumBuilder {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  public boolean updateExistOutlinkPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
+  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
     boolean changed = false;
-    boolean veryLikeDetailPage = TableUtil.veryLikeDetailPage(oldPage);
-    Instant publishTime = TableUtil.getPublishTime(oldPage);
+    boolean detail = TableUtil.veryLikeDetailPage(oldPage);
 
-    if (veryLikeDetailPage && publishTime.isAfter(Instant.EPOCH)) {
+    Instant publishTime = TableUtil.getPublishTime(oldPage);
+    if (detail && publishTime.isAfter(Instant.EPOCH)) {
       TableUtil.updateReferredPublishTime(mainPage, publishTime);
       changed = true;
     }
 
     // Vote the main page if not voted
-    if (veryLikeDetailPage && TableUtil.voteIfAbsent(oldPage, mainPage)) {
+    if (detail && TableUtil.voteIfAbsent(oldPage, mainPage)) {
       TableUtil.increaseReferredArticles(mainPage, 1);
       TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
       changed = true;
@@ -270,26 +269,27 @@ public class ReduceDatumBuilder {
           }
         }
 
-        long fetchTime = page.getFetchTime();
-        long prevFetchTime = page.getPrevFetchTime();
-        long modifiedTime = page.getModifiedTime();
-        long prevModifiedTime = page.getPrevModifiedTime();
-        CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
+        Instant prevFetchTime = Instant.ofEpochMilli(page.getPrevFetchTime());
+        Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
 
-        if (lastModified != null) {
-          try {
-            modifiedTime = HttpDateFormat.toLong(lastModified.toString());
-            prevModifiedTime = page.getModifiedTime();
-          } catch (Exception e) {
-            counter.increase(NutchCounter.Counter.errors);
-          }
+        Instant prevModifiedTime = Instant.ofEpochMilli(page.getPrevModifiedTime());
+        Instant modifiedTime = Instant.ofEpochMilli(page.getModifiedTime());
+
+        Instant latestModifiedTime = TableUtil.getHeaderLastModifiedTime(page, modifiedTime);
+        if (latestModifiedTime.isAfter(modifiedTime)) {
+          modifiedTime = latestModifiedTime;
+          prevModifiedTime = modifiedTime;
+        }
+        else {
+          LOG.warn("Bad last modified time : {} -> {}",
+              modifiedTime, TableUtil.getHeader(page, HttpHeaders.LAST_MODIFIED, "unknown time"));
         }
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        // 10 years means for every
         Duration fetchInterval = Duration.ofSeconds(page.getFetchInterval());
         if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && maxFetchInterval.compareTo(fetchInterval) < 0) {
+          LOG.info("Force refetch page " + url);
           fetchSchedule.forceRefetch(url, page, false);
         }
 

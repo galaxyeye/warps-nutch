@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -93,8 +94,8 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * preserve this behavior.
    */
   @Override
-  public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
-      long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
+  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+                               Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     page.setRetriesSinceFetch(0);
   }
 

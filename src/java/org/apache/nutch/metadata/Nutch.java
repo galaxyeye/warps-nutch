@@ -20,6 +20,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.Text;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 /**
  * A collection of Nutch internal metadata constants.
@@ -76,7 +77,11 @@ public interface Nutch {
   int MAX_DISTANCE = Integer.MAX_VALUE;
 
   int MAX_FETCH_INTERVAL_DAYS = 3 * 365;
-  int NEVER_FETCH_INTERVAL_DAYS = 10 * 365;
+  int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and 5 years
+
+  int FETCH_TASK_REMAINDER_NUMBER = 5;
+
+  Instant TCP_IP_STANDARDIZED_TIME = Instant.parse("1982-01-01T00:00:00Z");
 
   // The shortest url
   String SHORTEST_VALID_URL = "ftp://t.tt";
@@ -97,10 +102,8 @@ public interface Nutch {
   float SCORE_INDEX_PAGE = 1.0f;
   float SCORE_INJECTED = Float.MAX_VALUE / 1000;
   float SCORE_SEED = SCORE_INJECTED / 1000;
-  float SCORE_DETAIL_PAGE = SCORE_SEED / 1000;
-  float SCORE_PAGES_FROM_SEED = SCORE_SEED / 1000;
-
-  int FETCH_TASK_REMAINDER_NUMBER = 5;
+  float SCORE_DETAIL_PAGE = 10000.0f;
+  float SCORE_PAGES_FROM_SEED = 10000.0f;
 
   /**
    * All arguments from command line
@@ -275,11 +278,12 @@ public interface Nutch {
   String DOC_FIELD_HTML_CONTENT = "html_content";
   String DOC_FIELD_PAGE_CATEGORY = "page_category";
   String DOC_FIELD_PUBLISH_TIME = "publish_time";
+  String DOC_FIELD_OUTLINKS_COUNT = "outlinks_count";
 
   /**
    * Variable holders
    * */
-  String VAR_ORDERED_OUTLINKS = "ordered_outlinks";
+  String VAR_OUTLINKS_COUNT = "outlinks_count";
 
   /**
    * Program keys
@@ -297,9 +301,11 @@ public interface Nutch {
   /**
    * Master service
    * */
+  // TODO : move to bash script
   String DEFAULT_MASTER_HOSTNAME = "master";
   int DEFAULT_MASTER_PORT = 8182;
 
+  // TODO : move to bash script
   String PATH_NUTCH_TMP_DIR = "/tmp/nutch-" + System.getenv("USER");
   String PATH_NUTCH_OUTPUT_DIR = PATH_NUTCH_TMP_DIR;
   String PATH_NUTCH_REPORT_DIR = PATH_NUTCH_OUTPUT_DIR + "/report";

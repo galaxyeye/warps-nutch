@@ -26,9 +26,6 @@ bin="`cd "$bin"; pwd`"
 
  . "$bin"/nutch-config.sh
 
-# url to test if solr is available, once solr is not available, we stop crawl anything
-SOLR_TEST_URL=http://master:8983
-
 SEEDDIR="$1"
 CRAWL_ID="$2"
 if [ "$#" -eq 3 ]; then
@@ -92,7 +89,13 @@ addDays=0
 
 # note that some of the options listed here could be set in the
 # corresponding hadoop site xml param file
-commonOptions="-D mapreduce.job.reduces=$numTasks -D mapred.child.java.opts=-Xmx1000m -D mapreduce.reduce.speculative=false -D mapreduce.map.speculative=false -D mapreduce.map.output.compress=true"
+commonOptions=(
+    "-D mapreduce.job.reduces=$numTasks"
+    "-D mapred.child.java.opts=-Xmx1000m"
+    "-D mapreduce.reduce.speculative=false"
+    "-D mapreduce.map.speculative=false"
+    "-D mapreduce.map.output.compress=true"
+)
 
 # determines whether mode based on presence of job file
 if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
@@ -104,10 +107,9 @@ if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
 
   if [ $SEEDDIR != "false" ]; then
     HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
-    mkdir -p $HDFS_SEED_DIR
-    cp -r "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
-    hadoop fs -mkdir -p $HDFS_SEED_DIR
-    hadoop fs -copyFromLocal "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
+    hadoop fs -test -e $HDFS_SEED_DIR
+    (( $?==0 )) && hadoop fs -mkdir -p $HDFS_SEED_DIR
+    hadoop fs -copyFromLocal -f "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
 
     SEEDDIR=$HDFS_SEED_DIR
   fi
@@ -133,6 +135,36 @@ function __bin_nutch {
   fi
 }
 
+function __is_crawl_loop_stopped {
+  local STOP=false
+  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
+   if [ -e ".STOP" ]; then
+     mv .STOP ".STOP_EXECUTED_`date +%Y%m%d.%H%M%S`"
+   fi
+
+    STOP=true
+  fi
+
+  [[ $STOP ]] && return 1 || return 0
+}
+
+function __check_index_server_available {
+  for i in {1..200}
+  do
+    wget -q --spider $SOLR_TEST_URL
+
+    if (( $?==0 )); then
+      return 0;
+    fi
+
+    echo "Index server not available, check 15s later ..."
+    sleep 15s
+  done
+
+  echo "Index server is gone."
+  return 1
+}
+
 # initial injection
 # echo "Injecting seed URLs"
 if [ $SEEDDIR != "false" ]; then
@@ -142,33 +174,24 @@ fi
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))
 do
-  DATE=`date +%s`
-  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
-   echo "STOP file found - escaping loop"
-
-   if [ -e ".STOP" ]; then
-     mv .STOP ".STOP_EXECUTED_$DATE"
-   fi
-   break
+  if ( __is_crawl_loop_stopped ); then
+     echo "STOP file found - escaping loop"
+     exit 0
   fi
 
-  wget -q --spider $SOLR_TEST_URL
-  RETCODE=$?
-  if [ ! $RETCODE -eq 0 ]; then
-    echo "Lost index server, exit."
-    exit $RETCODE
+  if ( ! __check_index_server_available ); then
+    exit 1
   fi
 
-  echo "\n\n\n"
+  echo -e "\n\n--------------------------------------------------------------------"
   echo `date` ": Iteration $a of $LIMIT"
 
-  commonOptions="$commonOptions -Dcrawl.round=$a"
+  commonOptions=(${commonOptions[@]} "-D crawl.round=$a")
 
-  echo "Generating batchId"
-  batchId=$DATE-$RANDOM
+  batchId=`date +%s`-$RANDOM
 
   echo "Generating a new fetchlist"
-  generate_args=($commonOptions -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
+  generate_args=(${commonOptions[@]} -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
   echo "$bin/nutch generate ${generate_args[@]}"
   $bin/nutch generate "${generate_args[@]}"
   RETCODE=$?
@@ -186,7 +209,7 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch $commonOptions -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch "${commonOptions[@]}" -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
 done
 

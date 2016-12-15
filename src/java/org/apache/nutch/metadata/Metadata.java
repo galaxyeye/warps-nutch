@@ -51,6 +51,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
   public static final String META_REFERRED_PUBLISH_TIME = "REF_PUB_TIME";
   public static final String META_REFERRED_ARTICLES = "REF_ARTICLES";
   public static final String META_REFERRED_CHARS = "REF_CHARS";
+  public static final String META_OUT_LINK_COUNT = "OUT_LINK_COUNT";
   public static final String META_IS_NAVIGATOR = "IS_NAVIGATOR";
   public static final String META_IS_SEED = "IS_SEED";
   public static final String META_PAGE_CATEGORY_LIKELIHOOD = "PAGE_CATEGORY_LIKELIHOOD";

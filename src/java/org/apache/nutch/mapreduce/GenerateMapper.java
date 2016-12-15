@@ -147,22 +147,23 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     int priority = TableUtil.calculateFetchPriority(page);
-    float score = page.getScore();
-    try {
-      // Typically, we use OPIC scoring filter
-      score = scoringFilters.generatorSortValue(url, page, score);
-    } catch (ScoringFilterException ignored) {}
-
+    float initSortScore = 1.0f + page.getScore();
+    float sortScore = 0.0f;
     /*
      * Raise detail page's priority so them can be fetched sooner
      * Detail pages comes first, but we still need keep chances for pages with other category
      * */
-    if (crawlFilters.veryLikelyBeDetailUrl(url) && ++detailPages < maxDetailPageCount) {
+    if (TableUtil.veryLikeDetailPage(page) && ++detailPages < maxDetailPageCount) {
       priority = FETCH_PRIORITY_DETAIL_PAGE;
-      score = SCORE_DETAIL_PAGE - TableUtil.getDepth(page);
+      initSortScore = SCORE_DETAIL_PAGE - TableUtil.getDepth(page);
     }
 
-    output(url, new SelectorEntry(url, priority, score), page, context);
+    try {
+      // Typically, we use OPIC scoring filter
+      sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
+    } catch (ScoringFilterException ignored) {}
+
+    output(url, new SelectorEntry(url, priority, sortScore), page, context);
 
     updateStatus(url, page);
   }
@@ -309,14 +310,14 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
 
     int depth = TableUtil.getDepth(page);
-    Counter counter = null;
+    Counter counter;
 
     if (depth == 0) {
       counter = Counter.rowsDepth0;
     }
     else if (depth == 1) {
       counter = Counter.rowsDepth1;
-      if (crawlFilters.veryLikelyBeDetailUrl(url)) {
+      if (TableUtil.veryLikeDetailPage(page)) {
         counter = Counter.rowsDetailFromSeed;
       }
     }

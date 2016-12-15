@@ -33,10 +33,6 @@ public class MapDatumBuilder {
 
   public static final Logger LOG = LoggerFactory.getLogger(MapDatumBuilder.class);
 
-  public static final String URL_FILTERING = "dbupdate.url.filters";
-  public static final String URL_NORMALIZING = "dbupdate.url.normalizers";
-  public static final String URL_NORMALIZING_SCOPE = "dbupdate.url.normalizers.scope";
-
   private NutchCounter counter;
   private Configuration conf;
 

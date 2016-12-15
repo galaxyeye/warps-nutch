@@ -28,6 +28,7 @@ import org.apache.nutch.util.TableUtil;
 import java.util.Collection;
 import java.util.HashSet;
 
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_OUTLINKS_COUNT;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_PAGE_CATEGORY;
 
 // import org.apache.solr.common.util.DateUtil;
@@ -73,7 +74,7 @@ public class BasicIndexingFilter implements IndexingFilter {
 
     addPageCategory(doc, url, page);
 
-    doc.add("outlinks_count", page.getOutlinks().size());
+    doc.add(DOC_FIELD_OUTLINKS_COUNT, page.getOutlinks().size());
 
     doc.addIfAbsent("id", doc.getKey());
 

@@ -33,7 +33,6 @@ import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.DOMException;
 import org.w3c.dom.DocumentFragment;
 import org.warps.scent.document.TextDocument;
 import org.warps.scent.extractors.ChineseNewsExtractor;
@@ -42,7 +41,10 @@ import org.warps.scent.util.ProcessingException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -159,8 +161,6 @@ public class HtmlParser implements Parser {
   private DocumentFragment doParse(InputSource input) {
     try {
       return parse(input);
-    } catch (SAXException|DOMException|IOException e) {
-      LOG.error("Failed to parse, message : {}", e);
     } catch (Throwable e) {
       LOG.error("Failed to parse, message : {}", e);
     }
@@ -212,7 +212,7 @@ public class HtmlParser implements Parser {
       domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
-    page.setTmporaryVariable("outlinks_count", outlinks.size());
+    page.setTmporaryVariable(VAR_OUTLINKS_COUNT, outlinks.size());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("found " + outlinks.size() + " outlinks in " + url);

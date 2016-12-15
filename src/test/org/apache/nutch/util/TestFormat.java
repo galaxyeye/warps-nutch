@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
@@ -42,6 +44,12 @@ public class TestFormat {
 
     dateString = DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
     System.out.println(dateString);
+
+    Instant now = Instant.now();
+    System.out.println(now);
+
+    LocalDateTime ldt = LocalDateTime.now();
+    System.out.println(ldt);
   }
 
   @Test

@@ -87,23 +87,10 @@ fi
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))
 do
-  DATE=`date +%s`
-  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
-   echo "STOP file found - escaping loop"
-
-   if [ -e ".STOP" ]; then
-     mv .STOP ".STOP_EXECUTED_$DATE"
-   fi
-   break
-  fi
-
-  echo "\n\n\n"
+  echo -e "\n\n\n"
   echo `date` ": Iteration $a of $LIMIT"
 
-  commonOptions="$commonOptions -Dcrawl.round=$a"
-
-  echo "Generating batchId"
-  batchId=$DATE-$RANDOM
+  batchId=`date +%s`-$RANDOM
 
   echo "Generating a new fetchlist"
   generate_args=(-c="$CONFIG_DIR" -topN 1000 -crawlId "$CRAWL_ID")

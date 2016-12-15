@@ -816,7 +816,7 @@ public class TaskScheduler extends Configured {
     }
 
     if (updateJIT()) {
-      outputWithDbUpdate(url, reversedUrl, mainPage);
+      persistWithDbUpdate(url, reversedUrl, mainPage);
     }
     else {
       context.write(reversedUrl, mainPage);
@@ -830,7 +830,7 @@ public class TaskScheduler extends Configured {
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  private void outputWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
+  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
       mapDatumBuilder.reset();
       reduceDatumBuilder.reset();
@@ -838,19 +838,16 @@ public class TaskScheduler extends Configured {
       // Do not follow detail pages for public opinion tracking
       if (!TableUtil.veryLikeDetailPage(mainPage)) {
         Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
-        outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> outputOutlinkPage(mainPage, e.getKey()));
+        outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
       }
 
-      outputMainPage(url, reversedUrl, mainPage);
+      persistMainPage(url, reversedUrl, mainPage);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private void outputMainPage(String url, String reversedUrl, WebPage mainPage) {
+  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
     counter.increase(Counter.pagesPeresist);
-    if (TableUtil.veryLikeDetailPage(mainPage)) {
-      counter.increase(Counter.newDetailPages);
-    }
 
     // Process the main page, update fetch schedule
     reduceDatumBuilder.updateFetchSchedule(url, mainPage);
@@ -865,7 +862,7 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void outputOutlinkPage(WebPage mainPage, UrlWithScore urlWithScore) {
+  private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
@@ -893,14 +890,16 @@ public class TaskScheduler extends Configured {
    * */
   private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
     int oldDepth = TableUtil.getDepth(oldPage);
-    boolean changed = reduceDatumBuilder.updateExistOutlinkPage(mainPage, oldPage, newDepth, oldDepth);
+    boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
     if (changed) {
       output(reversedUrl, oldPage);
 
-      String report = oldDepth + " -> " + newDepth + ", " + url;
-      nutchMetrics.debugDepthUpdated(report, reportSuffix);
-      counter.increase(Counter.pagesDepthUpdated);
+      if (newDepth < oldDepth) {
+        String report = oldDepth + " -> " + newDepth + ", " + url;
+        nutchMetrics.debugDepthUpdated(report, reportSuffix);
+        counter.increase(Counter.pagesDepthUpdated);
+      }
     }
 
     counter.increase(Counter.existOutPages);
@@ -911,6 +910,7 @@ public class TaskScheduler extends Configured {
     // Update distance/score
     reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
 
+    TableUtil.increaseTotalOutLinkCount(mainPage, 1);
     counter.increase(Counter.newPages);
     if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
       counter.increase(Counter.newDetailPages);

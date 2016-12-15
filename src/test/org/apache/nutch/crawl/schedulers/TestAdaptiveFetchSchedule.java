@@ -17,13 +17,16 @@
 package org.apache.nutch.crawl.schedulers;
 
 import junit.framework.TestCase;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Test cases for AdaptiveFetchSchedule.
@@ -34,8 +37,9 @@ public class TestAdaptiveFetchSchedule extends TestCase {
   private float inc_rate;
   private float dec_rate;
   private Configuration conf;
-  private long curTime, lastModified;
-  private int changed, interval, calculateInterval;
+  private Instant curTime, lastModified;
+  private Duration interval, calculateInterval;
+  private int changed;
 
   @Before
   public void setUp() throws Exception {
@@ -43,8 +47,8 @@ public class TestAdaptiveFetchSchedule extends TestCase {
     conf = NutchConfiguration.create();
     inc_rate = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     dec_rate = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
-    interval = 100;
-    lastModified = 0;
+    interval = Duration.ofSeconds(100);
+    lastModified = Instant.EPOCH;
   }
 
   /**
@@ -54,28 +58,26 @@ public class TestAdaptiveFetchSchedule extends TestCase {
 
   @Test
   public void testAdaptiveFetchSchedule() {
-
     FetchSchedule fs = new AdaptiveFetchSchedule();
     fs.setConf(conf);
 
     WebPage p = prepareWebpage();
 
     changed = FetchSchedule.STATUS_UNKNOWN;
-    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(),
-        p.getModifiedTime(), curTime, lastModified, changed);
-    validateFetchInterval(changed, p.getFetchInterval());
+    fs.setFetchSchedule("http://www.example.com", p,
+        Instant.ofEpochMilli(p.getFetchTime()), Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
+    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
 
     changed = FetchSchedule.STATUS_MODIFIED;
-    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(),
-        p.getModifiedTime(), curTime, lastModified, changed);
-    validateFetchInterval(changed, p.getFetchInterval());
-    p.setFetchInterval(interval);
+    fs.setFetchSchedule("http://www.example.com", p, Instant.ofEpochMilli(p.getFetchTime()),
+        Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
+    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
+    p.setFetchInterval((int)interval.getSeconds());
 
     changed = FetchSchedule.STATUS_NOTMODIFIED;
-    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(),
-        p.getModifiedTime(), curTime, lastModified, changed);
-    validateFetchInterval(changed, p.getFetchInterval());
-
+    fs.setFetchSchedule("http://www.example.com", p, Instant.ofEpochMilli(p.getFetchTime()),
+        Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
+    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
   }
 
   /**
@@ -86,7 +88,7 @@ public class TestAdaptiveFetchSchedule extends TestCase {
   public WebPage prepareWebpage() {
     WebPage wp = WebPage.newBuilder().build();
     wp.setStatus(1);
-    wp.setFetchInterval(interval);
+    wp.setFetchInterval((int)interval.getSeconds());
     wp.setScore(1.0f);
     wp.setFetchTime(0L);
     return wp;
@@ -98,19 +100,19 @@ public class TestAdaptiveFetchSchedule extends TestCase {
    * 
    * @param changed
    *          status value to check calculated IntervalValue.
-   * @param getInterval
+   * @param expectedInterval
    *          to test IntervalValue get from webpage. Which is calculated via
    *          AdaptiveFetch Algorithm.
    */
-  private void validateFetchInterval(int changed, int getInterval) {
+  private void validateFetchInterval(int changed, Duration expectedInterval) {
     if (changed == FetchSchedule.STATUS_UNKNOWN) {
-      assertEquals(getInterval, interval);
+      assertEquals(expectedInterval, interval);
     } else if (changed == FetchSchedule.STATUS_MODIFIED) {
-      calculateInterval = (int) (interval - (interval * dec_rate));
-      assertEquals(getInterval, calculateInterval);
+      calculateInterval = interval.minusSeconds((long)(interval.getSeconds() * dec_rate));
+      assertEquals(expectedInterval, calculateInterval);
     } else if (changed == FetchSchedule.STATUS_NOTMODIFIED) {
-      calculateInterval = (int) (interval + (interval * inc_rate));
-      assertEquals(getInterval, calculateInterval);
+      calculateInterval = interval.plusSeconds((long)(interval.getSeconds() * dec_rate));
+      assertEquals(expectedInterval, calculateInterval);
     }
   }
 }

@@ -20,6 +20,7 @@ package org.apache.nutch.crawl;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.storage.WebPage;
 
+import java.time.Instant;
 import java.util.Collection;
 
 /**
@@ -78,8 +79,8 @@ public interface FetchSchedule extends Configurable {
    *          changed; implementations are free to follow a sensible default
    *          behavior.
    */
-  void setFetchSchedule(String url, WebPage page, long prevFetchTime,
-      long prevModifiedTime, long fetchTime, long modifiedTime, int state);
+  void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+                        Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state);
 
   /**
    * This method specifies how to schedule refetching of pages marked as GONE.

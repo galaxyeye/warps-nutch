@@ -29,7 +29,10 @@
 # The java implementation to use.  Java 1.8 required.
 export JAVA_HOME="/usr/lib/jvm/java-8-sun"
 
-export HDFS_BASE_URI=hdfs://galaxyeye:9000
+export HDFS_BASE_URI=hdfs://master:9000
+
+# url to test if solr is available, once solr is not available, we stop crawl anything
+export SOLR_TEST_URL=http://master:8983
 
 # Extra Java CLASSPATH elements.  Optional.
 # export NUTCH_CLASSPATH=

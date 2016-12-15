@@ -19,7 +19,6 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
@@ -28,6 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * @author Vincent Zhang
@@ -40,17 +40,17 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
   }
 
   @Override
-  public void setFetchSchedule(String url, WebPage page, long prevFetchTime,
-                               long prevModifiedTime, long fetchTime, long modifiedTime, int state) {
-    Instant refetchTime = Instant.ofEpochMilli(fetchTime);
+  public void setFetchSchedule(String url, WebPage page,
+                               Instant prevFetchTime, Instant prevModifiedTime,
+                               Instant fetchTime, Instant modifiedTime, int state) {
     Duration interval = TableUtil.getFetchInterval(page);
-    if (modifiedTime <= 0) {
+    if (modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       modifiedTime = fetchTime;
     }
 
     boolean changed = false;
     if (TableUtil.isSeed(page)) {
-      interval = adjustSeedFetchInterval(page, Instant.ofEpochMilli(fetchTime), interval);
+      interval = adjustSeedFetchInterval(page, fetchTime, interval);
       changed = true;
     }
     else if (TableUtil.veryLikeDetailPage(page)) {
@@ -64,7 +64,7 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     if (changed) {
-      updateRefetchTime(page, interval.getSeconds(), refetchTime.toEpochMilli(), prevModifiedTime, modifiedTime);
+      updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
     }
     else {
       super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
@@ -82,12 +82,10 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     Instant referredPublishTime = TableUtil.getReferredPublishTime(page);
-    if (referredPublishTime.isBefore(Instant.EPOCH)) {
-      LOG.warn("Unexpected referred publish time : " + DateTimeUtil.format(referredPublishTime) + ", " + page.getBaseUrl());
+    if (referredPublishTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
+      LOG.warn("Unexpected referred publish time : " + referredPublishTime + ", " + page.getBaseUrl());
     }
 
-    // long hours = Duration.ofMillis(fetchTime - referredPublishTime).toHours();
-    // long hours = Duration.between(referredPublishTime, fetchTime).toHours();
     long hours = ChronoUnit.HOURS.between(referredPublishTime, fetchTime);
     if (hours <= 24) {
       // There are updates today, keep re-fetch the page in every crawl loop
@@ -99,13 +97,12 @@ public class SeedFirstFetchSchedule extends AdaptiveFetchSchedule {
     }
     else {
       // If there is no any updates in 72 hours, check the page at least 1 hour later
-      int adjust = (int)(interval.getSeconds() * INC_RATE);
+      long adjust = (long)(interval.getSeconds() * INC_RATE);
 
-      interval.plusSeconds(adjust);
+      interval = interval.plusSeconds(adjust);
       if (interval.toHours() < 1) {
         interval = Duration.ofHours(1);
       }
-      // TODO : log see pages without updates for long time
     }
 
     // No longer than SEED_MAX_INTERVAL

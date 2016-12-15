@@ -374,17 +374,17 @@ public class TasksMonitor {
     }
 
     if (debugUrls) {
-      String report = "[" + DateTimeUtil.format(page.getPrevFetchTime())
-          + "] -> ["
-          + DateTimeUtil.format(page.getFetchTime()) + "]"
-          + ", FC : " + TableUtil.getFetchCount(page)
-          + ", RefPT : " + DateTimeUtil.format(TableUtil.getReferredPublishTime(page))
-          + ", RefPC : " + TableUtil.getReferredArticles(page)
-          + ", Score : " + page.getScore()
-          + ", Cash : " + TableUtil.getCash(page)
-          + "\t->\t" + url;
-
-      nutchMetrics.debugUrls(report, pageCategory, reportSuffix);
+      Params params = Params.of(
+          "FT", DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime()),
+          "FC", TableUtil.getFetchCount(page),
+          "RefPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
+          "RefPC", TableUtil.getReferredArticles(page),
+          "OLink", TableUtil.getTotalOutLinkCount(page),
+          "Score", page.getScore(),
+          "Cash", TableUtil.getCash(page),
+          "Url -> ", url
+      );
+      nutchMetrics.debugUrls(params.formatAsLine(), pageCategory, reportSuffix);
     }
 
     int depth = TableUtil.getDepth(page);

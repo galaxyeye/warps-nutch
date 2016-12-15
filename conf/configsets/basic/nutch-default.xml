@@ -384,14 +384,14 @@
 
 <property>
   <name>db.fetch.schedule.adaptive.min_interval</name>
-  <value>60</value>
+  <value>60s</value>
   <description>Minimum fetchInterval, in seconds.</description>
 </property>
 
 <property>
   <name>db.fetch.schedule.adaptive.max_interval</name>
-  <value>31536000</value>
-  <description>Maximum fetchInterval, in seconds (365 days).
+  <value>365d</value>
+  <description>Maximum fetchInterval, 365 days.
   NOTE: this is limited by db.fetch.interval.max. Pages with
   fetchInterval larger than db.fetch.interval.max
   will be fetched anyway.</description>

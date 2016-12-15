@@ -21,6 +21,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.WebPage;
 
@@ -251,7 +252,8 @@ public class TableUtil {
   }
 
   public static boolean veryLikeDetailPage(WebPage page) {
-    return isDetailPage(page, 0.85f);
+    boolean detail = CrawlFilter.sniffPageCategoryByUrlPattern(page.getBaseUrl()).isDetail();
+    return detail || isDetailPage(page, 0.85f);
   }
 
   public static void setPageCategory(WebPage page, CrawlFilter.PageCategory pageCategory) {
@@ -416,7 +418,7 @@ public class TableUtil {
     putMetadata(page, META_FETCH_TIMES, String.valueOf(count));
   }
 
-  public static void increaseFetchTimes(WebPage page) {
+  public static void increaseFetchCount(WebPage page) {
     int count = getFetchCount(page);
     putMetadata(page, META_FETCH_TIMES, String.valueOf(count + 1));
   }
@@ -435,6 +437,32 @@ public class TableUtil {
     putMetadata(page, META_REFERRED_ARTICLES, String.valueOf(oldCount + count));
   }
 
+  public static long getTotalOutLinkCount(WebPage page) {
+    String outLinks = getMetadata(page, META_OUT_LINK_COUNT);
+    return StringUtil.tryParseLong(outLinks, 0);
+  }
+
+  public static void setTotalOutLinkCount(WebPage page, long count) {
+    putMetadata(page, META_OUT_LINK_COUNT, String.valueOf(count));
+  }
+
+  public static void increaseTotalOutLinkCount(WebPage page, long count) {
+    long oldCount = getTotalOutLinkCount(page);
+    putMetadata(page, META_OUT_LINK_COUNT, String.valueOf(oldCount + count));
+  }
+
+  public static int sniffOutLinkCount(WebPage page) {
+    int _a = page.getOutlinks().size();
+    if (_a == 0) {
+      Object count = page.getTemporaryVariable(VAR_OUTLINKS_COUNT);
+      if (count != null && count instanceof Integer) {
+        _a = (int)count;
+      }
+    }
+
+    return _a;
+  }
+
   public static long getReferredChars(WebPage page) {
     String referredPages = getMetadata(page, META_REFERRED_CHARS);
     return StringUtil.tryParseLong(referredPages, 0);
@@ -445,7 +473,7 @@ public class TableUtil {
   }
 
   public static void increaseReferredChars(WebPage page, long count) {
-    long oldCount = getReferredArticles(page);
+    long oldCount = getReferredChars(page);
     setReferredChars(page, oldCount + count);
   }
 
@@ -459,11 +487,6 @@ public class TableUtil {
   }
 
   public static boolean updateReferredPublishTime(WebPage page, Instant newPublishTime) {
-    if (newPublishTime.isBefore(Instant.EPOCH)) {
-      NutchUtil.LOG.warn("Publish time is out of range, url : " + page.getBaseUrl());
-      return false;
-    }
-
     Instant latestTime = getReferredPublishTime(page);
     if (newPublishTime.isAfter(latestTime)) {
       setReferredPublishTime(page, newPublishTime);
@@ -479,6 +502,15 @@ public class TableUtil {
 
   public static Duration getFetchInterval(WebPage page) {
     return Duration.ofSeconds(page.getFetchInterval());
+  }
+
+  public static Instant getHeaderLastModifiedTime(WebPage page, Instant defaultValue) {
+    CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
+    if (lastModified != null) {
+      return DateTimeUtil.parseTime(lastModified.toString());
+    }
+
+    return defaultValue;
   }
 
   public static String getFetchTimeHistory(WebPage page, String defaultValue) {
@@ -544,8 +576,13 @@ public class TableUtil {
     return page.getMarkers().get(key);
   }
 
-  public static void putMetadata(WebPage page, Utf8 key, ByteBuffer value) {
-    page.getMetadata().put(key, value);
+  public static String getHeader(WebPage page, String name, String defaultValue) {
+    CharSequence value = page.getHeaders().get(new Utf8(name));
+    return value == null ? defaultValue : value.toString();
+  }
+
+  public static void putHeader(WebPage page, String name, String value) {
+    page.getHeaders().put(new Utf8(name), new Utf8(value));
   }
 
   /**
@@ -562,6 +599,10 @@ public class TableUtil {
 
   public static void putMetadata(WebPage page, String key, String value) {
     page.getMetadata().put(new Utf8(key), value == null ? null : ByteBuffer.wrap(value.getBytes()));
+  }
+
+  public static void putMetadata(WebPage page, Utf8 key, ByteBuffer value) {
+    page.getMetadata().put(key, value);
   }
 
   public static String getMetadata(WebPage page, String key) {

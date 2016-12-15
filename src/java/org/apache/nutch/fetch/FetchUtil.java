@@ -26,7 +26,7 @@ public class FetchUtil {
       page.setProtocolStatus(pstatus);
     }
 
-    TableUtil.increaseFetchTimes(page);
+    TableUtil.increaseFetchCount(page);
   }
 
   static public void updateMarks(WebPage page) {

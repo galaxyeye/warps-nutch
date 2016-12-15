@@ -43,7 +43,7 @@ public class CrawlFilter extends Configured {
    * The follow patterns are simple rule to indicate a url's category, this is a very simple solution, and the result is
    * not accurate
    * TODO : configurable
-   * */
+   */
   public static Pattern[] INDEX_PAGE_URL_PATTERNS = {
       Pattern.compile(".+tieba.baidu.com/.+search.+"),
       Pattern.compile(".+(index|list|tags|chanel).+"),
@@ -59,10 +59,14 @@ public class CrawlFilter extends Configured {
 
   public static Pattern MEDIA_PAGE_URL_PATTERN = Pattern.compile(".+(pic|picture|photo|avatar|photoshow|video).+");
 
-  /** TODO : use suffix-urlfilter instead */
+  /**
+   * TODO : use suffix-urlfilter instead
+   */
   public static final String[] MEDIA_URL_SUFFIXES = {"js", "css", "jpg", "png", "jpeg", "gif"};
 
-  /** TODO : need carefully test */
+  /**
+   * TODO : need carefully test
+   */
   public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
     if (page.getBaseUrl() == null) {
       return CrawlFilter.PageCategory.UNKNOWN;
@@ -74,26 +78,19 @@ public class CrawlFilter extends Configured {
       return pageCategory;
     }
 
-    String textContent = (String)page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
+    String textContent = (String) page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
     if (textContent == null) {
       return pageCategory;
     }
 
-    double _char = TableUtil.sniffTextLength(page);
-    double _a = page.getOutlinks().size();
-    if (_a == 0) {
-      Object count = page.getTemporaryVariable("outlinks_count");
-      if (count != null && count instanceof Integer) {
-        _a = (int)count;
-      }
-    }
+    int _char = TableUtil.sniffTextLength(page);
+    int _a = TableUtil.sniffOutLinkCount(page);
 
     if (_char < 100) {
       if (_a > 30) {
         pageCategory = PageCategory.INDEX;
       }
-    }
-    else {
+    } else {
       return sniffPageCategory(url, _char, _a);
     }
 
@@ -114,15 +111,18 @@ public class CrawlFilter extends Configured {
       _a = 1;
     }
 
-    if (_a > 60 && _char/_a < 20) {
+    if (_a > 60 && _char / _a < 20) {
       // 索引页：链接数不少于60个，文本密度小于20
       pageCategory = PageCategory.INDEX;
-    }
-    else if (_char/_a > 30) {
+    } else if (_char / _a > 30) {
       pageCategory = PageCategory.DETAIL;
     }
 
     return pageCategory;
+  }
+
+  public static PageCategory sniffPageCategoryByUrlPattern(CharSequence urlString) {
+    return sniffPageCategoryByUrlPattern(urlString.toString());
   }
 
   /**
