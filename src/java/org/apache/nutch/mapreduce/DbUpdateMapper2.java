@@ -26,8 +26,8 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 
 import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
 
-public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, NutchWritable> {
+public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScore, NutchWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper2.class);
 
@@ -57,8 +57,8 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
   private WebPageWritable pageWritable;
 
   @Override
-  public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
-    if (Mark.GENERATE_MARK.checkMark(page) == null) {
+  public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
+    if (Mark.GENERATE_MARK.checkMark(WrappedWebPage.wrap(page)) == null) {
       LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; not generated yet");
       return;
     }

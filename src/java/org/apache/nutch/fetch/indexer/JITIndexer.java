@@ -136,7 +136,7 @@ public class JITIndexer {
       String reverseUrl = TableUtil.reverseUrl(url);
       WrappedWebPage page = fetchTask.getPage();
 
-      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page.get());
+      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
       doc = filter(doc, page);
       if (doc != null) {
         synchronized (indexWriters) {

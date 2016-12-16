@@ -51,7 +51,7 @@ http://gora.apache.org/current/gora-hbase.html
         <family name="mk" maxVersions="1" />
     </table>
 
-    <class table="webpage" keyClass="java.lang.String" name="org.apache.nutch.storage.WebPage">
+    <class table="webpage" keyClass="java.lang.String" name="org.apache.nutch.storage.gora.GoraWebPage">
         <!-- fetch fields                                       -->
         <field name="baseUrl" family="f" qualifier="bas" />
         <field name="status" family="f" qualifier="st" />

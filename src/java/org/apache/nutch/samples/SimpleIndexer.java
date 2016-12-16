@@ -67,7 +67,7 @@ public class SimpleIndexer {
 
       String key = TableUtil.reverseUrl(url);
       simpleParser.parse(page);
-      doc = indexingFilters.filter(new IndexDocument(key), url, page.get());
+      doc = indexingFilters.filter(new IndexDocument(key), url, page);
       if (indexWriters != null) {
         indexWriters.write(doc);
         page.putIndexTimeHistory(Instant.now());

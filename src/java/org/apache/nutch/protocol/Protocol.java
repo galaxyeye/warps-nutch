@@ -19,17 +19,16 @@ package org.apache.nutch.protocol;
 
 // Hadoop imports
 
+import crawlercommons.robots.BaseRobotRules;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
-
-import crawlercommons.robots.BaseRobotRules;
+import org.apache.nutch.storage.WrappedWebPage;
 
 /** A retriever of url content. Implemented by protocol extensions. */
 public interface Protocol extends FieldPluggable, Configurable {
   /** The name of the extension point. */
-  public final static String X_POINT_ID = Protocol.class.getName();
+  String X_POINT_ID = Protocol.class.getName();
 
   /**
    * Property name. If in the current configuration this property is set to
@@ -38,7 +37,7 @@ public interface Protocol extends FieldPluggable, Configurable {
    * enforced elsewhere, and protocol implementations should not enforce them
    * internally.
    */
-  public final static String CHECK_BLOCKING = "protocol.plugin.check.blocking";
+  String CHECK_BLOCKING = "protocol.plugin.check.blocking";
 
   /**
    * Property name. If in the current configuration this property is set to
@@ -47,12 +46,12 @@ public interface Protocol extends FieldPluggable, Configurable {
    * enforced elsewhere, and protocol implementations should not enforce them
    * internally.
    */
-  public final static String CHECK_ROBOTS = "protocol.plugin.check.robots";
+  String CHECK_ROBOTS = "protocol.plugin.check.robots";
 
   /*
    * Returns the {@link Content} for a fetchlist entry.
    */
-  ProtocolOutput getProtocolOutput(String url, WebPage page);
+  ProtocolOutput getProtocolOutput(String url, WrappedWebPage page);
 
   /**
    * Retrieve robot rules applicable for this url.
@@ -62,7 +61,7 @@ public interface Protocol extends FieldPluggable, Configurable {
    * @param page
    * @return robot rules (specific for this url or default), never null
    */
-  BaseRobotRules getRobotRules(String url, WebPage page);
+  BaseRobotRules getRobotRules(String url, WrappedWebPage page);
 
   /**
    * Set the {@link Content} for a fetchlist entry directly

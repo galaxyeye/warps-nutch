@@ -26,8 +26,8 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -62,10 +62,10 @@ public class HtmlParser implements Parser {
 
   public static final Logger LOG = LoggerFactory.getLogger("org.apache.nutch.parse.html");
 
-  private static Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
   }
 
   private String parserImpl;
@@ -103,9 +103,7 @@ public class HtmlParser implements Parser {
     ));
   }
 
-  public Parse getParse(String url, WebPage page) {
-    WrappedWebPage wPage = WrappedWebPage.wrap(page);
-
+  public Parse getParse(String url, WrappedWebPage page) {
     URL baseURL;
     try {
       baseURL = new URL(TableUtil.toString(page.getBaseUrl()));
@@ -115,7 +113,7 @@ public class HtmlParser implements Parser {
 
     InputSource input = getContentAsInputSource(page);
     String encoding = encodingDetector.sniffEncoding(page);
-    setEncoding(wPage, encoding);
+    setEncoding(page, encoding);
     input.setEncoding(encoding);
     docRoot = doParse(input);
 
@@ -126,13 +124,13 @@ public class HtmlParser implements Parser {
 
     // Get meta directives
     HTMLMetaProcessor.getMetaTags(metaTags, docRoot, baseURL);
-    setMetadata(wPage, metaTags);
+    setMetadata(page, metaTags);
 
     // Check meta directives
     if (!metaTags.getNoIndex()) { // okay to index
       // Get input source, again. It's not reusable
       InputSource input2 = getContentAsInputSource(page, encoding);
-      extract(wPage, input2);
+      extract(page, input2);
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
@@ -149,13 +147,13 @@ public class HtmlParser implements Parser {
 
     if (metaTags.getNoCache()) {
       // Not okay to cache
-      wPage.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
+      page.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
-    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(wPage);
-    wPage.setPageCategory(pageCategory);
+    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
+    page.setPageCategory(pageCategory);
     if (pageCategory.isDetail()) {
-      wPage.setPageCategoryLikelihood(0.9f);
+      page.setPageCategoryLikelihood(0.9f);
     }
 
     return parse;
@@ -171,13 +169,13 @@ public class HtmlParser implements Parser {
     return null;
   }
 
-  private InputSource getContentAsInputSource(WebPage page, String encoding) {
+  private InputSource getContentAsInputSource(WrappedWebPage page, String encoding) {
     InputSource input = getContentAsInputSource(page);
     input.setEncoding(encoding);
     return input;
   }
 
-  private InputSource getContentAsInputSource(WebPage page) {
+  private InputSource getContentAsInputSource(WrappedWebPage page) {
     ByteBuffer contentInOctets = page.getContent();
 
     ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
@@ -199,7 +197,7 @@ public class HtmlParser implements Parser {
     return status;
   }
 
-  private void tryGetValidOutlinks(WebPage page, String url, URL base) {
+  private void tryGetValidOutlinks(WrappedWebPage page, String url, URL base) {
     /*
      * TODO : This is a temporary solution, and should be configured
      * */
@@ -283,7 +281,7 @@ public class HtmlParser implements Parser {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
@@ -367,7 +365,7 @@ public class HtmlParser implements Parser {
 
     HtmlParser parser = new HtmlParser();
     parser.setConf(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8(url));
     page.setContent(ByteBuffer.wrap(bytes));
     page.setContentType(new Utf8("text/html"));

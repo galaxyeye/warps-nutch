@@ -24,8 +24,8 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 
 import java.util.*;
@@ -140,10 +140,10 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
-    Set<WebPage.Field> fields = new HashSet<>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Set<GoraWebPage.Field> fields = new HashSet<>();
     for (ScoringFilter filter : scoringFilters) {
-      Collection<WebPage.Field> pluginFields = filter.getFields();
+      Collection<GoraWebPage.Field> pluginFields = filter.getFields();
       if (pluginFields != null) {
         fields.addAll(pluginFields);
       }

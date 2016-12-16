@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
@@ -50,12 +50,12 @@ public class MetadataIndexer implements IndexingFilter {
   private static ResourceCategory resourceCategory;
   private static Map<String, String> parseFieldnames = new TreeMap<>();
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
   }
 
   private Configuration conf;
@@ -85,17 +85,16 @@ public class MetadataIndexer implements IndexingFilter {
 //    ));
   }
 
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
-    WrappedWebPage wPage = WrappedWebPage.wrap(page);
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
     try {
-      addTime(doc, url, wPage);
+      addTime(doc, url, page);
 
       addHost(doc, url, page);
 
       // Metadata-indexer does not meet all our requirement
       addGeneralMetadata(doc, url, page);
 
-      addPageMetadata(doc, url, wPage);
+      addPageMetadata(doc, url, page);
     }
     catch (IndexingException e) {
       LOG.error(e.toString());
@@ -104,7 +103,7 @@ public class MetadataIndexer implements IndexingFilter {
     return doc;
   }
 
-  private void addHost(IndexDocument doc, String url, WebPage page) throws IndexingException {
+  private void addHost(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
     String reprUrlString = page.getReprUrl() != null ? page.getReprUrl().toString() : null;
 
     url = reprUrlString == null ? url : reprUrlString;
@@ -148,7 +147,7 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("index_time_history", indexTimeHistory);
   }
 
-  private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {
+  private void addGeneralMetadata(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
     String contentType = TableUtil.toString(page.getContentType());
     if (contentType == null || !contentType.contains("html")) {
       LOG.warn("Content type " + contentType + " is not fully supported");
@@ -196,7 +195,7 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

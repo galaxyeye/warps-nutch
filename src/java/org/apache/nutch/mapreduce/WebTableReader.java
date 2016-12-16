@@ -40,7 +40,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -65,12 +65,9 @@ public class WebTableReader extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(WebTableReader.class);
 
-  public static class WebTableStatMapper extends GoraMapper<String, WebPage, Text, LongWritable> {
+  public static class WebTableStatMapper extends GoraMapper<String, GoraWebPage, Text, LongWritable> {
     LongWritable COUNT_1 = new LongWritable(1);
     private boolean sort = false;
-
-    public WebTableStatMapper() {
-    }
 
     @Override
     public void setup(Context context) {
@@ -81,8 +78,8 @@ public class WebTableReader extends NutchJob implements Tool {
     }
 
     @Override
-    protected void map(String key, WebPage value,
-        org.apache.hadoop.mapreduce.Mapper<String, WebPage, Text, LongWritable>.Context context)
+    protected void map(String key, GoraWebPage value,
+        org.apache.hadoop.mapreduce.Mapper<String, GoraWebPage, Text, LongWritable>.Context context)
         throws IOException, InterruptedException {
       context.write(new Text("T"), COUNT_1);
       context.write(new Text("status " + value.getStatus()), COUNT_1);
@@ -90,7 +87,7 @@ public class WebTableReader extends NutchJob implements Tool {
       context.write(new Text("s"), new LongWritable((long) (value.getScore() * 1000.0)));
 
       if (sort) {
-        URL u = new URL(TableUtil.unreverseUrl(key.toString()));
+        URL u = new URL(TableUtil.unreverseUrl(key));
         String host = u.getHost();
         context.write(new Text("status " + value.getStatus() + " " + host), COUNT_1);
       }
@@ -216,18 +213,18 @@ public class WebTableReader extends NutchJob implements Tool {
   private void read(String key, boolean dumpContent, boolean dumpHeaders,
       boolean dumpLinks, boolean dumpText) throws ClassNotFoundException,
       IOException, Exception {
-    DataStore<String, WebPage> datastore = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> datastore = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
-    Query<String, WebPage> query = datastore.newQuery();
+    Query<String, GoraWebPage> query = datastore.newQuery();
     String reversedUrl = TableUtil.reverseUrl(key);
     query.setKey(reversedUrl);
 
-    Result<String, WebPage> result = datastore.execute(query);
+    Result<String, GoraWebPage> result = datastore.execute(query);
     boolean found = false;
     // should happen only once
     while (result.next()) {
       try {
-        WebPage page = result.get();
+        GoraWebPage page = result.get();
         String skey = result.getKey();
         // we should not get to this point but nevermind
         if (page == null || skey == null)
@@ -250,7 +247,7 @@ public class WebTableReader extends NutchJob implements Tool {
   }
 
   /** Filters the entries from the table based on a regex **/
-  public static class WebTableRegexMapper extends GoraMapper<String, WebPage, Text, Text> {
+  public static class WebTableRegexMapper extends GoraMapper<String, GoraWebPage, Text, Text> {
 
     static final String regexParamName = "webtable.url.regex";
     static final String contentParamName = "webtable.dump.content";
@@ -265,8 +262,8 @@ public class WebTableReader extends NutchJob implements Tool {
     private boolean dumpContent, dumpHeaders, dumpLinks, dumpText;
 
     @Override
-    protected void map(String key, WebPage value,
-        org.apache.hadoop.mapreduce.Mapper<String, WebPage, Text, Text>.Context context)
+    protected void map(String key, GoraWebPage value,
+        org.apache.hadoop.mapreduce.Mapper<String, GoraWebPage, Text, Text>.Context context)
         throws IOException, InterruptedException {
       // checks whether the Key passes the regex
       String url = TableUtil.unreverseUrl(key.toString());
@@ -278,7 +275,7 @@ public class WebTableReader extends NutchJob implements Tool {
 
     @Override
     protected void setup(
-        org.apache.hadoop.mapreduce.Mapper<String, WebPage, Text, Text>.Context context)
+        org.apache.hadoop.mapreduce.Mapper<String, GoraWebPage, Text, Text>.Context context)
         throws IOException, InterruptedException {
       regex = Pattern.compile(context.getConfiguration().get(regexParamName, ".+"));
       dumpContent = context.getConfiguration().getBoolean(contentParamName, false);
@@ -305,12 +302,12 @@ public class WebTableReader extends NutchJob implements Tool {
     cfg.setBoolean(WebTableRegexMapper.linksParamName, links);
     cfg.setBoolean(WebTableRegexMapper.textParamName, text);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(
-        job.getConfiguration(), String.class, WebPage.class);
-    Query<String, WebPage> query = store.newQuery();
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
+        job.getConfiguration(), String.class, GoraWebPage.class);
+    Query<String, GoraWebPage> query = store.newQuery();
     // remove the __g__dirty field since it is not stored
-    String[] fields = Arrays.copyOfRange(WebPage._ALL_FIELDS, 1,
-        WebPage._ALL_FIELDS.length);
+    String[] fields = Arrays.copyOfRange(GoraWebPage._ALL_FIELDS, 1,
+        GoraWebPage._ALL_FIELDS.length);
     query.setFields(fields);
 
     GoraMapper.initMapperJob(job, query, store, Text.class, Text.class,
@@ -329,7 +326,7 @@ public class WebTableReader extends NutchJob implements Tool {
     }
   }
 
-  private static String getPageRepresentation(String key, WebPage page,
+  private static String getPageRepresentation(String key, GoraWebPage page,
       boolean dumpContent, boolean dumpHeaders, boolean dumpLinks,
       boolean dumpText) {
     StringBuffer sb = new StringBuffer();
@@ -530,13 +527,13 @@ public class WebTableReader extends NutchJob implements Tool {
       sort = Boolean.FALSE;
     currentJob.getConfiguration().setBoolean("db.reader.stats.sort", sort);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(
-        currentJob.getConfiguration(), String.class, WebPage.class);
-    Query<String, WebPage> query = store.newQuery();
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
+        currentJob.getConfiguration(), String.class, GoraWebPage.class);
+    Query<String, GoraWebPage> query = store.newQuery();
 
     // remove the __g__dirty field since it is not stored
-    String[] fields = Arrays.copyOfRange(WebPage._ALL_FIELDS, 1,
-        WebPage._ALL_FIELDS.length);
+    String[] fields = Arrays.copyOfRange(GoraWebPage._ALL_FIELDS, 1,
+        GoraWebPage._ALL_FIELDS.length);
     query.setFields(fields);
 
     GoraMapper.initMapperJob(currentJob, query, store, Text.class,

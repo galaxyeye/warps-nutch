@@ -21,8 +21,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,11 +34,11 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
   private Configuration conf;
   private float normalizedScore = 1.00f;
 
-  private final static Set<WebPage.Field> FIELDS = new HashSet<>();
+  private final static Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.SCORE);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.SCORE);
   }
 
   public LinkAnalysisScoringFilter() {
@@ -54,7 +54,7 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

@@ -72,7 +72,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     if (changed) {
-      updateRefetchTime(page.get(), interval, fetchTime, prevModifiedTime, modifiedTime);
+      updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
     }
     else {
       super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);

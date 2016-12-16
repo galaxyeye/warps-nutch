@@ -18,13 +18,12 @@ package org.apache.nutch.protocol.http;
 
 // JDK imports
 
-import java.net.URL;
-
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.metadata.SpellCheckedMetadata;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+
+import java.net.URL;
 
 /** An HTTP response. */
 public class ForwardedHttpResponse implements Response {
@@ -34,7 +33,7 @@ public class ForwardedHttpResponse implements Response {
   private int code;
   private Metadata headers;
 
-  public ForwardedHttpResponse(URL url, byte[] content, int code, Metadata headers, WebPage page) {
+  public ForwardedHttpResponse(URL url, byte[] content, int code, Metadata headers, WrappedWebPage page) {
     this.url = url;
     this.content = content;
     this.code = code;

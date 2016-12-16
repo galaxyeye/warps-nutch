@@ -142,14 +142,14 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateNewRow(String url, WrappedWebPage sourcePage, WrappedWebPage newPage) {
-    newPage.setReferrer(sourcePage.getBaseUrl().toString());
+  public void updateNewRow(String url, WrappedWebPage sourcePage, WrappedWebPage nepage) {
+    nepage.setReferrer(sourcePage.getBaseUrl().toString());
 
-    updateScore(url, newPage);
+    updateScore(url, nepage);
 
-    updateMetadata(newPage);
+    updateMetadata(nepage);
 
-    updateStatusCounter(newPage);
+    updateStatusCounter(nepage);
   }
 
   /**
@@ -234,15 +234,15 @@ public class ReduceDatumBuilder {
     page.clearMetadata(PARAM_GENERATE_TIME);
 
     // Clear markers
-    Mark.INJECT_MARK.removeMarkIfExist(page.get());
-    Mark.GENERATE_MARK.removeMarkIfExist(page.get());
-    Mark.FETCH_MARK.removeMarkIfExist(page.get());
+    Mark.INJECT_MARK.removeMarkIfExist(page);
+    Mark.GENERATE_MARK.removeMarkIfExist(page);
+    Mark.FETCH_MARK.removeMarkIfExist(page);
 
-    Utf8 parseMark = Mark.PARSE_MARK.checkMark(page.get());
+    Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
     if (parseMark != null) {
-      Mark.PARSE_MARK.removeMark(page.get());
+      Mark.PARSE_MARK.removeMark(page);
       // What about INDEX_MARK?
-      Mark.UPDATEDB_MARK.putMark(page.get(), parseMark);
+      Mark.UPDATEDB_MARK.putMark(page, parseMark);
     }
   }
 

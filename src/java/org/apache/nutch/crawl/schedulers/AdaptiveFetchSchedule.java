@@ -19,7 +19,6 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
@@ -124,14 +123,13 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     if (adjustInterval < MIN_INTERVAL.getSeconds()) adjustInterval = MIN_INTERVAL.getSeconds();
     if (adjustInterval > MAX_INTERVAL.getSeconds()) adjustInterval = MAX_INTERVAL.getSeconds();
 
-    updateRefetchTime(page.get(), Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
+    updateRefetchTime(page, Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
   }
 
-  protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
-    page.setFetchInterval((int) interval.getSeconds());
-    page.setFetchTime(fetchTime.toEpochMilli() + interval.toMillis());
-    page.setPrevModifiedTime(prevModifiedTime.toEpochMilli());
-    page.setModifiedTime(modifiedTime.toEpochMilli());
+  protected void updateRefetchTime(WrappedWebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
+    page.setFetchInterval(interval);
+    page.setFetchTime(fetchTime.plus(interval));
+    page.setPrevModifiedTime(prevModifiedTime);
+    page.setModifiedTime(modifiedTime);
   }
-
 }

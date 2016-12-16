@@ -23,8 +23,8 @@ import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
@@ -43,7 +43,7 @@ import java.util.Set;
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
-public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, WebPage> {
+public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEntry, GoraWebPage> {
   public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
@@ -138,7 +138,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   }
 
   @Override
-  public void map(String reversedUrl, WebPage row, Context context) throws IOException, InterruptedException {
+  public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
@@ -165,7 +165,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
     } catch (ScoringFilterException ignored) {}
 
-    output(url, new SelectorEntry(url, priority, sortScore), page.get(), context);
+    output(url, new SelectorEntry(url, priority, sortScore), page, context);
 
     updateStatus(url, page);
   }
@@ -178,7 +178,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       return false;
     }
 
-    if (Mark.GENERATE_MARK.hasMark(page.get())) {
+    if (Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.pagesGenerated);
 
       /*
@@ -298,8 +298,8 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     return true;
   }
 
-  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
-    context.write(entry, page);
+  private void output(String url, SelectorEntry entry, WrappedWebPage page, Context context) throws IOException, InterruptedException {
+    context.write(entry, page.get());
   }
 
   private void updateStatus(String url, WrappedWebPage page) throws IOException, InterruptedException {
@@ -307,7 +307,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page.get())) {
+    if (Mark.INJECT_MARK.hasMark(page)) {
       getCounter().increase(Counter.rowsInjected);
     }
 

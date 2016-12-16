@@ -17,16 +17,11 @@
 
 package org.apache.nutch.crawl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-
 import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
+import java.util.*;
 
 /**
  * <p>
@@ -60,16 +55,16 @@ import org.apache.nutch.storage.WebPage;
  */
 public class TextProfileSignature extends Signature {
 
-  private final static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private final static Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.CONTENT);
+    FIELDS.add(GoraWebPage.Field.CONTENT);
   }
 
   Signature fallback = new MD5Signature();
 
   @Override
-  public byte[] calculate(WebPage page) {
+  public byte[] calculate(WrappedWebPage page) {
     int MIN_TOKEN_LEN = getConf().getInt(
         "db.signature.text_profile.min_token_len", 2);
     float QUANT_RATE = getConf().getFloat(
@@ -150,7 +145,7 @@ public class TextProfileSignature extends Signature {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

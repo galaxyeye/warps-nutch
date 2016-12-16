@@ -29,7 +29,7 @@ import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator.UrlOnlyComparator;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -45,23 +45,23 @@ public class DbUpdateJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateJob.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.OUTLINKS);
-    FIELDS.add(WebPage.Field.INLINKS);
-    FIELDS.add(WebPage.Field.STATUS);
-    FIELDS.add(WebPage.Field.PREV_SIGNATURE);
-    FIELDS.add(WebPage.Field.SIGNATURE);
-    FIELDS.add(WebPage.Field.MARKERS);
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.RETRIES_SINCE_FETCH);
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(WebPage.Field.PREV_FETCH_TIME);
-    FIELDS.add(WebPage.Field.PREV_MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.OUTLINKS);
+    FIELDS.add(GoraWebPage.Field.INLINKS);
+    FIELDS.add(GoraWebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.PREV_SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.MARKERS);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   private String batchId = ALL_BATCH_ID_STR;
@@ -100,7 +100,7 @@ public class DbUpdateJob extends NutchJob implements Tool {
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
     ScoringFilters scoringFilters = new ScoringFilters(currentJob.getConfiguration());
-    HashSet<WebPage.Field> fields = new HashSet<>(FIELDS);
+    HashSet<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     fields.addAll(scoringFilters.getFields());
 
     // Partition by {url}, sort by {url,score} and group by {url}.
@@ -111,12 +111,12 @@ public class DbUpdateJob extends NutchJob implements Tool {
     currentJob.setSortComparatorClass(UrlScoreComparator.class);
     currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
 
-    MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, UrlWithScore.class,
         NutchWritable.class, DbUpdateMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, DbUpdateReducer.class);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

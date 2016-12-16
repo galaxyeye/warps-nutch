@@ -28,23 +28,23 @@ public enum Mark {
     this.name = new Utf8(name);
   }
 
-  public void putMark(WebPage page, Utf8 markValue) {
+  public void putMark(WrappedWebPage page, Utf8 markValue) {
     page.getMarkers().put(name, markValue);
   }
 
-  public void putMark(WebPage page, String markValue) {
+  public void putMark(WrappedWebPage page, String markValue) {
     putMark(page, new Utf8(markValue));
   }
 
-  public Utf8 removeMark(WebPage page) {
+  public Utf8 removeMark(WrappedWebPage page) {
     return (Utf8) page.getMarkers().put(name, null);
   }
 
-  public Utf8 checkMark(WebPage page) {
+  public Utf8 checkMark(WrappedWebPage page) {
     return (Utf8) page.getMarkers().get(name);
   }
 
-  public boolean hasMark(WebPage page) {
+  public boolean hasMark(WrappedWebPage page) {
     return page.getMarkers().get(name) != null;
   }
 
@@ -55,7 +55,7 @@ public enum Mark {
    *          The page to remove the mark from.
    * @return If the mark was present.
    */
-  public Utf8 removeMarkIfExist(WebPage page) {
+  public Utf8 removeMarkIfExist(WrappedWebPage page) {
     if (checkMark(page) != null) {
       return removeMark(page);
     }

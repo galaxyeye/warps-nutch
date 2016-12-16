@@ -134,7 +134,7 @@ public class SimpleParser extends Configured {
       ParseUtil parseUtil = new ParseUtil(getConf());
       if (page != null && page.getBaseUrl() != null) {
         String reverseUrl = TableUtil.reverseUrl(page.getBaseUrl().toString());
-        parse = parseUtil.process(url, page.get());
+        parse = parseUtil.process(url, page);
       }
     } catch (MalformedURLException e) {
       LOG.error(e.getMessage());
@@ -169,7 +169,7 @@ public class SimpleParser extends Configured {
     InputSource input = getContentAsInputSource(page);
 
     EncodingDetector encodingDetector = new EncodingDetector(getConf());
-    String encoding = encodingDetector.sniffEncoding(page.get());
+    String encoding = encodingDetector.sniffEncoding(page);
     input.setEncoding(encoding);
 
     input = getContentAsInputSource(page);
@@ -202,7 +202,7 @@ public class SimpleParser extends Configured {
     Protocol protocol = factory.getProtocol(url);
     WrappedWebPage page = WrappedWebPage.newWebPage();
 
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page.get());
+    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
     ProtocolStatus pstatus = protocolOutput.getStatus();
 
     if (!pstatus.isSuccess()) {
@@ -251,12 +251,12 @@ public class SimpleParser extends Configured {
 
     results.put("content", page.toString());
 
-    if (ParserMapper.isTruncated(url, page.get())) {
+    if (ParserMapper.isTruncated(url, page)) {
       results.put("contentStatus", "truncated");
     }
 
     // Calculate the signature
-    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page.get());
+    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
 
     LOG.info("signature: " + StringUtil.toHexString(signature));
 

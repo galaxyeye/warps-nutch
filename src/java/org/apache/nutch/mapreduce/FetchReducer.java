@@ -21,12 +21,12 @@ import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.fetch.data.FetchEntry;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.StringUtil;
 
 import java.io.IOException;
 
-class FetchReducer extends NutchReducer<IntWritable, FetchEntry, String, WebPage> {
+class FetchReducer extends NutchReducer<IntWritable, FetchEntry, String, GoraWebPage> {
 
   private String jobName;
   private FetchMonitor fetchMonitor;
@@ -39,7 +39,7 @@ class FetchReducer extends NutchReducer<IntWritable, FetchEntry, String, WebPage
 
     jobName = context.getJobName();
 
-    NutchContext nutchContext = new ReducerContextWrapper<IntWritable, FetchEntry, String, WebPage>(context);
+    NutchContext nutchContext = new ReducerContextWrapper<IntWritable, FetchEntry, String, GoraWebPage>(context);
 
     fetchMonitor = new FetchMonitor(jobName, getCounter(), nutchContext);
   }

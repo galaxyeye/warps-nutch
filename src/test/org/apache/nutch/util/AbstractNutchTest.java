@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 /**
  * This class provides common routines for setup/teardown of an in-memory data
@@ -32,7 +32,7 @@ public class AbstractNutchTest {
   protected Configuration conf;
   protected FileSystem fs;
   protected Path testdir = new Path("build/test/working");
-  protected DataStore<String, WebPage> webPageStore;
+  protected DataStore<String, GoraWebPage> webPageStore;
   protected boolean persistentDataStore = false;
 
   public void setUp() throws Exception {
@@ -40,8 +40,7 @@ public class AbstractNutchTest {
     conf.set("storage.data.store.class",
         "org.apache.gora.memory.store.MemStore");
     fs = FileSystem.get(conf);
-    webPageStore = StorageUtils.createWebStore(conf, String.class,
-        WebPage.class);
+    webPageStore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
   }
 
   public void tearDown() throws Exception {

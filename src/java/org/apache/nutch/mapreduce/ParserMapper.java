@@ -7,7 +7,8 @@ import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -19,7 +20,7 @@ import java.nio.ByteBuffer;
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
-public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> {
+public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraWebPage> {
 
   public static final Logger LOG = ParserJob.LOG;
 
@@ -61,7 +62,9 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
   }
 
   @Override
-  public void map(String reverseUrl, WebPage page, Context context) {
+  public void map(String reverseUrl, GoraWebPage row, Context context) {
+    WrappedWebPage page = WrappedWebPage.wrap(row);
+
     try {
       getCounter().increase(rows);
 
@@ -92,7 +95,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
       }
       getCounter().updateAffectedRows(url);
 
-      context.write(reverseUrl, page);
+      context.write(reverseUrl, page.get());
 
       ++count;
     }
@@ -118,7 +121,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
     getCounter().increase(counter);
   }
 
-  private boolean shouldProcess(String url, WebPage page) {
+  private boolean shouldProcess(String url, WrappedWebPage page) {
     if (!reparse && !Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.notFetchedPages);
 
@@ -161,7 +164,7 @@ public class ParserMapper extends NutchMapper<String, WebPage, String, WebPage> 
    * @return If the page is truncated <code>true</code>. When it is not, or when
    *         it could be determined, <code>false</code>.
    */
-  public static boolean isTruncated(String url, WebPage page) {
+  public static boolean isTruncated(String url, WrappedWebPage page) {
     ByteBuffer content = page.getContent();
     if (content == null) {
       return false;

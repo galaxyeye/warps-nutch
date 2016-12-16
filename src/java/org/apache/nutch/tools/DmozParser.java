@@ -40,7 +40,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.MD5Hash;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.apache.xerces.util.XMLChar;
@@ -59,7 +60,7 @@ public class DmozParser {
   public static final Logger LOG = LoggerFactory.getLogger(DmozParser.class);
 
   long pages = 0;
-  private static DataStore<String, WebPage> store = null;
+  private static DataStore<String, GoraWebPage> store = null;
 
   /**
    * This filter fixes characters that might offend our parser. This lets us be
@@ -205,20 +206,19 @@ public class DmozParser {
           if (snippet) {
             try {
               String reversedUrl = TableUtil.reverseUrl(curURL);
-              WebPage row = store.get(reversedUrl);
+              WrappedWebPage row = WrappedWebPage.wrap(store.get(reversedUrl));
 
-              if (row != null) {
+              if (row.get() != null) {
                 if (desc.length() > 0) {
-                  row.getMetadata().put(new Utf8("_dmoz_desc_"),
-                      ByteBuffer.wrap(desc.toString().getBytes()));
+                  row.get().getMetadata().put(new Utf8("_dmoz_desc_"), ByteBuffer.wrap(desc.toString().getBytes()));
                   desc.delete(0, desc.length());
                 }
                 if (title.length() > 0) {
-                  row.getMetadata().put(new Utf8("_dmoz_title_"),
+                  row.get().getMetadata().put(new Utf8("_dmoz_title_"),
                       ByteBuffer.wrap(title.toString().getBytes()));
                   title.delete(0, title.length());
                 }
-                store.put(reversedUrl, row);
+                store.put(reversedUrl, row.get());
                 store.flush();
               }
 
@@ -392,10 +392,10 @@ public class DmozParser {
     boolean includeAdult = false;
     boolean snippet = false;
     Pattern topicPattern = null;
-    Vector<String> topics = new Vector<String>();
+    Vector<String> topics = new Vector<>();
 
     Configuration conf = NutchConfiguration.create();
-    store = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+    store = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     FileSystem fs = FileSystem.get(conf);
     try {
       for (int i = 1; i < argv.length; i++) {
@@ -440,5 +440,4 @@ public class DmozParser {
       fs.close();
     }
   }
-
 }

@@ -21,17 +21,14 @@ package org.apache.nutch.protocol.file;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.Protocol;
-import org.apache.nutch.protocol.ProtocolException;
-import org.apache.nutch.protocol.ProtocolFactory;
-import org.apache.nutch.protocol.ProtocolNotFound;
-import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.protocol.ProtocolStatusCodes;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.protocol.*;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author mattmann
@@ -78,7 +75,7 @@ public class TestProtocolFile {
   public void setContentType(String testTextFile) throws ProtocolNotFound {
     String urlString = "file:" + sampleDir + fileSeparator + testTextFile;
     assertNotNull(urlString);
-    WebPage datum = WebPage.newBuilder().build();
+    GoraWebPage datum = GoraWebPage.newBuilder().build();
     Protocol protocol = new ProtocolFactory(conf).getProtocol(urlString);
     ProtocolOutput output = protocol.getProtocolOutput(urlString, datum);
     assertNotNull(output);

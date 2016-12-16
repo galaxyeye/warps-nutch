@@ -29,7 +29,7 @@ import org.apache.nutch.net.proxy.ProxyEntry;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.protocol.http.api.HttpException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -57,7 +57,7 @@ public class HttpResponse implements Response {
     HTTP, HTTPS,
   }
 
-  public HttpResponse(HttpBase http, URL url, WebPage page)
+  public HttpResponse(HttpBase http, URL url, WrappedWebPage page)
       throws ProtocolException, IOException, InterruptedException, NoProxyException {
 
     this.http = http;
@@ -155,7 +155,7 @@ public class HttpResponse implements Response {
       if (conf.getBoolean("store.ip.address", false)) {
         String ipString = sockAddr.getAddress().getHostAddress(); // get the ip
                                                                   // address
-        page.getMetadata().put(new Utf8("_ip_"), ByteBuffer.wrap(ipString.getBytes()));
+        page.get().getMetadata().put(new Utf8("_ip_"), ByteBuffer.wrap(ipString.getBytes()));
       }
 
       // make request
@@ -192,9 +192,9 @@ public class HttpResponse implements Response {
         reqStr.append("\r\n");
       }
 
-      // if (page.isReadable(WebPage.Field.MODIFIED_TIME.getIndex())) {
+      // if (page.isReadable(GoraWebPage.Field.MODIFIED_TIME.getIndex())) {
       reqStr.append("If-Modified-Since: "
-          + HttpDateFormat.toString(page.getModifiedTime()));
+          + HttpDateFormat.toString(page.getModifiedTime().toEpochMilli()));
       reqStr.append("\r\n");
       // }
       reqStr.append("\r\n");

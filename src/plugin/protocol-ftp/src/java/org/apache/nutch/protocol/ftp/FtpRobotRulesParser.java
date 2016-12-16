@@ -24,7 +24,7 @@ import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.RobotRulesParser;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +80,7 @@ public class FtpRobotRulesParser extends RobotRulesParser {
       try {
         String robotsUrl = new URL(url, "/robots.txt").toString();
         ProtocolOutput output = ((Ftp) ftp).getProtocolOutput(robotsUrl,
-            WebPage.newBuilder().build());
+            GoraWebPage.newBuilder().build());
         int statusCode = output.getStatus().getCode();
 
         if (statusCode == ProtocolStatusCodes.SUCCESS) {

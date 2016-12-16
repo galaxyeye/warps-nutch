@@ -22,9 +22,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +47,11 @@ public class OPICScoringFilter implements ScoringFilter {
 
   private final static Logger LOG = LoggerFactory.getLogger(OPICScoringFilter.class);
 
-  private final static Set<WebPage.Field> FIELDS = new HashSet<>();
+  private final static Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.SCORE);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.SCORE);
   }
 
   private Configuration conf;
@@ -162,7 +161,7 @@ public class OPICScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

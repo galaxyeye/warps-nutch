@@ -28,7 +28,6 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
@@ -260,7 +259,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
     }
 
     /**
-     * Index a {@link WebPage}, here we add the following fields:
+     * Index a {@link WrappedWebPage}, here we add the following fields:
      * <ol>
      * <li><tt>id</tt>: default uniqueKey for the {@link IndexDocument}.</li>
      * <li><tt>digest</tt>: Digest is used to identify pages (like unique ID)
@@ -277,10 +276,10 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
      * @param key
      *          The key of the page (reversed url).
      * @param page
-     *          The {@link WebPage}.
+     *          The {@link WrappedWebPage}.
      * @return The indexed document, or null if skipped by index indexingFilters.
      */
-    public IndexDocument build(String key, WebPage page) {
+    public IndexDocument build(String key, WrappedWebPage page) {
       if (key == null || page == null) {
         return null;
       }
@@ -315,7 +314,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
       float boost = 1.0f;
       // run scoring indexingFilters
       try {
-        boost = scoringFilters.indexerScore(url, doc, WrappedWebPage.wrap(page), boost);
+        boost = scoringFilters.indexerScore(url, doc, page, boost);
       } catch (final ScoringFilterException e) {
         LOG.warn("Error calculating score " + key + ": " + e);
         return null;

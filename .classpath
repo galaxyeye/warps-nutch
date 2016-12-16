@@ -56,6 +56,7 @@
   <classpathentry kind="lib" path="src/bin" />
   <classpathentry kind="lib" path="build/lib/activation-1.1.jar" />
   <classpathentry kind="lib" path="build/lib/annotations-api-6.0.16.jar" />
+  <classpathentry kind="lib" path="build/lib/annotations-java8.jar" />
   <classpathentry kind="lib" path="build/lib/aopalliance-1.0.jar" />
   <classpathentry kind="lib" path="build/lib/apacheds-i18n-2.0.0-M15.jar" />
   <classpathentry kind="lib" path="build/lib/apacheds-kerberos-codec-2.0.0-M15.jar" />

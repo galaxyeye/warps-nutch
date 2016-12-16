@@ -33,7 +33,6 @@ import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -119,7 +118,7 @@ public class ParseUtil {
    *
    * @throws ParseException If there is an error parsing.
    */
-  public Parse parse(String url, WebPage page) throws ParseException {
+  public Parse parse(String url, WrappedWebPage page) throws ParseException {
     Parser[] parsers;
 
     String contentType = TableUtil.toString(page.getContentType());
@@ -153,7 +152,7 @@ public class ParseUtil {
    * @param url
    * @param page
    */
-  public Parse process(String url, WebPage page) {
+  public Parse process(String url, WrappedWebPage page) {
     byte status = page.getStatus().byteValue();
     if (status != CrawlStatus.STATUS_FETCHED) {
       if (LOG.isDebugEnabled()) {
@@ -196,7 +195,7 @@ public class ParseUtil {
 
   public Set<CharSequence> getUnparsableTypes() { return unparsableTypes; }
 
-  private Parse runParser(Parser p, String url, WebPage page) {
+  private Parse runParser(Parser p, String url, WrappedWebPage page) {
     ParseCallable pc = new ParseCallable(p, page, url);
     Future<Parse> task = executorService.submit(pc);
 
@@ -211,9 +210,7 @@ public class ParseUtil {
     return res;
   }
 
-  private void processSuccess(String url, WebPage p, Parse parse) {
-    WrappedWebPage page = WrappedWebPage.wrap(p);
-
+  private void processSuccess(String url, WrappedWebPage page, Parse parse) {
     page.setText(new Utf8(parse.getText()));
     page.setTitle(new Utf8(parse.getTitle()));
     ByteBuffer prevSig = page.getSignature();
@@ -221,7 +218,7 @@ public class ParseUtil {
       page.setPrevSignature(prevSig);
     }
 
-    final byte[] signature = sig.calculate(page.get());
+    final byte[] signature = sig.calculate(page);
     page.setSignature(ByteBuffer.wrap(signature));
 
     String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
@@ -263,13 +260,13 @@ public class ParseUtil {
 //    }
 
     // TODO : Marks should be set in mapper or reducer, not util methods
-    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page.get());
+    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
     if (fetchMark != null) {
-      Mark.PARSE_MARK.putMark(page.get(), fetchMark);
+      Mark.PARSE_MARK.putMark(page, fetchMark);
     }
   }
 
-  private void processRedirect(String url, WebPage page, org.apache.nutch.storage.ParseStatus pstatus) {
+  private void processRedirect(String url, WrappedWebPage page, org.apache.nutch.storage.ParseStatus pstatus) {
     String newUrl = ParseStatusUtils.getMessage(pstatus);
     int refreshTime = StringUtil.tryParseInt(ParseStatusUtils.getArg(pstatus, 1), 0);
     try {
@@ -296,7 +293,7 @@ public class ParseUtil {
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
 
-    WrappedWebPage.wrap(page).putMetadata(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    page.putMetadata(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
 
     if (newUrl.equals(url)) {
       String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetchJob.PERM_REFRESH_TIME);

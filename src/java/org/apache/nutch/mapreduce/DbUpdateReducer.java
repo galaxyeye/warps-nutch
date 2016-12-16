@@ -22,8 +22,8 @@ import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -34,7 +34,7 @@ import java.io.IOException;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 
-public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, String, WebPage> {
+public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, String, GoraWebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateReducer.class);
 
@@ -45,7 +45,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
   private ReduceDatumBuilder datumBuilder;
   private boolean additionsAllowed;
   private int maxLinks;
-  public DataStore<String, WebPage> datastore;
+  public DataStore<String, GoraWebPage> datastore;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -59,7 +59,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     additionsAllowed = conf.getBoolean(CRAWLDB_ADDITIONS_ALLOWED, true);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     try {
-      datastore = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+      datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     }
     catch (ClassNotFoundException e) {
       throw new IOException(e);
@@ -96,7 +96,7 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
 
     // Calculate inlinked score data, and return the main web page
     WrappedWebPage page = datumBuilder.calculateInlinks(url, values);
-    WebPage oldPage = datastore.get(reversedUrl);
+    GoraWebPage oldPage = datastore.get(reversedUrl);
 
     datumBuilder.process(url, page, WrappedWebPage.wrap(oldPage), additionsAllowed);
 

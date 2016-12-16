@@ -21,8 +21,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.CreativeCommons;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
@@ -55,7 +55,7 @@ public class CCParseFilter implements ParseFilter {
     }
 
     /** Scan the document adding attributes to metadata. */
-    public static void walk(Node doc, URL base, WebPage page, Configuration conf)
+    public static void walk(Node doc, URL base, WrappedWebPage page, Configuration conf)
         throws ParseException {
 
       // walk the DOM tree, scanning for license data
@@ -86,9 +86,9 @@ public class CCParseFilter implements ParseFilter {
           LOG.debug("CC: found " + licenseUrl + " in " + licenseLocation
               + " of " + base);
         }
-        page.getMetadata().put(new Utf8(CreativeCommons.LICENSE_URL),
+        page.get().getMetadata().put(new Utf8(CreativeCommons.LICENSE_URL),
             ByteBuffer.wrap(licenseUrl.getBytes()));
-        page.getMetadata().put(new Utf8(CreativeCommons.LICENSE_LOCATION),
+        page.get().getMetadata().put(new Utf8(CreativeCommons.LICENSE_LOCATION),
             ByteBuffer.wrap(licenseLocation.getBytes()));
       }
 
@@ -96,7 +96,7 @@ public class CCParseFilter implements ParseFilter {
         if (LOG.isDebugEnabled()) {
           LOG.debug("CC: found " + walker.workType + " in " + base);
         }
-        page.getMetadata().put(new Utf8(CreativeCommons.WORK_TYPE),
+        page.get().getMetadata().put(new Utf8(CreativeCommons.WORK_TYPE),
             ByteBuffer.wrap(walker.workType.getBytes()));
       }
 
@@ -251,11 +251,11 @@ public class CCParseFilter implements ParseFilter {
     }
   }
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   private static final HashMap<String, String> WORK_TYPE_NAMES = new HashMap<String, String>();
@@ -282,7 +282,7 @@ public class CCParseFilter implements ParseFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
@@ -291,8 +291,8 @@ public class CCParseFilter implements ParseFilter {
    * DOM tree of a page.
    */
   @Override
-  public Parse filter(String url, WebPage page, Parse parse,
-      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse,
+                      HTMLMetaTags metaTags, DocumentFragment doc) {
     // construct base url
     URL base;
     try {

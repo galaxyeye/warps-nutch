@@ -23,7 +23,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -39,19 +39,19 @@ public class SampleJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(SampleJob.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.HEADERS);
-    FIELDS.add(WebPage.Field.OUTLINKS);
-    FIELDS.add(WebPage.Field.INLINKS);
-    FIELDS.add(WebPage.Field.STATUS);
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
-    FIELDS.add(WebPage.Field.CONTENT);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.OUTLINKS);
+    FIELDS.add(GoraWebPage.Field.INLINKS);
+    FIELDS.add(GoraWebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
+    FIELDS.add(GoraWebPage.Field.CONTENT);
   }
 
   public SampleJob() {
@@ -86,12 +86,12 @@ public class SampleJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    HashSet<WebPage.Field> fields = new HashSet<>(FIELDS);
+    HashSet<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
 
-    StorageUtils.initMapperJob(currentJob, fields, Text.class, WebPage.class, SampleMapper.class);
+    StorageUtils.initMapperJob(currentJob, fields, Text.class, GoraWebPage.class, SampleMapper.class);
     StorageUtils.initReducerJob(currentJob, SampleReducer.class);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

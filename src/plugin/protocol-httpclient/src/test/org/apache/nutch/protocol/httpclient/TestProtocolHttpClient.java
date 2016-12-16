@@ -19,7 +19,7 @@ package org.apache.nutch.protocol.httpclient;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -211,7 +211,7 @@ public class TestProtocolHttpClient {
   private void fetchPage(String page, int expectedCode) throws Exception {
     URL url = new URL("http", "127.0.0.1", port, page);
     Response response = null;
-    response = http.getResponse(url, WebPage.newBuilder().build(), true);
+    response = http.getResponse(url, GoraWebPage.newBuilder().build(), true);
 
     int code = response.getCode();
     assertEquals("HTTP Status Code for " + url, expectedCode, code);

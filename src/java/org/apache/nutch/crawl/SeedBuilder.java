@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -47,13 +48,13 @@ public class SeedBuilder {
   /** Fetch interval in second */
   private int fetchIntervalSec;
   private float scoreInjected;
-  private long currentTime;
+  private Instant currentTime;
 
   public SeedBuilder(Configuration conf) {
     scoreFilters = new ScoringFilters(conf);
     fetchIntervalSec = getFetchIntervalSec();
     scoreInjected = conf.getFloat("db.score.injected", Float.MAX_VALUE);
-    currentTime = System.currentTimeMillis();
+    currentTime = Instant.now();
   }
 
   public Params getParams() {
@@ -82,8 +83,8 @@ public class SeedBuilder {
     String reversedUrl = null;
     try {
       reversedUrl = TableUtil.reverseUrl(url);
-      page.get().setFetchTime(currentTime);
-      page.get().setFetchInterval(fetchIntervalSec);
+      page.setFetchTime(currentTime);
+      page.setFetchInterval(fetchIntervalSec);
     }
     catch (MalformedURLException e) {
       LOG.warn("Ignore illegal formatted url : " + url);
@@ -114,7 +115,7 @@ public class SeedBuilder {
     page.setFetchCount(0);
     page.setDistance(0);
 
-    Mark.INJECT_MARK.putMark(page.get(), Nutch.YES_UTF8);
+    Mark.INJECT_MARK.putMark(page, Nutch.YES_UTF8);
 
     return page;
   }

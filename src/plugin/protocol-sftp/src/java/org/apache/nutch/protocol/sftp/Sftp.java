@@ -18,41 +18,32 @@
 package org.apache.nutch.protocol.sftp;
 
 //JDK imports
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
-//APACHE imports
+import com.jcraft.jsch.*;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
+import crawlercommons.robots.BaseRobotRules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.protocol.RobotRulesParser;
-
-//JSCH imports
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-
-import crawlercommons.robots.BaseRobotRules;
-
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+//APACHE imports
+//JSCH imports
 
 /**
  * This class uses the Jsch package to fetch content using the Sftp protocol.
@@ -73,7 +64,7 @@ public class Sftp implements Protocol {
   public Sftp() {
   }
 
-  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
+  public ProtocolOutput getProtocolOutput(String url, GoraWebPage page) {
     URL sUrl = null;
     String urlStr = url.toString().trim();
 
@@ -302,7 +293,7 @@ public class Sftp implements Protocol {
   }
 
   @Override
-  public BaseRobotRules getRobotRules(String url, WebPage page) {
+  public BaseRobotRules getRobotRules(String url, GoraWebPage page) {
     return RobotRulesParser.EMPTY_RULES;
   }
 

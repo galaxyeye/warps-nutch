@@ -17,13 +17,14 @@
 
 package org.apache.nutch.crawl;
 
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.io.MD5Hash;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
-
-import org.apache.avro.util.Utf8;
-import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WebPage;
 
 /**
  * Default implementation of a page signature. It calculates an MD5 hash of the
@@ -34,14 +35,14 @@ import org.apache.nutch.storage.WebPage;
  */
 public class MD5Signature extends Signature {
 
-  private final static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private final static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.CONTENT);
+    FIELDS.add(GoraWebPage.Field.CONTENT);
   }
 
   @Override
-  public byte[] calculate(WebPage page) {
+  public byte[] calculate(WrappedWebPage page) {
     ByteBuffer buf = page.getContent();
     byte[] data;
     int of;
@@ -67,7 +68,7 @@ public class MD5Signature extends Signature {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -63,7 +64,7 @@ public class StorageUtils {
     }
 
     String schema;
-    if (WebPage.class.equals(persistentClass)) {
+    if (GoraWebPage.class.equals(persistentClass)) {
       schema = conf.get("storage.schema.webpage", "webpage");
       conf.set("preferred.schema.name", schemaPrefix + "webpage");
     } else if (Host.class.equals(persistentClass)) {
@@ -94,47 +95,47 @@ public class StorageUtils {
   }
 
   public static <K, V> void initMapperJob(Job job,
-      Collection<WebPage.Field> fields, Class<K> outKeyClass,
-      Class<V> outValueClass,
-      Class<? extends GoraMapper<String, WebPage, K, V>> mapperClass)
+                                          Collection<GoraWebPage.Field> fields, Class<K> outKeyClass,
+                                          Class<V> outValueClass,
+                                          Class<? extends GoraMapper<String, GoraWebPage, K, V>> mapperClass)
       throws ClassNotFoundException, IOException {
     initMapperJob(job, fields, outKeyClass, outValueClass, mapperClass, null,
         true);
   }
 
   public static <K, V> void initMapperJob(Job job,
-      Collection<WebPage.Field> fields, Class<K> outKeyClass,
-      Class<V> outValueClass,
-      Class<? extends GoraMapper<String, WebPage, K, V>> mapperClass,
-      Class<? extends Partitioner<K, V>> partitionerClass)
+                                          Collection<GoraWebPage.Field> fields, Class<K> outKeyClass,
+                                          Class<V> outValueClass,
+                                          Class<? extends GoraMapper<String, GoraWebPage, K, V>> mapperClass,
+                                          Class<? extends Partitioner<K, V>> partitionerClass)
       throws ClassNotFoundException, IOException {
     initMapperJob(job, fields, outKeyClass, outValueClass, mapperClass,
         partitionerClass, true);
   }
 
   public static <K, V> void initMapperJob(Job job,
-      Collection<WebPage.Field> fields, Class<K> outKeyClass,
-      Class<V> outValueClass,
-      Class<? extends GoraMapper<String, WebPage, K, V>> mapperClass,
-      Class<? extends Partitioner<K, V>> partitionerClass, boolean reuseObjects)
+                                          Collection<GoraWebPage.Field> fields, Class<K> outKeyClass,
+                                          Class<V> outValueClass,
+                                          Class<? extends GoraMapper<String, GoraWebPage, K, V>> mapperClass,
+                                          Class<? extends Partitioner<K, V>> partitionerClass, boolean reuseObjects)
       throws ClassNotFoundException, IOException {
     initMapperJob(job, fields, outKeyClass, outValueClass, mapperClass,
         partitionerClass, null, reuseObjects);
   }
 
   public static <K, V> void initMapperJob(Job job,
-      Collection<WebPage.Field> fields, Class<K> outKeyClass,
-      Class<V> outValueClass,
-      Class<? extends GoraMapper<String, WebPage, K, V>> mapperClass,
-      Class<? extends Partitioner<K, V>> partitionerClass,
-      Filter<String, WebPage> filter, boolean reuseObjects)
+                                          Collection<GoraWebPage.Field> fields, Class<K> outKeyClass,
+                                          Class<V> outValueClass,
+                                          Class<? extends GoraMapper<String, GoraWebPage, K, V>> mapperClass,
+                                          Class<? extends Partitioner<K, V>> partitionerClass,
+                                          Filter<String, GoraWebPage> filter, boolean reuseObjects)
       throws ClassNotFoundException, IOException {
-    DataStore<String, WebPage> store = createWebStore(job.getConfiguration(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = createWebStore(job.getConfiguration(), String.class, GoraWebPage.class);
     if (store == null) {
       throw new RuntimeException("Could not create datastore");
     }
 
-    Query<String, WebPage> query = store.newQuery();
+    Query<String, GoraWebPage> query = store.newQuery();
     query.setFields(toStringArray(fields));
     if (filter != null) {
       query.setFilter(filter);
@@ -145,28 +146,27 @@ public class StorageUtils {
   }
 
   public static <K, V> void initMapperJob(Job job,
-      Collection<WebPage.Field> fields, Class<K> outKeyClass,
-      Class<V> outValueClass,
-      Class<? extends GoraMapper<String, WebPage, K, V>> mapperClass,
-      Filter<String, WebPage> filter) throws ClassNotFoundException,
+                                          Collection<GoraWebPage.Field> fields, Class<K> outKeyClass,
+                                          Class<V> outValueClass,
+                                          Class<? extends GoraMapper<String, GoraWebPage, K, V>> mapperClass,
+                                          Filter<String, GoraWebPage> filter) throws ClassNotFoundException,
       IOException {
     initMapperJob(job, fields, outKeyClass, outValueClass, mapperClass, null,
         filter, true);
   }
 
   public static <K, V> void initReducerJob(Job job,
-      Class<? extends GoraReducer<K, V, String, WebPage>> reducerClass)
+      Class<? extends GoraReducer<K, V, String, GoraWebPage>> reducerClass)
       throws ClassNotFoundException, GoraException {
     Configuration conf = job.getConfiguration();
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(conf,
-        String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     GoraReducer.initReducerJob(job, store, reducerClass);
     GoraOutputFormat.setOutput(job, store, true);
   }
 
-  public static String[] toStringArray(Collection<WebPage.Field> fields) {
+  public static String[] toStringArray(Collection<GoraWebPage.Field> fields) {
     String[] arr = new String[fields.size()];
-    Iterator<WebPage.Field> iter = fields.iterator();
+    Iterator<GoraWebPage.Field> iter = fields.iterator();
     for (int i = 0; i < arr.length; i++) {
       arr[i] = iter.next().getName();
     }

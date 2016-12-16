@@ -20,7 +20,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.mapreduce.InjectJob;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
 import org.junit.Before;
@@ -102,18 +103,18 @@ public class TestInjector extends AbstractNutchTest {
   }
 
   private static final String[] fields = new String[] {
-      WebPage.Field.MARKERS.getName(), WebPage.Field.METADATA.getName(),
-      WebPage.Field.SCORE.getName() };
+      GoraWebPage.Field.MARKERS.getName(), GoraWebPage.Field.METADATA.getName(),
+      GoraWebPage.Field.SCORE.getName() };
 
   private List<String> readDb() throws Exception {
     List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
         fields);
     ArrayList<String> read = new ArrayList<String>();
     for (URLWebPage up : pages) {
-      WebPage page = up.getDatum();
+      WrappedWebPage page = up.getDatum();
       String representation = up.getUrl();
       representation += "\tnutch.score=" + page.getScore().intValue();
-      ByteBuffer bb = page.getMetadata().get(new Utf8("custom.attribute"));
+      ByteBuffer bb = page.get().getMetadata().get(new Utf8("custom.attribute"));
       if (bb != null) {
         representation += "\tcustom.attribute=" + Bytes.toString(bb.array());
       }

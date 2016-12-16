@@ -26,7 +26,7 @@ import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.parse.ParseFilters;
 import org.apache.nutch.parse.ParserFactory;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.IdentityPageReducer;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -45,20 +45,20 @@ public class ParserJob extends NutchJob implements Tool {
 
   public static final String SKIP_TRUNCATED = "parser.skip.truncated";
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   private String batchId;
 
   static {
-    FIELDS.add(WebPage.Field.STATUS);
-    FIELDS.add(WebPage.Field.CONTENT);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
-    FIELDS.add(WebPage.Field.SIGNATURE);
-    FIELDS.add(WebPage.Field.MARKERS);
-    FIELDS.add(WebPage.Field.PARSE_STATUS);
-    FIELDS.add(WebPage.Field.OUTLINKS);
-    FIELDS.add(WebPage.Field.METADATA);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.CONTENT);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
+    FIELDS.add(GoraWebPage.Field.SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.MARKERS);
+    FIELDS.add(GoraWebPage.Field.PARSE_STATUS);
+    FIELDS.add(GoraWebPage.Field.OUTLINKS);
+    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   public ParserJob() {
@@ -69,15 +69,15 @@ public class ParserJob extends NutchJob implements Tool {
     setConf(conf);
   }
 
-  public Collection<WebPage.Field> getFields(Job job) {
+  public Collection<GoraWebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
-    Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
+    Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     ParserFactory parserFactory = new ParserFactory(conf);
     ParseFilters parseFilters = new ParseFilters(conf);
 
-    Collection<WebPage.Field> parsePluginFields = parserFactory.getFields();
-    Collection<WebPage.Field> signaturePluginFields = SignatureFactory.getFields(conf);
-    Collection<WebPage.Field> htmlParsePluginFields = parseFilters.getFields();
+    Collection<GoraWebPage.Field> parsePluginFields = parserFactory.getFields();
+    Collection<GoraWebPage.Field> signaturePluginFields = SignatureFactory.getFields(conf);
+    Collection<GoraWebPage.Field> htmlParsePluginFields = parseFilters.getFields();
 
     if (parsePluginFields != null) {
       fields.addAll(parsePluginFields);
@@ -132,17 +132,17 @@ public class ParserJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    Collection<WebPage.Field> fields = getFields(currentJob);
-    MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
+    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
 
-    StorageUtils.initMapperJob(currentJob, fields, String.class, WebPage.class, ParserMapper.class, batchIdFilter);
+    StorageUtils.initMapperJob(currentJob, fields, String.class, GoraWebPage.class, ParserMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, IdentityPageReducer.class);
 
     // there is no reduce phase, so set reduce tasks to be 0
     currentJob.setNumReduceTasks(0);
 
     // used to get schema name
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

@@ -16,15 +16,15 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 
 public class URLWebPage {
 
   private String url;
 
-  private WebPage datum;
+  private WrappedWebPage datum;
 
-  public URLWebPage(String url, WebPage datum) {
+  public URLWebPage(String url, WrappedWebPage datum) {
     this.url = url;
     this.datum = datum;
   }
@@ -37,11 +37,11 @@ public class URLWebPage {
     this.url = url;
   }
 
-  public WebPage getDatum() {
+  public WrappedWebPage getDatum() {
     return datum;
   }
 
-  public void setDatum(WebPage datum) {
+  public void setDatum(WrappedWebPage datum) {
     this.datum = datum;
   }
 

@@ -16,44 +16,44 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class WebPageWritable extends Configured implements Writable {
 
-  private WebPage webPage;
+  private GoraWebPage webPage;
 
   public WebPageWritable() {
-    this(null, WebPage.newBuilder().build());
+    this(null, GoraWebPage.newBuilder().build());
   }
 
-  public WebPageWritable(Configuration conf, WebPage webPage) {
+  public WebPageWritable(Configuration conf, GoraWebPage webPage) {
     super(conf);
     this.webPage = webPage;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    webPage = IOUtils.deserialize(getConf(), in, webPage, WebPage.class);
+    webPage = IOUtils.deserialize(getConf(), in, webPage, GoraWebPage.class);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    IOUtils.serialize(getConf(), out, webPage, WebPage.class);
+    IOUtils.serialize(getConf(), out, webPage, GoraWebPage.class);
   }
 
-  public WebPage getWebPage() {
+  public GoraWebPage getWebPage() {
     return webPage;
   }
 
-  public void setWebPage(WebPage webPage) {
+  public void setWebPage(GoraWebPage webPage) {
     this.webPage = webPage;
   }
 

@@ -17,28 +17,28 @@
 package org.apache.nutch.protocol.http;
 
 // JDK imports
+
+import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.net.protocols.Response;
+import org.apache.nutch.protocol.http.api.HttpBase;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.nutch.storage.WebPage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ForwardedHttp extends HttpBase {
 
   public static final Logger LOG = LoggerFactory.getLogger(ForwardedHttp.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   private byte[] content;
@@ -65,11 +65,11 @@ public class ForwardedHttp extends HttpBase {
   }
 
   @Override
-  protected Response getResponse(URL url, WebPage page, boolean redirect) {
+  protected Response getResponse(URL url, WrappedWebPage page, boolean redirect) {
     return new ForwardedHttpResponse(url, content, code, headers, page);
   }
 
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

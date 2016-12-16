@@ -20,14 +20,14 @@ package org.apache.nutch.analysis.lang;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NodeWalker;
 import org.apache.tika.language.LanguageIdentifier;
 import org.slf4j.Logger;
@@ -37,7 +37,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
-import java.lang.CharSequence;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -47,10 +46,9 @@ import java.util.*;
  */
 public class HTMLLanguageParser implements ParseFilter {
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(HTMLLanguageParser.class);
+  public static final Logger LOG = LoggerFactory.getLogger(HTMLLanguageParser.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   private int detect = -1, identify = -1;
 
@@ -90,8 +88,8 @@ public class HTMLLanguageParser implements ParseFilter {
    * -html.shtml#language) <li>3. meta http-equiv (content-language)
    * (http://www.w3.org/TR/REC-html40/struct/global.html#h-7.4.4.2) <br>
    */
-  public Parse filter(String url, WebPage page, Parse parse,
-      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse,
+                      HTMLMetaTags metaTags, DocumentFragment doc) {
     String lang = null;
 
     if (detect >= 0 && identify < 0) {
@@ -114,8 +112,7 @@ public class HTMLLanguageParser implements ParseFilter {
     }
 
     if (lang != null) {
-      page.getMetadata().put(new Utf8(Metadata.LANGUAGE),
-          ByteBuffer.wrap(lang.getBytes()));
+      page.get().getMetadata().put(new Utf8(Metadata.LANGUAGE), ByteBuffer.wrap(lang.getBytes()));
       return parse;
     }
 
@@ -123,9 +120,9 @@ public class HTMLLanguageParser implements ParseFilter {
   }
 
   /** Try to find the document's language from page headers and metadata */
-  private String detectLanguage(WebPage page, DocumentFragment doc) {
+  private String detectLanguage(WrappedWebPage page, DocumentFragment doc) {
     String lang = null;
-    ByteBuffer blang = getLanguageFromMetadata(page.getMetadata());
+    ByteBuffer blang = getLanguageFromMetadata(page.get().getMetadata());
     if (blang == null) {
       LanguageParser parser = new LanguageParser(doc);
       lang = parser.getLanguage();
@@ -151,12 +148,12 @@ public class HTMLLanguageParser implements ParseFilter {
     if (parse != null) {
       String title = parse.getTitle();
       if (title != null) {
-        text.append(title.toString());
+        text.append(title);
       }
 
       String content = parse.getText();
       if (content != null) {
-        text.append(" ").append(content.toString());
+        text.append(" ").append(content);
       }
 
       LanguageIdentifier identifier = new LanguageIdentifier(text.toString());
@@ -322,7 +319,7 @@ public class HTMLLanguageParser implements ParseFilter {
     return this.conf;
   }
 
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

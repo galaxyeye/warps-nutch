@@ -31,9 +31,9 @@ public class FetchUtil {
 
   static public void updateMarks(WrappedWebPage page) {
     /** Set fetch mark */
-    Mark.FETCH_MARK.putMark(page.get(), Mark.GENERATE_MARK.checkMark(page.get()));
+    Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
     /** Unset index mark if exist, this page should be re-indexed */
-    Mark.INDEX_MARK.removeMarkIfExist(page.get());
+    Mark.INDEX_MARK.removeMarkIfExist(page);
   }
 
   static public void updateContent(WrappedWebPage page, Content content) {

@@ -18,7 +18,7 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -29,7 +29,7 @@ import java.io.IOException;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 
-public class SampleReducer extends NutchReducer<Text, WebPage, String, WebPage> {
+public class SampleReducer extends NutchReducer<Text, GoraWebPage, String, GoraWebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(SampleReducer.class);
 
@@ -52,7 +52,7 @@ public class SampleReducer extends NutchReducer<Text, WebPage, String, WebPage> 
   }
 
   @Override
-  protected void reduce(Text key, Iterable<WebPage> values, Context context) {
+  protected void reduce(Text key, Iterable<GoraWebPage> values, Context context) {
     try {
       doReduce(key, values, context);
     }
@@ -61,14 +61,14 @@ public class SampleReducer extends NutchReducer<Text, WebPage, String, WebPage> 
     }
   }
 
-  private void doReduce(Text key, Iterable<WebPage> values, Context context) throws IOException, InterruptedException {
+  private void doReduce(Text key, Iterable<GoraWebPage> values, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String reversedUrl = key.toString();
     String url = TableUtil.unreverseUrl(reversedUrl);
     LOG.debug("Reduce : " + url);
 
-    for (WebPage page : values) {
+    for (GoraWebPage page : values) {
       context.write(reversedUrl, page);
     }
 

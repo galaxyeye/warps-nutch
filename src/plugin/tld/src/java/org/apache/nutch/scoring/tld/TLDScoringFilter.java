@@ -22,8 +22,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.domain.DomainSuffix;
 import org.apache.nutch.util.domain.DomainSuffixes;
 
@@ -42,7 +42,7 @@ public class TLDScoringFilter implements ScoringFilter {
   private Configuration conf;
   private DomainSuffixes tldEntries;
 
-  private final static Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private final static Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   public TLDScoringFilter() {
     tldEntries = DomainSuffixes.getInstance();
@@ -57,7 +57,7 @@ public class TLDScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

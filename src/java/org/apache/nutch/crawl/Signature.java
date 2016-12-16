@@ -17,14 +17,15 @@
 
 package org.apache.nutch.crawl;
 
-import java.util.Collection;
-
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
+import java.util.Collection;
 
 public abstract class Signature extends Configured {
 
-  public abstract byte[] calculate(WebPage page);
+  public abstract byte[] calculate(WrappedWebPage page);
 
-  public abstract Collection<WebPage.Field> getFields();
+  public abstract Collection<GoraWebPage.Field> getFields();
 }

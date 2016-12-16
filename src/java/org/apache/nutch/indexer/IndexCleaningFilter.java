@@ -19,7 +19,7 @@ package org.apache.nutch.indexer;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 
 /**
  * Extension point for indexing. Permits one to add metadata to the indexed
@@ -37,5 +37,5 @@ public interface IndexCleaningFilter extends FieldPluggable, Configurable {
    * @return true == remove false == keep
    * @throws IndexingException
    */
-  boolean remove(String url, WebPage page) throws IndexingException;
+  boolean remove(String url, WrappedWebPage page) throws IndexingException;
 }

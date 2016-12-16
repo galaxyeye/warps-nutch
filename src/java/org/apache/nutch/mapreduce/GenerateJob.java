@@ -31,7 +31,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.nutch.crawl.URLPartitioner.PARTITION_MODE_KEY;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -51,15 +54,15 @@ public class GenerateJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(GenerateJob.class);
 
-  private static final Set<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(WebPage.Field.SCORE);
-    FIELDS.add(WebPage.Field.STATUS);
-    FIELDS.add(WebPage.Field.MARKERS);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.SCORE);
+    FIELDS.add(GoraWebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.MARKERS);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   public GenerateJob() {
@@ -72,8 +75,8 @@ public class GenerateJob extends NutchJob implements Tool {
   /**
    * The field list affects which field to reads, but does not affect which field to to write
    * */
-  public Collection<WebPage.Field> getFields(Job job) {
-    Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
+  public Collection<GoraWebPage.Field> getFields(Job job) {
+    Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     fields.addAll(FetchScheduleFactory.getFetchSchedule(job.getConfiguration()).getFields());
     return fields;
   }
@@ -140,12 +143,12 @@ public class GenerateJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
-    Query<String, WebPage> query = initQuery(store);
+    Query<String, GoraWebPage> query = initQuery(store);
 
     GoraMapper.initMapperJob(currentJob, query, store, SelectorEntry.class,
-        WebPage.class, GenerateMapper.class, SelectorEntryPartitioner.class, true);
+        GoraWebPage.class, GenerateMapper.class, SelectorEntryPartitioner.class, true);
     StorageUtils.initReducerJob(currentJob, GenerateReducer.class);
 
     LOG.info(Params.format(
@@ -158,10 +161,10 @@ public class GenerateJob extends NutchJob implements Tool {
     currentJob.waitForCompletion(true);
   }
 
-  private Query<String, WebPage> initQuery(DataStore<String, WebPage> store) {
-    Query<String, WebPage> query = store.newQuery();
+  private Query<String, GoraWebPage> initQuery(DataStore<String, GoraWebPage> store) {
+    Query<String, GoraWebPage> query = store.newQuery();
 
-    Collection<WebPage.Field> fields = getFields(currentJob);
+    Collection<GoraWebPage.Field> fields = getFields(currentJob);
     query.setFields(StorageUtils.toStringArray(fields));
 
     LOG.debug("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));

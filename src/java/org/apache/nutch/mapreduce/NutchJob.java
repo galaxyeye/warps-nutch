@@ -26,11 +26,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,13 +113,13 @@ public abstract class NutchJob extends Configured {
     return results;
   }
 
-  protected MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
+  protected MapFieldValueFilter<String, GoraWebPage> getBatchIdFilter(String batchId) {
     if (batchId == null || batchId.equals(ALL_BATCH_ID_STR)) {
       return null;
     }
 
-    MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<>();
-    filter.setFieldName(WebPage.Field.MARKERS.toString());
+    MapFieldValueFilter<String, GoraWebPage> filter = new MapFieldValueFilter<>();
+    filter.setFieldName(GoraWebPage.Field.MARKERS.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
     filter.setMapKey(Mark.GENERATE_MARK.getName());

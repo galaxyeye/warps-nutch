@@ -21,7 +21,7 @@ import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.storage.Host;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.Histogram;
 import org.apache.nutch.util.URLUtil;
 
@@ -34,10 +34,10 @@ import java.util.Set;
  * some statistics.
  */
 public class HostDbUpdateReducer extends
-    GoraReducer<Text, WebPage, String, Host> {
+    GoraReducer<Text, WrappedWebPage, String, Host> {
 
   @Override
-  protected void reduce(Text key, Iterable<WebPage> values, Context context)
+  protected void reduce(Text key, Iterable<WrappedWebPage> values, Context context)
       throws IOException, InterruptedException {
 
     int numPages = 0;
@@ -47,7 +47,7 @@ public class HostDbUpdateReducer extends
     Histogram<String> inlinkCount = new Histogram<String>();
     Histogram<String> outlinkCount = new Histogram<String>();
 
-    for (WebPage page : values) {
+    for (WrappedWebPage page : values) {
       // count number of pages
       numPages++;
       // count number of fetched pages

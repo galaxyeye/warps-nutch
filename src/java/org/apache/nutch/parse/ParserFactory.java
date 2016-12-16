@@ -17,12 +17,13 @@
 package org.apache.nutch.parse;
 
 // JDK imports
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
@@ -199,13 +200,13 @@ public final class ParserFactory {
     }
   }
 
-  public Collection<WebPage.Field> getFields() {
-    Set<WebPage.Field> columns = new HashSet<WebPage.Field>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Set<GoraWebPage.Field> columns = new HashSet<>();
     Extension[] extensions = this.extensionPoint.getExtensions();
     for (Extension ext : extensions) {
       try {
         Parser parser = (Parser) ext.getExtensionInstance();
-        Collection<WebPage.Field> pluginFields = parser.getFields();
+        Collection<GoraWebPage.Field> pluginFields = parser.getFields();
         if (pluginFields != null) {
           columns.addAll(pluginFields);
         }

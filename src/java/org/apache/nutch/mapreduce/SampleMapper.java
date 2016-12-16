@@ -19,7 +19,8 @@ package org.apache.nutch.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ import java.io.IOException;
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_MAPPER_LIMIT;
 
-public class SampleMapper extends NutchMapper<String, WebPage, Text, WebPage> {
+public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(SampleMapper.class);
 
@@ -54,8 +55,10 @@ public class SampleMapper extends NutchMapper<String, WebPage, Text, WebPage> {
    * One row map to several rows
    * */
   @Override
-  public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
+  public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
+
+    WrappedWebPage page = WrappedWebPage.wrap(row);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
     LOG.debug("Map : " + url);
@@ -69,6 +72,6 @@ public class SampleMapper extends NutchMapper<String, WebPage, Text, WebPage> {
       stop("Hit limit, stop");
     }
 
-    context.write(new Text(reversedUrl), page);
+    context.write(new Text(reversedUrl), page.get());
   }
 }

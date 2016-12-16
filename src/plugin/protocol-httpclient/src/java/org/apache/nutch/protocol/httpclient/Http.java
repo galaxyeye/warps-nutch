@@ -17,45 +17,40 @@
 package org.apache.nutch.protocol.httpclient;
 
 // JDK imports
-import java.io.InputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-
-// Commons Logging imports
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-// HTTP Client imports
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.NTCredentials;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.httpclient.protocol.SSLProtocolSocketFactory;
-
-// Nutch imports
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage.Field;
 import org.apache.nutch.util.NutchConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+
+// Commons Logging imports
+// HTTP Client imports
+// Nutch imports
 
 /**
  * This class is a protocol plugin that configures an HTTP client for Basic,
@@ -89,11 +84,11 @@ public class Http extends HttpBase {
   private String proxyPassword;
   private String proxyRealm;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   @Override
@@ -167,7 +162,7 @@ public class Http extends HttpBase {
    *          Follow redirects if and only if true
    * @return HTTP response
    */
-  protected Response getResponse(URL url, WebPage page, boolean redirect)
+  protected Response getResponse(URL url, GoraWebPage page, boolean redirect)
       throws ProtocolException, IOException {
     resolveCredentials(url);
     return new HttpResponse(this, url, page, redirect);

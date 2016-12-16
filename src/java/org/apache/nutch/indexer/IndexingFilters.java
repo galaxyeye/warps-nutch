@@ -5,7 +5,8 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +84,7 @@ public class IndexingFilters {
   }
 
   /** Run all defined filters. */
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
     for (IndexingFilter indexingFilter : indexingFilters) {
       doc = indexingFilter.filter(doc, url, page);
       // break the loop if an indexing filter discards the doc
@@ -104,14 +105,14 @@ public class IndexingFilters {
   }
 
   /**
-   * Gets all the fields for a given {@link WebPage} Many datastores need to
+   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
    * that work on HWebPage are able to specify what fields they need.
    */
-  public Collection<WebPage.Field> getFields() {
-    Collection<WebPage.Field> columns = new HashSet<>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Collection<GoraWebPage.Field> columns = new HashSet<>();
     for (IndexingFilter indexingFilter : indexingFilters) {
-      Collection<WebPage.Field> fields = indexingFilter.getFields();
+      Collection<GoraWebPage.Field> fields = indexingFilter.getFields();
       if (fields != null) {
         columns.addAll(fields);
       }

@@ -60,12 +60,7 @@ public class TestAnything {
       seedUrls.add(new SeedUrl(i + 0L, "http://www.warpspeed.cn/" + i));
       seedUrls.add(new SeedUrl(i + 1L, "http://www.warpspeed.cn/" + i));
     }
-    Set<SeedUrl> uniqueSeedUrls = Sets.newTreeSet(new Comparator<SeedUrl>() {
-      @Override
-      public int compare(SeedUrl seedUrl, SeedUrl seedUrl2) {
-        return seedUrl.getUrl().compareTo(seedUrl2.getUrl());
-      }
-    });
+    Set<SeedUrl> uniqueSeedUrls = Sets.newTreeSet((seedUrl, seedUrl2) -> seedUrl.getUrl().compareTo(seedUrl2.getUrl()));
     uniqueSeedUrls.addAll(seedUrls);
     uniqueSeedUrls.stream().map(SeedUrl::getUrl).forEach(System.out::println);
   }
@@ -84,7 +79,7 @@ public class TestAnything {
     Set<String> domains = Sets.newHashSet();
     Set<String> regexes = Sets.newHashSet();
 
-    lines.stream().forEach(url -> {
+    lines.forEach(url -> {
       int pos = StringUtils.indexOfAny(url, "abcdefjhijklmnopqrstufwxyz");
       if (pos >= 0) {
         url = url.substring(pos);

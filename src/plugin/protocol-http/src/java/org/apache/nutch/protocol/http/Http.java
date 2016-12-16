@@ -17,30 +17,32 @@
 package org.apache.nutch.protocol.http;
 
 // JDK imports
-import java.io.IOException;
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class Http extends HttpBase {
 
   public static final Logger LOG = LoggerFactory.getLogger(Http.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   public Http() {
@@ -64,7 +66,7 @@ public class Http extends HttpBase {
   }
 
   @Override
-  protected Response getResponse(URL url, WebPage page, boolean redirect)
+  protected Response getResponse(URL url, WrappedWebPage page, boolean redirect)
       throws ProtocolException, IOException, NoProxyException {
       Response r = null;
       try {
@@ -75,7 +77,7 @@ public class Http extends HttpBase {
       return r;
   }
 
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

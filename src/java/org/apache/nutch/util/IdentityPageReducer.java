@@ -16,18 +16,17 @@
  ******************************************************************************/
 package org.apache.nutch.util;
 
+import org.apache.gora.mapreduce.GoraReducer;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
 import java.io.IOException;
 
-import org.apache.gora.mapreduce.GoraReducer;
-import org.apache.nutch.storage.WebPage;
-
-public class IdentityPageReducer extends
-    GoraReducer<String, WebPage, String, WebPage> {
+public class IdentityPageReducer extends GoraReducer<String, GoraWebPage, String, GoraWebPage> {
 
   @Override
-  protected void reduce(String key, Iterable<WebPage> values, Context context)
+  protected void reduce(String key, Iterable<GoraWebPage> values, Context context)
       throws IOException, InterruptedException {
-    for (WebPage page : values) {
+    for (GoraWebPage page : values) {
       context.write(key, page);
     }
   }

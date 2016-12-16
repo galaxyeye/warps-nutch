@@ -19,7 +19,7 @@ package org.apache.nutch.indexer;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -55,7 +55,7 @@ public class TestIndexingFilters {
     conf.set(IndexingFilters.INDEXINGFILTER_ORDER, class1 + " " + class2);
 
     IndexingFilters filters = new IndexingFilters(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
 
@@ -76,7 +76,7 @@ public class TestIndexingFilters {
     conf.addResource("crawl-tests.xml");
 
     IndexingFilters filters = new IndexingFilters(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
@@ -102,7 +102,7 @@ public class TestIndexingFilters {
     String key = TableUtil.reverseUrl(url);
 
     IndexingFilters filters1 = new IndexingFilters(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
 
@@ -110,7 +110,7 @@ public class TestIndexingFilters {
 
     // add another index filter
     String class2 = "org.apache.nutch.indexer.metadata.MetadataIndexer";
-    page.getMetadata().put("example", ByteBuffer.wrap(Bytes.toBytes("data")));
+    page.get().getMetadata().put("example", ByteBuffer.wrap(Bytes.toBytes("data")));
     // add MetadataIndxer filter
     conf.set(IndexingFilters.INDEXINGFILTER_ORDER, class1 + " " + class2);
     conf.set("index.metadata", "example");
@@ -143,7 +143,7 @@ public class TestIndexingFilters {
     conf.addResource("crawl-tests.xml");
 
     IndexingFilters filters = new IndexingFilters(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setText(new Utf8("text"));
     page.setTitle(new Utf8("title"));
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);

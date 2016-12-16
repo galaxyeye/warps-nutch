@@ -18,17 +18,14 @@ package org.apache.nutch.analysis.lang;
 
 // Nutch imports
 
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -46,10 +43,10 @@ public class LanguageIndexingFilter implements IndexingFilter {
 
   private Configuration conf;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   /**
@@ -58,14 +55,16 @@ public class LanguageIndexingFilter implements IndexingFilter {
   public LanguageIndexingFilter() {
   }
 
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
       throws IndexingException {
 
     // check if LANGUAGE found, possibly put there by HTMLLanguageParser
-    ByteBuffer blang = page.getMetadata().get(new Utf8(Metadata.LANGUAGE));
-    String lang = Bytes.toString(blang.array());
+//    ByteBuffer blang = page.get().getMetadata().get(new Utf8(Metadata.LANGUAGE));
+//    String lang = Bytes.toString(blang.array());
 
-    if (lang == null || lang.length() == 0) {
+    String lang = page.getMetadata(Metadata.LANGUAGE);
+
+    if (lang.length() == 0) {
       lang = "unknown";
     }
 
@@ -74,7 +73,7 @@ public class LanguageIndexingFilter implements IndexingFilter {
     return doc;
   }
 
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

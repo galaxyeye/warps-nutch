@@ -22,8 +22,8 @@ import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ import java.util.Map;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 
-public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, NutchWritable> {
+public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScore, NutchWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper.class);
 
@@ -58,13 +58,13 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
    * One row map to several rows
    * */
   @Override
-  public void map(String reversedUrl, WebPage row, Context context) throws IOException, InterruptedException {
+  public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     WrappedWebPage page = new WrappedWebPage(row);
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!Mark.FETCH_MARK.hasMark(page.get())) {
+    if (!Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.notFetched);
       return;
     }

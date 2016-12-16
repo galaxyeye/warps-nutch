@@ -28,7 +28,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Host;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -48,21 +48,21 @@ public class HostDbUpdateJob implements Tool {
 
   public static final Logger LOG = LoggerFactory
       .getLogger(HostDbUpdateJob.class);
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   private Configuration conf;
 
   static {
-    FIELDS.add(WebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.STATUS);
   }
 
   /**
-   * Maps each WebPage to a host key.
+   * Maps each WrappedWebPage to a host key.
    */
-  public static class Mapper extends GoraMapper<String, WebPage, Text, WebPage> {
+  public static class Mapper extends GoraMapper<String, GoraWebPage, Text, GoraWebPage> {
 
     @Override
-    protected void map(String key, WebPage value, Context context)
+    protected void map(String key, GoraWebPage value, Context context)
         throws IOException, InterruptedException {
 
       String reversedHost = TableUtil.getReversedHost(key);
@@ -90,20 +90,19 @@ public class HostDbUpdateJob implements Tool {
   public void updateHosts(boolean buildLinkDb) throws Exception {
 
     if (buildLinkDb) {
-      FIELDS.add(WebPage.Field.INLINKS);
-      FIELDS.add(WebPage.Field.OUTLINKS);
+      FIELDS.add(GoraWebPage.Field.INLINKS);
+      FIELDS.add(GoraWebPage.Field.OUTLINKS);
     }
 
     Job job = Job.getInstance(getConf(), "hostdb-update");
 
     // === Map ===
-    DataStore<String, WebPage> pageStore = StorageUtils.createWebStore(
-        job.getConfiguration(), String.class, WebPage.class);
-    Query<String, WebPage> query = pageStore.newQuery();
+    DataStore<String, GoraWebPage> pageStore = StorageUtils.createWebStore(job.getConfiguration(), String.class, GoraWebPage.class);
+    Query<String, GoraWebPage> query = pageStore.newQuery();
     query.setFields(StorageUtils.toStringArray(FIELDS)); // Note: pages without
                                                          // these fields are
                                                          // skipped
-    GoraMapper.initMapperJob(job, query, pageStore, Text.class, WebPage.class,
+    GoraMapper.initMapperJob(job, query, pageStore, Text.class, GoraWebPage.class,
         HostDbUpdateJob.Mapper.class, null, true);
 
     // === Reduce ===

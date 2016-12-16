@@ -16,12 +16,6 @@
  */
 package org.apache.nutch.util;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
@@ -32,7 +26,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.TestInjector;
 import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.DefaultHandler;
@@ -40,6 +35,12 @@ import org.mortbay.jetty.handler.HandlerList;
 import org.mortbay.jetty.handler.ResourceHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class CrawlTestUtil {
 
@@ -103,29 +104,29 @@ public class CrawlTestUtil {
    * @throws Exception
    */
   public static ArrayList<URLWebPage> readContents(
-      DataStore<String, WebPage> store, Mark requiredMark, String... fields)
+      DataStore<String, GoraWebPage> store, Mark requiredMark, String... fields)
       throws Exception {
     ArrayList<URLWebPage> l = new ArrayList<URLWebPage>();
 
-    Query<String, WebPage> query = store.newQuery();
+    Query<String, GoraWebPage> query = store.newQuery();
     if (fields != null) {
       query.setFields(fields);
     }
 
-    Result<String, WebPage> results = store.execute(query);
+    Result<String, GoraWebPage> results = store.execute(query);
     while (results.next()) {
       try {
-        WebPage page = results.get();
+        WrappedWebPage page = WrappedWebPage.wrap(results.get());
         String url = results.getKey();
 
-        if (page == null)
+        if (page.get() == null) {
           continue;
+        }
 
         if (requiredMark != null && requiredMark.checkMark(page) == null)
           continue;
 
-        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WebPage.newBuilder(
-            page).build()));
+        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WrappedWebPage.wrap(GoraWebPage.newBuilder(page.get()).build())));
       } catch (Exception e) {
         e.printStackTrace();
       }

@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.URLUtil;
 import org.apache.nutch.util.domain.DomainSuffix;
 import org.slf4j.Logger;
@@ -42,10 +42,10 @@ public class TLDIndexingFilter implements IndexingFilter {
 
   private Configuration conf;
 
-  private static final Collection<Field> fields = new ArrayList<>();
+  private static final Collection<GoraWebPage.Field> fields = new ArrayList<>();
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
       throws IndexingException {
     try {
       URL _url = new URL(url);
@@ -67,7 +67,7 @@ public class TLDIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return fields;
   }
 }

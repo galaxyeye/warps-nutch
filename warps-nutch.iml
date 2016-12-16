@@ -1,259 +1,260 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
   <component name="EclipseModuleManager">
-    <libelement value="file://$MODULE_DIR$/conf" />
-    <libelement value="file://$MODULE_DIR$/src/bin" />
-    <libelement value="file://$MODULE_DIR$/build/lib/activation-1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/annotations-api-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/aopalliance-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/apacheds-i18n-2.0.0-M15.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/apacheds-kerberos-codec-2.0.0-M15.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/api-asn1-api-1.0.0-M20.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/api-util-1.0.0-M20.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/asm-3.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/automaton-1.11-8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/avro-1.7.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/avro-compiler-1.7.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/avro-ipc-1.7.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/avro-mapred-1.7.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/catalina-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cglib-2.2.1-v20090111.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-beanutils-1.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-beanutils-core-1.8.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-cli-1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-codec-1.10.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-collections4-4.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-compress-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-configuration-1.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-digester-1.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-fileupload-1.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-httpclient-3.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-io-2.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-jexl-2.1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-lang-2.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-lang3-3.3.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-logging-1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-math3-3.1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/commons-net-3.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/crawler-commons-0.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-api-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-common-utilities-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-rt-bindings-xml-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-rt-core-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-rt-frontend-jaxrs-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-rt-transports-common-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/cxf-rt-transports-http-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/dom4j-1.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/el-api-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/findbugs-annotations-1.3.9-1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/geronimo-javamail_1.4_spec-1.7.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gora-compiler-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gora-compiler-cli-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gora-core-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gora-hbase-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gora-shims-distribution-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/gson-2.2.4.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/guava-13.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/guice-3.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/h2-1.4.180.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-annotations-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-auth-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-client-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-hdfs-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-app-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-common-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-jobclient-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-shuffle-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-yarn-api-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-yarn-client-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-yarn-common-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-yarn-server-common-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hadoop-yarn-server-nodemanager-2.5.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hamcrest-core-1.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hbase-client-0.98.8-hadoop2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hbase-common-0.98.8-hadoop2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hbase-protocol-0.98.8-hadoop2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/hsqldb-2.2.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/htrace-core-2.04.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/httpclient-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/httpcore-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/httpmime-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/icu4j-4.0.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-annotations-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-core-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-core-asl-1.9.13.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-databind-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-dataformat-csv-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-dataformat-smile-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-dataformat-xml-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-dataformat-yaml-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-jaxrs-1.9.13.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-mapper-asl-1.9.13.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-module-jaxb-annotations-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-module-jsonSchema-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jackson-xc-1.9.13.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jasper-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jasper-el-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jasper-jdt-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/javax.inject-1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/javax.persistence-2.0.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/javax.servlet-api-3.0.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jaxb-api-2.2.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jaxb-impl-2.2.3-1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jcl-over-slf4j-1.7.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jcodings-1.0.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jdom-1.1.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jersey-client-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jersey-core-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jersey-guice-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jersey-json-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jersey-server-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jettison-1.3.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-client-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-security-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-ssl-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-util-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jetty-xml-7.0.0.pre5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/joni-2.1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jsp-api-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jsr305-3.0.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/jsr311-api-1.1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/juli-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/junit-4.11.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/juniversalchardet-1.0.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/leveldbjni-all-1.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/log4j-1.2.17.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/mail-1.4.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/neethi-3.0.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/nekohtml-1.9.19.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/netty-3.6.6.Final.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/noggit-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/org.restlet-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/org.restlet.ext.jackson-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/org.restlet.ext.jaxrs-2.2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/org.restlet.lib.org.json-2.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/ormlite-core-4.48.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/ormlite-jdbc-4.48.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/oro-2.0.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/paranamer-2.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/protobuf-java-2.5.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/scent-jsoup-1.8.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/serializer-2.7.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/servlet-api-2.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/servlet-api-3.0.pre4.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/servlet-api-6.0.16.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/slf4j-api-1.7.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/slf4j-log4j12-1.6.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/snakeyaml-1.13.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/snappy-java-1.0.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/solr-solrj-6.1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-aop-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-beans-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-context-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-core-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-expression-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-jdbc-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-orm-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-tx-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/spring-web-4.0.4.RELEASE.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/stax-api-1.0-2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/stax2-api-3.1.4.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/t-digest-3.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/tagsoup-1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/textscent-common-2.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/tika-core-1.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/velocity-1.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/woodstox-core-asl-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/wsdl4j-1.6.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/xercesImpl-2.9.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/xml-apis-1.3.04.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/xmlParserAPIs-2.6.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/xmlenc-0.52.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/xmlschema-core-2.0.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/lib/zookeeper-3.4.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/index-anchor/index-anchor.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/index-basic/boilerpipe-1.1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/index-basic/index-basic.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/index-metadata/index-metadata.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/index-more/index-more.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/commons-codec-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/commons-logging-1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/httpclient-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/httpcore-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/httpmime-4.4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/indexer-solr/indexer-solr.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-http/lib-http.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-nekohtml/nekohtml-1.9.19.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-xml/jaxen-1.1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-xml/jdom-1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-xml/lib-xml.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/lib-xml/xercesImpl-2.9.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/nutch-extensionpoints/nutch-extensionpoints.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-html/nekohtml-1.9.19.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-html/parse-html.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-html/tagsoup-1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-js/parse-js.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-core-0.7.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-dom-0.7.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/asm-debug-all-4.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/aspectjrt-1.8.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/bcmail-jdk15-1.45.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/bcprov-jdk15-1.45.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/boilerpipe-1.1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/commons-codec-1.9.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/commons-compress-1.8.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/commons-httpclient-3.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/commons-logging-1.1.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/fontbox-1.8.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/isoparser-1.0.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/java-libpst-0.8.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/jcip-annotations-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/jdom-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/jempbox-1.8.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/jhighlight-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/jmatio-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/juniversalchardet-1.0.3.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/metadata-extractor-2.6.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/netcdf-4.2.20.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/parse-tika.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/pdfbox-1.8.8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/poi-3.11.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-3.11.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-schemas-3.11.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/poi-scratchpad-3.11.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/rome-1.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/tagsoup-1.2.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/tika-parsers-1.7.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/unidataCommon-4.2.20.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-core-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-tika-0.6.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/xercesImpl-2.8.1.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/xml-apis-1.3.03.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/xmlbeans-2.6.0.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/xmpcore-5.1.2.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/parse-tika/xz-1.5.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/protocol-crowd/protocol-crowd.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/protocol-file/protocol-file.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/protocol-http/protocol-http.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/scoring-link/scoring-link.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/scoring-opic/scoring-opic.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/tld/tld.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-automaton/automaton-1.11-8.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-automaton/urlfilter-automaton.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-domain/urlfilter-domain.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-prefix/urlfilter-prefix.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-suffix/urlfilter-suffix.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlfilter-validator/urlfilter-validator.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlnormalizer-pass/urlnormalizer-pass.jar" />
-    <libelement value="file://$MODULE_DIR$/build/plugins/urlnormalizer-regex/urlnormalizer-regex.jar" />
+    <libelement value="file://conf" />
+    <libelement value="file://src/bin" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/activation-1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/annotations-api-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/annotations-java8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/aopalliance-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/apacheds-i18n-2.0.0-M15.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/apacheds-kerberos-codec-2.0.0-M15.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/api-asn1-api-1.0.0-M20.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/api-util-1.0.0-M20.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/asm-3.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/automaton-1.11-8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/avro-1.7.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/avro-compiler-1.7.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/avro-ipc-1.7.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/avro-mapred-1.7.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/catalina-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cglib-2.2.1-v20090111.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-beanutils-1.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-beanutils-core-1.8.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-cli-1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-codec-1.10.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-collections4-4.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-compress-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-configuration-1.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-digester-1.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-fileupload-1.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-httpclient-3.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-io-2.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-jexl-2.1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-lang-2.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-lang3-3.3.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-logging-1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-math3-3.1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/commons-net-3.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/crawler-commons-0.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-api-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-common-utilities-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-rt-bindings-xml-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-rt-core-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-rt-frontend-jaxrs-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-rt-transports-common-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/cxf-rt-transports-http-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/dom4j-1.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/el-api-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/findbugs-annotations-1.3.9-1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/geronimo-javamail_1.4_spec-1.7.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gora-compiler-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gora-compiler-cli-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gora-core-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gora-hbase-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gora-shims-distribution-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/gson-2.2.4.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/guava-13.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/guice-3.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/h2-1.4.180.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-annotations-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-auth-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-client-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-hdfs-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-app-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-common-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-jobclient-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-shuffle-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-yarn-api-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-yarn-client-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-yarn-common-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-yarn-server-common-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hadoop-yarn-server-nodemanager-2.5.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hamcrest-core-1.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hbase-client-0.98.8-hadoop2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hbase-common-0.98.8-hadoop2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hbase-protocol-0.98.8-hadoop2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/hsqldb-2.2.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/htrace-core-2.04.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/httpclient-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/httpcore-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/httpmime-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/icu4j-4.0.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-annotations-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-core-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-core-asl-1.9.13.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-databind-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-dataformat-csv-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-dataformat-smile-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-dataformat-xml-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-dataformat-yaml-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-jaxrs-1.9.13.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-mapper-asl-1.9.13.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-module-jaxb-annotations-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-module-jsonSchema-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jackson-xc-1.9.13.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jasper-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jasper-el-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jasper-jdt-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/javax.inject-1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/javax.persistence-2.0.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/javax.servlet-api-3.0.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jaxb-api-2.2.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jaxb-impl-2.2.3-1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jcl-over-slf4j-1.7.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jcodings-1.0.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jdom-1.1.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jersey-client-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jersey-core-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jersey-guice-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jersey-json-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jersey-server-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jettison-1.3.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-client-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-security-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-ssl-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-util-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jetty-xml-7.0.0.pre5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/joni-2.1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jsp-api-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jsr305-3.0.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jsr311-api-1.1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/juli-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/junit-4.11.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/juniversalchardet-1.0.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/leveldbjni-all-1.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/log4j-1.2.17.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/mail-1.4.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/neethi-3.0.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/nekohtml-1.9.19.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/netty-3.6.6.Final.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/noggit-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/org.restlet-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/org.restlet.ext.jackson-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/org.restlet.ext.jaxrs-2.2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/org.restlet.lib.org.json-2.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/ormlite-core-4.48.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/ormlite-jdbc-4.48.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/oro-2.0.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/paranamer-2.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/protobuf-java-2.5.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/scent-jsoup-1.8.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/serializer-2.7.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/servlet-api-2.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/servlet-api-3.0.pre4.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/servlet-api-6.0.16.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/slf4j-api-1.7.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/slf4j-log4j12-1.6.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/snakeyaml-1.13.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/snappy-java-1.0.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/solr-solrj-6.1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-aop-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-beans-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-context-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-core-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-expression-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-jdbc-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-orm-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-tx-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-web-4.0.4.RELEASE.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/stax-api-1.0-2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/stax2-api-3.1.4.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/t-digest-3.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/tagsoup-1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/textscent-common-2.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/tika-core-1.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/velocity-1.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/woodstox-core-asl-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/wsdl4j-1.6.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/xercesImpl-2.9.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/xml-apis-1.3.04.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/xmlParserAPIs-2.6.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/xmlenc-0.52.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/xmlschema-core-2.0.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/zookeeper-3.4.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/index-anchor/index-anchor.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/index-basic/boilerpipe-1.1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/index-basic/index-basic.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/index-metadata/index-metadata.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/index-more/index-more.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/commons-codec-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/commons-logging-1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpclient-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpcore-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpmime-4.4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/indexer-solr/indexer-solr.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-http/lib-http.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-nekohtml/nekohtml-1.9.19.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-xml/jaxen-1.1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-xml/jdom-1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-xml/lib-xml.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/lib-xml/xercesImpl-2.9.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/nutch-extensionpoints/nutch-extensionpoints.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-html/nekohtml-1.9.19.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-html/parse-html.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-html/tagsoup-1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-js/parse-js.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-core-0.7.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-dom-0.7.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/asm-debug-all-4.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/aspectjrt-1.8.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/bcmail-jdk15-1.45.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/bcprov-jdk15-1.45.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/boilerpipe-1.1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-codec-1.9.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-compress-1.8.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-httpclient-3.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-logging-1.1.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/fontbox-1.8.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/isoparser-1.0.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/java-libpst-0.8.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/jcip-annotations-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/jdom-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/jempbox-1.8.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/jhighlight-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/jmatio-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/juniversalchardet-1.0.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/metadata-extractor-2.6.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/netcdf-4.2.20.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/parse-tika.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/pdfbox-1.8.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-3.11.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-3.11.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-schemas-3.11.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-scratchpad-3.11.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/rome-1.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/tagsoup-1.2.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/tika-parsers-1.7.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/unidataCommon-4.2.20.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-core-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-tika-0.6.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/xercesImpl-2.8.1.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/xml-apis-1.3.03.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/xmlbeans-2.6.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/xmpcore-5.1.2.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/parse-tika/xz-1.5.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/protocol-crowd/protocol-crowd.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/protocol-file/protocol-file.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/protocol-http/protocol-http.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/scoring-link/scoring-link.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/scoring-opic/scoring-opic.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/tld/tld.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-automaton/automaton-1.11-8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-automaton/urlfilter-automaton.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-domain/urlfilter-domain.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-prefix/urlfilter-prefix.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-suffix/urlfilter-suffix.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlfilter-validator/urlfilter-validator.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-pass/urlnormalizer-pass.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-regex/urlnormalizer-regex.jar!/" />
     <src_description expected_position="1">
       <src_folder value="file://$MODULE_DIR$/src/java/" expected_position="1" />
       <src_folder value="file://$MODULE_DIR$/src/test/" expected_position="2" />
@@ -307,15 +308,6 @@
       <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java/" expected_position="50" />
       <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test/" expected_position="51" />
     </src_description>
-  </component>
-  <component name="FacetManager">
-    <facet type="Spring" name="Spring">
-      <configuration>
-        <fileset id="fileset" name="Spring Application Context" removed="false">
-          <file>file://$MODULE_DIR$/src/java/org/apache/nutch/storage/local/SpringConfiguration.java</file>
-        </fileset>
-      </configuration>
-    </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes" />
@@ -372,10 +364,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/conf" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/bin" type="java-resource" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="conf">
@@ -407,7 +397,16 @@
     <orderEntry type="module-library">
       <library name="annotations-api-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/annotations-api-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/annotations-api-6.0.16.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="annotations-java8.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/annotations-java8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -416,7 +415,7 @@
     <orderEntry type="module-library">
       <library name="aopalliance-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/aopalliance-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/aopalliance-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -425,7 +424,7 @@
     <orderEntry type="module-library">
       <library name="apacheds-i18n-2.0.0-M15.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/apacheds-i18n-2.0.0-M15.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/apacheds-i18n-2.0.0-M15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -434,7 +433,7 @@
     <orderEntry type="module-library">
       <library name="apacheds-kerberos-codec-2.0.0-M15.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/apacheds-kerberos-codec-2.0.0-M15.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/apacheds-kerberos-codec-2.0.0-M15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -443,7 +442,7 @@
     <orderEntry type="module-library">
       <library name="api-asn1-api-1.0.0-M20.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/api-asn1-api-1.0.0-M20.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/api-asn1-api-1.0.0-M20.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -452,7 +451,7 @@
     <orderEntry type="module-library">
       <library name="api-util-1.0.0-M20.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/api-util-1.0.0-M20.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/api-util-1.0.0-M20.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -461,7 +460,7 @@
     <orderEntry type="module-library">
       <library name="asm-3.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/asm-3.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/asm-3.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -470,7 +469,7 @@
     <orderEntry type="module-library">
       <library name="automaton-1.11-8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/automaton-1.11-8.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/automaton-1.11-8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -479,7 +478,7 @@
     <orderEntry type="module-library">
       <library name="avro-1.7.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/avro-1.7.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/avro-1.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -488,7 +487,7 @@
     <orderEntry type="module-library">
       <library name="avro-compiler-1.7.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/avro-compiler-1.7.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/avro-compiler-1.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -497,7 +496,7 @@
     <orderEntry type="module-library">
       <library name="avro-ipc-1.7.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/avro-ipc-1.7.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/avro-ipc-1.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -506,7 +505,7 @@
     <orderEntry type="module-library">
       <library name="avro-mapred-1.7.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/avro-mapred-1.7.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/avro-mapred-1.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -515,7 +514,7 @@
     <orderEntry type="module-library">
       <library name="catalina-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/catalina-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/catalina-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -524,7 +523,7 @@
     <orderEntry type="module-library">
       <library name="cglib-2.2.1-v20090111.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cglib-2.2.1-v20090111.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cglib-2.2.1-v20090111.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -533,7 +532,7 @@
     <orderEntry type="module-library">
       <library name="commons-beanutils-1.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-beanutils-1.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-beanutils-1.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -542,7 +541,7 @@
     <orderEntry type="module-library">
       <library name="commons-beanutils-core-1.8.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-beanutils-core-1.8.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-beanutils-core-1.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -551,7 +550,7 @@
     <orderEntry type="module-library">
       <library name="commons-cli-1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-cli-1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-cli-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -560,7 +559,7 @@
     <orderEntry type="module-library">
       <library name="commons-codec-1.10.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-codec-1.10.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-codec-1.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -569,7 +568,7 @@
     <orderEntry type="module-library">
       <library name="commons-collections-3.2.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -578,7 +577,7 @@
     <orderEntry type="module-library">
       <library name="commons-collections4-4.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-collections4-4.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-collections4-4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -587,7 +586,7 @@
     <orderEntry type="module-library">
       <library name="commons-compress-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-compress-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-compress-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -596,7 +595,7 @@
     <orderEntry type="module-library">
       <library name="commons-configuration-1.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-configuration-1.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-configuration-1.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -605,7 +604,7 @@
     <orderEntry type="module-library">
       <library name="commons-digester-1.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-digester-1.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-digester-1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -614,7 +613,7 @@
     <orderEntry type="module-library">
       <library name="commons-fileupload-1.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-fileupload-1.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-fileupload-1.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -623,7 +622,7 @@
     <orderEntry type="module-library">
       <library name="commons-httpclient-3.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-httpclient-3.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-httpclient-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -632,7 +631,7 @@
     <orderEntry type="module-library">
       <library name="commons-io-2.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-io-2.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-io-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -641,7 +640,7 @@
     <orderEntry type="module-library">
       <library name="commons-jexl-2.1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-jexl-2.1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-jexl-2.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -650,7 +649,7 @@
     <orderEntry type="module-library">
       <library name="commons-lang-2.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-lang-2.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-lang-2.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -659,7 +658,7 @@
     <orderEntry type="module-library">
       <library name="commons-lang3-3.3.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-lang3-3.3.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-lang3-3.3.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -668,7 +667,7 @@
     <orderEntry type="module-library">
       <library name="commons-logging-1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-logging-1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-logging-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -677,7 +676,7 @@
     <orderEntry type="module-library">
       <library name="commons-math3-3.1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-math3-3.1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-math3-3.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -686,7 +685,7 @@
     <orderEntry type="module-library">
       <library name="commons-net-3.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/commons-net-3.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/commons-net-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -695,7 +694,7 @@
     <orderEntry type="module-library">
       <library name="crawler-commons-0.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/crawler-commons-0.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/crawler-commons-0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -704,7 +703,7 @@
     <orderEntry type="module-library">
       <library name="cxf-api-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-api-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-api-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -713,7 +712,7 @@
     <orderEntry type="module-library">
       <library name="cxf-common-utilities-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-common-utilities-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-common-utilities-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -722,7 +721,7 @@
     <orderEntry type="module-library">
       <library name="cxf-rt-bindings-xml-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-rt-bindings-xml-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-rt-bindings-xml-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -731,7 +730,7 @@
     <orderEntry type="module-library">
       <library name="cxf-rt-core-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-rt-core-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-rt-core-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -740,7 +739,7 @@
     <orderEntry type="module-library">
       <library name="cxf-rt-frontend-jaxrs-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-rt-frontend-jaxrs-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-rt-frontend-jaxrs-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -749,7 +748,7 @@
     <orderEntry type="module-library">
       <library name="cxf-rt-transports-common-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-rt-transports-common-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-rt-transports-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -758,7 +757,7 @@
     <orderEntry type="module-library">
       <library name="cxf-rt-transports-http-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/cxf-rt-transports-http-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/cxf-rt-transports-http-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -767,7 +766,7 @@
     <orderEntry type="module-library">
       <library name="dom4j-1.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/dom4j-1.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/dom4j-1.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -776,7 +775,7 @@
     <orderEntry type="module-library">
       <library name="el-api-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/el-api-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/el-api-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -785,7 +784,7 @@
     <orderEntry type="module-library">
       <library name="findbugs-annotations-1.3.9-1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/findbugs-annotations-1.3.9-1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/findbugs-annotations-1.3.9-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -794,7 +793,7 @@
     <orderEntry type="module-library">
       <library name="geronimo-javamail_1.4_spec-1.7.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/geronimo-javamail_1.4_spec-1.7.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/geronimo-javamail_1.4_spec-1.7.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -803,7 +802,7 @@
     <orderEntry type="module-library">
       <library name="gora-compiler-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gora-compiler-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gora-compiler-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -812,7 +811,7 @@
     <orderEntry type="module-library">
       <library name="gora-compiler-cli-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gora-compiler-cli-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gora-compiler-cli-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -821,7 +820,7 @@
     <orderEntry type="module-library">
       <library name="gora-core-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gora-core-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gora-core-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -830,7 +829,7 @@
     <orderEntry type="module-library">
       <library name="gora-hbase-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gora-hbase-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gora-hbase-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -839,7 +838,7 @@
     <orderEntry type="module-library">
       <library name="gora-shims-distribution-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gora-shims-distribution-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gora-shims-distribution-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -848,7 +847,7 @@
     <orderEntry type="module-library">
       <library name="gson-2.2.4.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/gson-2.2.4.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/gson-2.2.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -857,7 +856,7 @@
     <orderEntry type="module-library">
       <library name="guava-13.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/guava-13.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/guava-13.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -866,7 +865,7 @@
     <orderEntry type="module-library">
       <library name="guice-3.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/guice-3.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/guice-3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -875,7 +874,7 @@
     <orderEntry type="module-library">
       <library name="h2-1.4.180.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/h2-1.4.180.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/h2-1.4.180.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -884,7 +883,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-annotations-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-annotations-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-annotations-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -893,7 +892,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-auth-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-auth-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-auth-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -902,7 +901,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-client-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-client-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-client-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -911,7 +910,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-common-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -920,7 +919,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-hdfs-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-hdfs-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-hdfs-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -929,7 +928,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-mapreduce-client-app-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-app-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-app-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -938,7 +937,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-mapreduce-client-common-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-common-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -947,7 +946,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-mapreduce-client-core-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -956,7 +955,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-mapreduce-client-jobclient-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-jobclient-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-jobclient-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -965,7 +964,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-mapreduce-client-shuffle-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-shuffle-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-shuffle-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -974,7 +973,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-yarn-api-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-yarn-api-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-yarn-api-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -983,7 +982,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-yarn-client-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-yarn-client-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-yarn-client-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -992,7 +991,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-yarn-common-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-yarn-common-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-yarn-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1001,7 +1000,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-yarn-server-common-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-yarn-server-common-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-yarn-server-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1010,7 +1009,7 @@
     <orderEntry type="module-library">
       <library name="hadoop-yarn-server-nodemanager-2.5.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hadoop-yarn-server-nodemanager-2.5.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hadoop-yarn-server-nodemanager-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1019,7 +1018,7 @@
     <orderEntry type="module-library">
       <library name="hamcrest-core-1.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hamcrest-core-1.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hamcrest-core-1.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1028,7 +1027,7 @@
     <orderEntry type="module-library">
       <library name="hbase-client-0.98.8-hadoop2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hbase-client-0.98.8-hadoop2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hbase-client-0.98.8-hadoop2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1037,7 +1036,7 @@
     <orderEntry type="module-library">
       <library name="hbase-common-0.98.8-hadoop2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hbase-common-0.98.8-hadoop2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hbase-common-0.98.8-hadoop2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1046,7 +1045,7 @@
     <orderEntry type="module-library">
       <library name="hbase-protocol-0.98.8-hadoop2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hbase-protocol-0.98.8-hadoop2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hbase-protocol-0.98.8-hadoop2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1055,7 +1054,7 @@
     <orderEntry type="module-library">
       <library name="hsqldb-2.2.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/hsqldb-2.2.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/hsqldb-2.2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1064,7 +1063,7 @@
     <orderEntry type="module-library">
       <library name="htrace-core-2.04.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/htrace-core-2.04.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/htrace-core-2.04.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1073,7 +1072,7 @@
     <orderEntry type="module-library">
       <library name="httpclient-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/httpclient-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/httpclient-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1082,7 +1081,7 @@
     <orderEntry type="module-library">
       <library name="httpcore-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/httpcore-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/httpcore-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1091,7 +1090,7 @@
     <orderEntry type="module-library">
       <library name="httpmime-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/httpmime-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/httpmime-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1100,7 +1099,7 @@
     <orderEntry type="module-library">
       <library name="icu4j-4.0.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/icu4j-4.0.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/icu4j-4.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1109,7 +1108,7 @@
     <orderEntry type="module-library">
       <library name="jackson-annotations-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-annotations-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-annotations-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1118,7 +1117,7 @@
     <orderEntry type="module-library">
       <library name="jackson-core-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-core-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-core-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1127,7 +1126,7 @@
     <orderEntry type="module-library">
       <library name="jackson-core-asl-1.9.13.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-core-asl-1.9.13.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-core-asl-1.9.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1136,7 +1135,7 @@
     <orderEntry type="module-library">
       <library name="jackson-databind-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-databind-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-databind-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1145,7 +1144,7 @@
     <orderEntry type="module-library">
       <library name="jackson-dataformat-csv-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-dataformat-csv-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-dataformat-csv-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1154,7 +1153,7 @@
     <orderEntry type="module-library">
       <library name="jackson-dataformat-smile-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-dataformat-smile-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-dataformat-smile-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1163,7 +1162,7 @@
     <orderEntry type="module-library">
       <library name="jackson-dataformat-xml-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-dataformat-xml-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-dataformat-xml-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1172,7 +1171,7 @@
     <orderEntry type="module-library">
       <library name="jackson-dataformat-yaml-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-dataformat-yaml-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-dataformat-yaml-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1181,7 +1180,7 @@
     <orderEntry type="module-library">
       <library name="jackson-jaxrs-1.9.13.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-jaxrs-1.9.13.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-jaxrs-1.9.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1190,7 +1189,7 @@
     <orderEntry type="module-library">
       <library name="jackson-mapper-asl-1.9.13.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-mapper-asl-1.9.13.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-mapper-asl-1.9.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1199,7 +1198,7 @@
     <orderEntry type="module-library">
       <library name="jackson-module-jaxb-annotations-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-module-jaxb-annotations-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-module-jaxb-annotations-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1208,7 +1207,7 @@
     <orderEntry type="module-library">
       <library name="jackson-module-jsonSchema-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-module-jsonSchema-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-module-jsonSchema-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1217,7 +1216,7 @@
     <orderEntry type="module-library">
       <library name="jackson-xc-1.9.13.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jackson-xc-1.9.13.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jackson-xc-1.9.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1226,7 +1225,7 @@
     <orderEntry type="module-library">
       <library name="jasper-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jasper-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jasper-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1235,7 +1234,7 @@
     <orderEntry type="module-library">
       <library name="jasper-el-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jasper-el-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jasper-el-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1244,7 +1243,7 @@
     <orderEntry type="module-library">
       <library name="jasper-jdt-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jasper-jdt-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jasper-jdt-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1253,7 +1252,7 @@
     <orderEntry type="module-library">
       <library name="javax.inject-1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/javax.inject-1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/javax.inject-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1262,7 +1261,7 @@
     <orderEntry type="module-library">
       <library name="javax.persistence-2.0.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/javax.persistence-2.0.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/javax.persistence-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1271,7 +1270,7 @@
     <orderEntry type="module-library">
       <library name="javax.servlet-api-3.0.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/javax.servlet-api-3.0.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/javax.servlet-api-3.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1280,7 +1279,7 @@
     <orderEntry type="module-library">
       <library name="jaxb-api-2.2.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jaxb-api-2.2.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jaxb-api-2.2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1289,7 +1288,7 @@
     <orderEntry type="module-library">
       <library name="jaxb-impl-2.2.3-1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jaxb-impl-2.2.3-1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jaxb-impl-2.2.3-1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1298,7 +1297,7 @@
     <orderEntry type="module-library">
       <library name="jcl-over-slf4j-1.7.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jcl-over-slf4j-1.7.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jcl-over-slf4j-1.7.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1307,7 +1306,7 @@
     <orderEntry type="module-library">
       <library name="jcodings-1.0.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jcodings-1.0.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jcodings-1.0.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1316,7 +1315,7 @@
     <orderEntry type="module-library">
       <library name="jdom-1.1.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jdom-1.1.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jdom-1.1.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1325,7 +1324,7 @@
     <orderEntry type="module-library">
       <library name="jersey-client-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jersey-client-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jersey-client-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1334,7 +1333,7 @@
     <orderEntry type="module-library">
       <library name="jersey-core-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jersey-core-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jersey-core-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1343,7 +1342,7 @@
     <orderEntry type="module-library">
       <library name="jersey-guice-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jersey-guice-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jersey-guice-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1352,7 +1351,7 @@
     <orderEntry type="module-library">
       <library name="jersey-json-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jersey-json-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jersey-json-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1361,7 +1360,7 @@
     <orderEntry type="module-library">
       <library name="jersey-server-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jersey-server-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jersey-server-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1370,7 +1369,7 @@
     <orderEntry type="module-library">
       <library name="jettison-1.3.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jettison-1.3.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jettison-1.3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1379,7 +1378,7 @@
     <orderEntry type="module-library">
       <library name="jetty-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1388,7 +1387,7 @@
     <orderEntry type="module-library">
       <library name="jetty-client-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-client-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-client-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1397,7 +1396,7 @@
     <orderEntry type="module-library">
       <library name="jetty-security-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-security-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-security-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1406,7 +1405,7 @@
     <orderEntry type="module-library">
       <library name="jetty-ssl-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-ssl-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-ssl-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1415,7 +1414,7 @@
     <orderEntry type="module-library">
       <library name="jetty-util-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-util-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-util-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1424,7 +1423,7 @@
     <orderEntry type="module-library">
       <library name="jetty-xml-7.0.0.pre5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jetty-xml-7.0.0.pre5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jetty-xml-7.0.0.pre5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1433,7 +1432,7 @@
     <orderEntry type="module-library">
       <library name="joni-2.1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/joni-2.1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/joni-2.1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1442,7 +1441,7 @@
     <orderEntry type="module-library">
       <library name="jsp-api-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jsp-api-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jsp-api-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1451,7 +1450,7 @@
     <orderEntry type="module-library">
       <library name="jsr305-3.0.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jsr305-3.0.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jsr305-3.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1460,7 +1459,7 @@
     <orderEntry type="module-library">
       <library name="jsr311-api-1.1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/jsr311-api-1.1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/jsr311-api-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1469,7 +1468,7 @@
     <orderEntry type="module-library">
       <library name="juli-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/juli-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/juli-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1478,7 +1477,7 @@
     <orderEntry type="module-library">
       <library name="junit-4.11.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/junit-4.11.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/junit-4.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1487,7 +1486,7 @@
     <orderEntry type="module-library">
       <library name="juniversalchardet-1.0.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/juniversalchardet-1.0.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/juniversalchardet-1.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1496,7 +1495,7 @@
     <orderEntry type="module-library">
       <library name="leveldbjni-all-1.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/leveldbjni-all-1.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/leveldbjni-all-1.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1505,7 +1504,7 @@
     <orderEntry type="module-library">
       <library name="log4j-1.2.17.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/log4j-1.2.17.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/log4j-1.2.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1514,7 +1513,16 @@
     <orderEntry type="module-library">
       <library name="mail-1.4.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/mail-1.4.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/mail-1.4.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="mockito-all-1.9.5.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1523,7 +1531,7 @@
     <orderEntry type="module-library">
       <library name="neethi-3.0.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/neethi-3.0.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/neethi-3.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1532,7 +1540,7 @@
     <orderEntry type="module-library">
       <library name="nekohtml-1.9.19.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/nekohtml-1.9.19.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/nekohtml-1.9.19.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1541,7 +1549,7 @@
     <orderEntry type="module-library">
       <library name="netty-3.6.6.Final.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/netty-3.6.6.Final.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/netty-3.6.6.Final.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1550,7 +1558,7 @@
     <orderEntry type="module-library">
       <library name="noggit-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/noggit-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/noggit-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1559,7 +1567,7 @@
     <orderEntry type="module-library">
       <library name="org.restlet-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/org.restlet-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/org.restlet-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1568,7 +1576,7 @@
     <orderEntry type="module-library">
       <library name="org.restlet.ext.jackson-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/org.restlet.ext.jackson-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/org.restlet.ext.jackson-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1577,7 +1585,7 @@
     <orderEntry type="module-library">
       <library name="org.restlet.ext.jaxrs-2.2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/org.restlet.ext.jaxrs-2.2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/org.restlet.ext.jaxrs-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1586,7 +1594,7 @@
     <orderEntry type="module-library">
       <library name="org.restlet.lib.org.json-2.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/org.restlet.lib.org.json-2.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/org.restlet.lib.org.json-2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1595,7 +1603,7 @@
     <orderEntry type="module-library">
       <library name="ormlite-core-4.48.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/ormlite-core-4.48.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/ormlite-core-4.48.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1604,7 +1612,7 @@
     <orderEntry type="module-library">
       <library name="ormlite-jdbc-4.48.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/ormlite-jdbc-4.48.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/ormlite-jdbc-4.48.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1613,7 +1621,7 @@
     <orderEntry type="module-library">
       <library name="oro-2.0.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/oro-2.0.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/oro-2.0.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1622,7 +1630,7 @@
     <orderEntry type="module-library">
       <library name="paranamer-2.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/paranamer-2.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/paranamer-2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1631,7 +1639,7 @@
     <orderEntry type="module-library">
       <library name="protobuf-java-2.5.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/protobuf-java-2.5.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/protobuf-java-2.5.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1640,7 +1648,7 @@
     <orderEntry type="module-library">
       <library name="scent-jsoup-1.8.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/scent-jsoup-1.8.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/scent-jsoup-1.8.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1649,7 +1657,7 @@
     <orderEntry type="module-library">
       <library name="serializer-2.7.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/serializer-2.7.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/serializer-2.7.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1658,7 +1666,7 @@
     <orderEntry type="module-library">
       <library name="servlet-api-2.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/servlet-api-2.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/servlet-api-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1667,7 +1675,7 @@
     <orderEntry type="module-library">
       <library name="servlet-api-3.0.pre4.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/servlet-api-3.0.pre4.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/servlet-api-3.0.pre4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1676,7 +1684,7 @@
     <orderEntry type="module-library">
       <library name="servlet-api-6.0.16.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/servlet-api-6.0.16.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/servlet-api-6.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1685,7 +1693,7 @@
     <orderEntry type="module-library">
       <library name="slf4j-api-1.7.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/slf4j-api-1.7.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/slf4j-api-1.7.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1694,7 +1702,7 @@
     <orderEntry type="module-library">
       <library name="slf4j-log4j12-1.6.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/slf4j-log4j12-1.6.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/slf4j-log4j12-1.6.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1703,7 +1711,7 @@
     <orderEntry type="module-library">
       <library name="snakeyaml-1.13.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/snakeyaml-1.13.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/snakeyaml-1.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1712,7 +1720,7 @@
     <orderEntry type="module-library">
       <library name="snappy-java-1.0.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/snappy-java-1.0.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/snappy-java-1.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1721,7 +1729,7 @@
     <orderEntry type="module-library">
       <library name="solr-solrj-6.1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/solr-solrj-6.1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/solr-solrj-6.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1730,7 +1738,7 @@
     <orderEntry type="module-library">
       <library name="spring-aop-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-aop-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-aop-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1739,7 +1747,7 @@
     <orderEntry type="module-library">
       <library name="spring-beans-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-beans-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-beans-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1748,7 +1756,7 @@
     <orderEntry type="module-library">
       <library name="spring-context-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-context-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-context-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1757,7 +1765,7 @@
     <orderEntry type="module-library">
       <library name="spring-core-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-core-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-core-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1766,7 +1774,7 @@
     <orderEntry type="module-library">
       <library name="spring-expression-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-expression-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-expression-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1775,7 +1783,7 @@
     <orderEntry type="module-library">
       <library name="spring-jdbc-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-jdbc-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-jdbc-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1784,7 +1792,16 @@
     <orderEntry type="module-library">
       <library name="spring-orm-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-orm-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-orm-4.0.4.RELEASE.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="spring-test-4.0.4.RELEASE.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1793,7 +1810,7 @@
     <orderEntry type="module-library">
       <library name="spring-tx-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-tx-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-tx-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1802,7 +1819,7 @@
     <orderEntry type="module-library">
       <library name="spring-web-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-web-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-web-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1811,7 +1828,7 @@
     <orderEntry type="module-library">
       <library name="stax-api-1.0-2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/stax-api-1.0-2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/stax-api-1.0-2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1820,7 +1837,7 @@
     <orderEntry type="module-library">
       <library name="stax2-api-3.1.4.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/stax2-api-3.1.4.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/stax2-api-3.1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1829,7 +1846,7 @@
     <orderEntry type="module-library">
       <library name="t-digest-3.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/t-digest-3.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/t-digest-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1838,7 +1855,7 @@
     <orderEntry type="module-library">
       <library name="tagsoup-1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/tagsoup-1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/tagsoup-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1847,7 +1864,7 @@
     <orderEntry type="module-library">
       <library name="textscent-common-2.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/textscent-common-2.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/textscent-common-2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1856,7 +1873,7 @@
     <orderEntry type="module-library">
       <library name="tika-core-1.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/tika-core-1.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/tika-core-1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1865,7 +1882,7 @@
     <orderEntry type="module-library">
       <library name="velocity-1.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/velocity-1.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/velocity-1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1874,7 +1891,7 @@
     <orderEntry type="module-library">
       <library name="woodstox-core-asl-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/woodstox-core-asl-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/woodstox-core-asl-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1883,7 +1900,7 @@
     <orderEntry type="module-library">
       <library name="wsdl4j-1.6.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/wsdl4j-1.6.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/wsdl4j-1.6.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1892,7 +1909,7 @@
     <orderEntry type="module-library">
       <library name="xercesImpl-2.9.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/xercesImpl-2.9.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/xercesImpl-2.9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1901,7 +1918,7 @@
     <orderEntry type="module-library">
       <library name="xml-apis-1.3.04.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/xml-apis-1.3.04.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/xml-apis-1.3.04.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1910,7 +1927,7 @@
     <orderEntry type="module-library">
       <library name="xmlParserAPIs-2.6.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/xmlParserAPIs-2.6.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/xmlParserAPIs-2.6.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1919,7 +1936,7 @@
     <orderEntry type="module-library">
       <library name="xmlenc-0.52.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/xmlenc-0.52.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/xmlenc-0.52.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1928,7 +1945,7 @@
     <orderEntry type="module-library">
       <library name="xmlschema-core-2.0.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/xmlschema-core-2.0.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/xmlschema-core-2.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1937,7 +1954,7 @@
     <orderEntry type="module-library">
       <library name="zookeeper-3.4.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/zookeeper-3.4.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/zookeeper-3.4.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1946,7 +1963,7 @@
     <orderEntry type="module-library">
       <library name="index-anchor.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/index-anchor/index-anchor.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/index-anchor/index-anchor.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1955,7 +1972,7 @@
     <orderEntry type="module-library">
       <library name="boilerpipe-1.1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/index-basic/boilerpipe-1.1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/index-basic/boilerpipe-1.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1964,7 +1981,7 @@
     <orderEntry type="module-library">
       <library name="index-basic.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/index-basic/index-basic.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/index-basic/index-basic.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1973,7 +1990,7 @@
     <orderEntry type="module-library">
       <library name="index-metadata.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/index-metadata/index-metadata.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/index-metadata/index-metadata.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1982,7 +1999,7 @@
     <orderEntry type="module-library">
       <library name="index-more.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/index-more/index-more.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/index-more/index-more.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1991,7 +2008,7 @@
     <orderEntry type="module-library">
       <library name="commons-codec-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/commons-codec-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/commons-codec-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2000,7 +2017,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/indexer-solr/commons-logging-1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/commons-logging-1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/commons-logging-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2009,7 +2026,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/indexer-solr/httpclient-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/httpclient-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpclient-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2018,7 +2035,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/indexer-solr/httpcore-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/httpcore-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpcore-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2027,7 +2044,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/indexer-solr/httpmime-4.4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/httpmime-4.4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/httpmime-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2036,7 +2053,7 @@
     <orderEntry type="module-library">
       <library name="indexer-solr.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/indexer-solr/indexer-solr.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/indexer-solr/indexer-solr.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2045,7 +2062,7 @@
     <orderEntry type="module-library">
       <library name="lib-http.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-http/lib-http.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-http/lib-http.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2054,7 +2071,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/lib-nekohtml/nekohtml-1.9.19.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-nekohtml/nekohtml-1.9.19.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-nekohtml/nekohtml-1.9.19.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2063,7 +2080,7 @@
     <orderEntry type="module-library">
       <library name="jaxen-1.1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-xml/jaxen-1.1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-xml/jaxen-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2072,7 +2089,7 @@
     <orderEntry type="module-library">
       <library name="jdom-1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-xml/jdom-1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-xml/jdom-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2081,7 +2098,7 @@
     <orderEntry type="module-library">
       <library name="lib-xml.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-xml/lib-xml.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-xml/lib-xml.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2090,7 +2107,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/lib-xml/xercesImpl-2.9.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/lib-xml/xercesImpl-2.9.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/lib-xml/xercesImpl-2.9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2099,7 +2116,7 @@
     <orderEntry type="module-library">
       <library name="nutch-extensionpoints.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/nutch-extensionpoints/nutch-extensionpoints.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/nutch-extensionpoints/nutch-extensionpoints.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2108,7 +2125,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-html/nekohtml-1.9.19.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-html/nekohtml-1.9.19.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-html/nekohtml-1.9.19.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2117,7 +2134,7 @@
     <orderEntry type="module-library">
       <library name="parse-html.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-html/parse-html.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-html/parse-html.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2126,7 +2143,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-html/tagsoup-1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-html/tagsoup-1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-html/tagsoup-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2135,7 +2152,7 @@
     <orderEntry type="module-library">
       <library name="parse-js.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-js/parse-js.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-js/parse-js.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2144,7 +2161,7 @@
     <orderEntry type="module-library">
       <library name="apache-mime4j-core-0.7.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-core-0.7.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-core-0.7.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2153,7 +2170,7 @@
     <orderEntry type="module-library">
       <library name="apache-mime4j-dom-0.7.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-dom-0.7.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/apache-mime4j-dom-0.7.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2162,7 +2179,7 @@
     <orderEntry type="module-library">
       <library name="asm-debug-all-4.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/asm-debug-all-4.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/asm-debug-all-4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2171,7 +2188,7 @@
     <orderEntry type="module-library">
       <library name="aspectjrt-1.8.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/aspectjrt-1.8.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/aspectjrt-1.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2180,7 +2197,7 @@
     <orderEntry type="module-library">
       <library name="bcmail-jdk15-1.45.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/bcmail-jdk15-1.45.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/bcmail-jdk15-1.45.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2189,7 +2206,7 @@
     <orderEntry type="module-library">
       <library name="bcprov-jdk15-1.45.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/bcprov-jdk15-1.45.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/bcprov-jdk15-1.45.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2198,7 +2215,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-tika/boilerpipe-1.1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/boilerpipe-1.1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/boilerpipe-1.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2207,7 +2224,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-tika/commons-codec-1.9.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/commons-codec-1.9.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-codec-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2216,7 +2233,7 @@
     <orderEntry type="module-library">
       <library name="commons-compress-1.8.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/commons-compress-1.8.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-compress-1.8.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2225,7 +2242,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-tika/commons-httpclient-3.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/commons-httpclient-3.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-httpclient-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2234,7 +2251,7 @@
     <orderEntry type="module-library">
       <library name="commons-logging-1.1.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/commons-logging-1.1.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/commons-logging-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2243,7 +2260,7 @@
     <orderEntry type="module-library">
       <library name="fontbox-1.8.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/fontbox-1.8.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/fontbox-1.8.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2252,7 +2269,7 @@
     <orderEntry type="module-library">
       <library name="isoparser-1.0.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/isoparser-1.0.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/isoparser-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2261,7 +2278,7 @@
     <orderEntry type="module-library">
       <library name="java-libpst-0.8.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/java-libpst-0.8.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/java-libpst-0.8.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2270,7 +2287,7 @@
     <orderEntry type="module-library">
       <library name="jcip-annotations-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/jcip-annotations-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/jcip-annotations-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2279,7 +2296,7 @@
     <orderEntry type="module-library">
       <library name="jdom-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/jdom-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/jdom-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2288,7 +2305,7 @@
     <orderEntry type="module-library">
       <library name="jempbox-1.8.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/jempbox-1.8.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/jempbox-1.8.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2297,7 +2314,7 @@
     <orderEntry type="module-library">
       <library name="jhighlight-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/jhighlight-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/jhighlight-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2306,7 +2323,7 @@
     <orderEntry type="module-library">
       <library name="jmatio-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/jmatio-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/jmatio-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2315,7 +2332,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/parse-tika/juniversalchardet-1.0.3.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/juniversalchardet-1.0.3.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/juniversalchardet-1.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2324,7 +2341,7 @@
     <orderEntry type="module-library">
       <library name="metadata-extractor-2.6.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/metadata-extractor-2.6.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/metadata-extractor-2.6.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2333,7 +2350,7 @@
     <orderEntry type="module-library">
       <library name="netcdf-4.2.20.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/netcdf-4.2.20.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/netcdf-4.2.20.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2342,7 +2359,7 @@
     <orderEntry type="module-library">
       <library name="parse-tika.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/parse-tika.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/parse-tika.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2351,7 +2368,7 @@
     <orderEntry type="module-library">
       <library name="pdfbox-1.8.8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/pdfbox-1.8.8.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/pdfbox-1.8.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2360,7 +2377,7 @@
     <orderEntry type="module-library">
       <library name="poi-3.11.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/poi-3.11.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-3.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2369,7 +2386,7 @@
     <orderEntry type="module-library">
       <library name="poi-ooxml-3.11.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-3.11.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-3.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2378,7 +2395,7 @@
     <orderEntry type="module-library">
       <library name="poi-ooxml-schemas-3.11.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-schemas-3.11.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-ooxml-schemas-3.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2387,7 +2404,7 @@
     <orderEntry type="module-library">
       <library name="poi-scratchpad-3.11.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/poi-scratchpad-3.11.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/poi-scratchpad-3.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2396,7 +2413,7 @@
     <orderEntry type="module-library">
       <library name="rome-1.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/rome-1.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/rome-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2405,7 +2422,7 @@
     <orderEntry type="module-library">
       <library name="slf4j-api-1.6.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2414,7 +2431,7 @@
     <orderEntry type="module-library">
       <library name="tagsoup-1.2.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/tagsoup-1.2.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/tagsoup-1.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2423,7 +2440,7 @@
     <orderEntry type="module-library">
       <library name="tika-parsers-1.7.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/tika-parsers-1.7.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/tika-parsers-1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2432,7 +2449,7 @@
     <orderEntry type="module-library">
       <library name="unidataCommon-4.2.20.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/unidataCommon-4.2.20.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/unidataCommon-4.2.20.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2441,7 +2458,7 @@
     <orderEntry type="module-library">
       <library name="vorbis-java-core-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-core-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-core-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2450,7 +2467,7 @@
     <orderEntry type="module-library">
       <library name="vorbis-java-tika-0.6.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-tika-0.6.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/vorbis-java-tika-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2459,7 +2476,7 @@
     <orderEntry type="module-library">
       <library name="xercesImpl-2.8.1.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/xercesImpl-2.8.1.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/xercesImpl-2.8.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2468,7 +2485,7 @@
     <orderEntry type="module-library">
       <library name="xml-apis-1.3.03.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/xml-apis-1.3.03.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/xml-apis-1.3.03.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2477,7 +2494,7 @@
     <orderEntry type="module-library">
       <library name="xmlbeans-2.6.0.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/xmlbeans-2.6.0.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/xmlbeans-2.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2486,7 +2503,7 @@
     <orderEntry type="module-library">
       <library name="xmpcore-5.1.2.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/xmpcore-5.1.2.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/xmpcore-5.1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2495,7 +2512,7 @@
     <orderEntry type="module-library">
       <library name="xz-1.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/parse-tika/xz-1.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/xz-1.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2504,7 +2521,7 @@
     <orderEntry type="module-library">
       <library name="protocol-crowd.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/protocol-crowd/protocol-crowd.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/protocol-crowd/protocol-crowd.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2513,7 +2530,7 @@
     <orderEntry type="module-library">
       <library name="protocol-file.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/protocol-file/protocol-file.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/protocol-file/protocol-file.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2522,7 +2539,7 @@
     <orderEntry type="module-library">
       <library name="protocol-http.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/protocol-http/protocol-http.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/protocol-http/protocol-http.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2531,7 +2548,7 @@
     <orderEntry type="module-library">
       <library name="scoring-link.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/scoring-link/scoring-link.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/scoring-link/scoring-link.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2540,7 +2557,7 @@
     <orderEntry type="module-library">
       <library name="scoring-opic.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/scoring-opic/scoring-opic.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/scoring-opic/scoring-opic.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2549,7 +2566,7 @@
     <orderEntry type="module-library">
       <library name="tld.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/tld/tld.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/tld/tld.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2558,7 +2575,7 @@
     <orderEntry type="module-library">
       <library name="build/plugins/urlfilter-automaton/automaton-1.11-8.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-automaton/automaton-1.11-8.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-automaton/automaton-1.11-8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2567,7 +2584,7 @@
     <orderEntry type="module-library">
       <library name="urlfilter-automaton.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-automaton/urlfilter-automaton.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-automaton/urlfilter-automaton.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2576,7 +2593,7 @@
     <orderEntry type="module-library">
       <library name="urlfilter-domain.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-domain/urlfilter-domain.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-domain/urlfilter-domain.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2585,7 +2602,7 @@
     <orderEntry type="module-library">
       <library name="urlfilter-prefix.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-prefix/urlfilter-prefix.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-prefix/urlfilter-prefix.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2594,7 +2611,7 @@
     <orderEntry type="module-library">
       <library name="urlfilter-suffix.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-suffix/urlfilter-suffix.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-suffix/urlfilter-suffix.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2603,7 +2620,7 @@
     <orderEntry type="module-library">
       <library name="urlfilter-validator.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlfilter-validator/urlfilter-validator.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlfilter-validator/urlfilter-validator.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2612,7 +2629,7 @@
     <orderEntry type="module-library">
       <library name="urlnormalizer-basic.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2621,7 +2638,7 @@
     <orderEntry type="module-library">
       <library name="urlnormalizer-pass.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlnormalizer-pass/urlnormalizer-pass.jar" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlnormalizer-pass/urlnormalizer-pass.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2630,17 +2647,7 @@
     <orderEntry type="module-library">
       <library name="urlnormalizer-regex.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/plugins/urlnormalizer-regex/urlnormalizer-regex.jar" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="lib" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/annotations-java8.jar!/" />
+          <root url="jar://$MODULE_DIR$/build/plugins/urlnormalizer-regex/urlnormalizer-regex.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

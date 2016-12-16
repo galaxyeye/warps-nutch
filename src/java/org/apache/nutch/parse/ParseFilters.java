@@ -22,7 +22,8 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.w3c.dom.DocumentFragment;
 
@@ -93,7 +94,7 @@ public class ParseFilters {
   }
 
   /** Run all defined filters. */
-  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
     // loop on each filter
     for (ParseFilter parseFilter : parseFilters) {
       // call filter interface
@@ -108,10 +109,10 @@ public class ParseFilters {
     return parse;
   }
 
-  public Collection<WebPage.Field> getFields() {
-    Collection<WebPage.Field> fields = new HashSet<>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Collection<GoraWebPage.Field> fields = new HashSet<>();
     for (ParseFilter htmlParseFilter : parseFilters) {
-      Collection<WebPage.Field> pluginFields = htmlParseFilter.getFields();
+      Collection<GoraWebPage.Field> pluginFields = htmlParseFilter.getFields();
       if (pluginFields != null) {
         fields.addAll(pluginFields);
       }

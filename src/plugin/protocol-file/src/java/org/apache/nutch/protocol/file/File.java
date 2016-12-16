@@ -17,14 +17,14 @@
 package org.apache.nutch.protocol.file;
 
 import crawlercommons.robots.BaseRobotRules;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage.Field;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +44,11 @@ public class File implements Protocol {
 
   public static final Logger LOG = LoggerFactory.getLogger(File.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   static final int MAX_REDIRECTS = 5;
@@ -100,14 +100,14 @@ public class File implements Protocol {
    * 
    * @param url
    *          Text containing the url
-   * @param datum
+   * @param page
    *          The CrawlDatum object corresponding to the url
    * 
    * @return {@link ProtocolOutput} object for the content of the file indicated
    *         by url
    */
-  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
-    String urlString = url.toString();
+  public ProtocolOutput getProtocolOutput(String url, WrappedWebPage page) {
+    String urlString = url;
     try {
       URL u = new URL(urlString);
 
@@ -117,48 +117,40 @@ public class File implements Protocol {
         FileResponse response;
         response = new FileResponse(u, page, this, getConf()); // make a request
         int code = response.getCode();
-
         if (code == 200) { // got a good response
           return new ProtocolOutput(response.toContent()); // return it
-
         } else if (code == 304) { // got not modified
-          return new ProtocolOutput(response.toContent(),
-              ProtocolStatusUtils.STATUS_NOTMODIFIED);
-
+          return new ProtocolOutput(response.toContent(), ProtocolStatusUtils.STATUS_NOTMODIFIED);
         } else if (code == 401) { // access denied / no read permissions
-          return new ProtocolOutput(response.toContent(),
-              ProtocolStatusUtils.makeStatus(ProtocolStatusUtils.ACCESS_DENIED));
-
+          return new ProtocolOutput(response.toContent(), ProtocolStatusUtils.makeStatus(ProtocolStatusUtils.ACCESS_DENIED));
         } else if (code == 404) { // no such file
-          return new ProtocolOutput(response.toContent(),
-              ProtocolStatusUtils.STATUS_NOTFOUND);
-
+          return new ProtocolOutput(response.toContent(), ProtocolStatusUtils.STATUS_NOTFOUND);
         } else if (code >= 300 && code < 400) { // handle redirect
           u = new URL(response.getHeader("Location"));
           if (LOG.isTraceEnabled()) {
             LOG.trace("redirect to " + u);
           }
           if (symlinksAsRedirects) {
-            return new ProtocolOutput(response.toContent(),
-                ProtocolStatusUtils.makeStatus(ProtocolStatusUtils.MOVED, u));
+            return new ProtocolOutput(response.toContent(), ProtocolStatusUtils.makeStatus(ProtocolStatusUtils.MOVED, u));
           } else if (redirects == MAX_REDIRECTS) {
             LOG.trace("Too many redirects: {}", url);
-            return new ProtocolOutput(response.toContent(),
-                ProtocolStatusUtils.makeStatus(
-                    ProtocolStatusUtils.REDIR_EXCEEDED, u));
+            return new ProtocolOutput(response.toContent(), ProtocolStatusUtils.makeStatus(ProtocolStatusUtils.REDIR_EXCEEDED, u));
           }
           redirects++;
-
         } else { // convert to exception
           throw new FileError(code);
         }
       }
     } catch (Exception e) {
       e.printStackTrace();
-      ProtocolStatus ps = ProtocolStatusUtils.makeStatus(
-          ProtocolStatusCodes.EXCEPTION, e.toString());
+      ProtocolStatus ps = ProtocolStatusUtils.makeStatus(ProtocolStatusCodes.EXCEPTION, e.toString());
       return new ProtocolOutput(null, ps);
     }
+  }
+
+  @Override
+  public BaseRobotRules getRobotRules(String url, WrappedWebPage page) {
+    return null;
   }
 
   @Override
@@ -199,8 +191,7 @@ public class File implements Protocol {
     if (maxContentLength != Integer.MIN_VALUE) // set maxContentLength
       file.setMaxContentLength(maxContentLength);
 
-    ProtocolOutput output = file.getProtocolOutput(urlString, WebPage
-        .newBuilder().build());
+    ProtocolOutput output = file.getProtocolOutput(urlString, WrappedWebPage.newWebPage());
     Content content = output.getContent();
 
     System.err.println("URL: " + content.getUrl());
@@ -230,7 +221,7 @@ public class File implements Protocol {
    * No robots parsing is done for file protocol. So this returns a set of empty
    * rules which will allow every url.
    */
-  public BaseRobotRules getRobotRules(String url, WebPage page) {
+  public BaseRobotRules getRobotRules(String url, GoraWebPage page) {
     return RobotRulesParser.EMPTY_RULES;
   }
 

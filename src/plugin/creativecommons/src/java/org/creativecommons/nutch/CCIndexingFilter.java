@@ -19,13 +19,13 @@ package org.creativecommons.nutch;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.metadata.CreativeCommons;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +46,11 @@ public class CCIndexingFilter implements IndexingFilter {
 
   private Configuration conf;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   /**
@@ -93,16 +93,13 @@ public class CCIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
-      throws IndexingException {
-
-    ByteBuffer blicense = page.getMetadata().get(
-        new Utf8(CreativeCommons.LICENSE_URL));
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
+    ByteBuffer blicense = page.get().getMetadata().get(new Utf8(CreativeCommons.LICENSE_URL));
     if (blicense != null) {
       String licenseUrl = Bytes.toString(blicense.array());
       if (LOG.isInfoEnabled()) {
@@ -117,16 +114,14 @@ public class CCIndexingFilter implements IndexingFilter {
     }
 
     // index the license location as cc:meta=xxx
-    ByteBuffer blicenseloc = page.getMetadata().get(
-        new Utf8(CreativeCommons.LICENSE_LOCATION));
+    ByteBuffer blicenseloc = page.get().getMetadata().get(new Utf8(CreativeCommons.LICENSE_LOCATION));
     if (blicenseloc != null) {
       String licenseLocation = Bytes.toString(blicenseloc.array());
       addFeature(doc, "meta=" + licenseLocation);
     }
 
     // index the work type cc:type=xxx
-    ByteBuffer bworkType = page.getMetadata().get(
-        new Utf8(CreativeCommons.WORK_TYPE));
+    ByteBuffer bworkType = page.get().getMetadata().get(new Utf8(CreativeCommons.WORK_TYPE));
     if (bworkType != null) {
       String workType = Bytes.toString(bworkType.array());
       addFeature(doc, workType);

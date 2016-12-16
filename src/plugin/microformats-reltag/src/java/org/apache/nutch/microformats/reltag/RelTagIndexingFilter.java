@@ -17,18 +17,19 @@
 package org.apache.nutch.microformats.reltag;
 
 // Nutch imports
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.HashSet;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * An {@link IndexingFilter} that adds <code>tag</code>
@@ -42,20 +43,20 @@ public class RelTagIndexingFilter implements IndexingFilter {
 
   private Configuration conf;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   /**
-   * Gets all the fields for a given {@link WebPage} Many datastores need to
+   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WebPage are able to specify what fields they need.
+   * that work on WrappedWebPage are able to specify what fields they need.
    */
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
@@ -81,14 +82,14 @@ public class RelTagIndexingFilter implements IndexingFilter {
    * @param url
    *          URL to be filtered for rel-tag's
    * @param page
-   *          {@link WebPage} object relative to the URL
+   *          {@link WrappedWebPage} object relative to the URL
    * @return filtered NutchDocument
    */
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
       throws IndexingException {
     // Check if some Rel-Tags found, possibly put there by RelTagParser
-    ByteBuffer bb = page.getMetadata().get(new Utf8(RelTagParser.REL_TAG));
+    ByteBuffer bb = page.get().getMetadata().get(new Utf8(RelTagParser.REL_TAG));
 
     if (bb != null) {
       String[] tags = Bytes.toString(bb.array()).split("\t");

@@ -17,21 +17,21 @@
 
 package org.apache.nutch.protocol;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Creates and caches {@link Protocol} plugins. Protocol plugins should define
@@ -155,13 +155,13 @@ public class ProtocolFactory {
     return false;
   }
 
-  public Collection<WebPage.Field> getFields() {
-    Collection<WebPage.Field> fields = new HashSet<WebPage.Field>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Collection<GoraWebPage.Field> fields = new HashSet<>();
     for (Extension extension : this.extensionPoint.getExtensions()) {
       Protocol protocol;
       try {
         protocol = (Protocol) extension.getExtensionInstance();
-        Collection<WebPage.Field> pluginFields = protocol.getFields();
+        Collection<GoraWebPage.Field> pluginFields = protocol.getFields();
         if (pluginFields != null) {
           fields.addAll(pluginFields);
         }

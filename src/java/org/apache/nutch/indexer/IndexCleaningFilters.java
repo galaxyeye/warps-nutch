@@ -22,7 +22,8 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +98,7 @@ public class IndexCleaningFilters {
   }
 
   /** Run all defined filters. */
-  public boolean remove(String url, WebPage page) throws IndexingException {
+  public boolean remove(String url, WrappedWebPage page) throws IndexingException {
     for (IndexCleaningFilter indexcleaningFilter : indexcleaningFilters) {
       if (indexcleaningFilter.remove(url, page)) {
         return true;
@@ -106,10 +107,10 @@ public class IndexCleaningFilters {
     return false;
   }
 
-  public Collection<WebPage.Field> getFields() {
-    Collection<WebPage.Field> columns = new HashSet<>();
+  public Collection<GoraWebPage.Field> getFields() {
+    Collection<GoraWebPage.Field> columns = new HashSet<>();
     for (IndexCleaningFilter indexcleaningFilter : indexcleaningFilters) {
-      Collection<WebPage.Field> fields = indexcleaningFilter.getFields();
+      Collection<GoraWebPage.Field> fields = indexcleaningFilter.getFields();
       if (fields != null) {
         columns.addAll(fields);
       }

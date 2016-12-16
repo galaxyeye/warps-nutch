@@ -33,7 +33,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -55,13 +55,13 @@ public class FetchJob extends NutchJob implements Tool {
   public static final int PERM_REFRESH_TIME = 5;
   public static final Utf8 REDIRECT_DISCOVERED = new Utf8("___rdrdsc__");
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.MARKERS);
-    FIELDS.add(WebPage.Field.REPR_URL);
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.MARKERS);
+    FIELDS.add(GoraWebPage.Field.REPR_URL);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   private int numTasks = 2;
@@ -77,8 +77,8 @@ public class FetchJob extends NutchJob implements Tool {
   /**
    * The field list affects which field to reads, but does not affect which field to to write
    * */
-  public Collection<WebPage.Field> getFields(Job job) {
-    Collection<WebPage.Field> fields = new HashSet<>(FIELDS);
+  public Collection<GoraWebPage.Field> getFields(Job job) {
+    Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     if (job.getConfiguration().getBoolean(PARAM_PARSE, false)) {
       ParserJob parserJob = new ParserJob();
       fields.addAll(parserJob.getFields(job));
@@ -152,8 +152,8 @@ public class FetchJob extends NutchJob implements Tool {
     // For politeness, don't permit parallel execution of a single task
     currentJob.setReduceSpeculativeExecution(false);
 
-    Collection<WebPage.Field> fields = getFields(currentJob);
-    MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
+    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, IntWritable.class,
         FetchEntry.class, FetchMapper.class, FetchEntryPartitioner.class,
         batchIdFilter, false);
@@ -162,7 +162,7 @@ public class FetchJob extends NutchJob implements Tool {
     currentJob.setNumReduceTasks(numTasks);
 
     // used to get schema name
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.debug("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
 

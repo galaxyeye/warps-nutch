@@ -16,7 +16,16 @@
  */
 package org.apache.nutch.parse.tika;
 
-import static org.junit.Assert.*;
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseException;
+import org.apache.nutch.parse.ParseUtil;
+import org.apache.nutch.protocol.ProtocolException;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.util.NutchConfiguration;
+import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -24,16 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.apache.avro.util.Utf8;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.Parse;
-import org.apache.nutch.parse.ParseException;
-import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.ProtocolException;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class TestImageMetadata {
 
@@ -60,7 +60,7 @@ public class TestImageMetadata {
       in.readFully(bytes);
       in.close();
 
-      WebPage page = WebPage.newBuilder().build();
+      WrappedWebPage page = WrappedWebPage.newWebPage();
       page.setBaseUrl(new Utf8(urlString));
       page.setContent(ByteBuffer.wrap(bytes));
       String mtype = mimeutil.getMimeType(file);
@@ -69,14 +69,14 @@ public class TestImageMetadata {
       parse = new ParseUtil(conf).parse(urlString, page);
 
       // assert width
-      ByteBuffer bbufW = page.getMetadata().get(new Utf8("width"));
+      ByteBuffer bbufW = page.get().getMetadata().get(new Utf8("width"));
       byte[] byteArrayW = new byte[bbufW.remaining()];
       bbufW.get(byteArrayW);
       String width = new String(byteArrayW);
       assertEquals("121", width);
 
       // assert height
-      ByteBuffer bbufH = page.getMetadata().get(new Utf8("height"));
+      ByteBuffer bbufH = page.get().getMetadata().get(new Utf8("height"));
       byte[] byteArrayH = new byte[bbufH.remaining()];
       bbufH.get(byteArrayH);
       String height = new String(byteArrayH);

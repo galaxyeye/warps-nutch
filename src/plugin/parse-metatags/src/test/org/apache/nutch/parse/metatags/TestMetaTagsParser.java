@@ -17,18 +17,14 @@
 
 package org.apache.nutch.parse.metatags;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.parse.metatags.MetaTagsParser;
-import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.junit.Test;
@@ -39,15 +35,14 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class TestMetaTagsParser {
 
@@ -78,7 +73,7 @@ public class TestMetaTagsParser {
       in.readFully(bytes);
       in.close();
 
-      WebPage page = WebPage.newBuilder().build();
+      WrappedWebPage page = WrappedWebPage.newWebPage();
       page.setBaseUrl(new Utf8(urlString));
       page.setContent(ByteBuffer.wrap(bytes));
       page.setContentType(new Utf8("text/html"));
@@ -103,7 +98,7 @@ public class TestMetaTagsParser {
         mtp.filter(urlString, page, new Parse(), metaTags, node);
       }
 
-      return page.getMetadata();
+      return page.get().getMetadata();
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.toString());
@@ -111,8 +106,7 @@ public class TestMetaTagsParser {
     }
   }
 
-  public static final void getMetaTagsHelper(HTMLMetaTags metaTags, Node node,
-      URL currURL) {
+  public static final void getMetaTagsHelper(HTMLMetaTags metaTags, Node node, URL currURL) {
 
     if (node.getNodeType() == Node.ELEMENT_NODE) {
 

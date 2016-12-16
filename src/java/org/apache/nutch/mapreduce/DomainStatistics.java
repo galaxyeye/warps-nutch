@@ -15,11 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.nutch.util.domain;
-
-import java.io.IOException;
-import java.net.URL;
-import java.text.SimpleDateFormat;
+package org.apache.nutch.mapreduce;
 
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
@@ -38,7 +34,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
@@ -46,13 +42,16 @@ import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+
 /**
  * Extracts some very basic statistics about domains from the crawldb
  */
 public class DomainStatistics extends Configured implements Tool {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(DomainStatistics.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DomainStatistics.class);
 
   private static final Text FETCHED_TEXT = new Text("FETCHED");
   private static final Text NOT_FETCHED_TEXT = new Text("NOT_FETCHED");
@@ -102,11 +101,11 @@ public class DomainStatistics extends Configured implements Tool {
 
     Job job = Job.getInstance(getConf(), "Domain statistics");
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(
-        job.getConfiguration(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
+        job.getConfiguration(), String.class, GoraWebPage.class);
 
-    Query<String, WebPage> query = store.newQuery();
-    query.setFields(WebPage._ALL_FIELDS);
+    Query<String, GoraWebPage> query = store.newQuery();
+    query.setFields(GoraWebPage._ALL_FIELDS);
 
     GoraMapper.initMapperJob(job, query, store, Text.class, LongWritable.class,
         DomainStatisticsMapper.class, null, true);
@@ -176,8 +175,7 @@ public class DomainStatistics extends Configured implements Tool {
     }
   }
 
-  public static class DomainStatisticsMapper extends
-      GoraMapper<String, WebPage, Text, LongWritable> {
+  public static class DomainStatisticsMapper extends GoraMapper<String, GoraWebPage, Text, LongWritable> {
     LongWritable COUNT_1 = new LongWritable(1);
 
     private int mode = 0;
@@ -194,11 +192,11 @@ public class DomainStatistics extends Configured implements Tool {
     }
 
     @Override
-    protected void map(String key, WebPage value, Context context)
+    protected void map(String key, GoraWebPage value, Context context)
         throws IOException, InterruptedException {
       if (value.getStatus() == CrawlStatus.STATUS_FETCHED) {
         try {
-          URL url = new URL(TableUtil.unreverseUrl(key.toString()));
+          URL url = new URL(TableUtil.unreverseUrl(key));
           String out = null;
           switch (mode) {
           case MODE_HOST:

@@ -21,7 +21,8 @@ import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -38,10 +39,10 @@ public class CleaningJob extends NutchJob implements Tool {
   public static final Logger LOG = LoggerFactory.getLogger(CleaningJob.class);
   private Configuration conf;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.STATUS);
   }
 
   @Override
@@ -54,15 +55,15 @@ public class CleaningJob extends NutchJob implements Tool {
     this.conf = conf;
   }
 
-  public Collection<WebPage.Field> getFields(Job job) {
+  public Collection<GoraWebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
-    Collection<WebPage.Field> columns = new HashSet<>(FIELDS);
+    Collection<GoraWebPage.Field> columns = new HashSet<>(FIELDS);
     IndexCleaningFilters filters = new IndexCleaningFilters(conf);
     columns.addAll(filters.getFields());
     return columns;
   }
 
-  public static class CleanMapper extends NutchMapper<String, WebPage, String, WebPage> {
+  public static class CleanMapper extends NutchMapper<String, GoraWebPage, String, GoraWebPage> {
 
     private IndexCleaningFilters filters;
 
@@ -75,9 +76,9 @@ public class CleaningJob extends NutchJob implements Tool {
     }
 
     @Override
-    public void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
+    public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
       try {
-        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(key, page)) {
+        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(key, WrappedWebPage.wrap(page))) {
           context.write(key, page);
         }
       } catch (IndexingException e) {
@@ -86,7 +87,7 @@ public class CleaningJob extends NutchJob implements Tool {
     }
   }
 
-  public static class CleanReducer extends Reducer<String, WebPage, NullWritable, NullWritable> {
+  public static class CleanReducer extends Reducer<String, GoraWebPage, NullWritable, NullWritable> {
     private int numDeletes = 0;
     private boolean commit;
     IndexWriters writers = null;
@@ -99,7 +100,7 @@ public class CleaningJob extends NutchJob implements Tool {
       commit = conf.getBoolean(ARG_COMMIT, false);
     }
 
-    public void reduce(String key, Iterable<WebPage> values, Context context) throws IOException {
+    public void reduce(String key, Iterable<GoraWebPage> values, Context context) throws IOException {
       writers.delete(key);
       numDeletes++;
       context.getCounter("SolrClean", "DELETED").increment(1);
@@ -122,12 +123,12 @@ public class CleaningJob extends NutchJob implements Tool {
         "mapred.output.key.comparator.class", StringComparator.class,
         RawComparator.class);
 
-    Collection<WebPage.Field> fields = getFields(currentJob);
-    StorageUtils.initMapperJob(currentJob, fields, String.class, WebPage.class, CleanMapper.class);
+    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    StorageUtils.initMapperJob(currentJob, fields, String.class, GoraWebPage.class, CleanMapper.class);
     currentJob.setReducerClass(CleanReducer.class);
     currentJob.setOutputFormatClass(NullOutputFormat.class);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

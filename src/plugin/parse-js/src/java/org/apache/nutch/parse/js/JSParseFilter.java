@@ -16,6 +16,20 @@
  */
 package org.apache.nutch.parse.js;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.parse.*;
+import org.apache.nutch.storage.ParseStatus;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.TableUtil;
+import org.apache.oro.text.regex.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.*;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -26,34 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.Parse;
-import org.apache.nutch.parse.ParseStatusCodes;
-import org.apache.nutch.parse.ParseStatusUtils;
-import org.apache.nutch.parse.Parser;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
-import org.apache.oro.text.regex.MatchResult;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternCompiler;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.PatternMatcherInput;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
-import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * This class is a heuristic link extractor for JavaScript files and code
@@ -73,20 +59,19 @@ public class JSParseFilter implements ParseFilter, Parser {
    * Scan the JavaScript looking for possible {@link Outlink}'s
    * 
    * @param url
-   *          URL of the {@link WebPage} to be parsed
+   *          URL of the {@link WrappedWebPage} to be parsed
    * @param page
-   *          {@link WebPage} object relative to the URL
+   *          {@link WrappedWebPage} object relative to the URL
    * @param parse
    *          {@link Parse} object holding parse status
-   * @param metatags
+   * @param metaTags
    *          within the {@link IndexDocument}
    * @param doc
    *          The {@link IndexDocument} object
    * @return parse the actual {@link Parse} object
    */
   @Override
-  public Parse filter(String url, WebPage page, Parse parse,
-      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
 
     ArrayList<Outlink> outlinks = new ArrayList<Outlink>();
     walk(doc, parse, metaTags, url, outlinks);
@@ -169,13 +154,13 @@ public class JSParseFilter implements ParseFilter, Parser {
    * Set the {@link Configuration} object
    * 
    * @param url
-   *          URL of the {@link WebPage} which is parsed
+   *          URL of the {@link WrappedWebPage} which is parsed
    * @param page
-   *          {@link WebPage} object relative to the URL
+   *          {@link WrappedWebPage} object relative to the URL
    * @return parse the actual {@link Parse} object
    */
   @Override
-  public Parse getParse(String url, WebPage page) {
+  public Parse getParse(String url, WrappedWebPage page) {
     String type = TableUtil.toString(page.getContentType());
     if (type != null && !type.trim().equals("")
         && !type.toLowerCase().startsWith("application/x-javascript"))
@@ -336,12 +321,12 @@ public class JSParseFilter implements ParseFilter, Parser {
   }
 
   /**
-   * Gets all the fields for a given {@link WebPage} Many datastores need to
+   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WebPage are able to specify what fields they need.
+   * that work on WrappedWebPage are able to specify what fields they need.
    */
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return null;
   }
 

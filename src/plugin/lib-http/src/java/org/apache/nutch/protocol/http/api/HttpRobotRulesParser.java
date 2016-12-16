@@ -23,7 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.RobotRulesParser;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ public class HttpRobotRulesParser extends RobotRulesParser {
       }
       try {
         Response response = ((HttpBase) http).getResponse(new URL(url,
-            "/robots.txt"), WebPage.newBuilder().build(), true);
+            "/robots.txt"), WrappedWebPage.newWebPage(), true);
         // try one level of redirection ?
         if (response.getCode() == 301 || response.getCode() == 302) {
           String redirection = response.getHeader("Location");
@@ -109,8 +109,7 @@ public class HttpRobotRulesParser extends RobotRulesParser {
               redir = new URL(redirection);
             }
 
-            response = ((HttpBase) http).getResponse(redir, WebPage
-                .newBuilder().build(), true);
+            response = ((HttpBase) http).getResponse(redir, WrappedWebPage.newWebPage(), true);
           }
         }
 

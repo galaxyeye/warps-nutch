@@ -28,7 +28,11 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.*;
+import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.ProtocolStatus;
+import org.apache.nutch.storage.StorageUtils;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
@@ -77,7 +81,7 @@ public class TaskScheduler extends Configured {
     rowsRedirect,
     seeds,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
-    pagesPeresist, existOutPages, newPages, newDetailPages
+    pagesPeresist, existOutPages, nepages, newDetailPages
   }
 
   private static final AtomicInteger objectSequence = new AtomicInteger(0);
@@ -146,7 +150,7 @@ public class TaskScheduler extends Configured {
   /**
    * Update
    */
-  private final DataStore<String, WebPage> datastore;
+  private final DataStore<String, GoraWebPage> datastore;
   private final MapDatumBuilder mapDatumBuilder;
   private final ReduceDatumBuilder reduceDatumBuilder;
 
@@ -210,7 +214,7 @@ public class TaskScheduler extends Configured {
 
     boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, true);
     try {
-      datastore = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+      datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (ClassNotFoundException e) {
       throw new IOException(e);
     }
@@ -333,8 +337,8 @@ public class TaskScheduler extends Configured {
     String url = page.getTemporaryVariableAsString("url");
     // set score?
 
-    Mark.INJECT_MARK.removeMarkIfExist(page.get());
-    Mark.GENERATE_MARK.putMark(page.get(), new Utf8(batchId));
+    Mark.INJECT_MARK.removeMarkIfExist(page);
+    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
     page.setBatchId(batchId);
 
     tasksMonitor.produce(context.getJobId(), url, page);
@@ -698,7 +702,7 @@ public class TaskScheduler extends Configured {
         }
         // TODO : It's not a good idea to save newUrl in message
         final String newUrl = ProtocolStatusUtils.getMessage(status);
-        handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage().get());
+        handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage());
         handleResult(fetchTask, content, status, code);
         break;
 
@@ -731,7 +735,7 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WebPage page)
+  private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WrappedWebPage page)
       throws URLFilterException, IOException, InterruptedException {
     newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
     newUrl = urlFilters.filter(newUrl);
@@ -749,7 +753,7 @@ public class TaskScheduler extends Configured {
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
-    page.getMetadata().put(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    page.get().getMetadata().put(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
 
     String reprUrl = setRedirectRepresentativeUrl(page, url, newUrl, temp);
 
@@ -758,7 +762,7 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.rowsRedirect);
   }
 
-  private String setRedirectRepresentativeUrl(WebPage page, String url, String newUrl, boolean temp) {
+  private String setRedirectRepresentativeUrl(WrappedWebPage page, String url, String newUrl, boolean temp) {
     long threadId = Thread.currentThread().getId();
 
     String reprUrl = reprUrls.get(threadId);
@@ -793,12 +797,12 @@ public class TaskScheduler extends Configured {
 
     // Only STATUS_FETCHED can be parsed
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
-      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage.get())) {
+      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
         synchronized (parseUtil) {
-          parseUtil.process(url, mainPage.get());
+          parseUtil.process(url, mainPage);
         }
 
-        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage.get());
+        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage);
         // JIT Index
         if (jitIndexer != null && parseMark != null) {
           jitIndexer.produce(fetchTask);
@@ -868,16 +872,16 @@ public class TaskScheduler extends Configured {
       newDepth += 1;
     }
 
-    WebPage oldPage;
+    WrappedWebPage oldPage;
     synchronized(context) {
-      oldPage = datastore.get(reversedUrl);
+      oldPage = WrappedWebPage.wrap(datastore.get(reversedUrl));
     }
 
     if (oldPage != null) {
-      tryUpdateOldPage(url, reversedUrl, mainPage, new WrappedWebPage(oldPage), newDepth);
+      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
     }
     else {
-      createNewPage(url, reversedUrl, mainPage, newDepth);
+      createNepage(url, reversedUrl, mainPage, newDepth);
     }
   }
 
@@ -902,25 +906,25 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.existOutPages);
   }
 
-  private void createNewPage(String url, String reversedUrl, WrappedWebPage mainPage, int depth) {
-    WrappedWebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
+  private void createNepage(String url, String reversedUrl, WrappedWebPage mainPage, int depth) {
+    WrappedWebPage nepage = reduceDatumBuilder.createNewRow(url, depth);
     // Update distance/score
-    reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
+    reduceDatumBuilder.updateNewRow(url, mainPage, nepage);
 
     mainPage.increaseTotalOutLinkCount(1);
-    counter.increase(Counter.newPages);
+    counter.increase(Counter.nepages);
     if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
       counter.increase(Counter.newDetailPages);
     }
 
-    output(reversedUrl, newPage);
+    output(reversedUrl, nepage);
   }
 
   @SuppressWarnings("unchecked")
   private void output(String reversedUrl, WrappedWebPage page) {
     try {
       synchronized(context) {
-        context.write(reversedUrl, page.get());
+        context.write(reversedUrl, page);
       }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());

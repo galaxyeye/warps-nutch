@@ -25,7 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ public class DbReader {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);
 
-  private DataStore<String, WebPage> store;
+  private DataStore<String, GoraWebPage> store;
 
   public DbReader(Configuration conf, String crawlId) {
     conf = new Configuration(conf);
@@ -48,7 +48,7 @@ public class DbReader {
     }
 
     try {
-      store = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+      store = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot create webstore!", e);
     }
@@ -70,7 +70,7 @@ public class DbReader {
       endKey = reverseKey(filter.getEndKey());
     }
 
-    Query<String, WebPage> query = store.newQuery();
+    Query<String, GoraWebPage> query = store.newQuery();
 
     query.setFields(prepareFields(filter.getFields()));
     if (startKey != null) {
@@ -92,7 +92,7 @@ public class DbReader {
     Configuration conf = NutchConfiguration.create();
     conf.set("urlfilter.regex.rules", urlFilter);
 
-    Result<String, WebPage> result = store.execute(query);
+    Result<String, GoraWebPage> result = store.execute(query);
     return new DbIterator(result, filter, conf);
   }
 

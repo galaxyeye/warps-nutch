@@ -33,7 +33,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class IndexJob extends NutchJob implements Tool {
   public static final String INDEXER_PARAMS = "indexer.additional.params";
   public static final String INDEXER_DELETE = "indexer.delete";
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   private static final Utf8 REINDEX = new Utf8("-reindex");
 
@@ -64,16 +64,16 @@ public class IndexJob extends NutchJob implements Tool {
   private int numTasks = 2;
 
   static {
-    FIELDS.add(WebPage.Field.SIGNATURE);
-    FIELDS.add(WebPage.Field.PARSE_STATUS);
-    FIELDS.add(WebPage.Field.SCORE);
-    FIELDS.add(WebPage.Field.MARKERS);
+    FIELDS.add(GoraWebPage.Field.SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.PARSE_STATUS);
+    FIELDS.add(GoraWebPage.Field.SCORE);
+    FIELDS.add(GoraWebPage.Field.MARKERS);
   }
 
-  private static Collection<WebPage.Field> getFields(Job job) {
+  private static Collection<GoraWebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
 
-    Collection<WebPage.Field> columns = new HashSet<>(FIELDS);
+    Collection<GoraWebPage.Field> columns = new HashSet<>(FIELDS);
     IndexingFilters filters = new IndexingFilters(conf);
     columns.addAll(filters.getFields());
     ScoringFilters scoringFilters = new ScoringFilters(conf);
@@ -144,8 +144,8 @@ public class IndexJob extends NutchJob implements Tool {
     // TODO: Figure out why this needs to be here
     currentJob.getConfiguration().setClass("mapred.output.key.comparator.class", StringComparator.class, RawComparator.class);
 
-    Collection<WebPage.Field> fields = getFields(currentJob);
-    MapFieldValueFilter<String, WebPage> batchIdFilter = getBatchIdFilter(batchId);
+    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, String.class, IndexDocument.class, IndexMapper.class, batchIdFilter);
 
     // The data is write to a network sink using IndexerOutputFormat.write
@@ -155,7 +155,7 @@ public class IndexJob extends NutchJob implements Tool {
     currentJob.setNumReduceTasks(0);
 
     // used to get schema name
-    DataStore<String, WebPage> storage = StorageUtils.createWebStore(getConf(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> storage = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -167,13 +167,13 @@ public class IndexJob extends NutchJob implements Tool {
     currentJob.waitForCompletion(true);
   }
 
-  protected MapFieldValueFilter<String, WebPage> getBatchIdFilter(String batchId) {
+  protected MapFieldValueFilter<String, GoraWebPage> getBatchIdFilter(String batchId) {
     if (batchId.equals(REINDEX.toString()) || batchId.equals(ALL_BATCH_ID_STR)) {
       return null;
     }
 
-    MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<>();
-    filter.setFieldName(WebPage.Field.MARKERS.toString());
+    MapFieldValueFilter<String, GoraWebPage> filter = new MapFieldValueFilter<>();
+    filter.setFieldName(GoraWebPage.Field.MARKERS.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
     filter.setMapKey(Mark.UPDATEDB_MARK.getName());

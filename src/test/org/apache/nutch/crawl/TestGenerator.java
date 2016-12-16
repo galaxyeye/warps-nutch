@@ -20,7 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.GenerateJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
 import org.apache.nutch.util.NutchUtil;
@@ -50,7 +51,7 @@ public class TestGenerator extends AbstractNutchTest {
   public static final Logger LOG = LoggerFactory.getLogger(TestGenerator.class);
 
   private static String[] FIELDS = new String[] {
-      WebPage.Field.MARKERS.getName(), WebPage.Field.SCORE.getName() };
+      GoraWebPage.Field.MARKERS.getName(), GoraWebPage.Field.SCORE.getName() };
 
   @Override
   @Before
@@ -82,7 +83,7 @@ public class TestGenerator extends AbstractNutchTest {
     }
 
     for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
+      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
     }
     webPageStore.flush();
 
@@ -97,8 +98,8 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(NUM_RESULTS, l.size());
 
     // verify we have the highest scoring urls
-    assertEquals("http://aaa/100", (l.get(0).getUrl().toString()));
-    assertEquals("http://aaa/099", (l.get(1).getUrl().toString()));
+    assertEquals("http://aaa/100", (l.get(0).getUrl()));
+    assertEquals("http://aaa/099", (l.get(1).getUrl()));
   }
 
   private String pad(int i) {
@@ -141,7 +142,7 @@ public class TestGenerator extends AbstractNutchTest {
     list.add(createURLWebPage("http://www.example.com/index3.html", 1, 1));
 
     for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
+      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
     }
     webPageStore.flush();
 
@@ -193,7 +194,7 @@ public class TestGenerator extends AbstractNutchTest {
     list.add(createURLWebPage("http://three.example.com/index1.html", 1, 1));
 
     for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
+      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
     }
     webPageStore.flush();
 
@@ -243,7 +244,7 @@ public class TestGenerator extends AbstractNutchTest {
     list.add(createURLWebPage("http://www.example.org/index.html", 1, 1));
 
     for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
+      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
     }
     webPageStore.flush();
 
@@ -293,7 +294,7 @@ public class TestGenerator extends AbstractNutchTest {
    * @return Constructed object
    */
   private URLWebPage createURLWebPage(final String url, final int fetchInterval, final float score) {
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setFetchInterval(fetchInterval);
     page.setScore(score);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);

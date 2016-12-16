@@ -17,13 +17,12 @@
 
 package org.apache.nutch.protocol.file;
 
-// JDK imports
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.MimeUtil;
 
 import java.io.IOException;
@@ -86,7 +85,7 @@ public class FileResponse {
         getHeader(Response.CONTENT_TYPE), headers, this.conf);
   }
 
-  public FileResponse(URL url, WebPage page, File file, Configuration conf)
+  public FileResponse(URL url, WrappedWebPage page, File file, Configuration conf)
       throws FileException, IOException {
 
     this.orig = url.toString();
@@ -141,16 +140,14 @@ public class FileResponse {
       if (!f.equals(f.getCanonicalFile())) {
         // set headers
         // hdrs.put("Location", f.getCanonicalFile().toURI());
-        headers.set(Response.LOCATION, f.getCanonicalFile().toURI().toURL()
-            .toString());
+        headers.set(Response.LOCATION, f.getCanonicalFile().toURI().toURL().toString());
 
         this.code = 300; // http redirect
         return;
       }
-      if (f.lastModified() <= page.getModifiedTime()) {
+      if (f.lastModified() <= page.getModifiedTime().toEpochMilli()) {
         this.code = 304;
-        this.headers.set("Last-Modified",
-            HttpDateFormat.toString(f.lastModified()));
+        this.headers.set("Last-Modified", HttpDateFormat.toString(f.lastModified()));
         return;
       }
 

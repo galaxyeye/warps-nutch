@@ -28,9 +28,11 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import com.google.common.collect.Maps;
@@ -38,9 +40,9 @@ import com.google.common.collect.Sets;
 
 public class DbPageConverter {
 
-  public static Map<String, Object> convertPage(WebPage page, Set<String> fields) {
+  public static Map<String, Object> convertPage(WrappedWebPage page, Set<String> fields) {
     Map<String, Object> result = Maps.newHashMap();
-    for (Field field : filterFields(page, fields)) {
+    for (Field field : filterFields(page.get(), fields)) {
       Object value = convertField(page, field);
       if (value != null) {
         result.put(field.name(), value);
@@ -49,20 +51,20 @@ public class DbPageConverter {
     return result;
   }
 
-  private static Object convertField(WebPage page, Field field) {
+  private static Object convertField(WrappedWebPage page, Field field) {
     int index = field.pos();
     if (index < 0) {
       return null;
     }
 
-    Object value = page.get(index);
+    Object value = page.get().get(index);
     if (value == null) {
       return null;
     }
 
     String fieldName = field.name();
     if (StringUtils.equals(fieldName, "metadata")) {
-      return getSimpleMetadata(page);
+      return getSimpleMetadata(page.get());
     }
     if (StringUtils.equals(fieldName, "protocolStatus")) {
       return ProtocolStatusUtils.toString(page.getProtocolStatus());
@@ -97,7 +99,7 @@ public class DbPageConverter {
     return value;
   }
 
-  private static Set<Field> filterFields(WebPage page, Set<String> queryFields) {
+  private static Set<Field> filterFields(GoraWebPage page, Set<String> queryFields) {
     // DbIterator.LOG.error("queryFields : {}", new Gson().toJson(queryFields));
 
     List<Field> pageFields = page.getSchema().getFields();
@@ -117,7 +119,7 @@ public class DbPageConverter {
     return filteredFields;
   }
 
-  private static Map<String, String> getSimpleMetadata(WebPage page) {
+  private static Map<String, String> getSimpleMetadata(GoraWebPage page) {
     Map<CharSequence, ByteBuffer> metadata = page.getMetadata();
     if (MapUtils.isEmpty(metadata)) {
       return Collections.emptyMap();

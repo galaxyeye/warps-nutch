@@ -19,7 +19,7 @@ package org.apache.nutch.util;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -50,7 +50,7 @@ public class TestEncodingDetector {
     // Content content;
     String encoding;
 
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -61,7 +61,7 @@ public class TestEncodingDetector {
     // no information is available, so it should return default encoding
     assertEquals("windows-1252", encoding.toLowerCase());
 
-    page = WebPage.newBuilder().build();
+    page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -73,7 +73,7 @@ public class TestEncodingDetector {
     encoding = detector.guessEncoding(page, "windows-1252");
     assertEquals("utf-16", encoding.toLowerCase());
 
-    page = WebPage.newBuilder().build();
+    page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -86,11 +86,11 @@ public class TestEncodingDetector {
 
     // enable autodetection
     conf.setInt(EncodingDetector.MIN_CONFIDENCE_KEY, 50);
-    page = WebPage.newBuilder().build();
+    page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
-    page.getMetadata().put(new Utf8(Response.CONTENT_TYPE),
+    page.get().getMetadata().put(new Utf8(Response.CONTENT_TYPE),
         ByteBuffer.wrap("text/plain; charset=UTF-16".getBytes()));
 
     detector = new EncodingDetector(conf);

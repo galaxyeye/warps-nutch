@@ -19,7 +19,7 @@ package org.apache.nutch.microformats.reltag;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
 
@@ -42,12 +42,12 @@ public class TestRelTagIndexingFilter {
     RelTagIndexingFilter filter = new RelTagIndexingFilter();
     filter.setConf(conf);
     assertNotNull(filter);
-
+    
     IndexDocument doc = new IndexDocument();
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     byte[] bytes = new byte[10];
     ByteBuffer bbuf = ByteBuffer.wrap(bytes);
-    page.getMetadata().put(new Utf8(RelTagParser.REL_TAG), bbuf);
+    page.get().getMetadata().put(new Utf8(RelTagParser.REL_TAG), bbuf);
     try {
       filter.filter(doc, "http://nutch.apache.org/", page);
     } catch (Exception e) {

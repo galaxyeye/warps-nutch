@@ -16,27 +16,27 @@
  ******************************************************************************/
 package org.apache.nutch.service.impl.db;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
+import com.google.common.collect.UnmodifiableIterator;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.gora.query.Result;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.service.model.request.DbFilter;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.filter.RegexURLFilter;
 import org.apache.nutch.filter.URLFilterException;
+import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DbPageConverter;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.UnmodifiableIterator;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
 
@@ -44,8 +44,8 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
 
   public static long DefaultDbLimit = 100000L;
 
-  private Result<String, WebPage> result;
-  private WebPage page;
+  private Result<String, GoraWebPage> result;
+  private WrappedWebPage page;
 
   private boolean hasNext;
   private long recordCount = 0;
@@ -55,7 +55,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   private RegexURLFilter urlFilter;
   private int urlRegexNotMatch = 0;
 
-  DbIterator(Result<String, WebPage> res, DbFilter filter, Configuration conf) {
+  DbIterator(Result<String, GoraWebPage> res, DbFilter filter, Configuration conf) {
     this.result = res;
     if (filter.getFields() != null) { this.fields = filter.getFields(); }
     if (filter.getBatchId() != null) { this.batchId = new Utf8(filter.getBatchId()); }
@@ -101,8 +101,8 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return false;
     }
 
-    Utf8 mark = Mark.UPDATEDB_MARK.checkMark(result.get());
-    return batchId == null ? true : shouldProcess(mark, batchId);
+    Utf8 mark = Mark.UPDATEDB_MARK.checkMark(WrappedWebPage.wrap(result.get()));
+    return batchId == null || shouldProcess(mark, batchId);
   }
 
   public boolean hasNext() {
@@ -146,7 +146,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return null;
     }
 
-    page = WebPage.newBuilder(result.get()).build();
+    page = WrappedWebPage.wrap(GoraWebPage.newBuilder(result.get()).build());
 
     try {
       skipNonRelevant();
@@ -164,7 +164,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     return pageAsMap(skey, page);
   }
 
-  private Map<String, Object> pageAsMap(String url, WebPage page) {
+  private Map<String, Object> pageAsMap(String url, WrappedWebPage page) {
     Map<String, Object> result = DbPageConverter.convertPage(page, fields);
 
     if (CollectionUtils.isEmpty(fields) || fields.contains("url")) {

@@ -17,14 +17,14 @@
 package org.apache.nutch.microformats.reltag;
 
 // JDK imports
+
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,35 +128,35 @@ public class RelTagParser implements ParseFilter {
     return this.conf;
   }
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
-    FIELDS.add(WebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   /**
-   * Gets all the fields for a given {@link WebPage} Many datastores need to
+   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WebPage are able to specify what fields they need.
+   * that work on WrappedWebPage are able to specify what fields they need.
    */
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
   @Override
   /**
    * Scan the HTML document looking at possible rel-tags
-   * @param url URL of the {@link WebPage} to be parsed 
-   * @param page {@link WebPage} object relative to the URL
+   * @param url URL of the {@link WrappedWebPage} to be parsed
+   * @param page {@link WrappedWebPage} object relative to the URL
    * @param parse {@link Parse} object holding parse status
    * @param metatags within the {@link NutchDocument}
    * @param doc The {@link NutchDocument} object
    * @return parse the actual {@link Parse} object
    */
-  public Parse filter(String url, WebPage page, Parse parse,
-      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse,
+                      HTMLMetaTags metaTags, DocumentFragment doc) {
     // Trying to find the document's rel-tags
     Parser parser = new Parser(doc);
     Set<String> tags = parser.getRelTags();
@@ -168,7 +168,7 @@ public class RelTagParser implements ParseFilter {
       sb.append("\t");
     }
     ByteBuffer bb = ByteBuffer.wrap(sb.toString().getBytes());
-    page.getMetadata().put(new Utf8(REL_TAG), bb);
+    page.get().getMetadata().put(new Utf8(REL_TAG), bb);
     return parse;
   }
 }

@@ -17,27 +17,28 @@
 package org.apache.nutch.protocol.httpclient;
 
 // JDK imports
+
+import org.apache.avro.util.Utf8;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpVersion;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.metadata.SpellCheckedMetadata;
+import org.apache.nutch.net.protocols.HttpDateFormat;
+import org.apache.nutch.net.protocols.Response;
+import org.apache.nutch.protocol.http.api.HttpBase;
+import org.apache.nutch.storage.gora.GoraWebPage;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
 // HTTP Client imports
-import org.apache.avro.util.Utf8;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpVersion;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.httpclient.HttpException;
-
 // Nutch imports
-import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.net.protocols.HttpDateFormat;
-import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.nutch.storage.WebPage;
 
 /**
  * An HTTP response.
@@ -59,7 +60,7 @@ public class HttpResponse implements Response {
    * @param url
    *          URL to be fetched
    * @param page
-   *          WebPage
+   *          WrappedWebPage
    * @param followRedirects
    *          Whether to follow redirects; follows redirect if and only if this
    *          is true
@@ -67,7 +68,7 @@ public class HttpResponse implements Response {
    * @throws IOException
    *           When an error occurs
    */
-  HttpResponse(Http http, URL url, WebPage page, boolean followRedirects)
+  HttpResponse(Http http, URL url, GoraWebPage page, boolean followRedirects)
       throws IOException {
 
     // Prepare GET method for HTTP request

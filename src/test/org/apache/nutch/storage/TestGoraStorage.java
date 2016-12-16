@@ -21,6 +21,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
 import org.hsqldb.Server;
@@ -71,8 +72,8 @@ public class TestGoraStorage extends AbstractNutchTest {
     readWrite(id, webPageStore);
   }
 
-  private static void readWrite(String id, DataStore<String, WebPage> store) throws Exception {
-    WebPage page = WebPage.newBuilder().build();
+  private static void readWrite(String id, DataStore<String, GoraWebPage> store) throws Exception {
+    GoraWebPage page = GoraWebPage.newBuilder().build();
     int max = 1000;
     for (int i = 0; i < max; i++) {
       // store a page with title
@@ -89,7 +90,7 @@ public class TestGoraStorage extends AbstractNutchTest {
     }
 
     // scan over the rows
-    Result<String, WebPage> result = store.execute(store.newQuery());
+    Result<String, GoraWebPage> result = store.execute(store.newQuery());
     int count = 0;
     while (result.next()) {
       try {
@@ -169,7 +170,7 @@ public class TestGoraStorage extends AbstractNutchTest {
     server.start();
 
     // create the store so that the tests can start right away
-    StorageUtils.createWebStore(conf, String.class, WebPage.class);
+    StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
 
     // create a fixed thread pool
     int numThreads = 4;
@@ -231,8 +232,8 @@ public class TestGoraStorage extends AbstractNutchTest {
     localConf.set("storage.data.store.class",
         "org.apache.gora.memory.store.MemStore");
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(localConf,
-        String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(localConf,
+        String.class, GoraWebPage.class);
     readWrite("single_id", store);
     System.out.println("Done.");
   }

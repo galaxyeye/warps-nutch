@@ -6,8 +6,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.oro.text.regex.*;
@@ -39,16 +39,16 @@ public class MoreIndexingFilter implements IndexingFilter {
   /** Get the MimeTypes resolver instance. */
   private MimeUtil MIME;
 
-  private static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.HEADERS);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
   }
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
     addTime(doc, page, url);
     addLength(doc, page, url);
     addType(doc, page, url);
@@ -58,7 +58,7 @@ public class MoreIndexingFilter implements IndexingFilter {
 
   // Add time related meta info. Add last-modified if present. Index date as
   // last-modified, or, if that's not present, use fetch time.
-  private IndexDocument addTime(IndexDocument doc, WebPage page, String url) {
+  private IndexDocument addTime(IndexDocument doc, WrappedWebPage page, String url) {
     Instant time = Instant.EPOCH;
 
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
@@ -67,7 +67,7 @@ public class MoreIndexingFilter implements IndexingFilter {
     }
 
     if (time.toEpochMilli() > 0) { // if no last-modified
-      time = Instant.ofEpochMilli(page.getModifiedTime()); // use Modified time
+      time = page.getModifiedTime(); // use Modified time
     }
 
     // un-stored, indexed and un-tokenized
@@ -80,7 +80,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   // Add Content-Length
-  private IndexDocument addLength(IndexDocument doc, WebPage page, String url) {
+  private IndexDocument addLength(IndexDocument doc, WrappedWebPage page, String url) {
     CharSequence contentLength = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_LENGTH));
     if (contentLength != null) {
       // NUTCH-1010 ContentLength not trimmed
@@ -111,7 +111,7 @@ public class MoreIndexingFilter implements IndexingFilter {
    * @param url
    * @return
    */
-  private IndexDocument addType(IndexDocument doc, WebPage page, String url) {
+  private IndexDocument addType(IndexDocument doc, WrappedWebPage page, String url) {
     String mimeType = null;
     CharSequence contentType = page.getContentType();
     if (contentType == null) {
@@ -188,7 +188,7 @@ public class MoreIndexingFilter implements IndexingFilter {
     }
   }
 
-  private IndexDocument resetTitle(IndexDocument doc, WebPage page, String url) {
+  private IndexDocument resetTitle(IndexDocument doc, WrappedWebPage page, String url) {
     CharSequence contentDisposition = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_DISPOSITION));
     if (contentDisposition == null) {
       return doc;
@@ -220,7 +220,7 @@ public class MoreIndexingFilter implements IndexingFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

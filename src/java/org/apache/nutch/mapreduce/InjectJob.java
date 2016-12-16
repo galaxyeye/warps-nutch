@@ -31,12 +31,12 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class InjectJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(InjectJob.class);
 
-  public static class UrlMapper extends Mapper<LongWritable, Text, String, WebPage> {
+  public static class UrlMapper extends Mapper<LongWritable, Text, String, GoraWebPage> {
     private Configuration conf;
 
     private SeedBuilder seedBuiler;
@@ -149,10 +149,10 @@ public class InjectJob extends NutchJob implements Tool {
     FileInputFormat.addInputPath(currentJob, input);
     currentJob.setMapperClass(UrlMapper.class);
     currentJob.setMapOutputKeyClass(String.class);
-    currentJob.setMapOutputValueClass(WebPage.class);
+    currentJob.setMapOutputValueClass(WrappedWebPage.class);
     currentJob.setOutputFormatClass(GoraOutputFormat.class);
 
-    DataStore<String, WebPage> store = StorageUtils.createWebStore(currentJob.getConfiguration(), String.class, WebPage.class);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(currentJob.getConfiguration(), String.class, GoraWebPage.class);
     GoraOutputFormat.setOutput(currentJob, store, true);
 
     currentJob.setReducerClass(Reducer.class);

@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 
 import java.util.Collection;
@@ -47,12 +47,12 @@ public class BasicIndexingFilter implements IndexingFilter {
 
   private Configuration conf;
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.TITLE);
-    FIELDS.add(WebPage.Field.TEXT);
-    FIELDS.add(WebPage.Field.CONTENT);
+    FIELDS.add(GoraWebPage.Field.TITLE);
+    FIELDS.add(GoraWebPage.Field.TEXT);
+    FIELDS.add(GoraWebPage.Field.CONTENT);
   }
 
   /**
@@ -65,10 +65,10 @@ public class BasicIndexingFilter implements IndexingFilter {
    * @param url
    *          URL to be filtered for anchor text
    * @param page
-   *          {@link WebPage} object relative to the URL
+   *          {@link WrappedWebPage} object relative to the URL
    * @return filtered NutchDocument
    * */
-  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
 
     addDocFields(doc, url, page);
 
@@ -81,14 +81,14 @@ public class BasicIndexingFilter implements IndexingFilter {
     return doc;
   }
 
-  private void addDocFields(IndexDocument doc, String url, WebPage page) {
+  private void addDocFields(IndexDocument doc, String url, WrappedWebPage page) {
     page.getProgramVariables().entrySet().stream()
         .filter(entry -> entry.getValue().toString().length() < MAX_CONTENT_LENGTH)
         .forEach(entry -> doc.add(entry.getKey(), entry.getValue()));
   }
 
-  private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(DOC_FIELD_PAGE_CATEGORY, WrappedWebPage.wrap(page).getPageCategory());
+  private void addPageCategory(IndexDocument doc, String url, WrappedWebPage page) {
+    doc.add(DOC_FIELD_PAGE_CATEGORY, page.getPageCategory());
   }
 
   /**
@@ -111,12 +111,12 @@ public class BasicIndexingFilter implements IndexingFilter {
   public Configuration getConf() { return this.conf; }
 
   /**
-   * Gets all the fields for a given {@link WebPage} Many datastores need to
+   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WebPage are able to specify what fields they need.
+   * that work on WrappedWebPage are able to specify what fields they need.
    */
   @Override
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 

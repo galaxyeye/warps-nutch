@@ -20,8 +20,7 @@ package org.creativecommons.nutch;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.WebPage;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Ignore;
@@ -68,7 +67,7 @@ public class TestCCParseFilter {
     byte[] bytes = out.toByteArray();
     Configuration conf = NutchConfiguration.create();
 
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8(url));
     page.setContent(ByteBuffer.wrap(bytes));
     MimeUtil mimeutil = new MimeUtil(conf);
@@ -77,11 +76,11 @@ public class TestCCParseFilter {
 
     new ParseUtil(conf).parse(url, page);
 
-    ByteBuffer bb = page.getMetadata().get(new Utf8("License-Url"));
-    assertEquals(license, Bytes.toString(bb.array()));
-    bb = page.getMetadata().get(new Utf8("License-Location"));
-    assertEquals(location, Bytes.toString(bb.array()));
-    bb = page.getMetadata().get(new Utf8("Work-Type"));
-    assertEquals(type, Bytes.toString(bb.array()));
+    String bb = page.getMetadata().get("License-Url");
+    assertEquals(license, bb);
+    bb = page.getMetadata().get("License-Location");
+    assertEquals(location, bb);
+    bb = page.getMetadata().get("Work-Type");
+    assertEquals(type, bb);
   }
 }

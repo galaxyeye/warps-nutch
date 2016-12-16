@@ -18,8 +18,8 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configurable;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -158,5 +158,5 @@ public interface FetchSchedule extends Configurable {
    */
   void forceRefetch(String url, WrappedWebPage row, boolean asap);
 
-  Collection<WebPage.Field> getFields();
+  Collection<GoraWebPage.Field> getFields();
 }

@@ -24,9 +24,8 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.w3c.dom.DocumentFragment;
 
 import java.nio.ByteBuffer;
@@ -66,7 +65,7 @@ public class MetaTagsParser implements ParseFilter {
     return this.conf;
   }
 
-  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WrappedWebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
     // temporary map: cannot concurrently iterate over and modify page metadata
     Map<CharSequence, ByteBuffer> metadata = new HashMap<>();
 
@@ -74,12 +73,12 @@ public class MetaTagsParser implements ParseFilter {
     // might have stored the values there already.
     // Values are then additionally stored with the prefixed key.
     page.getMetadata().keySet().stream().map(CharSequence::toString).forEach(
-        key -> addIndexedMetatags(metadata, key, WrappedWebPage.wrap(page).getMetadata(key))
+        key -> addIndexedMetatags(metadata, key, page.getMetadata(key))
     );
 
     // add temporary metadata to page metadata
     for (Entry<CharSequence, ByteBuffer> entry : metadata.entrySet()) {
-      page.getMetadata().put(entry.getKey(), entry.getValue());
+      page.get().getMetadata().put(entry.getKey(), entry.getValue());
     }
 
     Metadata generalMetaTags = metaTags.getGeneralTags();
@@ -92,7 +91,7 @@ public class MetaTagsParser implements ParseFilter {
         }
         sb.append(value);
       }
-      addIndexedMetatags(page.getMetadata(), tagName, sb.toString());
+      addIndexedMetatags(page.get().getMetadata(), tagName, sb.toString());
     }
 
     Properties httpequiv = metaTags.getHttpEquivTags();
@@ -100,7 +99,7 @@ public class MetaTagsParser implements ParseFilter {
     while (tagNames.hasMoreElements()) {
       String name = (String) tagNames.nextElement();
       String value = httpequiv.getProperty(name);
-      addIndexedMetatags(page.getMetadata(), name, value);
+      addIndexedMetatags(page.get().getMetadata(), name, value);
     }
 
     return parse;
@@ -123,7 +122,7 @@ public class MetaTagsParser implements ParseFilter {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return null;
   }
 

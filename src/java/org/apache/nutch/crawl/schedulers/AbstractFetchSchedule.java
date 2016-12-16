@@ -21,8 +21,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +44,12 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   protected Duration defaultInterval;
   protected Duration maxInterval;
 
-  private static final Set<WebPage.Field> FIELDS = new HashSet<>();
+  private static final Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.FETCH_TIME);
-    FIELDS.add(WebPage.Field.RETRIES_SINCE_FETCH);
-    FIELDS.add(WebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
+    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
   }
 
   public AbstractFetchSchedule() {
@@ -237,7 +237,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
     }
   }
 
-  public Set<WebPage.Field> getFields() {
+  public Set<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 }

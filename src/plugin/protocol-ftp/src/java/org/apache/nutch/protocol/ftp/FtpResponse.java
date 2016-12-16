@@ -28,7 +28,7 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,7 +79,7 @@ public class FtpResponse {
         getHeader(Response.CONTENT_TYPE), headers, this.conf);
   }
 
-  public FtpResponse(URL url, WebPage page, Ftp ftp, Configuration conf)
+  public FtpResponse(URL url, GoraWebPage page, Ftp ftp, Configuration conf)
       throws FtpException, IOException {
 
     this.orig = url.toString();

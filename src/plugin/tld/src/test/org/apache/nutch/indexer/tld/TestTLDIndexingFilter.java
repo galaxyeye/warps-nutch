@@ -17,7 +17,7 @@
 package org.apache.nutch.indexer.tld;
 
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
 
@@ -89,7 +89,7 @@ public class TestTLDIndexingFilter {
     urls.put("ftp://w.info.nf/", "info.nf");
     urls.put("file://x.aa.no", "aa.no");
 
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
 
     TLDIndexingFilter filter = new TLDIndexingFilter();
     assertNotNull(filter);

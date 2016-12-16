@@ -7,7 +7,11 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.*;
+import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.ParseStatus;
+import org.apache.nutch.storage.StorageUtils;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 
@@ -21,11 +25,11 @@ import static org.apache.nutch.metadata.Nutch.*;
  * Created by vincent on 16-7-30.
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
-public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocument> {
+public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexDocument> {
 
   public enum Counter { unmatchStatus, notUpdated, alreadyIndexed, pageTruncated, parseFailed, indexFailed, shortContent, hasPublishTime, hasAuthor };
 
-  private DataStore<String, WebPage> storage;
+  private DataStore<String, GoraWebPage> storage;
   private ParseUtil parseUtil;
   private boolean skipTruncated;
 
@@ -53,7 +57,7 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
     skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
 
     try {
-      storage = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+      storage = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (ClassNotFoundException e) {
       throw new IOException(e);
     }
@@ -76,7 +80,9 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
   }
 
   @Override
-  public void map(String reverseUrl, WebPage page, Context context) throws IOException, InterruptedException {
+  public void map(String reverseUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
+    WrappedWebPage page = WrappedWebPage.wrap(row);
+
     try {
       getCounter().increase(rows);
 
@@ -163,9 +169,9 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
       // LOG.debug(TableUtil.toString(page.getText()));
 
       // Multiple output
-      WrappedWebPage.wrap(page).putIndexTimeHistory(Instant.now());
+      page.putIndexTimeHistory(Instant.now());
 
-      storage.put(reverseUrl, page);
+      storage.put(reverseUrl, page.get());
       context.write(reverseUrl, doc);
 
       getCounter().updateAffectedRows(doc.getUrl());

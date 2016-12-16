@@ -22,8 +22,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -43,7 +43,7 @@ import static org.apache.nutch.metadata.Nutch.*;
  * The #reduce() method write a random integer to all generated URLs. This
  * random number is then used by {@link FetchMapper}.
  */
-public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String, WebPage> {
+public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, String, GoraWebPage> {
 
   public static final Logger LOG = GenerateJob.LOG;
 
@@ -94,7 +94,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
   }
 
   @Override
-  protected void reduce(SelectorEntry key, Iterable<WebPage> values, Context context) throws IOException, InterruptedException {
+  protected void reduce(SelectorEntry key, Iterable<GoraWebPage> values, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     if (LOG.isTraceEnabled()) {
@@ -109,7 +109,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       return;
     }
 
-    for (WebPage value : values) {
+    for (GoraWebPage value : values) {
       WrappedWebPage page = WrappedWebPage.wrap(value);
       try {
         if (count >= limit) {
@@ -152,8 +152,8 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     page.setGenerateTime(startTime);
     page.setFetchPriority(page.calculateFetchPriority());
 
-    Mark.INJECT_MARK.removeMarkIfExist(page.get());
-    Mark.GENERATE_MARK.putMark(page.get(), new Utf8(batchId));
+    Mark.INJECT_MARK.removeMarkIfExist(page);
+    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
 
     return page;
   }

@@ -22,7 +22,7 @@ import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
@@ -183,7 +183,7 @@ public class TestURLPartitioner {
     int partitionFromRef = refPartitioner.getPartition("http://www.example.org/", numReduceTasks);
     // init selector entry (score shouldn't matter)
     SelectorEntry selectorEntry = new SelectorEntry("http://www.example.org/", 1337);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     int partitionFromSig = sigPartitioner.getPartition(selectorEntry, page, numReduceTasks);
 
     assertEquals("partitions should be same", partitionFromRef, partitionFromSig);
@@ -212,7 +212,7 @@ public class TestURLPartitioner {
 
     int partitionFromRef = refPartitioner.getPartition("http://www.example.org/", numReduceTasks);
     IntWritable intWritable = new IntWritable(1337); // doesn't matter
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     String key = TableUtil.reverseUrl("http://www.example.org/");
     FetchEntry fetchEntry = new FetchEntry(conf, key, page);
     int partitionFromSig = sigPartitioner.getPartition(intWritable, fetchEntry, numReduceTasks);

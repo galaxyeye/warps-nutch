@@ -16,8 +16,6 @@
  */
 package org.apache.nutch.protocol.http.api;
 
-// JDK imports
-
 import crawlercommons.robots.BaseRobotRules;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.math.NumberUtils;
@@ -32,7 +30,7 @@ import org.apache.nutch.net.proxy.ProxyPool;
 import org.apache.nutch.net.proxy.ProxyPoolFactory;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.DeflateUtils;
 import org.apache.nutch.util.GZIPUtils;
 import org.apache.nutch.util.MimeUtil;
@@ -50,8 +48,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-// crawler-commons imports
 
 public abstract class HttpBase implements Protocol {
 
@@ -237,7 +233,7 @@ public abstract class HttpBase implements Protocol {
     return this.conf;
   }
 
-  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
+  public ProtocolOutput getProtocolOutput(String url, WrappedWebPage page) {
     try {
       URL u = new URL(url);
       Response response = null; // make a request
@@ -286,7 +282,7 @@ public abstract class HttpBase implements Protocol {
           elapsedTime = NumberUtils.toInt(response.getHeader("Q-Response-Time"), -1);
         }
 
-        page.getMetadata().put(RESPONSE_TIME, ByteBuffer.wrap(Bytes.toBytes(elapsedTime)));
+        page.get().getMetadata().put(RESPONSE_TIME, ByteBuffer.wrap(Bytes.toBytes(elapsedTime)));
       }
 
       int code = response.getCode();
@@ -529,7 +525,7 @@ public abstract class HttpBase implements Protocol {
         url = args[i];
     }
 
-    ProtocolOutput out = http.getProtocolOutput(url, WebPage.newBuilder().build());
+    ProtocolOutput out = http.getProtocolOutput(url, WrappedWebPage.newWebPage());
     Content content = out.getContent();
 
     System.out.println("Status: " + out.getStatus());
@@ -549,11 +545,11 @@ public abstract class HttpBase implements Protocol {
     
   }
 
-  protected abstract Response getResponse(URL url, WebPage page,
+  protected abstract Response getResponse(URL url, WrappedWebPage page,
       boolean followRedirects) throws ProtocolException, IOException, NoProxyException;
 
   @Override
-  public BaseRobotRules getRobotRules(String url, WebPage page) {
+  public BaseRobotRules getRobotRules(String url, WrappedWebPage page) {
     return robots.getRobotRulesSet(this, url);
   }
 }

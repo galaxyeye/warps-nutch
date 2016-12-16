@@ -29,8 +29,8 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ import java.util.List;
 
 import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
 
-public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, String, WebPage> {
+public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, String, GoraWebPage> {
 
   public static final String CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
 
@@ -56,7 +56,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
   private ScoringFilters scoringFilters;
   private List<ScoreDatum> inlinkedScoreData = new ArrayList<>();
   private int maxLinks;
-  public DataStore<String, WebPage> datastore;
+  public DataStore<String, GoraWebPage> datastore;
 
   @Override
   protected void setup(Context context) throws IOException,
@@ -69,7 +69,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     scoringFilters = new ScoringFilters(conf);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     try {
-      datastore = StorageUtils.createWebStore(conf, String.class, WebPage.class);
+      datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     }
     catch (ClassNotFoundException e) {
       throw new IOException(e);
@@ -85,15 +85,15 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
   protected void reduce(UrlWithScore key, Iterable<NutchWritable> values, Context context) throws IOException, InterruptedException {
     String keyUrl = key.getReversedUrl();
 
-    WebPage page = null;
+    WrappedWebPage page = null;
     // Initialize old_page for checking if the outlink is already in the datastore
-    WebPage old_page = null;
+    WrappedWebPage old_page = null;
     inlinkedScoreData.clear();
 
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = ((WebPageWritable) val).getWebPage();
+        page = WrappedWebPage.wrap(((WebPageWritable) val).getWebPage());
       } else {
         inlinkedScoreData.add((ScoreDatum) val);
         if (inlinkedScoreData.size() >= maxLinks) {
@@ -114,7 +114,8 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     }
 
     //check if page is already in the db
-    if(page == null && (old_page = datastore.get(keyUrl)) != null) {
+    old_page = WrappedWebPage.wrap(datastore.get(keyUrl));
+    if(page == null && old_page.get() != null) {
       //if we return here inlinks will not be updated
       page=old_page;
     }
@@ -122,12 +123,11 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
       if (!additionsAllowed) {
         return;
       }
-      page = WebPage.newBuilder().build();
-      WrappedWebPage wPage = new WrappedWebPage(page);
-      schedule.initializeSchedule(url, wPage);
+      page = WrappedWebPage.newWebPage();
+      schedule.initializeSchedule(url, page);
       page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
       try {
-        scoringFilters.initialScore(url, wPage);
+        scoringFilters.initialScore(url, page);
       } catch (ScoringFilterException e) {
         page.setScore(0.0f);
       }
@@ -152,15 +152,13 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
             }
           }
 
-          WrappedWebPage wPage = new WrappedWebPage(page);
+          Instant prevFetchTime = page.getPrevFetchTime();
+          Instant fetchTime = page.getFetchTime();
 
-          Instant prevFetchTime = Instant.ofEpochMilli(page.getPrevFetchTime());
-          Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
+          Instant prevModifiedTime = page.getPrevModifiedTime();
+          Instant modifiedTime = page.getModifiedTime();
 
-          Instant prevModifiedTime = Instant.ofEpochMilli(page.getPrevModifiedTime());
-          Instant modifiedTime = Instant.ofEpochMilli(page.getModifiedTime());
-
-          Instant latestModifiedTime = wPage.getHeaderLastModifiedTime(modifiedTime);
+          Instant latestModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
           if (latestModifiedTime.isAfter(modifiedTime)) {
             modifiedTime = latestModifiedTime;
             prevModifiedTime = modifiedTime;
@@ -169,14 +167,12 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
             LOG.trace("Bad last modified time : {} -> {}", modifiedTime, page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED)));
           }
 
-          schedule.setFetchSchedule(url, wPage, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
+          schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-          if (maxInterval < page.getFetchInterval()) schedule.forceRefetch(url, wPage, false);
+          if (maxInterval < page.getFetchInterval().getSeconds()) schedule.forceRefetch(url, page, false);
           break;
         case CrawlStatus.STATUS_RETRY:
-          wPage = new WrappedWebPage(page);
-
-          schedule.setPageRetrySchedule(url, wPage, Instant.EPOCH, wPage.getPrevModifiedTime(), wPage.getFetchTime());
+          schedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
           if (page.getRetriesSinceFetch() < retryMax) {
             page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
           } else {
@@ -184,10 +180,8 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
           }
           break;
         case CrawlStatus.STATUS_GONE:
-          wPage = new WrappedWebPage(page);
-
-          schedule.setPageGoneSchedule(url, wPage, Instant.EPOCH, wPage.getPrevModifiedTime(),
-              wPage.getFetchTime());
+          schedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(),
+              page.getFetchTime());
           break;
       }
     }
@@ -223,7 +217,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     }
 
     try {
-      scoringFilters.updateScore(url, WrappedWebPage.wrap(page), inlinkedScoreData);
+      scoringFilters.updateScore(url, page, inlinkedScoreData);
     } catch (ScoringFilterException e) {
       LOG.warn("Scoring filters failed with exception "
           + StringUtils.stringifyException(e));
@@ -232,8 +226,8 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     // clear markers
     // But only delete when they exist. This is much faster for the underlying
     // store. The markers are on the input anyway.
-    if (page.getMetadata().get(REDIRECT_DISCOVERED) != null) {
-      page.getMetadata().put(REDIRECT_DISCOVERED, null);
+    if (page.get().getMetadata().get(REDIRECT_DISCOVERED) != null) {
+      page.get().getMetadata().put(REDIRECT_DISCOVERED, null);
     }
     Mark.GENERATE_MARK.removeMarkIfExist(page);
     Mark.FETCH_MARK.removeMarkIfExist(page);
@@ -243,6 +237,6 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
       Mark.PARSE_MARK.removeMark(page);
     }
 
-    context.write(keyUrl, page);
+    context.write(keyUrl, page.get());
   }
 }

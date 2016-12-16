@@ -19,13 +19,13 @@ package org.apache.nutch.parse.tika;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.WebPage.Field;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
@@ -58,11 +58,11 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
 
   public static final Logger LOG = LoggerFactory.getLogger(TikaParser.class);
 
-  private static Collection<WebPage.Field> FIELDS = new HashSet<>();
+  private static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(WebPage.Field.BASE_URL);
-    FIELDS.add(WebPage.Field.CONTENT_TYPE);
+    FIELDS.add(GoraWebPage.Field.BASE_URL);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
   }
 
   private Configuration conf;
@@ -74,7 +74,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
   private HtmlMapper HTMLMapper;
 
   @Override
-  public Parse getParse(String url, WebPage page) {
+  public Parse getParse(String url, WrappedWebPage page) {
 
     String baseUrl = TableUtil.toString(page.getBaseUrl());
     URL base;
@@ -166,7 +166,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
       if (tikaMDName.equalsIgnoreCase(TikaCoreProperties.TITLE.toString()))
         continue;
       // TODO what if multivalued?
-      page.getMetadata().put(new Utf8(tikaMDName), ByteBuffer.wrap(Bytes.toBytes(tikamd.get(tikaMDName))));
+      page.get().getMetadata().put(new Utf8(tikaMDName), ByteBuffer.wrap(Bytes.toBytes(tikamd.get(tikaMDName))));
     }
 
     // no outlinks? try OutlinkExtractor e.g works for mime types where no
@@ -187,7 +187,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     parse = htmlParseFilters.filter(url, page, parse, metaTags, root);
 
     if (metaTags.getNoCache()) { // not okay to cache
-      page.getMetadata().put(new Utf8(Nutch.CACHING_FORBIDDEN_KEY), ByteBuffer.wrap(Bytes.toBytes(cachingPolicy)));
+      page.get().getMetadata().put(new Utf8(Nutch.CACHING_FORBIDDEN_KEY), ByteBuffer.wrap(Bytes.toBytes(cachingPolicy)));
     }
 
     return parse;
@@ -239,7 +239,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
   }
 
   @Override
-  public Collection<Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
@@ -255,7 +255,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     Configuration conf = NutchConfiguration.create();
     // TikaParser parser = new TikaParser();
     // parser.setConf(conf);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
     page.setBaseUrl(new Utf8(url));
     page.setContent(ByteBuffer.wrap(bytes));
     MimeUtil mimeutil = new MimeUtil(conf);

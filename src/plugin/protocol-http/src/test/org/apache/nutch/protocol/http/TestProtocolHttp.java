@@ -17,21 +17,21 @@
 
 package org.apache.nutch.protocol.http;
 
-import java.net.URL;
-
-import org.junit.After;
-import org.junit.Test;
-import static org.junit.Assert.*;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.junit.After;
+import org.junit.Test;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
+
+import java.net.URL;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test cases for protocol-http
@@ -121,7 +121,7 @@ public class TestProtocolHttp {
    */
   private void fetchPage(String page, int expectedCode) throws Exception {
     URL url = new URL("http", "127.0.0.1", port, page);
-    WebPage p = WebPage.newBuilder().build();
+    WrappedWebPage p = WrappedWebPage.newWebPage();
     Response response = http.getResponse(url, p, true);
     ProtocolOutput out = http.getProtocolOutput(url.toString(), p);
     Content content = out.getContent();

@@ -18,13 +18,14 @@
 package org.apache.nutch.crawl;
 
 // Commons Logging imports
-import java.util.Collection;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 
 /**
  * Factory class, which instantiates a Signature implementation according to the
@@ -34,8 +35,7 @@ import org.slf4j.LoggerFactory;
  * @author Andrzej Bialecki &lt;ab@getopt.org&gt;
  */
 public class SignatureFactory {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(SignatureFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SignatureFactory.class);
 
   private SignatureFactory() {
   } // no public ctor
@@ -59,7 +59,7 @@ public class SignatureFactory {
     return impl;
   }
 
-  public static Collection<WebPage.Field> getFields(Configuration conf) {
+  public static Collection<GoraWebPage.Field> getFields(Configuration conf) {
     Signature impl = getSignature(conf);
     return impl.getFields();
   }

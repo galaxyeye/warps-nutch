@@ -4,8 +4,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
@@ -37,7 +37,7 @@ import static org.apache.nutch.metadata.Nutch.*;
  * from other hosts as well.
  * </p>
  */
-public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, FetchEntry> {
+public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, FetchEntry> {
 
   public enum Counter { 
     notGenerated, alreadyFetched, hostsUnreachable,
@@ -93,7 +93,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
    * and then filtered by mapper, which is a scan, the time complex is O(N)
    * */
   @Override
-  protected void map(String key, WebPage row, Context context) throws IOException, InterruptedException {
+  protected void map(String key, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(key);
@@ -104,7 +104,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
       return;
     }
 
-    if (!Mark.GENERATE_MARK.hasMark(page.get())) {
+    if (!Mark.GENERATE_MARK.hasMark(page)) {
       getCounter().increase(Counter.notGenerated);
       return;
     }
@@ -116,7 +116,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
      * NOTE : Nutch removes marks only in DbUpdatejob, include INJECT_MARK, GENERATE_MARK, FETCH_MARK, PARSE_MARK,
      * so a page row can have multiple marks.
      * */
-    if (resume && Mark.FETCH_MARK.hasMark(page.get())) {
+    if (resume && Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.alreadyFetched);
       return;
     }
@@ -124,7 +124,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
     // Higher priority, comes first
     int shuffleOrder = random.nextInt(65536) - 65536 * priority;
-    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page.get()));
+    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page));
     updateStatus(url, page);
 
     if (limit > 0 && ++count > limit) {
@@ -157,7 +157,7 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page.get())) {
+    if (Mark.INJECT_MARK.hasMark(page)) {
       getCounter().increase(Counter.rowsInjected);
     }
 

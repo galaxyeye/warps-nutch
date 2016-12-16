@@ -21,11 +21,11 @@ import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.nutch.mapreduce.GenerateJob;
-import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.mapreduce.GenerateJob;
+import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -103,12 +103,12 @@ public class URLPartitioner implements Configurable {
     return (hashCode & Integer.MAX_VALUE) % numReduceTasks;
   }
 
-  public static class SelectorEntryPartitioner extends Partitioner<SelectorEntry, WebPage> implements Configurable {
+  public static class SelectorEntryPartitioner extends Partitioner<SelectorEntry, WrappedWebPage> implements Configurable {
     private URLPartitioner partitioner = new URLPartitioner();
     private Configuration conf;
 
     @Override
-    public int getPartition(SelectorEntry selectorEntry, WebPage page, int numReduces) {
+    public int getPartition(SelectorEntry selectorEntry, WrappedWebPage page, int numReduces) {
       return partitioner.getPartition(selectorEntry.getUrl(), numReduces);
     }
 

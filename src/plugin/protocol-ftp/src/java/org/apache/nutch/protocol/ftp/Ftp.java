@@ -18,14 +18,13 @@
 package org.apache.nutch.protocol.ftp;
 
 import crawlercommons.robots.BaseRobotRules;
-
 import org.apache.commons.net.ftp.FTPFileEntryParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +45,11 @@ public class Ftp implements Protocol {
 
   public static final Logger LOG = LoggerFactory.getLogger(Ftp.class);
 
-  private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
 
   static {
-    FIELDS.add(WebPage.Field.MODIFIED_TIME);
-    FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   static final int BUFFER_SIZE = 16384; // 16*1024 = 16384
@@ -120,7 +119,7 @@ public class Ftp implements Protocol {
    * 
    * @return {@link ProtocolOutput} object for the url
    */
-  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
+  public ProtocolOutput getProtocolOutput(String url, GoraWebPage page) {
     try {
       URL u = new URL(url);
 
@@ -237,7 +236,7 @@ public class Ftp implements Protocol {
       ftp.setMaxContentLength(maxContentLength);
 
     Content content = ftp.getProtocolOutput(urlString,
-        WebPage.newBuilder().build()).getContent();
+        GoraWebPage.newBuilder().build()).getContent();
 
     System.err.println("Content-Type: " + content.getContentType());
     System.err.println("Content-Length: "
@@ -251,14 +250,14 @@ public class Ftp implements Protocol {
     ftp = null;
   }
 
-  public Collection<WebPage.Field> getFields() {
+  public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
 
   /**
    * Get the robots rules for a given url
    */
-  public BaseRobotRules getRobotRules(String url, WebPage page) {
+  public BaseRobotRules getRobotRules(String url, GoraWebPage page) {
     return robots.getRobotRulesSet(this, url);
   }
 
