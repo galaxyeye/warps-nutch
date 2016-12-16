@@ -40,7 +40,7 @@
 
   <property>
     <name>db.fetch.schedule.class</name>
-    <value>org.apache.nutch.crawl.schedulers.SeedFirstFetchSchedule</value>
+    <value>org.apache.nutch.crawl.schedulers.NewsFetchSchedule</value>
     <description>The implementation of fetch schedule. DefaultFetchSchedule simply
       adds the original fetchInterval to the last fetch time, regardless of
       page changes.

@@ -25,13 +25,8 @@ import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
-
-import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
-import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
-import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -139,110 +134,4 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     page.setModifiedTime(modifiedTime.toEpochMilli());
   }
 
-  public static void main(String[] args) throws Exception {
-    FetchSchedule fs = new SeedFirstFetchSchedule();
-    fs.setConf(NutchConfiguration.create());
-
-    final Duration timeDelta = Duration.ofHours(2); // 2 hours
-    // we trigger the update of the page every 30 days
-    final Duration update = Duration.ofDays(1);
-
-    // we start the time at 0, for simplicity
-    Instant curTime = TCP_IP_STANDARDIZED_TIME;
-    Instant lastModified = TCP_IP_STANDARDIZED_TIME;
-
-    boolean changed = true;
-    int miss = 0;
-    int totalMiss = 0;
-    int maxMiss = 0;
-    int fetchCnt = 0;
-    int changeCnt = 0;
-    // initial fetchInterval is 10 days
-    // WebPage p = new WebPage(1, 3600 * 24 * 30, 1.0f);
-    WebPage p = WebPage.newBuilder().build();
-    p.setStatus(0);
-    p.setFetchInterval((int) Duration.ofDays(1).getSeconds()); // 3600 * 24 * 30
-    p.setScore(1.0f);
-
-    p.setFetchTime(TCP_IP_STANDARDIZED_TIME.toEpochMilli());
-    TableUtil.putMetadata(p, META_IS_SEED, YES_STRING);
-
-    LOG.info(p.toString());
-    // let's move the timeline a couple of deltas
-    for (int i = 0; i < 1000; i++) {
-      if (lastModified.plus(update).isBefore(curTime)) {
-        // System.out.println("i=" + i + ", lastModified=" + lastModified +
-        // ", update=" + update + ", curTime=" + curTime);
-        changed = true;
-        changeCnt++;
-        lastModified = curTime;
-      }
-
-      LOG.info("");
-      LOG.info(i + ". " + (changed ? "[changed] " : "[no-change] ")
-          + "Last Modified : " + getRoundNumber(p, p.getModifiedTime(), timeDelta) + ", "
-          + "Next fetch : " + getRoundNumber(p, p.getFetchTime(), timeDelta) + ", "
-          + "Interval : " + getRound(p, timeDelta) + " round, "
-          + "Score : " + p.getScore() + ", "
-          + "Missed " + miss);
-
-      if (p.getFetchTime() <= curTime.toEpochMilli()) {
-        fetchCnt++;
-        fs.setFetchSchedule("http://www.example.com", p,
-            Instant.ofEpochMilli(p.getFetchTime()),
-            Instant.ofEpochMilli(p.getModifiedTime()),
-            curTime,
-            lastModified,
-            changed ? FetchSchedule.STATUS_MODIFIED : FetchSchedule.STATUS_NOTMODIFIED);
-
-        LOG.info("\tFetched & Adjusted: " + ", "
-            + "Last Modified : " + getRoundNumber(p, p.getModifiedTime(), timeDelta) + ", "
-            + "Next fetch : " + getRoundNumber(p, p.getFetchTime(), timeDelta) + ", "
-            + "Score : " + p.getScore() + ", "
-            + "Interval : " + getRound(p, timeDelta) + " round");
-
-        TableUtil.updateReferredPublishTime(p, curTime);
-        TableUtil.increaseFetchCount(p);
-        TableUtil.increaseReferredArticles(p, 1);
-        TableUtil.increaseReferredChars(p, 2500);
-        setScore(p);
-
-        if (!changed) miss++;
-        if (miss > maxMiss) maxMiss = miss;
-
-        changed = false;
-        totalMiss += miss;
-        miss = 0;
-      }
-
-      if (changed) {
-        miss++;
-      }
-
-      // move time line
-      curTime = curTime.plus(timeDelta);
-    }
-    LOG.info("Total missed: " + totalMiss + ", max miss: " + maxMiss);
-    LOG.info("Page changed " + changeCnt + " times, fetched " + fetchCnt + " times.");
-  }
-
-  private static long getRoundNumber(WebPage p, long time, Duration timeDelta) {
-    return (time - TCP_IP_STANDARDIZED_TIME.toEpochMilli()) / timeDelta.toMillis();
-  }
-
-  private static String getRound(WebPage p, Duration timeDelta) {
-    final DecimalFormat df = new DecimalFormat("0.0");
-
-    return df.format(1.0 * TableUtil.getFetchInterval(p).toMillis()  / timeDelta.toMillis());
-  }
-
-  private static void setScore(WebPage p) {
-    float f1 = 1.0f;
-    float f2 = 2.0f;
-
-    long ra = TableUtil.getReferredArticles(p);
-    long rc = TableUtil.getReferredChars(p);
-
-    p.setScore(f1 * ra + f2 * ((rc - 1000) / 1000));
-  }
 }

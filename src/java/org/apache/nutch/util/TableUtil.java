@@ -252,6 +252,9 @@ public class TableUtil {
   }
 
   public static boolean veryLikeDetailPage(WebPage page) {
+    if (page.getBaseUrl() == null) {
+      return false;
+    }
     boolean detail = CrawlFilter.sniffPageCategoryByUrlPattern(page.getBaseUrl()).isDetail();
     return detail || isDetailPage(page, 0.85f);
   }

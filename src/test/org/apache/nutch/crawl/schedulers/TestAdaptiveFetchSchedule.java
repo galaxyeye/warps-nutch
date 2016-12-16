@@ -16,7 +16,6 @@
  */
 package org.apache.nutch.crawl.schedulers;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
@@ -28,11 +27,13 @@ import org.junit.Test;
 import java.time.Duration;
 import java.time.Instant;
 
+import static junit.framework.TestCase.assertEquals;
+
 /**
  * Test cases for AdaptiveFetchSchedule.
  * 
  */
-public class TestAdaptiveFetchSchedule extends TestCase {
+public class TestAdaptiveFetchSchedule {
 
   private float inc_rate;
   private float dec_rate;
@@ -43,7 +44,6 @@ public class TestAdaptiveFetchSchedule extends TestCase {
 
   @Before
   public void setUp() throws Exception {
-    super.setUp();
     conf = NutchConfiguration.create();
     inc_rate = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     dec_rate = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
@@ -55,7 +55,6 @@ public class TestAdaptiveFetchSchedule extends TestCase {
    * Test the core functionality of AdaptiveFetchSchedule.
    * 
    */
-
   @Test
   public void testAdaptiveFetchSchedule() {
     FetchSchedule fs = new AdaptiveFetchSchedule();
@@ -88,9 +87,11 @@ public class TestAdaptiveFetchSchedule extends TestCase {
   public WebPage prepareWebpage() {
     WebPage wp = WebPage.newBuilder().build();
     wp.setStatus(1);
-    wp.setFetchInterval((int)interval.getSeconds());
     wp.setScore(1.0f);
+
     wp.setFetchTime(0L);
+    wp.setFetchInterval((int)interval.getSeconds());
+
     return wp;
   }
 
