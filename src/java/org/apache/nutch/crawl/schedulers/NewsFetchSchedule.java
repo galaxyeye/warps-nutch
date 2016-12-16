@@ -18,8 +18,7 @@
 package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -49,22 +48,22 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   }
 
   @Override
-  public void setFetchSchedule(String url, WebPage page,
+  public void setFetchSchedule(String url, WrappedWebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
                                Instant fetchTime, Instant modifiedTime, int state) {
-    Duration interval = TableUtil.getFetchInterval(page);
+    Duration interval = page.getFetchInterval();
     if (modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       modifiedTime = fetchTime;
     }
 
     boolean changed = false;
-    if (TableUtil.isSeed(page)) {
+    if (page.isSeed()) {
       interval = adjustSeedFetchInterval(page, fetchTime, interval);
       changed = true;
     }
-    else if (TableUtil.veryLikeDetailPage(page)) {
+    else if (page.veryLikeDetailPage()) {
       // Detail pages are fetched only once
-      TableUtil.setNoFetch(page);
+      page.setNoFetch();
       interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
       changed = true;
     }
@@ -73,7 +72,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     if (changed) {
-      updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
+      updateRefetchTime(page.get(), interval, fetchTime, prevModifiedTime, modifiedTime);
     }
     else {
       super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
@@ -83,14 +82,14 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private Duration adjustSeedFetchInterval(WebPage page, Instant fetchTime, Duration interval) {
-    int fetchCount = TableUtil.getFetchCount(page);
+  private Duration adjustSeedFetchInterval(WrappedWebPage page, Instant fetchTime, Duration interval) {
+    int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
       // Referred publish time is not initialized yet for this seed page
       return Duration.ofSeconds(1);
     }
 
-    Instant referredPublishTime = TableUtil.getReferredPublishTime(page);
+    Instant referredPublishTime = page.getReferredPublishTime();
     if (referredPublishTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       LOG.warn("Unexpected referred publish time : " + referredPublishTime + ", " + page.getBaseUrl());
     }

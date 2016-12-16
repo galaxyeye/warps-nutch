@@ -24,6 +24,7 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
@@ -137,25 +138,26 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   }
 
   @Override
-  public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
+  public void map(String reversedUrl, WebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
+    WrappedWebPage page = WrappedWebPage.wrap(row);
 
     if (!shouldFetch(url, reversedUrl, page)) {
       return;
     }
 
-    int priority = TableUtil.calculateFetchPriority(page);
+    int priority = page.calculateFetchPriority();
     float initSortScore = 1.0f + page.getScore();
     float sortScore = 0.0f;
     /*
      * Raise detail page's priority so them can be fetched sooner
      * Detail pages comes first, but we still need keep chances for pages with other category
      * */
-    if (TableUtil.veryLikeDetailPage(page) && ++detailPages < maxDetailPageCount) {
+    if (page.veryLikeDetailPage() && ++detailPages < maxDetailPageCount) {
       priority = FETCH_PRIORITY_DETAIL_PAGE;
-      initSortScore = SCORE_DETAIL_PAGE - TableUtil.getDepth(page);
+      initSortScore = SCORE_DETAIL_PAGE - page.getDepth();
     }
 
     try {
@@ -163,7 +165,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
     } catch (ScoringFilterException ignored) {}
 
-    output(url, new SelectorEntry(url, priority, sortScore), page, context);
+    output(url, new SelectorEntry(url, priority, sortScore), page.get(), context);
 
     updateStatus(url, page);
   }
@@ -171,12 +173,12 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   /**
    * TODO : We may move some filters to hbase query filters directly
    * */
-  private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
+  private boolean shouldFetch(String url, String reversedUrl, WrappedWebPage page) {
     if (!checkHost(url)) {
       return false;
     }
 
-    if (Mark.GENERATE_MARK.hasMark(page)) {
+    if (Mark.GENERATE_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.pagesGenerated);
 
       /*
@@ -190,7 +192,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
        * */
       if (ignoreGenerated) {
         // LOG.debug("Skipping {}; already generated", url);
-        long generateTime = TableUtil.getGenerateTime(page);
+        long generateTime = page.getGenerateTime();
 
         // Do not re-generate pages in one day if it's marked as "GENERATED"
         if (generateTime > 0 && (startTime - generateTime) < Duration.ofDays(1).toMillis()) {
@@ -199,7 +201,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
       }
     } // if
 
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
     // Filter on distance
     if (maxDistance > -1) {
       if (depth > maxDistance) {
@@ -256,9 +258,9 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
   /**
    * Fetch schedule, timing filter
    * */
-  private boolean checkFetchSchedule(String url, WebPage page, int depth) {
-    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime.toEpochMilli())) {
-      Instant fetchTime = TableUtil.getFetchTime(page);
+  private boolean checkFetchSchedule(String url, WrappedWebPage page, int depth) {
+    if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
+      Instant fetchTime = page.getFetchTime();
 
       long days = ChronoUnit.DAYS.between(fetchTime, pseudoCurrTime);
       if (days <= 30) {
@@ -300,16 +302,16 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     context.write(entry, page);
   }
 
-  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
-    if (TableUtil.isSeed(page)) {
+  private void updateStatus(String url, WrappedWebPage page) throws IOException, InterruptedException {
+    if (page.isSeed()) {
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page)) {
+    if (Mark.INJECT_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.rowsInjected);
     }
 
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
     Counter counter;
 
     if (depth == 0) {
@@ -317,7 +319,7 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     }
     else if (depth == 1) {
       counter = Counter.rowsDepth1;
-      if (TableUtil.veryLikeDetailPage(page)) {
+      if (page.veryLikeDetailPage()) {
         counter = Counter.rowsDetailFromSeed;
       }
     }
@@ -336,14 +338,14 @@ public class GenerateMapper extends NutchMapper<String, WebPage, SelectorEntry, 
     getCounter().updateAffectedRows(url);
   }
 
-  private void debugFetchLaterSeeds(WebPage page) {
+  private void debugFetchLaterSeeds(WrappedWebPage page) {
     String report = Params.formatAsLine(
         "CurrTime", DateTimeUtil.format(pseudoCurrTime),
-        "LastRefPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
-        "RefPC", TableUtil.getReferredArticles(page),
+        "LastRefPT", DateTimeUtil.format(page.getReferredPublishTime()),
+        "RefPC", page.getReferredArticles(),
         "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
         "FetchTime", DateTimeUtil.format(page.getFetchTime()),
-        "seeds", TableUtil.isSeed(page),
+        "seeds", page.isSeed(),
         "->\t", page.getBaseUrl()
     );
 

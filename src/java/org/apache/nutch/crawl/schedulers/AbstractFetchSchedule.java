@@ -22,12 +22,13 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,10 +41,10 @@ import java.util.Set;
 public abstract class AbstractFetchSchedule extends Configured implements FetchSchedule {
   protected static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
-  protected int defaultInterval;
-  protected int maxInterval;
+  protected Duration defaultInterval;
+  protected Duration maxInterval;
 
-  private static final Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+  private static final Set<WebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(WebPage.Field.FETCH_TIME);
@@ -62,12 +63,14 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   @Override
   public void setConf(Configuration conf) {
     super.setConf(conf);
-    if (conf == null)
+    if (conf == null) {
       return;
-    defaultInterval = conf.getInt("db.fetch.interval.default", 0);
-    maxInterval = conf.getInt("db.fetch.interval.max", 0);
-    LOG.info("defaultInterval=" + defaultInterval);
-    LOG.info("maxInterval=" + maxInterval);
+    }
+
+    defaultInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.default", 0));
+    maxInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.max", 0));
+
+    LOG.info("defaultInterval : " + defaultInterval + ", maxInterval : " + maxInterval);
   }
 
   /**
@@ -81,8 +84,8 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @param page
    */
   @Override
-  public void initializeSchedule(String url, WebPage page) {
-    page.setFetchTime(System.currentTimeMillis());
+  public void initializeSchedule(String url, WrappedWebPage page) {
+    page.setFetchTime(Instant.now());
     page.setFetchInterval(defaultInterval);
     page.setRetriesSinceFetch(0);
   }
@@ -94,7 +97,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * preserve this behavior.
    */
   @Override
-  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+  public void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     page.setRetriesSinceFetch(0);
   }
@@ -111,17 +114,17 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *         NOTE: this may be a different instance than
    */
   @Override
-  public void setPageGoneSchedule(String url, WebPage page, long prevFetchTime,
-      long prevModifiedTime, long fetchTime) {
+  public void setPageGoneSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
+                                  Instant prevModifiedTime, Instant fetchTime) {
     // no page is truly GONE ... just increase the interval by 50%
     // and try much later.
-    if ((page.getFetchInterval() * 1.5f) < maxInterval) {
-      int newFetchInterval = (int) (page.getFetchInterval() * 1.5f);
+    if ((page.getFetchInterval().getSeconds() * 1.5f) < maxInterval.getSeconds()) {
+      int newFetchInterval = (int) (page.getFetchInterval().getSeconds() * 1.5f);
       page.setFetchInterval(newFetchInterval);
     } else {
-      page.setFetchInterval((int) (maxInterval * 0.9f));
+      page.setFetchInterval((int) (maxInterval.getSeconds() * 0.9f));
     }
-    page.setFetchTime(fetchTime + page.getFetchInterval() * 1000L);
+    page.setFetchTime(fetchTime.plus(page.getFetchInterval()));
   }
 
   /**
@@ -140,9 +143,9 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *          current fetch time
    */
   @Override
-  public void setPageRetrySchedule(String url, WebPage page,
-      long prevFetchTime, long prevModifiedTime, long fetchTime) {
-    page.setFetchTime(fetchTime + Duration.ofDays(1).toMillis());
+  public void setPageRetrySchedule(String url, WrappedWebPage page,
+      Instant prevFetchTime, Instant prevModifiedTime, Instant fetchTime) {
+    page.setFetchTime(fetchTime.plus(1, ChronoUnit.DAYS));
     page.setRetriesSinceFetch(page.getRetriesSinceFetch() + 1);
   }
 
@@ -152,8 +155,8 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @return the date as a long.
    */
   @Override
-  public long calculateLastFetchTime(WebPage page) {
-    return page.getFetchTime() - page.getFetchInterval() * 1000L;
+  public Instant calculateLastFetchTime(WrappedWebPage page) {
+    return page.getFetchTime().minus(page.getFetchInterval());
   }
 
   /**
@@ -177,23 +180,34 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *         fetchlist, otherwise false.
    */
   @Override
-  public boolean shouldFetch(String url, WebPage page, long curTime) {
+  public boolean shouldFetch(String url, WrappedWebPage page, Instant curTime) {
     // pages are marked as never fetch again
-    if (TableUtil.isNoFetch(page)) {
+    if (page.isNoFetch()) {
       return false;
     }
+
+//    long fetchTime = page.getFetchTime();
+//    if (fetchTime - curTime > maxInterval * 1000L) {
+//      if (page.getFetchInterval() > maxInterval) {
+//        page.setFetchInterval(Math.round(maxInterval * 0.9f));
+//      }
+//      page.setFetchTime(curTime);
+//    }
+//    return fetchTime <= curTime;
 
     // pages are never truly GONE - we have to check them from time to time.
     // pages with too long fetchInterval are adjusted so that they fit within
     // maximum fetchInterval (batch retention period).
-    long fetchTime = page.getFetchTime();
-    if (fetchTime - curTime > maxInterval * 1000L) {
-      if (page.getFetchInterval() > maxInterval) {
-        page.setFetchInterval(Math.round(maxInterval * 0.9f));
+    Instant fetchTime = page.getFetchTime();
+
+    if (curTime.plus(maxInterval).isBefore(fetchTime)) {
+      if (page.getFetchInterval().compareTo(maxInterval) > 0) {
+        page.setFetchInterval(Math.round(maxInterval.getSeconds() * 0.9f));
       }
       page.setFetchTime(curTime);
     }
-    return fetchTime <= curTime;
+
+    return fetchTime.isBefore(curTime);
   }
 
   /**
@@ -209,17 +223,17 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *          time is set.
    */
   @Override
-  public void forceRefetch(String url, WebPage page, boolean asap) {
+  public void forceRefetch(String url, WrappedWebPage page, boolean asap) {
     // reduce fetchInterval so that it fits within the max value
-    if (page.getFetchInterval() > maxInterval) {
-      page.setFetchInterval(Math.round(maxInterval * 0.9f));
+    if (page.getFetchInterval().compareTo(maxInterval) > 0) {
+      page.setFetchInterval(Math.round(maxInterval.getSeconds() * 0.9f));
     }
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
     page.setRetriesSinceFetch(0);
     // TODO: row.setSignature(null) ??
-    page.setModifiedTime(0L);
+    page.setModifiedTime(Instant.EPOCH);
     if (asap) {
-      page.setFetchTime(System.currentTimeMillis());
+      page.setFetchTime(Instant.now());
     }
   }
 

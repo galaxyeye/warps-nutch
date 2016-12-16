@@ -27,6 +27,7 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,14 +69,15 @@ public class DbUpdateMapper2 extends GoraMapper<String, WebPage, UrlWithScore, N
     Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
     if (outlinks != null) {
       for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-        int depth = TableUtil.getDepth(page);
+//        int depth = TableUtil.getDepth(page);
+        int depth = 0; // wrong, temp
         scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), depth));
       }
     }
 
     // TODO: Outlink filtering (i.e. "only keep the first n outlinks")
     try {
-      scoringFilters.distributeScoreToOutlinks(url, page, scoreData, (outlinks == null ? 0 : outlinks.size()));
+      scoringFilters.distributeScoreToOutlinks(url, WrappedWebPage.wrap(page), scoreData, (outlinks == null ? 0 : outlinks.size()));
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL: " + key + " exception:" + StringUtils.stringifyException(e));
     }

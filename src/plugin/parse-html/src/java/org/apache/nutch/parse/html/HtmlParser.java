@@ -27,6 +27,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -103,6 +104,8 @@ public class HtmlParser implements Parser {
   }
 
   public Parse getParse(String url, WebPage page) {
+    WrappedWebPage wPage = WrappedWebPage.wrap(page);
+
     URL baseURL;
     try {
       baseURL = new URL(TableUtil.toString(page.getBaseUrl()));
@@ -112,7 +115,7 @@ public class HtmlParser implements Parser {
 
     InputSource input = getContentAsInputSource(page);
     String encoding = encodingDetector.sniffEncoding(page);
-    setEncoding(page, encoding);
+    setEncoding(wPage, encoding);
     input.setEncoding(encoding);
     docRoot = doParse(input);
 
@@ -123,13 +126,13 @@ public class HtmlParser implements Parser {
 
     // Get meta directives
     HTMLMetaProcessor.getMetaTags(metaTags, docRoot, baseURL);
-    setMetadata(page, metaTags);
+    setMetadata(wPage, metaTags);
 
     // Check meta directives
     if (!metaTags.getNoIndex()) { // okay to index
       // Get input source, again. It's not reusable
       InputSource input2 = getContentAsInputSource(page, encoding);
-      extract(page, input2);
+      extract(wPage, input2);
     }
 
     String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
@@ -146,13 +149,13 @@ public class HtmlParser implements Parser {
 
     if (metaTags.getNoCache()) {
       // Not okay to cache
-      TableUtil.putMetadata(page, CACHING_FORBIDDEN_KEY, cachingPolicy);
+      wPage.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
-    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
-    TableUtil.setPageCategory(page, pageCategory);
+    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(wPage);
+    wPage.setPageCategory(pageCategory);
     if (pageCategory.isDetail()) {
-      TableUtil.setPageCategoryLikelihood(page, 0.9f);
+      wPage.setPageCategoryLikelihood(0.9f);
     }
 
     return parse;
@@ -219,24 +222,24 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void setEncoding(WebPage page, String encoding) {
+  private void setEncoding(WrappedWebPage page, String encoding) {
     page.setTmporaryVariable("encoding", encoding);
-    TableUtil.putMetadata(page, Nutch.ORIGINAL_CHAR_ENCODING, encoding);
-    TableUtil.putMetadata(page, Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
+    page.putMetadata(Nutch.ORIGINAL_CHAR_ENCODING, encoding);
+    page.putMetadata(Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
 
-  private void setMetadata(WebPage page, HTMLMetaTags metaTags) {
+  private void setMetadata(WrappedWebPage page, HTMLMetaTags metaTags) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Meta tags for " + page.getBaseUrl() + ": " + metaTags.toString());
     }
 
     Metadata metadata = metaTags.getGeneralTags();
     for (String name : metadata.names()) {
-      TableUtil.putMetadata(page, "meta_" + name, metadata.get(name));
+      page.putMetadata("meta_" + name, metadata.get(name));
     }
   }
 
-  private void extract(WebPage page, InputSource input) {
+  private void extract(WrappedWebPage page, InputSource input) {
     LOG.trace("Try extract by Scent");
 
     if (page.getContent() == null) {
@@ -264,10 +267,10 @@ public class HtmlParser implements Parser {
 //      LOG.info("Text content length : " + doc.getTextContent().length()
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
-      TableUtil.setTextContentLength(page, doc.getTextContent().length());
+      page.setTextContentLength(doc.getTextContent().length());
       String publishTime = doc.getField(DOC_FIELD_PUBLISH_TIME);
       if (publishTime != null) {
-        TableUtil.setPublishTime(page, publishTime);
+        page.setPublishTime(publishTime);
       }
 
     } catch (ProcessingException|SAXException e) {

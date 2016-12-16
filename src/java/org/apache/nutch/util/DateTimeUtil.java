@@ -203,7 +203,7 @@ public class DateTimeUtil {
     return parsedDate;
   }
 
-  public static String constructTimeHistory(String timeHistory, long fetchTime, int maxRecords) {
+  public static String constructTimeHistory(String timeHistory, Instant fetchTime, int maxRecords) {
     String dateStr = solrCompatibleFormat(fetchTime);
 
     if (timeHistory == null) {

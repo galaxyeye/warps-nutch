@@ -23,6 +23,7 @@ import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -108,7 +109,8 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
       return;
     }
 
-    for (WebPage page : values) {
+    for (WebPage value : values) {
+      WrappedWebPage page = WrappedWebPage.wrap(value);
       try {
         if (count >= limit) {
           stop("Enough pages generated, quit");
@@ -121,7 +123,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
           break;
         }
 
-        int depth = TableUtil.getDepth(page);
+        int depth = page.getDepth();
         // seed pages are fetched imperative, so we just ignore topN parameter for them
         if (depth > 0) {
           ++count;
@@ -129,7 +131,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
 
         page = updatePage(url, page);
 
-        context.write(TableUtil.reverseUrl(url), page);
+        context.write(TableUtil.reverseUrl(url), page.get());
 
         updateStatus(url, page, context);
       }
@@ -139,26 +141,26 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     } // for
   }
 
-  private WebPage updatePage(String url, WebPage page) {
-    if (TableUtil.isSeed(page)) {
+  private WrappedWebPage updatePage(String url, WrappedWebPage page) {
+    if (page.isSeed()) {
       // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
       page = seedBuiler.buildWebPage(url);
     }
 
     page.setBatchId(batchId);
     // Generate time, we will use this mark to decide if we re-generate this page
-    TableUtil.setGenerateTime(page, startTime);
-    TableUtil.setFetchPriority(page, TableUtil.calculateFetchPriority(page));
+    page.setGenerateTime(startTime);
+    page.setFetchPriority(page.calculateFetchPriority());
 
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+    Mark.INJECT_MARK.removeMarkIfExist(page.get());
+    Mark.GENERATE_MARK.putMark(page.get(), new Utf8(batchId));
 
     return page;
   }
 
-  private void updateStatus(String url, WebPage page, Context context) throws IOException {
+  private void updateStatus(String url, WrappedWebPage page, Context context) throws IOException {
     Counter counter;
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
     if (depth == 0) {
       counter = Counter.pagesDepth0;
     }
@@ -177,7 +179,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, WebPage, String
     getCounter().increase(counter);
 
     // double check (depth == 0 or has IS-SEED metadata) , can be removed later
-    if (TableUtil.isSeed(page)) {
+    if (page.isSeed()) {
       getCounter().increase(Counter.rowsIsSeed);
     }
 

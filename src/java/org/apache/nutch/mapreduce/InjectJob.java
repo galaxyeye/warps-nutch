@@ -32,6 +32,7 @@ import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -89,11 +90,11 @@ public class InjectJob extends NutchJob implements Tool {
         return;
       }
 
-      WebPage row = seedBuiler.buildWebPage(urlLine);
+      WrappedWebPage row = seedBuiler.buildWebPage(urlLine);
       String reversedUrl = row.getTemporaryVariableAsString("reversedUrl");
 
       if (reversedUrl != null) {
-        context.write(reversedUrl, row);
+        context.write(reversedUrl, row.get());
         context.getCounter(Nutch.STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
       }
     }

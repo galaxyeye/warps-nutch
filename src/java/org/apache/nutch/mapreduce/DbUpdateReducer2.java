@@ -30,6 +30,7 @@ import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,10 +123,11 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
         return;
       }
       page = WebPage.newBuilder().build();
-      schedule.initializeSchedule(url, page);
+      WrappedWebPage wPage = new WrappedWebPage(page);
+      schedule.initializeSchedule(url, wPage);
       page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
       try {
-        scoringFilters.initialScore(url, page);
+        scoringFilters.initialScore(url, wPage);
       } catch (ScoringFilterException e) {
         page.setScore(0.0f);
       }
@@ -150,28 +152,31 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
             }
           }
 
+          WrappedWebPage wPage = new WrappedWebPage(page);
+
           Instant prevFetchTime = Instant.ofEpochMilli(page.getPrevFetchTime());
           Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
 
           Instant prevModifiedTime = Instant.ofEpochMilli(page.getPrevModifiedTime());
           Instant modifiedTime = Instant.ofEpochMilli(page.getModifiedTime());
 
-          Instant latestModifiedTime = TableUtil.getHeaderLastModifiedTime(page, modifiedTime);
+          Instant latestModifiedTime = wPage.getHeaderLastModifiedTime(modifiedTime);
           if (latestModifiedTime.isAfter(modifiedTime)) {
             modifiedTime = latestModifiedTime;
             prevModifiedTime = modifiedTime;
           }
           else {
-            LOG.warn("Bad last modified time : {} -> {}", modifiedTime, page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED)));
+            LOG.trace("Bad last modified time : {} -> {}", modifiedTime, page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED)));
           }
 
-          schedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
+          schedule.setFetchSchedule(url, wPage, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-          if (maxInterval < page.getFetchInterval()) schedule.forceRefetch(url, page, false);
+          if (maxInterval < page.getFetchInterval()) schedule.forceRefetch(url, wPage, false);
           break;
         case CrawlStatus.STATUS_RETRY:
-          schedule.setPageRetrySchedule(url, page, 0L,
-              page.getPrevModifiedTime(), page.getFetchTime());
+          wPage = new WrappedWebPage(page);
+
+          schedule.setPageRetrySchedule(url, wPage, Instant.EPOCH, wPage.getPrevModifiedTime(), wPage.getFetchTime());
           if (page.getRetriesSinceFetch() < retryMax) {
             page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
           } else {
@@ -179,8 +184,10 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
           }
           break;
         case CrawlStatus.STATUS_GONE:
-          schedule.setPageGoneSchedule(url, page, 0L, page.getPrevModifiedTime(),
-              page.getFetchTime());
+          wPage = new WrappedWebPage(page);
+
+          schedule.setPageGoneSchedule(url, wPage, Instant.EPOCH, wPage.getPrevModifiedTime(),
+              wPage.getFetchTime());
           break;
       }
     }
@@ -216,7 +223,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     }
 
     try {
-      scoringFilters.updateScore(url, page, inlinkedScoreData);
+      scoringFilters.updateScore(url, WrappedWebPage.wrap(page), inlinkedScoreData);
     } catch (ScoringFilterException e) {
       LOG.warn("Scoring filters failed with exception "
           + StringUtils.stringifyException(e));

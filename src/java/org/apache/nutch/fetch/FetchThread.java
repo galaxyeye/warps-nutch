@@ -209,7 +209,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
     LOG.trace("Fetching <{}, {}>", task.getPriority(), task.getUrl());
 
     // Blocking until the target web page is loaded
-    final ProtocolOutput output = protocol.getProtocolOutput(task.getUrl(), task.getPage());
+    final ProtocolOutput output = protocol.getProtocolOutput(task.getUrl(), task.getPage().get());
     taskScheduler.finish(task.getPriority(), task.getQueueId(), task.getItemId(), output);
 
     if (debugContent) {

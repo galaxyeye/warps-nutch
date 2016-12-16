@@ -27,18 +27,18 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.fetch.FetchUtil;
-import org.apache.nutch.mapreduce.ParserMapper;
+import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
+import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +97,7 @@ public class SimpleParser extends Configured {
   private Map<String, Object> results = Maps.newHashMap();
 
   private String url;
-  private WebPage page;
+  private WrappedWebPage page;
   private Parse parse;
 
   public SimpleParser(Configuration conf) {
@@ -129,12 +129,12 @@ public class SimpleParser extends Configured {
     }
   }
 
-  public void parse(WebPage page) {
+  public void parse(WrappedWebPage page) {
     try {
       ParseUtil parseUtil = new ParseUtil(getConf());
       if (page != null && page.getBaseUrl() != null) {
         String reverseUrl = TableUtil.reverseUrl(page.getBaseUrl().toString());
-        parse = parseUtil.process(url, page);
+        parse = parseUtil.process(url, page.get());
       }
     } catch (MalformedURLException e) {
       LOG.error(e.getMessage());
@@ -155,7 +155,7 @@ public class SimpleParser extends Configured {
     }
   }
 
-  private InputSource getContentAsInputSource(WebPage page) {
+  private InputSource getContentAsInputSource(WrappedWebPage page) {
     ByteBuffer contentInOctets = page.getContent();
 
     ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
@@ -165,11 +165,11 @@ public class SimpleParser extends Configured {
     return new InputSource(stream);
   }
 
-  public void extract(WebPage page) throws IOException, SAXException, ProcessingException {
+  public void extract(WrappedWebPage page) throws IOException, SAXException, ProcessingException {
     InputSource input = getContentAsInputSource(page);
 
     EncodingDetector encodingDetector = new EncodingDetector(getConf());
-    String encoding = encodingDetector.sniffEncoding(page);
+    String encoding = encodingDetector.sniffEncoding(page.get());
     input.setEncoding(encoding);
 
     input = getContentAsInputSource(page);
@@ -177,7 +177,7 @@ public class SimpleParser extends Configured {
     System.out.println(scentDoc.getText(true, true));
   }
 
-  public WebPage getWebPage() {
+  public WrappedWebPage getWebPage() {
     return page;
   }
 
@@ -191,18 +191,18 @@ public class SimpleParser extends Configured {
     return results;
   }
 
-  public WebPage download(String url) throws ProtocolNotFound {
+  public WrappedWebPage download(String url) throws ProtocolNotFound {
     return download(url, null);
   }
 
-  public WebPage download(String url, String contentType) throws ProtocolNotFound {
+  public WrappedWebPage download(String url, String contentType) throws ProtocolNotFound {
     LOG.info("Fetching: " + url);
 
     ProtocolFactory factory = new ProtocolFactory(getConf());
     Protocol protocol = factory.getProtocol(url);
-    WebPage page = WebPage.newBuilder().build();
+    WrappedWebPage page = WrappedWebPage.newWebPage();
 
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
+    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page.get());
     ProtocolStatus pstatus = protocolOutput.getStatus();
 
     if (!pstatus.isSuccess()) {
@@ -229,7 +229,7 @@ public class SimpleParser extends Configured {
     return page;
   }
 
-  private void saveWebPage(WebPage page) {
+  private void saveWebPage(WrappedWebPage page) {
     try {
       Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl().toString()));
 
@@ -251,17 +251,17 @@ public class SimpleParser extends Configured {
 
     results.put("content", page.toString());
 
-    if (ParserMapper.isTruncated(url, page)) {
+    if (ParserMapper.isTruncated(url, page.get())) {
       results.put("contentStatus", "truncated");
     }
 
     // Calculate the signature
-    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
+    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page.get());
 
     LOG.info("signature: " + StringUtil.toHexString(signature));
 
     // LOG.info("---------\nMetadata\n---------\n");
-    Map<CharSequence, ByteBuffer> metadata = page.getMetadata();
+    Map<CharSequence, ByteBuffer> metadata = page.get().getMetadata();
     StringBuffer sb = new StringBuffer();
     if (metadata != null) {
       Iterator<Entry<CharSequence, ByteBuffer>> iterator = metadata.entrySet().iterator();

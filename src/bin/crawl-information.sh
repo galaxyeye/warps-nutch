@@ -186,12 +186,10 @@ do
   echo -e "\n\n--------------------------------------------------------------------"
   echo `date` ": Iteration $a of $LIMIT"
 
-  commonOptions=(${commonOptions[@]} "-D crawl.round=$a")
-
   batchId=`date +%s`-$RANDOM
 
   echo "Generating a new fetchlist"
-  generate_args=(${commonOptions[@]} -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
+  generate_args=(${commonOptions[@]}  "-D crawl.round=$a" -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
   echo "$bin/nutch generate ${generate_args[@]}"
   $bin/nutch generate "${generate_args[@]}"
   RETCODE=$?
@@ -209,7 +207,7 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch "${commonOptions[@]}" -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
 done
 

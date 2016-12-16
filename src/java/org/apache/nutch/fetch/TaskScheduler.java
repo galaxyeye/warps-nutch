@@ -28,10 +28,7 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.*;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
@@ -332,12 +329,12 @@ public class TaskScheduler extends Configured {
       return 0;
     }
 
-    WebPage page = seedBuiler.buildWebPage(urlLine);
+    WrappedWebPage page = seedBuiler.buildWebPage(urlLine);
     String url = page.getTemporaryVariableAsString("url");
     // set score?
 
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+    Mark.INJECT_MARK.removeMarkIfExist(page.get());
+    Mark.GENERATE_MARK.putMark(page.get(), new Utf8(batchId));
     page.setBatchId(batchId);
 
     tasksMonitor.produce(context.getJobId(), url, page);
@@ -701,7 +698,7 @@ public class TaskScheduler extends Configured {
         }
         // TODO : It's not a good idea to save newUrl in message
         final String newUrl = ProtocolStatusUtils.getMessage(status);
-        handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage());
+        handleRedirect(fetchTask.getUrl(), newUrl, temp, FetchJob.PROTOCOL_REDIR, fetchTask.getPage().get());
         handleResult(fetchTask, content, status, code);
         break;
 
@@ -783,7 +780,7 @@ public class TaskScheduler extends Configured {
   private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
-    WebPage mainPage = fetchTask.getPage();
+    WrappedWebPage mainPage = new WrappedWebPage(fetchTask.getPage().get());
 
     FetchUtil.updateContent(mainPage, content);
     FetchUtil.updateStatus(mainPage, status, pstatus);
@@ -796,12 +793,12 @@ public class TaskScheduler extends Configured {
 
     // Only STATUS_FETCHED can be parsed
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
-      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
+      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage.get())) {
         synchronized (parseUtil) {
-          parseUtil.process(url, mainPage);
+          parseUtil.process(url, mainPage.get());
         }
 
-        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage);
+        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage.get());
         // JIT Index
         if (jitIndexer != null && parseMark != null) {
           jitIndexer.produce(fetchTask);
@@ -830,13 +827,13 @@ public class TaskScheduler extends Configured {
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
+  private void persistWithDbUpdate(String url, String reversedUrl, WrappedWebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
       mapDatumBuilder.reset();
       reduceDatumBuilder.reset();
 
       // Do not follow detail pages for public opinion tracking
-      if (!TableUtil.veryLikeDetailPage(mainPage)) {
+      if (!mainPage.veryLikeDetailPage()) {
         Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
         outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
       }
@@ -846,7 +843,7 @@ public class TaskScheduler extends Configured {
   }
 
   @SuppressWarnings("unchecked")
-  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
+  private void persistMainPage(String url, String reversedUrl, WrappedWebPage mainPage) {
     counter.increase(Counter.pagesPeresist);
 
     // Process the main page, update fetch schedule
@@ -862,11 +859,11 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
+  private void persistOutPage(WrappedWebPage mainPage, UrlWithScore urlWithScore) {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    int newDepth = TableUtil.getDepth(mainPage);
+    int newDepth = mainPage.getDepth();
     if (newDepth != MAX_DISTANCE) {
       newDepth += 1;
     }
@@ -877,7 +874,7 @@ public class TaskScheduler extends Configured {
     }
 
     if (oldPage != null) {
-      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
+      tryUpdateOldPage(url, reversedUrl, mainPage, new WrappedWebPage(oldPage), newDepth);
     }
     else {
       createNewPage(url, reversedUrl, mainPage, newDepth);
@@ -888,8 +885,8 @@ public class TaskScheduler extends Configured {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
-    int oldDepth = TableUtil.getDepth(oldPage);
+  private void tryUpdateOldPage(String url, String reversedUrl, WrappedWebPage mainPage, WrappedWebPage oldPage, int newDepth) {
+    int oldDepth = oldPage.getDepth();
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
     if (changed) {
@@ -905,12 +902,12 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.existOutPages);
   }
 
-  private void createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
-    WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
+  private void createNewPage(String url, String reversedUrl, WrappedWebPage mainPage, int depth) {
+    WrappedWebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
     // Update distance/score
     reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
 
-    TableUtil.increaseTotalOutLinkCount(mainPage, 1);
+    mainPage.increaseTotalOutLinkCount(1);
     counter.increase(Counter.newPages);
     if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
       counter.increase(Counter.newDetailPages);
@@ -920,17 +917,17 @@ public class TaskScheduler extends Configured {
   }
 
   @SuppressWarnings("unchecked")
-  private void output(String reversedUrl, WebPage page) {
+  private void output(String reversedUrl, WrappedWebPage page) {
     try {
       synchronized(context) {
-        context.write(reversedUrl, page);
+        context.write(reversedUrl, page.get());
       }
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + e.toString());
     }
   }
 
-  private void updateStatus(String url, WebPage page) throws IOException {
+  private void updateStatus(String url, WrappedWebPage page) throws IOException {
     int pageLength = 0;
     ByteBuffer content = page.getContent();
     if (content != null) {
@@ -939,9 +936,9 @@ public class TaskScheduler extends Configured {
     totalPages.incrementAndGet();
     totalBytes.addAndGet(pageLength);
 
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
 
-    if (TableUtil.isSeed(page)) {
+    if (page.isSeed()) {
       counter.increase(Counter.seeds);
     }
 
@@ -966,9 +963,9 @@ public class TaskScheduler extends Configured {
     counter.updateAffectedRows(url);
   }
 
-  private void debugFetchHistory(FetchTask fetchTask, WebPage mainPage, byte status) {
+  private void debugFetchHistory(FetchTask fetchTask, WrappedWebPage mainPage, byte status) {
     // Debug fetch time history
-    String fetchTimeHistory = TableUtil.getFetchTimeHistory(mainPage, "");
+    String fetchTimeHistory = mainPage.getFetchTimeHistory("");
     if (fetchTimeHistory.contains(",")) {
       String report = String.format("%60s", fetchTask.getUrl())
 //          + "\turlCategory : " +

@@ -7,14 +7,12 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.*;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 
 import java.io.IOException;
+import java.time.Instant;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -165,7 +163,7 @@ public class IndexMapper extends NutchMapper<String, WebPage, String, IndexDocum
       // LOG.debug(TableUtil.toString(page.getText()));
 
       // Multiple output
-      TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+      WrappedWebPage.wrap(page).putIndexTimeHistory(Instant.now());
 
       storage.put(reverseUrl, page);
       context.write(reverseUrl, doc);

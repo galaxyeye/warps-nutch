@@ -19,6 +19,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -48,7 +49,7 @@ public interface FetchSchedule extends Configurable {
    *          URL of the page.
    * @param page
    */
-  void initializeSchedule(String url, WebPage page);
+  void initializeSchedule(String url, WrappedWebPage page);
 
   /**
    * Sets the <code>fetchInterval</code> and <code>fetchTime</code> on a
@@ -79,21 +80,21 @@ public interface FetchSchedule extends Configurable {
    *          changed; implementations are free to follow a sensible default
    *          behavior.
    */
-  void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+  void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
                         Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state);
 
   /**
    * This method specifies how to schedule refetching of pages marked as GONE.
    * Default implementation increases fetchInterval by 50%, and if it exceeds
    * the <code>maxInterval</code> it calls
-   * {@link #forceRefetch(String, WebPage, boolean)}.
+   * {@link #forceRefetch(String, WrappedWebPage, boolean)}.
    * 
    * @param url
    *          URL of the page
    * @param page
    */
-  void setPageGoneSchedule(String url, WebPage page, long prevFetchTime,
-      long prevModifiedTime, long fetchTime);
+  void setPageGoneSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
+                           Instant prevModifiedTime, Instant fetchTime);
 
   /**
    * This method adjusts the fetch schedule if fetching needs to be re-tried due
@@ -110,15 +111,15 @@ public interface FetchSchedule extends Configurable {
    * @param fetchTime
    *          current fetch time
    */
-  void setPageRetrySchedule(String url, WebPage page,
-      long prevFetchTime, long prevModifiedTime, long fetchTime);
+  void setPageRetrySchedule(String url, WrappedWebPage page,
+                            Instant prevFetchTime, Instant prevModifiedTime, Instant fetchTime);
 
   /**
    * Calculates last fetch time of the given CrawlDatum.
    * 
    * @return the date as a long.
    */
-  long calculateLastFetchTime(WebPage page);
+  Instant calculateLastFetchTime(WrappedWebPage page);
 
   /**
    * This method provides information whether the page is suitable for selection
@@ -141,7 +142,7 @@ public interface FetchSchedule extends Configurable {
    * @return true, if the page should be considered for inclusion in the current
    *         fetchlist, otherwise false.
    */
-  boolean shouldFetch(String url, WebPage row, long curTime);
+  boolean shouldFetch(String url, WrappedWebPage row, Instant curTime);
 
   /**
    * This method resets fetchTime, fetchInterval, modifiedTime and page
@@ -155,7 +156,7 @@ public interface FetchSchedule extends Configurable {
    *          fetchTime to now. If false, force refetch whenever the next fetch
    *          time is set.
    */
-  void forceRefetch(String url, WebPage row, boolean asap);
+  void forceRefetch(String url, WrappedWebPage row, boolean asap);
 
   Collection<WebPage.Field> getFields();
 }

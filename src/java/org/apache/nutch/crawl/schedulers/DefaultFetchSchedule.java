@@ -17,7 +17,7 @@
 
 package org.apache.nutch.crawl.schedulers;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 
 import java.time.Instant;
 
@@ -32,11 +32,11 @@ import java.time.Instant;
 public class DefaultFetchSchedule extends AbstractFetchSchedule {
 
   @Override
-  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+  public void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    page.setFetchTime(fetchTime.toEpochMilli() + page.getFetchInterval() * 1000L);
-    page.setModifiedTime(modifiedTime.toEpochMilli());
-    page.setPrevModifiedTime(prevModifiedTime.toEpochMilli());
+    page.setFetchTime(fetchTime.plus(page.getFetchInterval()));
+    page.setModifiedTime(modifiedTime);
+    page.setPrevModifiedTime(prevModifiedTime);
   }
 }

@@ -9,12 +9,13 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -66,7 +67,7 @@ public class JITIndexer {
    * Thread safe
    * */
   public void produce(FetchTask fetchTask) {
-    WebPage page = fetchTask.getPage();
+    WrappedWebPage page = fetchTask.getPage();
     if (page == null) {
       LOG.warn("Invalid FetchTask to index, ignore it");
       return;
@@ -133,14 +134,14 @@ public class JITIndexer {
 
       String url = fetchTask.getUrl();
       String reverseUrl = TableUtil.reverseUrl(url);
-      WebPage page = fetchTask.getPage();
+      WrappedWebPage page = fetchTask.getPage();
 
-      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
+      IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page.get());
       doc = filter(doc, page);
       if (doc != null) {
         synchronized (indexWriters) {
           indexWriters.write(doc);
-          TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+          page.putIndexTimeHistory(Instant.now());
         }
       } // if
     }
@@ -149,7 +150,7 @@ public class JITIndexer {
     }
   }
 
-  private IndexDocument filter(IndexDocument doc, WebPage page) {
+  private IndexDocument filter(IndexDocument doc, WrappedWebPage page) {
     if (doc == null || page == null) {
       return null;
     }

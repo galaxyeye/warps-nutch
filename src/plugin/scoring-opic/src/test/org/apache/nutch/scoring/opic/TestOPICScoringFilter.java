@@ -16,25 +16,17 @@
  */
 package org.apache.nutch.scoring.opic;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
-
-import java.text.DecimalFormat;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 import static org.junit.Assert.assertTrue;
 
@@ -131,7 +123,7 @@ public class TestOPICScoringFilter {
     Configuration conf = NutchConfiguration.create();
     // LinkedHashMap dbWebPages is used instead of a persistent
     // data store for this test class
-    Map<String, Map<WebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<String, Map<WebPage, List<ScoreDatum>>>();
+    Map<String, Map<WrappedWebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<>();
 
     // All WebPages stored in this map with an initial true value.
     // After processing, it is set to false.
@@ -147,12 +139,12 @@ public class TestOPICScoringFilter {
 
     // injecting seed list, with scored attached to webpages
     for (String url : self.seedList) {
-      WebPage row = WebPage.newBuilder().build();
+      WrappedWebPage row = WrappedWebPage.newWebPage();
       row.setScore(scoreInjected);
       scoringFilter.injectedScore(url, row);
 
-      List<ScoreDatum> scList = new LinkedList<ScoreDatum>();
-      Map<WebPage, List<ScoreDatum>> webPageMap = new HashMap<WebPage, List<ScoreDatum>>();
+      List<ScoreDatum> scList = new LinkedList<>();
+      Map<WrappedWebPage, List<ScoreDatum>> webPageMap = new HashMap<>();
       webPageMap.put(row, scList);
       dbWebPages.put(TableUtil.reverseUrl(url), webPageMap);
       dbWebPagesControl.put(TableUtil.reverseUrl(url), true);
@@ -160,20 +152,20 @@ public class TestOPICScoringFilter {
 
     // Depth Loop
     for (int i = 1; i <= DEPTH; i++) {
-      Iterator<Map.Entry<String, Map<WebPage, List<ScoreDatum>>>> iter = dbWebPages
+      Iterator<Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>>> iter = dbWebPages
           .entrySet().iterator();
 
       // OPIC Score calculated for each website one by one
       while (iter.hasNext()) {
-        Map.Entry<String, Map<WebPage, List<ScoreDatum>>> entry = iter.next();
-        Map<WebPage, List<ScoreDatum>> webPageMap = entry.getValue();
+        Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>> entry = iter.next();
+        Map<WrappedWebPage, List<ScoreDatum>> webPageMap = entry.getValue();
 
-        WebPage row = null;
+        WrappedWebPage row = null;
         List<ScoreDatum> scoreList = null;
-        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> iters = webPageMap
+        Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> iters = webPageMap
             .entrySet().iterator();
         if (iters.hasNext()) {
-          Map.Entry<WebPage, List<ScoreDatum>> values = iters.next();
+          Map.Entry<WrappedWebPage, List<ScoreDatum>> values = iters.next();
           row = values.getKey();
           scoreList = values.getValue();
         }
@@ -212,22 +204,21 @@ public class TestOPICScoringFilter {
           if (dbWebPages.get(TableUtil.reverseUrl(sc.getUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
-            WebPage outlinkRow = WebPage.newBuilder().build();
+            WrappedWebPage outlinkRow = WrappedWebPage.newWebPage();
+
             scoringFilter.initialScore(sc.getUrl(), outlinkRow);
-            List<ScoreDatum> newScoreList = new LinkedList<ScoreDatum>();
+            List<ScoreDatum> newScoreList = new LinkedList<>();
             newScoreList.add(sc);
-            Map<WebPage, List<ScoreDatum>> values = new HashMap<WebPage, List<ScoreDatum>>();
+            Map<WrappedWebPage, List<ScoreDatum>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
             dbWebPages.put(TableUtil.reverseUrl(sc.getUrl()), values);
             dbWebPagesControl.put(TableUtil.reverseUrl(sc.getUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WebPage, List<ScoreDatum>> values = dbWebPages.get(TableUtil
-                .reverseUrl(sc.getUrl()));
-            Iterator<Map.Entry<WebPage, List<ScoreDatum>>> value = values
-                .entrySet().iterator();
+            Map<WrappedWebPage, List<ScoreDatum>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
+            Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
-              Map.Entry<WebPage, List<ScoreDatum>> list = value.next();
+              Map.Entry<WrappedWebPage, List<ScoreDatum>> list = value.next();
               scoreList = list.getValue();
               scoreList.add(sc);
             }
@@ -236,19 +227,17 @@ public class TestOPICScoringFilter {
       }
 
       // Simulate Reducing
-      for (Map.Entry<String, Map<WebPage, List<ScoreDatum>>> page : dbWebPages
-          .entrySet()) {
+      for (Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>> page : dbWebPages.entrySet()) {
 
         String reversedUrl = page.getKey();
         String url = TableUtil.unreverseUrl(reversedUrl);
 
-        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> rr = page.getValue()
-            .entrySet().iterator();
+        Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> rr = page.getValue().entrySet().iterator();
 
         List<ScoreDatum> inlinkedScoreDataList = null;
-        WebPage row = null;
+        WrappedWebPage row = null;
         if (rr.hasNext()) {
-          Map.Entry<WebPage, List<ScoreDatum>> aa = rr.next();
+          Map.Entry<WrappedWebPage, List<ScoreDatum>> aa = rr.next();
           inlinkedScoreDataList = aa.getValue();
           row = aa.getKey();
         }
@@ -278,7 +267,5 @@ public class TestOPICScoringFilter {
         assertTrue(accepted.equals(result));
       }
     }
-
   }
-
 }

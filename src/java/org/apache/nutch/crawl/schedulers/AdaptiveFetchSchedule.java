@@ -20,8 +20,8 @@ package org.apache.nutch.crawl.schedulers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ import java.time.Instant;
  * NOTE: values of DEC_FACTOR and INC_FACTOR higher than 0.4f may destabilize
  * the algorithm, so that the fetch interval either increases or decreases
  * infinitely, with little relevance to the page changes. Please use
- * {@link #main(String[])} method to test the values before applying them in a
+ * {@link #(String[])} method to test the values before applying them in a
  * production system.
  * </p>
  * 
@@ -94,14 +94,14 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   }
 
   @Override
-  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
+  public void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
     if (modifiedTime.toEpochMilli() <= 0) {
       modifiedTime = fetchTime;
     }
 
-    long adjustInterval = TableUtil.getFetchInterval(page).getSeconds();
+    long adjustInterval = page.getFetchInterval().getSeconds();
     switch (state) {
       case FetchSchedule.STATUS_MODIFIED:
         adjustInterval *= (1.0f - DEC_RATE);
@@ -124,7 +124,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     if (adjustInterval < MIN_INTERVAL.getSeconds()) adjustInterval = MIN_INTERVAL.getSeconds();
     if (adjustInterval > MAX_INTERVAL.getSeconds()) adjustInterval = MAX_INTERVAL.getSeconds();
 
-    updateRefetchTime(page, Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
+    updateRefetchTime(page.get(), Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
   }
 
   protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {

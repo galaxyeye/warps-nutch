@@ -5,10 +5,10 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.storage.WrappedWebPage;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 /**
  * Created by vincent on 16-9-10.
@@ -16,31 +16,31 @@ import java.nio.ByteBuffer;
  */
 public class FetchUtil {
 
-  static public void updateStatus(WebPage page, byte status) {
+  static public void updateStatus(WrappedWebPage page, byte status) {
     updateStatus(page, status, null);
   }
 
-  static public void updateStatus(WebPage page, byte status, ProtocolStatus pstatus) {
+  static public void updateStatus(WrappedWebPage page, byte status, ProtocolStatus pstatus) {
     page.setStatus((int) status);
     if (pstatus != null) {
       page.setProtocolStatus(pstatus);
     }
 
-    TableUtil.increaseFetchCount(page);
+    page.increaseFetchCount();
   }
 
-  static public void updateMarks(WebPage page) {
+  static public void updateMarks(WrappedWebPage page) {
     /** Set fetch mark */
-    Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
+    Mark.FETCH_MARK.putMark(page.get(), Mark.GENERATE_MARK.checkMark(page.get()));
     /** Unset index mark if exist, this page should be re-indexed */
-    Mark.INDEX_MARK.removeMarkIfExist(page);
+    Mark.INDEX_MARK.removeMarkIfExist(page.get());
   }
 
-  static public void updateContent(WebPage page, Content content) {
+  static public void updateContent(WrappedWebPage page, Content content) {
     updateContent(page, content, null);
   }
 
-  static public void updateContent(WebPage page, Content content, String contentType) {
+  static public void updateContent(WrappedWebPage page, Content content, String contentType) {
     if (content == null) {
       return;
     }
@@ -61,14 +61,15 @@ public class FetchUtil {
     }
   }
 
-  static public void updateFetchTime(WebPage page, byte status) {
-    final long prevFetchTime = page.getFetchTime();
-    final long fetchTime = System.currentTimeMillis();
+  static public void updateFetchTime(WrappedWebPage page, byte status) {
+    Instant prevFetchTime = page.getFetchTime();
+    Instant fetchTime = Instant.now();
+
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(fetchTime);
 
     if (status == CrawlStatus.STATUS_FETCHED) {
-      TableUtil.putFetchTimeHistory(page, fetchTime);
+      page.putFetchTimeHistory(fetchTime);
     }
   }
 }

@@ -18,9 +18,8 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,23 +59,20 @@ public class TestAdaptiveFetchSchedule {
     FetchSchedule fs = new AdaptiveFetchSchedule();
     fs.setConf(conf);
 
-    WebPage p = prepareWebpage();
+    WrappedWebPage p = prepareWebpage();
 
     changed = FetchSchedule.STATUS_UNKNOWN;
-    fs.setFetchSchedule("http://www.example.com", p,
-        Instant.ofEpochMilli(p.getFetchTime()), Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
-    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
+    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified, changed);
+    validateFetchInterval(changed, p.getFetchInterval());
 
     changed = FetchSchedule.STATUS_MODIFIED;
-    fs.setFetchSchedule("http://www.example.com", p, Instant.ofEpochMilli(p.getFetchTime()),
-        Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
-    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
+    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified, changed);
+    validateFetchInterval(changed, p.getFetchInterval());
     p.setFetchInterval((int)interval.getSeconds());
 
     changed = FetchSchedule.STATUS_NOTMODIFIED;
-    fs.setFetchSchedule("http://www.example.com", p, Instant.ofEpochMilli(p.getFetchTime()),
-        Instant.ofEpochMilli(p.getModifiedTime()), curTime, lastModified, changed);
-    validateFetchInterval(changed, TableUtil.getFetchInterval(p));
+    fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified, changed);
+    validateFetchInterval(changed, p.getFetchInterval());
   }
 
   /**
@@ -84,12 +80,12 @@ public class TestAdaptiveFetchSchedule {
    * 
    * @return wp :Webpage
    */
-  public WebPage prepareWebpage() {
-    WebPage wp = WebPage.newBuilder().build();
+  public WrappedWebPage prepareWebpage() {
+    WrappedWebPage wp = WrappedWebPage.newWebPage();
     wp.setStatus(1);
     wp.setScore(1.0f);
 
-    wp.setFetchTime(0L);
+    wp.setFetchTime(Instant.EPOCH);
     wp.setFetchInterval((int)interval.getSeconds());
 
     return wp;

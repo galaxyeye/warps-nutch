@@ -34,6 +34,7 @@ import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
@@ -210,7 +211,9 @@ public class ParseUtil {
     return res;
   }
 
-  private void processSuccess(String url, WebPage page, Parse parse) {
+  private void processSuccess(String url, WebPage p, Parse parse) {
+    WrappedWebPage page = WrappedWebPage.wrap(p);
+
     page.setText(new Utf8(parse.getText()));
     page.setTitle(new Utf8(parse.getTitle()));
     ByteBuffer prevSig = page.getSignature();
@@ -218,16 +221,16 @@ public class ParseUtil {
       page.setPrevSignature(prevSig);
     }
 
-    final byte[] signature = sig.calculate(page);
+    final byte[] signature = sig.calculate(page.get());
     page.setSignature(ByteBuffer.wrap(signature));
 
     String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
     Map<CharSequence, CharSequence> outlinks = Stream.of(parse.getOutlinks())
         .map(l -> Pair.of(new Utf8(normalizeUrlToEmpty(page, l.getToUrl())), new Utf8(l.getAnchor())))
-        .filter(p -> p.getKey().length() != 0)
+        .filter(pair -> pair.getKey().length() != 0)
         .distinct()
         .limit(maxOutlinks)
-        .filter(p -> validateDestHost(sourceHost, URLUtil.getHost(p.getKey(), hostGroupMode)))
+        .filter(pair -> validateDestHost(sourceHost, URLUtil.getHost(pair.getKey(), hostGroupMode)))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
     page.setOutlinks(outlinks);
 
@@ -260,9 +263,9 @@ public class ParseUtil {
 //    }
 
     // TODO : Marks should be set in mapper or reducer, not util methods
-    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
+    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page.get());
     if (fetchMark != null) {
-      Mark.PARSE_MARK.putMark(page, fetchMark);
+      Mark.PARSE_MARK.putMark(page.get(), fetchMark);
     }
   }
 
@@ -293,7 +296,7 @@ public class ParseUtil {
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
 
-    TableUtil.putMetadata(page, FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    WrappedWebPage.wrap(page).putMetadata(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
 
     if (newUrl.equals(url)) {
       String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetchJob.PERM_REFRESH_TIME);
@@ -311,7 +314,7 @@ public class ParseUtil {
   }
 
   @Contract("_, null -> !null")
-  private String normalizeUrlToEmpty(WebPage page, final String url) {
+  private String normalizeUrlToEmpty(WrappedWebPage page, final String url) {
     if (url == null) {
       return "";
     }
@@ -328,7 +331,7 @@ public class ParseUtil {
 
     // We explicitly follow detail urls from seed page
     // TODO : this can be avoid
-    if (TableUtil.isSeed(page) && crawlFilters.veryLikelyBeDetailUrl(filteredUrl)) {
+    if (page.isSeed() && crawlFilters.veryLikelyBeDetailUrl(filteredUrl)) {
       return filteredUrl;
     }
 

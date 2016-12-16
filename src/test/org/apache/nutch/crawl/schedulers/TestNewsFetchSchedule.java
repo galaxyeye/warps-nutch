@@ -19,9 +19,8 @@ package org.apache.nutch.crawl.schedulers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.filter.CrawlFilter;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -64,7 +63,7 @@ public class TestNewsFetchSchedule {
   int totalRounds = 1000;
   int changeBefore = 500;
 
-  WebPage p = WebPage.newBuilder().build();
+  WrappedWebPage p = WrappedWebPage.newWebPage();
   FetchSchedule fs = new NewsFetchSchedule();
 
   @Before
@@ -80,8 +79,8 @@ public class TestNewsFetchSchedule {
     p.setBaseUrl("http://www.example.com");
     p.setStatus(0);
     p.setScore(1.0f);
-    p.setFetchTime(startTime.plusSeconds(60).toEpochMilli());
-    p.setFetchInterval((int) Duration.ofDays(1).getSeconds());
+    p.setFetchTime(startTime.plusSeconds(60));
+    p.setFetchInterval(Duration.ofDays(1));
 
     choosePageType("seed", p);
 
@@ -95,9 +94,9 @@ public class TestNewsFetchSchedule {
       if (lastModified.plus(update).isBefore(curTime)) {
         if (i < changeBefore) {
           // TableUtil.updateReferredPublishTime(p, curTime.minus(2, ChronoUnit.DAYS));
-          TableUtil.updateReferredPublishTime(p, curTime);
-          TableUtil.increaseReferredArticles(p, 1);
-          TableUtil.increaseReferredChars(p, 2500);
+          p.updateReferredPublishTime(curTime);
+          p.increaseReferredArticles(1);
+          p.increaseReferredChars(2500);
           updateScore(p);
 
           changed = true;
@@ -115,11 +114,11 @@ public class TestNewsFetchSchedule {
           + "Score : " + p.getScore() + ", "
           + "Missed " + miss);
 
-      if (p.getFetchTime() <= curTime.toEpochMilli()) {
+      if (p.getFetchTime().isBefore(curTime)) {
         fetchCnt++;
         fs.setFetchSchedule("http://www.example.com", p,
-            Instant.ofEpochMilli(p.getFetchTime()),
-            Instant.ofEpochMilli(p.getModifiedTime()),
+            p.getFetchTime(),
+            p.getModifiedTime(),
             curTime,
             lastModified,
             changed ? FetchSchedule.STATUS_MODIFIED : FetchSchedule.STATUS_NOTMODIFIED);
@@ -130,7 +129,7 @@ public class TestNewsFetchSchedule {
             + "Score : " + p.getScore() + ", "
             + "Interval : " + getRoundString(p, timeDelta));
 
-        TableUtil.increaseFetchCount(p);
+        p.increaseFetchCount();
 
         if (!changed) miss++;
         if (miss > maxMiss) maxMiss = miss;
@@ -152,24 +151,24 @@ public class TestNewsFetchSchedule {
     LOG.info("Page changed " + changeCnt + " times, fetched " + fetchCnt + " times.");
   }
 
-  private void choosePageType(String type, WebPage p) {
+  private void choosePageType(String type, WrappedWebPage p) {
     if ("seed".equalsIgnoreCase(type)) {
-      TableUtil.putMetadata(p, META_IS_SEED, YES_STRING);
+      p.putMetadata(META_IS_SEED, YES_STRING);
     }
     else if ("detail".equalsIgnoreCase(type)) {
-      TableUtil.setPageCategory(p, CrawlFilter.PageCategory.DETAIL);
-      TableUtil.setPageCategoryLikelihood(p, 0.9f);
+      p.setPageCategory(CrawlFilter.PageCategory.DETAIL);
+      p.setPageCategoryLikelihood(0.9f);
     }
   }
 
-  private long getRoundNumber(WebPage p, long time, Duration timeDelta) {
-    return (time - startTime.toEpochMilli()) / timeDelta.toMillis();
+  private long getRoundNumber(WrappedWebPage p, Instant time, Duration timeDelta) {
+    return (time.toEpochMilli() - startTime.toEpochMilli()) / timeDelta.toMillis();
   }
 
-  private String getRoundString(WebPage p, Duration timeDelta) {
+  private String getRoundString(WrappedWebPage p, Duration timeDelta) {
     final DecimalFormat df = new DecimalFormat("0.00");
 
-    long inteval = TableUtil.getFetchInterval(p).toMillis();
+    long inteval = p.getFetchInterval().toMillis();
 
     float round = 1.0f * inteval / timeDelta.toMillis();
     float days = 1.0f * inteval / Duration.ofDays(1).toMillis();
@@ -178,12 +177,12 @@ public class TestNewsFetchSchedule {
     return df.format(round) + " rounds (" + (days >= 1 ? (df.format(days) + " days") : df.format(hours) + " hours") + "), ";
   }
 
-  private void updateScore(WebPage p) {
+  private void updateScore(WrappedWebPage p) {
     float f1 = 1.0f;
     float f2 = 2.0f;
 
-    long ra = TableUtil.getReferredArticles(p);
-    long rc = TableUtil.getReferredChars(p);
+    long ra = p.getReferredArticles();
+    long rc = p.getReferredChars();
 
     p.setScore(p.getScore() + f1 * ra + f2 * ((rc - 1000) / 1000));
   }

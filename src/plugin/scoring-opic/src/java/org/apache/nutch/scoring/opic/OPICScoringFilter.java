@@ -23,6 +23,7 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +72,9 @@ public class OPICScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public void injectedScore(String url, WebPage row) throws ScoringFilterException {
+  public void injectedScore(String url, WrappedWebPage row) throws ScoringFilterException {
     float score = row.getScore();
-    TableUtil.setCash(row, score);
+    row.setCash(score);
   }
 
   /**
@@ -81,20 +82,20 @@ public class OPICScoringFilter implements ScoringFilter {
    * correct level. Newly discovered pages have at least one inlink.
    */
   @Override
-  public void initialScore(String url, WebPage row) throws ScoringFilterException {
+  public void initialScore(String url, WrappedWebPage row) throws ScoringFilterException {
     row.setScore(0.0f);
-    TableUtil.setCash(row, 0.0f);
+    row.setCash(0.0f);
   }
 
-  /** Use {@link WebPage#getScore()}. */
+  /** Use {@link WrappedWebPage#getScore()}. */
   @Override
-  public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
+  public float generatorSortValue(String url, WrappedWebPage row, float initSort) throws ScoringFilterException {
     return initSort + row.getScore();
   }
 
   /** Increase the score by a sum of inlinked scores. */
   @Override
-  public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) {
+  public void updateScore(String url, WrappedWebPage row, List<ScoreDatum> inlinkedScoreData) {
     float adjust = 0.0f;
     float factor = 1.0f;
 
@@ -107,14 +108,14 @@ public class OPICScoringFilter implements ScoringFilter {
     float oldScore = row.getScore();
     row.setScore(oldScore + adjust);
 
-    float cash = TableUtil.getCash(row);
-    TableUtil.setCash(row, cash + factor * adjust);
+    float cash = row.getCash();
+    row.setCash(cash + factor * adjust);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage row, Collection<ScoreDatum> scoreData, int allCount) {
-    float cash = TableUtil.getCash(row);
+  public void distributeScoreToOutlinks(String fromUrl, WrappedWebPage row, Collection<ScoreDatum> scoreData, int allCount) {
+    float cash = row.getCash();
     if (cash == 0) {
       return;
     }
@@ -142,21 +143,21 @@ public class OPICScoringFilter implements ScoringFilter {
       }
     }
 
-    TableUtil.setCash(row, 0.0f);
+    row.setCash(0.0f);
   }
 
-  private float adjustArticlePageScore(WebPage row) {
+  private float adjustArticlePageScore(WrappedWebPage row) {
     float f1 = 1.0f;
     float f2 = 2.0f;
 
-    long ra = TableUtil.getReferredArticles(row);
-    long rc = TableUtil.getReferredChars(row);
+    long ra = row.getReferredArticles();
+    long rc = row.getReferredChars();
 
     return f1 * ra + f2 * ((rc - 1000) / 1000);
   }
 
   /** Dampen the boost value by scorePower. */
-  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) {
+  public float indexerScore(String url, IndexDocument doc, WrappedWebPage row, float initScore) {
     return (float) Math.pow(row.getScore(), scorePower) * initScore;
   }
 

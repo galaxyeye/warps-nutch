@@ -1,11 +1,11 @@
 package org.apache.nutch.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
@@ -93,17 +93,18 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
    * and then filtered by mapper, which is a scan, the time complex is O(N)
    * */
   @Override
-  protected void map(String key, WebPage page, Context context) throws IOException, InterruptedException {
+  protected void map(String key, WebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(key);
+    WrappedWebPage page = WrappedWebPage.wrap(row);
 
     if (unreachableHosts.contains(URLUtil.getDomainName(url))) {
       getCounter().increase(Counter.hostsUnreachable);
       return;
     }
 
-    if (!Mark.GENERATE_MARK.hasMark(page)) {
+    if (!Mark.GENERATE_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.notGenerated);
       return;
     }
@@ -115,15 +116,15 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
      * NOTE : Nutch removes marks only in DbUpdatejob, include INJECT_MARK, GENERATE_MARK, FETCH_MARK, PARSE_MARK,
      * so a page row can have multiple marks.
      * */
-    if (resume && Mark.FETCH_MARK.hasMark(page)) {
+    if (resume && Mark.FETCH_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.alreadyFetched);
       return;
     }
 
-    int priority = TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+    int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
     // Higher priority, comes first
     int shuffleOrder = random.nextInt(65536) - 65536 * priority;
-    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page));
+    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page.get()));
     updateStatus(url, page);
 
     if (limit > 0 && ++count > limit) {
@@ -131,9 +132,9 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
     }
   }
 
-  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
+  private void updateStatus(String url, WrappedWebPage page) throws IOException, InterruptedException {
     Counter counter;
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
     if (depth == 0) {
       counter = Counter.rowsDepth0;
     }
@@ -152,11 +153,11 @@ public class FetchMapper extends NutchMapper<String, WebPage, IntWritable, Fetch
 
     getCounter().increase(counter);
 
-    if (TableUtil.isSeed(page)) {
+    if (page.isSeed()) {
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page)) {
+    if (Mark.INJECT_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.rowsInjected);
     }
 

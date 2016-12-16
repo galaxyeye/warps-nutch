@@ -12,9 +12,8 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,8 @@ public class ReduceDatumBuilder {
     this.counter = counter;
 
     retryMax = conf.getInt("db.fetch.retry.max", 3);
-    maxFetchInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.max", 0));
+    maxFetchInterval = Duration.ofSeconds(conf.getLong("db.fetch.interval.max", Duration.ofDays(90).getSeconds()));
+    // maxFetchInterval = NutchConfiguration.getDuration(conf, "db.fetch.interval.max", Duration.ofDays(90));
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
@@ -64,7 +64,7 @@ public class ReduceDatumBuilder {
 
   public Params getParams() { return params; }
 
-  public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
+  public void process(String url, WrappedWebPage page, WrappedWebPage oldPage, boolean additionsAllowed) {
     //check if page is already in the db
     if(page == null && oldPage != null) {
       // if we return here inlinks will not be updated
@@ -89,17 +89,17 @@ public class ReduceDatumBuilder {
   public void reset() { inlinkedScoreData.clear(); }
 
   /**
-   * In the mapper phrase, NutchWritable is sets to be a WebPage or a ScoreDatum,
-   * the WebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
+   * In the mapper phrase, NutchWritable is sets to be a WrappedWebPage or a ScoreDatum,
+   * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
-  public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
-    WebPage page = null;
+  public WrappedWebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
+    WrappedWebPage page = null;
     inlinkedScoreData.clear();
 
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = ((WebPageWritable) val).getWebPage();
+        page = new WrappedWebPage(((WebPageWritable) val).getWebPage());
       } else {
         inlinkedScoreData.add((ScoreDatum) val);
 
@@ -113,7 +113,7 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateRow(String url, WebPage page) {
+  public void updateRow(String url, WrappedWebPage page) {
     calculateDistance(page);
 
     updateScore(url, page);
@@ -123,14 +123,14 @@ public class ReduceDatumBuilder {
     updateStatusCounter(page);
   }
 
-  public WebPage createNewRow(String url, int depth) {
-    WebPage page = WebPage.newBuilder().build();
+  public WrappedWebPage createNewRow(String url, int depth) {
+    WrappedWebPage page = WrappedWebPage.newWebPage();
 
     fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
 
-    TableUtil.setDistance(page, depth);
-    TableUtil.setFetchCount(page, 0);
+    page.setDistance(depth);
+    page.setFetchCount(0);
 
     try {
       scoringFilters.initialScore(url, page);
@@ -142,8 +142,8 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
-    TableUtil.setReferrer(newPage, sourcePage.getBaseUrl().toString());
+  public void updateNewRow(String url, WrappedWebPage sourcePage, WrappedWebPage newPage) {
+    newPage.setReferrer(sourcePage.getBaseUrl().toString());
 
     updateScore(url, newPage);
 
@@ -156,26 +156,26 @@ public class ReduceDatumBuilder {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
+  public boolean updateExistOutPage(WrappedWebPage mainPage, WrappedWebPage oldPage, int depth, int oldDepth) {
     boolean changed = false;
-    boolean detail = TableUtil.veryLikeDetailPage(oldPage);
+    boolean detail = oldPage.veryLikeDetailPage();
 
-    Instant publishTime = TableUtil.getPublishTime(oldPage);
+    Instant publishTime = oldPage.getPublishTime();
     if (detail && publishTime.isAfter(Instant.EPOCH)) {
-      TableUtil.updateReferredPublishTime(mainPage, publishTime);
+      mainPage.updateReferredPublishTime(publishTime);
       changed = true;
     }
 
     // Vote the main page if not voted
-    if (detail && TableUtil.voteIfAbsent(oldPage, mainPage)) {
-      TableUtil.increaseReferredArticles(mainPage, 1);
-      TableUtil.increaseReferredChars(mainPage, TableUtil.sniffTextLength(oldPage));
+    if (detail && oldPage.voteIfAbsent(mainPage)) {
+      mainPage.increaseReferredArticles(1);
+      mainPage.increaseReferredChars(oldPage.sniffTextLength());
       changed = true;
     }
 
     if (depth < oldDepth) {
-      TableUtil.setReferrer(mainPage, mainPage.getBaseUrl().toString());
-      TableUtil.setDistance(oldPage, depth);
+      mainPage.setReferrer(mainPage.getBaseUrl().toString());
+      oldPage.setDistance(depth);
       changed = true;
     }
 
@@ -189,7 +189,7 @@ public class ReduceDatumBuilder {
    * If the new distance is smaller than old one (or if old did not exist yet),
    * write it to the page.
    * */
-  private void calculateDistance(WebPage page) {
+  private void calculateDistance(WrappedWebPage page) {
     if (page.getInlinks() != null) {
       page.getInlinks().clear();
     }
@@ -207,16 +207,16 @@ public class ReduceDatumBuilder {
     }
 
     if (smallestDist != MAX_DISTANCE) {
-      int oldDistance = TableUtil.getDepth(page);
+      int oldDistance = page.getDepth();
       int newDistance = smallestDist + 1;
 
       if (newDistance < oldDistance) {
-        TableUtil.setDistance(page, newDistance);
+        page.setDistance(newDistance);
       }
     }
   }
 
-  private void updateScore(String url, WebPage page) {
+  private void updateScore(String url, WrappedWebPage page) {
     try {
       scoringFilters.updateScore(url, page, inlinkedScoreData);
     } catch (ScoringFilterException e) {
@@ -228,25 +228,25 @@ public class ReduceDatumBuilder {
     // it should have a very high score
   }
 
-  private void updateMetadata(WebPage page) {
+  private void updateMetadata(WrappedWebPage page) {
     // Clear temporary metadata
-    TableUtil.clearMetadata(page, FetchJob.REDIRECT_DISCOVERED);
-    TableUtil.clearMetadata(page, PARAM_GENERATE_TIME);
+    page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
+    page.clearMetadata(PARAM_GENERATE_TIME);
 
     // Clear markers
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.removeMarkIfExist(page);
-    Mark.FETCH_MARK.removeMarkIfExist(page);
+    Mark.INJECT_MARK.removeMarkIfExist(page.get());
+    Mark.GENERATE_MARK.removeMarkIfExist(page.get());
+    Mark.FETCH_MARK.removeMarkIfExist(page.get());
 
-    Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
+    Utf8 parseMark = Mark.PARSE_MARK.checkMark(page.get());
     if (parseMark != null) {
-      Mark.PARSE_MARK.removeMark(page);
+      Mark.PARSE_MARK.removeMark(page.get());
       // What about INDEX_MARK?
-      Mark.UPDATEDB_MARK.putMark(page, parseMark);
+      Mark.UPDATEDB_MARK.putMark(page.get(), parseMark);
     }
   }
 
-  public void updateFetchSchedule(String url, WebPage page) {
+  public void updateFetchSchedule(String url, WrappedWebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {
@@ -269,33 +269,32 @@ public class ReduceDatumBuilder {
           }
         }
 
-        Instant prevFetchTime = Instant.ofEpochMilli(page.getPrevFetchTime());
-        Instant fetchTime = Instant.ofEpochMilli(page.getFetchTime());
+        Instant prevFetchTime = page.getPrevFetchTime();
+        Instant fetchTime = page.getFetchTime();
 
-        Instant prevModifiedTime = Instant.ofEpochMilli(page.getPrevModifiedTime());
-        Instant modifiedTime = Instant.ofEpochMilli(page.getModifiedTime());
+        Instant prevModifiedTime = page.getPrevModifiedTime();
+        Instant modifiedTime = page.getModifiedTime();
 
-        Instant latestModifiedTime = TableUtil.getHeaderLastModifiedTime(page, modifiedTime);
+        Instant latestModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
         if (latestModifiedTime.isAfter(modifiedTime)) {
           modifiedTime = latestModifiedTime;
           prevModifiedTime = modifiedTime;
         }
         else {
-          LOG.warn("Bad last modified time : {} -> {}",
-              modifiedTime, TableUtil.getHeader(page, HttpHeaders.LAST_MODIFIED, "unknown time"));
+          LOG.trace("Bad last modified time : {} -> {}", modifiedTime, page.getHeader(HttpHeaders.LAST_MODIFIED, "unknown time"));
         }
 
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
-        Duration fetchInterval = Duration.ofSeconds(page.getFetchInterval());
-        if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && maxFetchInterval.compareTo(fetchInterval) < 0) {
-          LOG.info("Force refetch page " + url);
+        Duration fetchInterval = page.getFetchInterval();
+        if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && fetchInterval.compareTo(maxFetchInterval) > 0) {
+          LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
           fetchSchedule.forceRefetch(url, page, false);
         }
 
         break;
       case CrawlStatus.STATUS_RETRY:
-        fetchSchedule.setPageRetrySchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
+        fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
         if (page.getRetriesSinceFetch() < retryMax) {
           page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
         } else {
@@ -303,12 +302,12 @@ public class ReduceDatumBuilder {
         }
         break;
       case CrawlStatus.STATUS_GONE:
-        fetchSchedule.setPageGoneSchedule(url, page, 0L, page.getPrevModifiedTime(), page.getFetchTime());
+        fetchSchedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
         break;
     }
   }
 
-  private void updateStatusCounter(WebPage page) {
+  private void updateStatusCounter(WrappedWebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {

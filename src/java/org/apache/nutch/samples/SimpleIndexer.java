@@ -7,12 +7,13 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.ProtocolNotFound;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
 
 /**
  * Created by vincent on 16-9-8.
@@ -59,17 +60,17 @@ public class SimpleIndexer {
     IndexDocument doc = null;
 
     try {
-      WebPage page = simpleParser.download(url, contentType);
+      WrappedWebPage page = simpleParser.download(url, contentType);
       if (page == null) {
         return null;
       }
 
       String key = TableUtil.reverseUrl(url);
       simpleParser.parse(page);
-      doc = indexingFilters.filter(new IndexDocument(key), url, page);
+      doc = indexingFilters.filter(new IndexDocument(key), url, page.get());
       if (indexWriters != null) {
         indexWriters.write(doc);
-        TableUtil.putIndexTimeHistory(page, System.currentTimeMillis());
+        page.putIndexTimeHistory(Instant.now());
       }
 
       System.out.println(doc);

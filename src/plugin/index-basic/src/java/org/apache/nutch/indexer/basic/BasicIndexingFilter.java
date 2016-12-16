@@ -22,8 +22,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TableUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -88,7 +88,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(DOC_FIELD_PAGE_CATEGORY, TableUtil.getPageCategory(page));
+    doc.add(DOC_FIELD_PAGE_CATEGORY, WrappedWebPage.wrap(page).getPageCategory());
   }
 
   /**

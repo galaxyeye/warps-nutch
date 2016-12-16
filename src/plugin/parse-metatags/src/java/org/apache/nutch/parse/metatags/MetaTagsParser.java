@@ -26,7 +26,7 @@ import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.WebPage.Field;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.w3c.dom.DocumentFragment;
 
 import java.nio.ByteBuffer;
@@ -74,7 +74,7 @@ public class MetaTagsParser implements ParseFilter {
     // might have stored the values there already.
     // Values are then additionally stored with the prefixed key.
     page.getMetadata().keySet().stream().map(CharSequence::toString).forEach(
-        key -> addIndexedMetatags(metadata, key, TableUtil.getMetadata(page, key))
+        key -> addIndexedMetatags(metadata, key, WrappedWebPage.wrap(page).getMetadata(key))
     );
 
     // add temporary metadata to page metadata

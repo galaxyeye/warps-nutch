@@ -23,6 +23,7 @@ import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,12 +58,13 @@ public class DbUpdateMapper extends NutchMapper<String, WebPage, UrlWithScore, N
    * One row map to several rows
    * */
   @Override
-  public void map(String reversedUrl, WebPage page, Context context) throws IOException, InterruptedException {
+  public void map(String reversedUrl, WebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
+    WrappedWebPage page = new WrappedWebPage(row);
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!Mark.FETCH_MARK.hasMark(page)) {
+    if (!Mark.FETCH_MARK.hasMark(page.get())) {
       getCounter().increase(Counter.notFetched);
       return;
     }

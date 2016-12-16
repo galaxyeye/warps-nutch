@@ -6,11 +6,11 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
-import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +65,8 @@ public class SeedBuilder {
     );
   }
 
-  public WebPage buildWebPage(String urlLine) {
-    WebPage row = WebPage.newBuilder().build();
+  public WrappedWebPage buildWebPage(String urlLine) {
+    WrappedWebPage page = WrappedWebPage.newWebPage();
 
       /* Ignore line that start with # */
     if (urlLine.length() < SHORTEST_VALID_URL_LENGTH || urlLine.startsWith("#")) {
@@ -77,13 +77,13 @@ public class SeedBuilder {
 
     Map<String, String> metadata = buildMetadata(urlLine);
     // Add metadata to page
-    TableUtil.putAllMetadata(row, metadata);
+    page.putAllMetadata(metadata);
 
     String reversedUrl = null;
     try {
       reversedUrl = TableUtil.reverseUrl(url);
-      row.setFetchTime(currentTime);
-      row.setFetchInterval(fetchIntervalSec);
+      page.get().setFetchTime(currentTime);
+      page.get().setFetchInterval(fetchIntervalSec);
     }
     catch (MalformedURLException e) {
       LOG.warn("Ignore illegal formatted url : " + url);
@@ -91,32 +91,32 @@ public class SeedBuilder {
 
     if (reversedUrl == null) {
       LOG.warn("Ignore illegal formatted url : " + url);
-      return row;
+      return page;
     }
 
     // TODO : Check the difference between hbase.url and page.baseUrl
-    row.setTmporaryVariable("url", url);
-    row.setTmporaryVariable("reversedUrl", reversedUrl);
+    page.setTmporaryVariable("url", url);
+    page.setTmporaryVariable("reversedUrl", reversedUrl);
 
     if (customPageScore != -1f) {
-      row.setScore(customPageScore);
+      page.setScore(customPageScore);
     }
     else {
-      row.setScore(scoreInjected);
+      page.setScore(scoreInjected);
     }
 
     try {
-      scoreFilters.injectedScore(url, row);
+      scoreFilters.injectedScore(url, page);
     } catch (ScoringFilterException e) {
       LOG.warn("Cannot filter injected score for " + url + ", using default. (" + e.getMessage() + ")");
     }
 
-    TableUtil.setFetchCount(row, 0);
-    TableUtil.setDistance(row, 0);
+    page.setFetchCount(0);
+    page.setDistance(0);
 
-    Mark.INJECT_MARK.putMark(row, Nutch.YES_UTF8);
+    Mark.INJECT_MARK.putMark(page.get(), Nutch.YES_UTF8);
 
-    return row;
+    return page;
   }
 
   public int getFetchIntervalSec() {

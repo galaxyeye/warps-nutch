@@ -3,6 +3,7 @@ package org.apache.nutch.fetch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -126,7 +127,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
         while (feedCapacity > 0 && currentIter.hasNext()) {
           FetchEntry entry = currentIter.next();
           final String url = TableUtil.unreverseUrl(entry.getKey());
-          tasksMonitor.produce(context.getJobId(), url, entry.getWebPage());
+          tasksMonitor.produce(context.getJobId(), url, WrappedWebPage.wrap(entry.getWebPage()));
           feedCapacity--;
           feededCount++;
         }

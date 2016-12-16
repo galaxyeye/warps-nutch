@@ -22,6 +22,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
@@ -85,15 +86,16 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
+    WrappedWebPage wPage = WrappedWebPage.wrap(page);
     try {
-      addTime(doc, url, page);
+      addTime(doc, url, wPage);
 
       addHost(doc, url, page);
 
       // Metadata-indexer does not meet all our requirement
       addGeneralMetadata(doc, url, page);
 
-      addPageMetadata(doc, url, page);
+      addPageMetadata(doc, url, wPage);
     }
     catch (IndexingException e) {
       LOG.error(e.toString());
@@ -126,20 +128,20 @@ public class MetadataIndexer implements IndexingFilter {
     }
   }
 
-  private void addTime(IndexDocument doc, String url, WebPage page) {
+  private void addTime(IndexDocument doc, String url, WrappedWebPage page) {
     Instant now = Instant.now();
 
     String crawlTimeStr = DateTimeUtil.solrCompatibleFormat(now);
-    Instant firstCrawlTime = TableUtil.getFirstCrawlTime(page, now);
-    String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, crawlTimeStr);
+    Instant firstCrawlTime = page.getFirstCrawlTime(now);
+    String fetchTimeHistory = page.getFetchTimeHistory(crawlTimeStr);
 
     doc.add("first_crawl_time", DateTimeUtil.solrCompatibleFormat(firstCrawlTime));
     doc.add("last_crawl_time", crawlTimeStr);
     doc.add("fetch_time_history", fetchTimeHistory);
 
     String indexTimeStr = DateTimeUtil.solrCompatibleFormat(now);
-    Instant firstIndexTime = TableUtil.getFirstIndexTime(page, now);
-    String indexTimeHistory = TableUtil.getIndexTimeHistory(page, indexTimeStr);
+    Instant firstIndexTime = page.getFirstIndexTime(now);
+    String indexTimeHistory = page.getIndexTimeHistory(indexTimeStr);
 
     doc.add("first_index_time", DateTimeUtil.solrCompatibleFormat(firstIndexTime));
     doc.add("last_index_time", indexTimeStr);
@@ -159,14 +161,14 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("content_type", contentType);
   }
 
-  private IndexDocument addPageMetadata(IndexDocument doc, String url, WebPage page) {
+  private IndexDocument addPageMetadata(IndexDocument doc, String url, WrappedWebPage page) {
     if (doc == null || parseFieldnames.isEmpty()) {
       return doc;
     }
 
     for (Map.Entry<String, String> metatag : parseFieldnames.entrySet()) {
       String k = metatag.getValue();
-      String metadata = TableUtil.getMetadata(page, metatag.getKey());
+      String metadata = page.getMetadata(metatag.getKey());
 
       if (k != null && metadata != null) {
         k = k.trim();

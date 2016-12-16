@@ -15,7 +15,7 @@ import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.Host;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.WrappedWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
@@ -127,8 +127,8 @@ public class TasksMonitor {
     doProduce(item);
   }
 
-  public synchronized void produce(int jobID, String url, WebPage page) {
-    int priority = TableUtil.getFetchPriority(page, FETCH_PRIORITY_DEFAULT);
+  public synchronized void produce(int jobID, String url, WrappedWebPage page) {
+    int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
     FetchTask task = FetchTask.create(jobID, priority, url, page, hostGroupMode);
 
     if (task != null) {
@@ -337,7 +337,7 @@ public class TasksMonitor {
   /**
    * Available hosts statistics
    * */
-  public synchronized void statHost(String url, WebPage page) {
+  public synchronized void statHost(String url, WrappedWebPage page) {
     if (url == null || url.isEmpty()) {
       return;
     }
@@ -376,18 +376,18 @@ public class TasksMonitor {
     if (debugUrls) {
       Params params = Params.of(
           "FT", DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime()),
-          "FC", TableUtil.getFetchCount(page),
-          "RefPT", DateTimeUtil.format(TableUtil.getReferredPublishTime(page)),
-          "RefPC", TableUtil.getReferredArticles(page),
-          "OLink", TableUtil.getTotalOutLinkCount(page),
+          "FC", page.getFetchCount(),
+          "RefPT", DateTimeUtil.format(page.getReferredPublishTime()),
+          "RefPC", page.getReferredArticles(),
+          "OLink", page.getTotalOutLinkCount(),
           "Score", page.getScore(),
-          "Cash", TableUtil.getCash(page),
+          "Cash", page.getCash(),
           "Url -> ", url
       );
       nutchMetrics.debugUrls(params.formatAsLine(), pageCategory, reportSuffix);
     }
 
-    int depth = TableUtil.getDepth(page);
+    int depth = page.getDepth();
     if (depth == 1) {
       ++hostStat.urlsFromSeed;
     }
