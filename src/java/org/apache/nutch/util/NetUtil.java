@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,12 +127,12 @@ public class NetUtil {
     return "http://" + host + ":" + port;
   }
 
-  public static WrappedWebPage getWebPage(String url, String contentType, Configuration conf) throws ProtocolNotFound {
+  public static WebPage getWebPage(String url, String contentType, Configuration conf) throws ProtocolNotFound {
     LOG.info("fetching: " + url);
 
     ProtocolFactory factory = new ProtocolFactory(conf);
     Protocol protocol = factory.getProtocol(url);
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
 
     ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
 

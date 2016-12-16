@@ -22,7 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.Parser;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,15 +92,15 @@ public class TestHtmlParser {
     parser.setConf(conf);
   }
 
-  protected WrappedWebPage page(byte[] contentBytes) {
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+  protected WebPage page(byte[] contentBytes) {
+    WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8(dummyUrl));
     page.setContent(ByteBuffer.wrap(contentBytes));
     page.setContentType(new Utf8("text/html"));
     return page;
   }
 
-  protected Parse parse(WrappedWebPage page) {
+  protected Parse parse(WebPage page) {
     return parser.getParse(dummyUrl, page);
   }
 
@@ -111,7 +111,7 @@ public class TestHtmlParser {
       Charset charset = Charset.forName(testPage[1]);
       byte[] contentBytes = testPage[2].getBytes(charset);
       // Parse parse = parse(contentBytes);
-      WrappedWebPage page = page(contentBytes);
+      WebPage page = page(contentBytes);
       Parse parse = parse(page);
       String text = parse.getText();
       String title = parse.getTitle();

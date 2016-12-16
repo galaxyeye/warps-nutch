@@ -22,7 +22,7 @@ import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class TestImageMetadata {
       in.readFully(bytes);
       in.close();
 
-      WrappedWebPage page = WrappedWebPage.newWebPage();
+      WebPage page = WebPage.newWebPage();
       page.setBaseUrl(new Utf8(urlString));
       page.setContent(ByteBuffer.wrap(bytes));
       String mtype = mimeutil.getMimeType(file);

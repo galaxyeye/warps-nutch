@@ -8,8 +8,8 @@ import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.parse.ParseStatusCodes;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -67,7 +67,7 @@ public class JITIndexer {
    * Thread safe
    * */
   public void produce(FetchTask fetchTask) {
-    WrappedWebPage page = fetchTask.getPage();
+    WebPage page = fetchTask.getPage();
     if (page == null) {
       LOG.warn("Invalid FetchTask to index, ignore it");
       return;
@@ -134,7 +134,7 @@ public class JITIndexer {
 
       String url = fetchTask.getUrl();
       String reverseUrl = TableUtil.reverseUrl(url);
-      WrappedWebPage page = fetchTask.getPage();
+      WebPage page = fetchTask.getPage();
 
       IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
       doc = filter(doc, page);
@@ -150,7 +150,7 @@ public class JITIndexer {
     }
   }
 
-  private IndexDocument filter(IndexDocument doc, WrappedWebPage page) {
+  private IndexDocument filter(IndexDocument doc, WebPage page) {
     if (doc == null || page == null) {
       return null;
     }

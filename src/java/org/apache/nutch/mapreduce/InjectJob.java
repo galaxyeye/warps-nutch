@@ -31,7 +31,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
@@ -90,7 +90,7 @@ public class InjectJob extends NutchJob implements Tool {
         return;
       }
 
-      WrappedWebPage row = seedBuiler.buildWebPage(urlLine);
+      WebPage row = seedBuiler.buildWebPage(urlLine);
       String reversedUrl = row.getTemporaryVariableAsString("reversedUrl");
 
       if (reversedUrl != null) {
@@ -149,7 +149,7 @@ public class InjectJob extends NutchJob implements Tool {
     FileInputFormat.addInputPath(currentJob, input);
     currentJob.setMapperClass(UrlMapper.class);
     currentJob.setMapOutputKeyClass(String.class);
-    currentJob.setMapOutputValueClass(WrappedWebPage.class);
+    currentJob.setMapOutputValueClass(WebPage.class);
     currentJob.setOutputFormatClass(GoraOutputFormat.class);
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(currentJob.getConfiguration(), String.class, GoraWebPage.class);

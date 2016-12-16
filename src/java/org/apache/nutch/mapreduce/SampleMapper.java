@@ -19,7 +19,7 @@ package org.apache.nutch.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWeb
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-    WrappedWebPage page = WrappedWebPage.wrap(row);
+    WebPage page = WebPage.wrap(row);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
     LOG.debug("Map : " + url);

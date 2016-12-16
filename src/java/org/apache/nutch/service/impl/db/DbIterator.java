@@ -26,7 +26,7 @@ import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DbPageConverter;
 import org.apache.nutch.util.TableUtil;
@@ -45,7 +45,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   public static long DefaultDbLimit = 100000L;
 
   private Result<String, GoraWebPage> result;
-  private WrappedWebPage page;
+  private WebPage page;
 
   private boolean hasNext;
   private long recordCount = 0;
@@ -101,7 +101,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return false;
     }
 
-    Utf8 mark = Mark.UPDATEDB_MARK.checkMark(WrappedWebPage.wrap(result.get()));
+    Utf8 mark = Mark.UPDATEDB_MARK.checkMark(WebPage.wrap(result.get()));
     return batchId == null || shouldProcess(mark, batchId);
   }
 
@@ -146,7 +146,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return null;
     }
 
-    page = WrappedWebPage.wrap(GoraWebPage.newBuilder(result.get()).build());
+    page = WebPage.wrap(GoraWebPage.newBuilder(result.get()).build());
 
     try {
       skipNonRelevant();
@@ -164,7 +164,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     return pageAsMap(skey, page);
   }
 
-  private Map<String, Object> pageAsMap(String url, WrappedWebPage page) {
+  private Map<String, Object> pageAsMap(String url, WebPage page) {
     Map<String, Object> result = DbPageConverter.convertPage(page, fields);
 
     if (CollectionUtils.isEmpty(fields) || fields.contains("url")) {

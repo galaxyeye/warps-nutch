@@ -17,7 +17,7 @@
 package org.apache.nutch.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -173,15 +173,15 @@ public class TableUtil {
     return (utf8 == null ? defaultValue : StringUtil.cleanField(utf8.toString()));
   }
 
-  public static Map<CharSequence, CharSequence> getOutlinks(WrappedWebPage page) {
+  public static Map<CharSequence, CharSequence> getOutlinks(WebPage page) {
     return page.getOutlinks() == null ? Collections.EMPTY_MAP : page.getOutlinks();
   }
 //
-//  public static boolean isSeed(WrappedWebPage page) {
+//  public static boolean isSeed(WebPage page) {
 //    return hasMetadata(page, META_IS_SEED);
 //  }
 //
-//  public static float getFloatMetadata(WrappedWebPage page, String key, float defaultValue) {
+//  public static float getFloatMetadata(WebPage page, String key, float defaultValue) {
 //    ByteBuffer cashRaw = page.getMetadata().get(new Utf8(key));
 //    float value = defaultValue;
 //    if (cashRaw != null) {
@@ -190,20 +190,20 @@ public class TableUtil {
 //    return value;
 //  }
 //
-//  public static void setFloatMetadata(WrappedWebPage page, String key, float value) {
+//  public static void setFloatMetadata(WebPage page, String key, float value) {
 //    page.getMetadata().put(new Utf8(key), ByteBuffer.wrap(Bytes.toBytes(value)));
 //  }
 //
-//  public static void setTextContentLength(WrappedWebPage page, int length) {
+//  public static void setTextContentLength(WebPage page, int length) {
 //    putMetadata(page, META_TEXT_CONTENT_LENGTH, String.valueOf(length));
 //  }
 //
-//  public static int getTextContentLength(WrappedWebPage page) {
+//  public static int getTextContentLength(WebPage page) {
 //    String ds = getMetadata(page, META_TEXT_CONTENT_LENGTH);
 //    return StringUtil.tryParseInt(ds, -1);
 //  }
 //
-//  public static int sniffTextLength(WrappedWebPage page) {
+//  public static int sniffTextLength(WebPage page) {
 //    int length = getTextContentLength(page);
 //    if (length >= 0) {
 //      return length;
@@ -227,19 +227,19 @@ public class TableUtil {
 //    return 0;
 //  }
 //
-//  public static float getPageCategoryLikelihood(WrappedWebPage page) {
+//  public static float getPageCategoryLikelihood(WebPage page) {
 //    return getFloatMetadata(page, META_PAGE_CATEGORY_LIKELIHOOD, 0f);
 //  }
 //
-//  public static void setPageCategoryLikelihood(WrappedWebPage page, float likelihood) {
+//  public static void setPageCategoryLikelihood(WebPage page, float likelihood) {
 //    setFloatMetadata(page, META_PAGE_CATEGORY_LIKELIHOOD, likelihood);
 //  }
 //
-//  public static boolean isDetailPage(WrappedWebPage page, float threshold) {
+//  public static boolean isDetailPage(WebPage page, float threshold) {
 //    return getPageCategory(page).isDetail() && getPageCategoryLikelihood(page) >= threshold;
 //  }
 //
-//  public static boolean veryLikeDetailPage(WrappedWebPage page) {
+//  public static boolean veryLikeDetailPage(WebPage page) {
 //    if (page.getBaseUrl() == null) {
 //      return false;
 //    }
@@ -247,11 +247,11 @@ public class TableUtil {
 //    return detail || isDetailPage(page, 0.85f);
 //  }
 //
-//  public static void setPageCategory(WrappedWebPage page, CrawlFilter.PageCategory pageCategory) {
+//  public static void setPageCategory(WebPage page, CrawlFilter.PageCategory pageCategory) {
 //    putMetadata(page, META_PAGE_CATEGORY, pageCategory.name());
 //  }
 //
-//  public static CrawlFilter.PageCategory getPageCategory(WrappedWebPage page) {
+//  public static CrawlFilter.PageCategory getPageCategory(WebPage page) {
 //    String pageCategoryStr = getMetadata(page, META_PAGE_CATEGORY);
 //
 //    try {
@@ -262,35 +262,35 @@ public class TableUtil {
 //    }
 //  }
 //
-//  public static void setNoFetch(WrappedWebPage page) {
+//  public static void setNoFetch(WebPage page) {
 //    putMetadata(page, META_NO_FETCH, YES_STRING);
 //  }
 //
-//  public static boolean isNoFetch(WrappedWebPage page) {
+//  public static boolean isNoFetch(WebPage page) {
 //    return getMetadata(page, META_NO_FETCH) != null;
 //  }
 //
-//  public static int getDepth(WrappedWebPage page) {
+//  public static int getDepth(WebPage page) {
 //    return getDistance(page);
 //  }
 //
-//  public static int getDistance(WrappedWebPage page) {
+//  public static int getDistance(WebPage page) {
 //    String ds = getMetadata(page, META_DISTANCE);
 //    return StringUtil.tryParseInt(ds, MAX_DISTANCE);
 //  }
 //
-//  public static void setDistance(WrappedWebPage page, int newDistance) {
+//  public static void setDistance(WebPage page, int newDistance) {
 //    putMetadata(page, META_DISTANCE, String.valueOf(newDistance));
 //  }
 //
-//  public static void increaseDistance(WrappedWebPage page, int distance) {
+//  public static void increaseDistance(WebPage page, int distance) {
 //    int oldDistance = getDistance(page);
 //    if (oldDistance < MAX_DISTANCE - distance) {
 //      putMetadata(page, META_DISTANCE, String.valueOf(oldDistance + distance));
 //    }
 //  }
 //
-//  public static int calculateFetchPriority(WrappedWebPage page) {
+//  public static int calculateFetchPriority(WebPage page) {
 //    int depth = getDepth(page);
 //    int priority = FETCH_PRIORITY_DEFAULT;
 //
@@ -301,29 +301,29 @@ public class TableUtil {
 //    return priority;
 //  }
 //
-//  public static void setFetchPriority(WrappedWebPage page, int priority) {
+//  public static void setFetchPriority(WebPage page, int priority) {
 //    TableUtil.putMetadata(page, META_FETCH_PRIORITY, String.valueOf(priority));
 //  }
 //
-//  public static int getFetchPriority(WrappedWebPage page, int defaultPriority) {
+//  public static int getFetchPriority(WebPage page, int defaultPriority) {
 //    String s = TableUtil.getMetadata(page, META_FETCH_PRIORITY);
 //    return StringUtil.tryParseInt(s, defaultPriority);
 //  }
 //
-//  public static void setGenerateTime(WrappedWebPage page, long generateTime) {
+//  public static void setGenerateTime(WebPage page, long generateTime) {
 //    putMetadata(page, PARAM_GENERATE_TIME, String.valueOf(generateTime));
 //  }
 //
-//  public static long getGenerateTime(WrappedWebPage page) {
+//  public static long getGenerateTime(WebPage page) {
 //    String generateTimeStr = getMetadata(page, PARAM_GENERATE_TIME);
 //    return StringUtil.tryParseLong(generateTimeStr, -1);
 //  }
 //
-//  public static float getCash(WrappedWebPage page) {
+//  public static float getCash(WebPage page) {
 //    return getFloatMetadata(page, META_CASH_KEY, 0f);
 //  }
 //
-//  public static void setCash(WrappedWebPage page, float cash) {
+//  public static void setCash(WebPage page, float cash) {
 //    setFloatMetadata(page, META_CASH_KEY, cash);
 //  }
 //
@@ -331,7 +331,7 @@ public class TableUtil {
 //   * TODO : We need a better solution to track all voted pages
 //   * TODO : optimization, consider byte array to track vote history
 //   * */
-//  public static boolean voteIfAbsent(WrappedWebPage voter, WrappedWebPage candidate) {
+//  public static boolean voteIfAbsent(WebPage voter, WebPage candidate) {
 //    String baseUrl = candidate.getBaseUrl().toString();
 //    String hash;
 //    try {
@@ -358,7 +358,7 @@ public class TableUtil {
 //    return false;
 //  }
 //
-//  public static boolean isVoted(WrappedWebPage voter, WrappedWebPage candidate) {
+//  public static boolean isVoted(WebPage voter, WebPage candidate) {
 //    String baseUrl = candidate.getBaseUrl().toString();
 //    String hash;
 //    try {
@@ -371,78 +371,78 @@ public class TableUtil {
 //    return voteHistory.contains(hash);
 //  }
 //
-//  public static String getVoteHistory(WrappedWebPage voter) {
+//  public static String getVoteHistory(WebPage voter) {
 //    return getMetadata(voter, META_VOTE_HISTORY, "");
 //  }
 //
-//  public static void setPublishTime(WrappedWebPage page, String publishTime) {
+//  public static void setPublishTime(WebPage page, String publishTime) {
 //    putMetadata(page, META_PUBLISH_TIME, publishTime);
 //  }
 //
-//  public static void setPublishTime(WrappedWebPage page, Date publishTime) {
+//  public static void setPublishTime(WebPage page, Date publishTime) {
 //    putMetadata(page, META_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
 //  }
 //
-//  public static String getPublishTimeStr(WrappedWebPage page) {
+//  public static String getPublishTimeStr(WebPage page) {
 //    return getMetadata(page, META_PUBLISH_TIME);
 //  }
 //
-//  public static Instant getPublishTime(WrappedWebPage page) {
+//  public static Instant getPublishTime(WebPage page) {
 //    String publishTimeStr = getPublishTimeStr(page);
 //    return DateTimeUtil.parseTime(publishTimeStr);
 //  }
 //
-//  public static String getReferrer(WrappedWebPage page) {
+//  public static String getReferrer(WebPage page) {
 //    return getMetadata(page, META_REFERRER);
 //  }
 //
-//  public static void setReferrer(WrappedWebPage page, String referrer) {
+//  public static void setReferrer(WebPage page, String referrer) {
 //    putMetadata(page, META_REFERRER, referrer);
 //  }
 //
-//  public static int getFetchCount(WrappedWebPage page) {
+//  public static int getFetchCount(WebPage page) {
 //    String referredPages = getMetadata(page, META_FETCH_TIMES);
 //    return StringUtil.tryParseInt(referredPages, 0);
 //  }
 //
-//  public static void setFetchCount(WrappedWebPage page, int count) {
+//  public static void setFetchCount(WebPage page, int count) {
 //    putMetadata(page, META_FETCH_TIMES, String.valueOf(count));
 //  }
 //
-//  public static void increaseFetchCount(WrappedWebPage page) {
+//  public static void increaseFetchCount(WebPage page) {
 //    int count = getFetchCount(page);
 //    putMetadata(page, META_FETCH_TIMES, String.valueOf(count + 1));
 //  }
 //
-//  public static long getReferredArticles(WrappedWebPage page) {
+//  public static long getReferredArticles(WebPage page) {
 //    String referredPages = getMetadata(page, META_REFERRED_ARTICLES);
 //    return StringUtil.tryParseLong(referredPages, 0);
 //  }
 //
-//  public static void setReferredArticles(WrappedWebPage page, long count) {
+//  public static void setReferredArticles(WebPage page, long count) {
 //    putMetadata(page, META_REFERRED_ARTICLES, String.valueOf(count));
 //  }
 //
-//  public static void increaseReferredArticles(WrappedWebPage page, long count) {
+//  public static void increaseReferredArticles(WebPage page, long count) {
 //    long oldCount = getReferredArticles(page);
 //    putMetadata(page, META_REFERRED_ARTICLES, String.valueOf(oldCount + count));
 //  }
 //
-//  public static long getTotalOutLinkCount(WrappedWebPage page) {
+//  public static long getTotalOutLinkCount(WebPage page) {
 //    String outLinks = getMetadata(page, META_OUT_LINK_COUNT);
 //    return StringUtil.tryParseLong(outLinks, 0);
 //  }
 //
-//  public static void setTotalOutLinkCount(WrappedWebPage page, long count) {
+//  public static void setTotalOutLinkCount(WebPage page, long count) {
 //    putMetadata(page, META_OUT_LINK_COUNT, String.valueOf(count));
 //  }
 //
-//  public static void increaseTotalOutLinkCount(WrappedWebPage page, long count) {
+//  public static void increaseTotalOutLinkCount(WebPage page, long count) {
 //    long oldCount = getTotalOutLinkCount(page);
 //    putMetadata(page, META_OUT_LINK_COUNT, String.valueOf(oldCount + count));
 //  }
 //
-//  public static int sniffOutLinkCount(WrappedWebPage page) {
+//  public static int sniffOutLinkCount(WebPage page) {
 //    int _a = page.getOutlinks().size();
 //    if (_a == 0) {
 //      Object count = page.getTemporaryVariable(VAR_OUTLINKS_COUNT);
@@ -454,30 +454,30 @@ public class TableUtil {
 //    return _a;
 //  }
 //
-//  public static long getReferredChars(WrappedWebPage page) {
+//  public static long getReferredChars(WebPage page) {
 //    String referredPages = getMetadata(page, META_REFERRED_CHARS);
 //    return StringUtil.tryParseLong(referredPages, 0);
 //  }
 //
-//  public static void setReferredChars(WrappedWebPage page, long count) {
+//  public static void setReferredChars(WebPage page, long count) {
 //    putMetadata(page, META_REFERRED_CHARS, String.valueOf(count));
 //  }
 //
-//  public static void increaseReferredChars(WrappedWebPage page, long count) {
+//  public static void increaseReferredChars(WebPage page, long count) {
 //    long oldCount = getReferredChars(page);
 //    setReferredChars(page, oldCount + count);
 //  }
 //
-//  public static Instant getReferredPublishTime(WrappedWebPage page) {
+//  public static Instant getReferredPublishTime(WebPage page) {
 //    String publishTimeStr = getMetadata(page, META_REFERRED_PUBLISH_TIME);
 //    return DateTimeUtil.parseTime(publishTimeStr);
 //  }
 //
-//  public static void setReferredPublishTime(WrappedWebPage page, Instant publishTime) {
+//  public static void setReferredPublishTime(WebPage page, Instant publishTime) {
 //    putMetadata(page, META_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
 //  }
 //
-//  public static boolean updateReferredPublishTime(WrappedWebPage page, Instant newPublishTime) {
+//  public static boolean updateReferredPublishTime(WebPage page, Instant newPublishTime) {
 //    Instant latestTime = getReferredPublishTime(page);
 //    if (newPublishTime.isAfter(latestTime)) {
 //      setReferredPublishTime(page, newPublishTime);
@@ -487,15 +487,15 @@ public class TableUtil {
 //    return false;
 //  }
 //
-//  public static Instant getFetchTime(WrappedWebPage page) {
+//  public static Instant getFetchTime(WebPage page) {
 //    return Instant.ofEpochMilli(page.getFetchTime());
 //  }
 //
-//  public static Duration getFetchInterval(WrappedWebPage page) {
+//  public static Duration getFetchInterval(WebPage page) {
 //    return Duration.ofSeconds(page.getFetchInterval());
 //  }
 //
-//  public static Instant getHeaderLastModifiedTime(WrappedWebPage page, Instant defaultValue) {
+//  public static Instant getHeaderLastModifiedTime(WebPage page, Instant defaultValue) {
 //    CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
 //    if (lastModified != null) {
 //      return DateTimeUtil.parseTime(lastModified.toString());
@@ -504,18 +504,18 @@ public class TableUtil {
 //    return defaultValue;
 //  }
 //
-//  public static String getFetchTimeHistory(WrappedWebPage page, String defaultValue) {
+//  public static String getFetchTimeHistory(WebPage page, String defaultValue) {
 //    String s = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
 //    return s == null ? defaultValue : s;
 //  }
 //
-//  public static void putFetchTimeHistory(WrappedWebPage page, long fetchTime) {
+//  public static void putFetchTimeHistory(WebPage page, long fetchTime) {
 //    String fetchTimeHistory = TableUtil.getMetadata(page, Metadata.META_FETCH_TIME_HISTORY);
 //    fetchTimeHistory = DateTimeUtil.constructTimeHistory(fetchTimeHistory, fetchTime, 10);
 //    TableUtil.putMetadata(page, Metadata.META_FETCH_TIME_HISTORY, fetchTimeHistory);
 //  }
 //
-//  public static Instant getFirstCrawlTime(WrappedWebPage page, Instant defaultValue) {
+//  public static Instant getFirstCrawlTime(WebPage page, Instant defaultValue) {
 //    Instant firstCrawlTime = null;
 //
 //    String fetchTimeHistory = TableUtil.getFetchTimeHistory(page, "");
@@ -530,7 +530,7 @@ public class TableUtil {
 //    return firstCrawlTime == null ? defaultValue : firstCrawlTime;
 //  }
 //
-//  public static String getIndexTimeHistory(WrappedWebPage page, String defaultValue) {
+//  public static String getIndexTimeHistory(WebPage page, String defaultValue) {
 //    String s = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
 //    return s == null ? defaultValue : s;
 //  }
@@ -538,13 +538,13 @@ public class TableUtil {
 //  /**
 //   * TODO : consider hbase's record history feature
 //   * */
-//  public static void putIndexTimeHistory(WrappedWebPage page, long indexTime) {
+//  public static void putIndexTimeHistory(WebPage page, long indexTime) {
 //    String indexTimeHistory = TableUtil.getMetadata(page, Metadata.META_INDEX_TIME_HISTORY);
 //    indexTimeHistory = DateTimeUtil.constructTimeHistory(indexTimeHistory, indexTime, 10);
 //    TableUtil.putMetadata(page, Metadata.META_INDEX_TIME_HISTORY, indexTimeHistory);
 //  }
 //
-//  public static Instant getFirstIndexTime(WrappedWebPage page, Instant defaultValue) {
+//  public static Instant getFirstIndexTime(WebPage page, Instant defaultValue) {
 //    Instant firstIndexTime = null;
 //
 //    String indexTimeHistory = TableUtil.getIndexTimeHistory(page, "");
@@ -559,27 +559,27 @@ public class TableUtil {
 //    return firstIndexTime == null ? defaultValue : firstIndexTime;
 //  }
 //
-//  public static void putMark(WrappedWebPage page, CharSequence key, CharSequence value) {
+//  public static void putMark(WebPage page, CharSequence key, CharSequence value) {
 //    page.getMarkers().put(key, value);
 //  }
 //
-//  public static CharSequence getMark(WrappedWebPage page, CharSequence key) {
+//  public static CharSequence getMark(WebPage page, CharSequence key) {
 //    return page.getMarkers().get(key);
 //  }
 //
-//  public static String getHeader(WrappedWebPage page, String name, String defaultValue) {
+//  public static String getHeader(WebPage page, String name, String defaultValue) {
 //    CharSequence value = page.getHeaders().get(new Utf8(name));
 //    return value == null ? defaultValue : value.toString();
 //  }
 //
-//  public static void putHeader(WrappedWebPage page, String name, String value) {
+//  public static void putHeader(WebPage page, String name, String value) {
 //    page.getHeaders().put(new Utf8(name), new Utf8(value));
 //  }
 //
 //  /**
 //   * TODO : Why the nutch team wrap the key using Utf8?
 //   * */
-//  public static void putAllMetadata(WrappedWebPage page, Map<String, String> metadata) {
+//  public static void putAllMetadata(WebPage page, Map<String, String> metadata) {
 //    for (Map.Entry<String, String> entry : metadata.entrySet()) {
 //      String k = entry.getKey();
 //      String v = entry.getValue();
@@ -588,15 +588,15 @@ public class TableUtil {
 //    }
 //  }
 //
-//  public static void putMetadata(WrappedWebPage page, String key, String value) {
+//  public static void putMetadata(WebPage page, String key, String value) {
 //    page.getMetadata().put(new Utf8(key), value == null ? null : ByteBuffer.wrap(value.getBytes()));
 //  }
 //
-//  public static void putMetadata(WrappedWebPage page, Utf8 key, ByteBuffer value) {
+//  public static void putMetadata(WebPage page, Utf8 key, ByteBuffer value) {
 //    page.getMetadata().put(key, value);
 //  }
 //
-//  public static String getMetadata(WrappedWebPage page, String key) {
+//  public static String getMetadata(WebPage page, String key) {
 //    ByteBuffer bvalue = page.getMetadata().get(new Utf8(key));
 //    if (bvalue == null) {
 //      return null;
@@ -604,25 +604,25 @@ public class TableUtil {
 //    return Bytes.toString(bvalue.array());
 //  }
 //
-//  public static String getMetadata(WrappedWebPage page, String key, String defaultValue) {
+//  public static String getMetadata(WebPage page, String key, String defaultValue) {
 //    String value = getMetadata(page, key);
 //    return value == null ? defaultValue : value;
 //  }
 //
-//  public static boolean hasMetadata(WrappedWebPage page, String key) {
+//  public static boolean hasMetadata(WebPage page, String key) {
 //    ByteBuffer bvalue = page.getMetadata().get(new Utf8(key));
 //    return bvalue != null;
 //  }
 //
 //  // But only delete when they exist. This is much faster for the underlying store
 //  // The markers are on the input anyway.
-//  public static void clearMetadata(WrappedWebPage page, Utf8 key) {
+//  public static void clearMetadata(WebPage page, Utf8 key) {
 //    if (page.getMetadata().get(key) != null) {
 //      page.getMetadata().put(key, null);
 //    }
 //  }
 //
-//  public static void clearMetadata(WrappedWebPage page, String key) {
+//  public static void clearMetadata(WebPage page, String key) {
 //    if (getMetadata(page, key) != null) {
 //      putMetadata(page, key, null);
 //    }
@@ -630,13 +630,13 @@ public class TableUtil {
 //
 //  // But only delete when they exist. This is much faster for the underlying store
 //  // The markers are on the input anyway.
-//  public static void clearTmpMetadata(WrappedWebPage page) {
+//  public static void clearTmpMetadata(WebPage page) {
 //    page.getMetadata().keySet().stream()
 //        .filter(key -> key.toString().startsWith(Metadata.META_TMP))
 //        .forEach(key -> page.getMetadata().put(key, null));
 //  }
 //
-//  public static Map<String, String> getMetadata(WrappedWebPage page) {
+//  public static Map<String, String> getMetadata(WebPage page) {
 //    Map<String, String> result = Maps.newHashMap();
 //
 //    for (CharSequence key : page.getMetadata().keySet()) {

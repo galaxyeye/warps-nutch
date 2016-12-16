@@ -21,7 +21,7 @@ package org.apache.nutch.protocol.http;
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import java.net.URL;
 
@@ -33,7 +33,7 @@ public class ForwardedHttpResponse implements Response {
   private int code;
   private Metadata headers;
 
-  public ForwardedHttpResponse(URL url, byte[] content, int code, Metadata headers, WrappedWebPage page) {
+  public ForwardedHttpResponse(URL url, byte[] content, int code, Metadata headers, WebPage page) {
     this.url = url;
     this.content = content;
     this.code = code;

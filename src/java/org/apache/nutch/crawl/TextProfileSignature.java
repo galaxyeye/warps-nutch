@@ -18,7 +18,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.util.*;
@@ -64,7 +64,7 @@ public class TextProfileSignature extends Signature {
   Signature fallback = new MD5Signature();
 
   @Override
-  public byte[] calculate(WrappedWebPage page) {
+  public byte[] calculate(WebPage page) {
     int MIN_TOKEN_LEN = getConf().getInt(
         "db.signature.text_profile.min_token_len", 2);
     float QUANT_RATE = getConf().getFloat(

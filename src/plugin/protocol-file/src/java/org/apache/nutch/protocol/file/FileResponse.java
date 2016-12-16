@@ -22,7 +22,7 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.MimeUtil;
 
 import java.io.IOException;
@@ -85,7 +85,7 @@ public class FileResponse {
         getHeader(Response.CONTENT_TYPE), headers, this.conf);
   }
 
-  public FileResponse(URL url, WrappedWebPage page, File file, Configuration conf)
+  public FileResponse(URL url, WebPage page, File file, Configuration conf)
       throws FileException, IOException {
 
     this.orig = url.toString();

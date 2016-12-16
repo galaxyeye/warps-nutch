@@ -6,7 +6,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -66,8 +66,8 @@ public class SeedBuilder {
     );
   }
 
-  public WrappedWebPage buildWebPage(String urlLine) {
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+  public WebPage buildWebPage(String urlLine) {
+    WebPage page = WebPage.newWebPage();
 
       /* Ignore line that start with # */
     if (urlLine.length() < SHORTEST_VALID_URL_LENGTH || urlLine.startsWith("#")) {

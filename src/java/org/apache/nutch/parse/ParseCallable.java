@@ -16,16 +16,16 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import java.util.concurrent.Callable;
 
 class ParseCallable implements Callable<Parse> {
   private Parser p;
-  private WrappedWebPage content;
+  private WebPage content;
   private String url;
 
-  public ParseCallable(Parser p, WrappedWebPage content, String url) {
+  public ParseCallable(Parser p, WebPage content, String url) {
     this.p = p;
     this.content = content;
     this.url = url;

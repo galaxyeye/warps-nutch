@@ -3,11 +3,11 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.storage;  
+package org.apache.nutch.storage.gora;
 @SuppressWarnings("all")
-/** A nested container representing parse status data captured from invocation of parsers on fetch of a WrappedWebPage */
+/** A nested container representing parse status data captured from invocation of parsers on fetch of a WebPage */
 public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"ParseStatus\",\"namespace\":\"org.apache.nutch.storage\",\"doc\":\"A nested container representing parse status data captured from invocation of parsers on fetch of a WrappedWebPage\",\"fields\":[{\"name\":\"majorCode\",\"type\":\"int\",\"doc\":\"Major parsing status' including NOTPARSED (Parsing was not performed), SUCCESS (Parsing succeeded), FAILED (General failure. There may be a more specific error message in arguments.)\",\"default\":0},{\"name\":\"minorCode\",\"type\":\"int\",\"doc\":\"Minor parsing status' including SUCCESS_OK - Successful parse devoid of anomalies or issues, SUCCESS_REDIRECT - Parsed content contains a directive to redirect to another URL. The target URL can be retrieved from the arguments., FAILED_EXCEPTION - Parsing failed. An Exception occured which may be retrieved from the arguments., FAILED_TRUNCATED - Parsing failed. Content was truncated, but the parser cannot handle incomplete content., FAILED_INVALID_FORMAT - Parsing failed. Invalid format e.g. the content may be corrupted or of wrong type., FAILED_MISSING_PARTS - Parsing failed. Other related parts of the content are needed to halt parsing. The list of URLs to missing parts may be provided in arguments. The Fetcher may decide to fetch these parts at once, then put them into Content.metadata, and supply them for re-parsing., FAILED_MISING_CONTENT - Parsing failed. There was no content to be parsed - probably caused by errors at protocol stage.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the parse status code.\",\"default\":[]}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"ParseStatus\",\"namespace\":\"org.apache.nutch.storage\",\"doc\":\"A nested container representing parse status data captured from invocation of parsers on fetch of a WebPage\",\"fields\":[{\"name\":\"majorCode\",\"type\":\"int\",\"doc\":\"Major parsing status' including NOTPARSED (Parsing was not performed), SUCCESS (Parsing succeeded), FAILED (General failure. There may be a more specific error message in arguments.)\",\"default\":0},{\"name\":\"minorCode\",\"type\":\"int\",\"doc\":\"Minor parsing status' including SUCCESS_OK - Successful parse devoid of anomalies or issues, SUCCESS_REDIRECT - Parsed content contains a directive to redirect to another URL. The target URL can be retrieved from the arguments., FAILED_EXCEPTION - Parsing failed. An Exception occured which may be retrieved from the arguments., FAILED_TRUNCATED - Parsing failed. Content was truncated, but the parser cannot handle incomplete content., FAILED_INVALID_FORMAT - Parsing failed. Invalid format e.g. the content may be corrupted or of wrong type., FAILED_MISSING_PARTS - Parsing failed. Other related parts of the content are needed to halt parsing. The list of URLs to missing parts may be provided in arguments. The Fetcher may decide to fetch these parts at once, then put them into Content.metadata, and supply them for re-parsing., FAILED_MISING_CONTENT - Parsing failed. There was no content to be parsed - probably caused by errors at protocol stage.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the parse status code.\",\"default\":[]}]}");
 
   /** Enum containing all data bean's fields. */
   public static enum Field {
@@ -166,18 +166,18 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
   }
 
   /** Creates a new ParseStatus RecordBuilder */
-  public static org.apache.nutch.storage.ParseStatus.Builder newBuilder() {
-    return new org.apache.nutch.storage.ParseStatus.Builder();
+  public static ParseStatus.Builder newBuilder() {
+    return new ParseStatus.Builder();
   }
   
   /** Creates a new ParseStatus RecordBuilder by copying an existing Builder */
-  public static org.apache.nutch.storage.ParseStatus.Builder newBuilder(org.apache.nutch.storage.ParseStatus.Builder other) {
-    return new org.apache.nutch.storage.ParseStatus.Builder(other);
+  public static ParseStatus.Builder newBuilder(ParseStatus.Builder other) {
+    return new ParseStatus.Builder(other);
   }
   
   /** Creates a new ParseStatus RecordBuilder by copying an existing ParseStatus instance */
-  public static org.apache.nutch.storage.ParseStatus.Builder newBuilder(org.apache.nutch.storage.ParseStatus other) {
-    return new org.apache.nutch.storage.ParseStatus.Builder(other);
+  public static ParseStatus.Builder newBuilder(ParseStatus other) {
+    return new ParseStatus.Builder(other);
   }
   
   private static java.nio.ByteBuffer deepCopyToReadOnlyBuffer(
@@ -215,17 +215,17 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
 
     /** Creates a new Builder */
     private Builder() {
-      super(org.apache.nutch.storage.ParseStatus.SCHEMA$);
+      super(ParseStatus.SCHEMA$);
     }
     
     /** Creates a Builder by copying an existing Builder */
-    private Builder(org.apache.nutch.storage.ParseStatus.Builder other) {
+    private Builder(ParseStatus.Builder other) {
       super(other);
     }
     
     /** Creates a Builder by copying an existing ParseStatus instance */
-    private Builder(org.apache.nutch.storage.ParseStatus other) {
-            super(org.apache.nutch.storage.ParseStatus.SCHEMA$);
+    private Builder(ParseStatus other) {
+            super(ParseStatus.SCHEMA$);
       if (isValidValue(fields()[0], other.majorCode)) {
         this.majorCode = (java.lang.Integer) data().deepCopy(fields()[0].schema(), other.majorCode);
         fieldSetFlags()[0] = true;
@@ -246,7 +246,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'majorCode' field */
-    public org.apache.nutch.storage.ParseStatus.Builder setMajorCode(int value) {
+    public ParseStatus.Builder setMajorCode(int value) {
       validate(fields()[0], value);
       this.majorCode = value;
       fieldSetFlags()[0] = true;
@@ -259,7 +259,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Clears the value of the 'majorCode' field */
-    public org.apache.nutch.storage.ParseStatus.Builder clearMajorCode() {
+    public ParseStatus.Builder clearMajorCode() {
       fieldSetFlags()[0] = false;
       return this;
     }
@@ -270,7 +270,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'minorCode' field */
-    public org.apache.nutch.storage.ParseStatus.Builder setMinorCode(int value) {
+    public ParseStatus.Builder setMinorCode(int value) {
       validate(fields()[1], value);
       this.minorCode = value;
       fieldSetFlags()[1] = true;
@@ -283,7 +283,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Clears the value of the 'minorCode' field */
-    public org.apache.nutch.storage.ParseStatus.Builder clearMinorCode() {
+    public ParseStatus.Builder clearMinorCode() {
       fieldSetFlags()[1] = false;
       return this;
     }
@@ -294,7 +294,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'args' field */
-    public org.apache.nutch.storage.ParseStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
+    public ParseStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
       validate(fields()[2], value);
       this.args = value;
       fieldSetFlags()[2] = true;
@@ -307,7 +307,7 @@ public class ParseStatus extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Clears the value of the 'args' field */
-    public org.apache.nutch.storage.ParseStatus.Builder clearArgs() {
+    public ParseStatus.Builder clearArgs() {
       args = null;
       fieldSetFlags()[2] = false;
       return this;

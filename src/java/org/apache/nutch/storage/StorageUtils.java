@@ -30,6 +30,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.Host;
 
 import java.io.IOException;
 import java.util.Collection;

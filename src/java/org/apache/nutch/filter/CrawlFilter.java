@@ -22,7 +22,7 @@ import com.google.gson.annotations.Expose;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -67,7 +67,7 @@ public class CrawlFilter extends Configured {
   /**
    * TODO : need carefully test
    */
-  public static CrawlFilter.PageCategory sniffPageCategory(WrappedWebPage page) {
+  public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
     if (page.getBaseUrl() == null) {
       return CrawlFilter.PageCategory.UNKNOWN;
     }

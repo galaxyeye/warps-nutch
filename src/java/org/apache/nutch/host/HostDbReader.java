@@ -27,7 +27,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.storage.Host;
+import org.apache.nutch.storage.gora.Host;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;

@@ -40,7 +40,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.MD5Hash;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
@@ -206,7 +206,7 @@ public class DmozParser {
           if (snippet) {
             try {
               String reversedUrl = TableUtil.reverseUrl(curURL);
-              WrappedWebPage row = WrappedWebPage.wrap(store.get(reversedUrl));
+              WebPage row = WebPage.wrap(store.get(reversedUrl));
 
               if (row.get() != null) {
                 if (desc.length() > 0) {

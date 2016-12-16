@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.URLUtil;
 import org.apache.nutch.util.domain.DomainSuffix;
@@ -45,7 +45,7 @@ public class TLDIndexingFilter implements IndexingFilter {
   private static final Collection<GoraWebPage.Field> fields = new ArrayList<>();
 
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     try {
       URL _url = new URL(url);

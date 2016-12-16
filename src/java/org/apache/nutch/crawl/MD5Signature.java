@@ -19,7 +19,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.nio.ByteBuffer;
@@ -42,7 +42,7 @@ public class MD5Signature extends Signature {
   }
 
   @Override
-  public byte[] calculate(WrappedWebPage page) {
+  public byte[] calculate(WebPage page) {
     ByteBuffer buf = page.getContent();
     byte[] data;
     int of;

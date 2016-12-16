@@ -19,7 +19,7 @@ package org.apache.nutch.scoring;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import java.util.Collection;
 import java.util.List;
@@ -48,7 +48,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          new page. Filters will modify it in-place.
    * @throws ScoringFilterException
    */
-  void injectedScore(String url, WrappedWebPage page) throws ScoringFilterException;
+  void injectedScore(String url, WebPage page) throws ScoringFilterException;
 
   /**
    * Set an initial score for newly discovered pages. Note: newly discovered
@@ -62,7 +62,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param page
    * @throws ScoringFilterException
    */
-  void initialScore(String url, WrappedWebPage page) throws ScoringFilterException;
+  void initialScore(String url, WebPage page) throws ScoringFilterException;
 
   /**
    * This method prepares a sort value for the purpose of sorting and selecting
@@ -75,7 +75,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param initSort
    *          initial sort value, or a value from previous filters in chain
    */
-  float generatorSortValue(String url, WrappedWebPage page, float initSort) throws ScoringFilterException;
+  float generatorSortValue(String url, WebPage page, float initSort) throws ScoringFilterException;
 
   /**
    * Distribute score value from the current page to all its outlinked pages.
@@ -87,13 +87,13 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param scoreData
    *          A list of {@link ScoreDatum}s for every outlink. These
    *          {@link ScoreDatum}s will be passed to
-   *          {@link #updateScore(String, WrappedWebPage, List)} for every
+   *          {@link #updateScore(String, WebPage, List)} for every
    *          outlinked URL.
    * @param allCount
    *          number of all collected outlinks from the source page
    * @throws ScoringFilterException
    */
-  void distributeScoreToOutlinks(String fromUrl, WrappedWebPage page,
+  void distributeScoreToOutlinks(String fromUrl, WebPage page,
       Collection<ScoreDatum> scoreData, int allCount)
       throws ScoringFilterException;
 
@@ -109,7 +109,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          this URL.
    * @throws ScoringFilterException
    */
-  void updateScore(String url, WrappedWebPage page, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException;
+  void updateScore(String url, WebPage page, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException;
 
   /**
    * This method calculates a Lucene document boost.
@@ -130,5 +130,5 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *         document directly.
    * @throws ScoringFilterException
    */
-  float indexerScore(String url, IndexDocument doc, WrappedWebPage page, float initScore) throws ScoringFilterException;
+  float indexerScore(String url, IndexDocument doc, WebPage page, float initScore) throws ScoringFilterException;
 }

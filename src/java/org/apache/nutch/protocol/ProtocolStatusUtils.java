@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.avro.util.Utf8;
-import org.apache.nutch.storage.ProtocolStatus;
+import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.util.TableUtil;
 
 public class ProtocolStatusUtils implements ProtocolStatusCodes {

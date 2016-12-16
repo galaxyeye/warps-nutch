@@ -22,7 +22,7 @@ import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -95,10 +95,10 @@ public class DbUpdateReducer extends NutchReducer<UrlWithScore, NutchWritable, S
     String url = TableUtil.unreverseUrl(reversedUrl);
 
     // Calculate inlinked score data, and return the main web page
-    WrappedWebPage page = datumBuilder.calculateInlinks(url, values);
+    WebPage page = datumBuilder.calculateInlinks(url, values);
     GoraWebPage oldPage = datastore.get(reversedUrl);
 
-    datumBuilder.process(url, page, WrappedWebPage.wrap(oldPage), additionsAllowed);
+    datumBuilder.process(url, page, WebPage.wrap(oldPage), additionsAllowed);
 
     getCounter().updateAffectedRows(url);
 

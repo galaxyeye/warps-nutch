@@ -16,8 +16,8 @@
  */
 
 /**
- * Representation ({@link org.apache.nutch.storage.WrappedWebPage web pages},
- * {@link org.apache.nutch.storage.Host host metadata}) of data in abstracted storage.
+ * Representation ({@link org.apache.nutch.storage.WebPage web pages},
+ * {@link org.apache.nutch.storage.gora.Host host metadata}) of data in abstracted storage.
  */
 package org.apache.nutch.storage;
 

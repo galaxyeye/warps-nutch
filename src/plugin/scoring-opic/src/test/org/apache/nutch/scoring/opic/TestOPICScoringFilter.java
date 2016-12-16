@@ -18,7 +18,7 @@ package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -64,9 +64,9 @@ public class TestOPICScoringFilter {
 
   // Previously calculated values for each three depths. We will compare these
   // to the results this test generates
-  private static HashMap<Integer, HashMap<String, Float>> acceptedScores = new HashMap<Integer, HashMap<String, Float>>() {
+  static HashMap<Integer, HashMap<String, Float>> acceptedScores = new HashMap<Integer, HashMap<String, Float>>() {
     /**
-	 * 
+     *
 	 */
     private static final long serialVersionUID = 278328450774664407L;
 
@@ -78,10 +78,10 @@ public class TestOPICScoringFilter {
         private static final long serialVersionUID = 6145080304388858096L;
 
         {
-          put(new String("http://a.com"), new Float(1.833));
-          put(new String("http://b.com"), new Float(2.333));
-          put(new String("http://c.com"), new Float(1.5));
-          put(new String("http://d.com"), new Float(0.333));
+          put("http://a.com", new Float(1.833));
+          put("http://b.com", 2.333f);
+          put("http://c.com", 1.5f);
+          put("http://d.com", 0.333f);
         }
       });
       put(2, new HashMap<String, Float>() {
@@ -104,10 +104,10 @@ public class TestOPICScoringFilter {
         private static final long serialVersionUID = -7025018421800845103L;
 
         {
-          put(new String("http://a.com"), new Float(3.388));
-          put(new String("http://b.com"), new Float(4.388));
-          put(new String("http://c.com"), new Float(2.666));
-          put(new String("http://d.com"), new Float(0.5));
+          put("http://a.com", 3.388f);
+          put("http://b.com", 4.388f);
+          put("http://c.com", 2.666f);
+          put("http://d.com", 0.5f);
         }
       });
     }
@@ -123,7 +123,7 @@ public class TestOPICScoringFilter {
     Configuration conf = NutchConfiguration.create();
     // LinkedHashMap dbWebPages is used instead of a persistent
     // data store for this test class
-    Map<String, Map<WrappedWebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<>();
+    Map<String, Map<WebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<>();
 
     // All WebPages stored in this map with an initial true value.
     // After processing, it is set to false.
@@ -139,12 +139,12 @@ public class TestOPICScoringFilter {
 
     // injecting seed list, with scored attached to webpages
     for (String url : self.seedList) {
-      WrappedWebPage row = WrappedWebPage.newWebPage();
+      WebPage row = WebPage.newWebPage();
       row.setScore(scoreInjected);
       scoringFilter.injectedScore(url, row);
 
       List<ScoreDatum> scList = new LinkedList<>();
-      Map<WrappedWebPage, List<ScoreDatum>> webPageMap = new HashMap<>();
+      Map<WebPage, List<ScoreDatum>> webPageMap = new HashMap<>();
       webPageMap.put(row, scList);
       dbWebPages.put(TableUtil.reverseUrl(url), webPageMap);
       dbWebPagesControl.put(TableUtil.reverseUrl(url), true);
@@ -152,20 +152,20 @@ public class TestOPICScoringFilter {
 
     // Depth Loop
     for (int i = 1; i <= DEPTH; i++) {
-      Iterator<Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>>> iter = dbWebPages
+      Iterator<Map.Entry<String, Map<WebPage, List<ScoreDatum>>>> iter = dbWebPages
           .entrySet().iterator();
 
       // OPIC Score calculated for each website one by one
       while (iter.hasNext()) {
-        Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>> entry = iter.next();
-        Map<WrappedWebPage, List<ScoreDatum>> webPageMap = entry.getValue();
+        Map.Entry<String, Map<WebPage, List<ScoreDatum>>> entry = iter.next();
+        Map<WebPage, List<ScoreDatum>> webPageMap = entry.getValue();
 
-        WrappedWebPage row = null;
+        WebPage row = null;
         List<ScoreDatum> scoreList = null;
-        Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> iters = webPageMap
+        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> iters = webPageMap
             .entrySet().iterator();
         if (iters.hasNext()) {
-          Map.Entry<WrappedWebPage, List<ScoreDatum>> values = iters.next();
+          Map.Entry<WebPage, List<ScoreDatum>> values = iters.next();
           row = values.getKey();
           scoreList = values.getValue();
         }
@@ -204,21 +204,21 @@ public class TestOPICScoringFilter {
           if (dbWebPages.get(TableUtil.reverseUrl(sc.getUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
-            WrappedWebPage outlinkRow = WrappedWebPage.newWebPage();
+            WebPage outlinkRow = WebPage.newWebPage();
 
             scoringFilter.initialScore(sc.getUrl(), outlinkRow);
             List<ScoreDatum> newScoreList = new LinkedList<>();
             newScoreList.add(sc);
-            Map<WrappedWebPage, List<ScoreDatum>> values = new HashMap<>();
+            Map<WebPage, List<ScoreDatum>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
             dbWebPages.put(TableUtil.reverseUrl(sc.getUrl()), values);
             dbWebPagesControl.put(TableUtil.reverseUrl(sc.getUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WrappedWebPage, List<ScoreDatum>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
-            Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> value = values.entrySet().iterator();
+            Map<WebPage, List<ScoreDatum>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
+            Iterator<Map.Entry<WebPage, List<ScoreDatum>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
-              Map.Entry<WrappedWebPage, List<ScoreDatum>> list = value.next();
+              Map.Entry<WebPage, List<ScoreDatum>> list = value.next();
               scoreList = list.getValue();
               scoreList.add(sc);
             }
@@ -227,17 +227,17 @@ public class TestOPICScoringFilter {
       }
 
       // Simulate Reducing
-      for (Map.Entry<String, Map<WrappedWebPage, List<ScoreDatum>>> page : dbWebPages.entrySet()) {
+      for (Map.Entry<String, Map<WebPage, List<ScoreDatum>>> page : dbWebPages.entrySet()) {
 
         String reversedUrl = page.getKey();
         String url = TableUtil.unreverseUrl(reversedUrl);
 
-        Iterator<Map.Entry<WrappedWebPage, List<ScoreDatum>>> rr = page.getValue().entrySet().iterator();
+        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> rr = page.getValue().entrySet().iterator();
 
         List<ScoreDatum> inlinkedScoreDataList = null;
-        WrappedWebPage row = null;
+        WebPage row = null;
         if (rr.hasNext()) {
-          Map.Entry<WrappedWebPage, List<ScoreDatum>> aa = rr.next();
+          Map.Entry<WebPage, List<ScoreDatum>> aa = rr.next();
           inlinkedScoreDataList = aa.getValue();
           row = aa.getKey();
         }

@@ -19,7 +19,7 @@ package org.apache.nutch.parse;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.w3c.dom.DocumentFragment;
 
 /**
@@ -34,7 +34,7 @@ public interface ParseFilter extends FieldPluggable, Configurable {
   /**
    * Adds metadata or otherwise modifies a parse, given the DOM tree of a page.
    */
-  Parse filter(String url, WrappedWebPage page, Parse parse, HTMLMetaTags metaTags,
+  Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags,
                DocumentFragment doc);
 
 }

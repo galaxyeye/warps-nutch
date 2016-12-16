@@ -18,7 +18,7 @@
 package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -48,7 +48,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   }
 
   @Override
-  public void setFetchSchedule(String url, WrappedWebPage page,
+  public void setFetchSchedule(String url, WebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
                                Instant fetchTime, Instant modifiedTime, int state) {
     Duration interval = page.getFetchInterval();
@@ -82,7 +82,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private Duration adjustSeedFetchInterval(WrappedWebPage page, Instant fetchTime, Duration interval) {
+  private Duration adjustSeedFetchInterval(WebPage page, Instant fetchTime, Duration interval) {
     int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
       // Referred publish time is not initialized yet for this seed page

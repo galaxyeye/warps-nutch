@@ -6,8 +6,8 @@ import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -63,7 +63,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
 
   @Override
   public void map(String reverseUrl, GoraWebPage row, Context context) {
-    WrappedWebPage page = WrappedWebPage.wrap(row);
+    WebPage page = WebPage.wrap(row);
 
     try {
       getCounter().increase(rows);
@@ -121,7 +121,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
     getCounter().increase(counter);
   }
 
-  private boolean shouldProcess(String url, WrappedWebPage page) {
+  private boolean shouldProcess(String url, WebPage page) {
     if (!reparse && !Mark.FETCH_MARK.hasMark(page)) {
       getCounter().increase(Counter.notFetchedPages);
 
@@ -164,7 +164,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
    * @return If the page is truncated <code>true</code>. When it is not, or when
    *         it could be determined, <code>false</code>.
    */
-  public static boolean isTruncated(String url, WrappedWebPage page) {
+  public static boolean isTruncated(String url, WebPage page) {
     ByteBuffer content = page.getContent();
     if (content == null) {
       return false;

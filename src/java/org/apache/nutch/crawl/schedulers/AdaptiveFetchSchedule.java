@@ -19,7 +19,7 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +93,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   }
 
   @Override
-  public void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
+  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
     if (modifiedTime.toEpochMilli() <= 0) {
@@ -126,7 +126,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     updateRefetchTime(page, Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
   }
 
-  protected void updateRefetchTime(WrappedWebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
+  protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
     page.setFetchInterval(interval);
     page.setFetchTime(fetchTime.plus(interval));
     page.setPrevModifiedTime(prevModifiedTime);

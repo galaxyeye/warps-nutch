@@ -21,7 +21,7 @@ import com.ibm.icu.text.CharsetMatch;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,7 +184,7 @@ public class EncodingDetector {
     this.defaultCharEncoding = conf.get("parser.character.encoding.default", "windows-1252");
   }
 
-  public String sniffEncoding(WrappedWebPage page) {
+  public String sniffEncoding(WebPage page) {
     autoDetectClues(page, true);
     addClue(sniffCharacterEncoding(page.getContent().array()), "sniffed");
     String encoding = guessEncoding(page, defaultCharEncoding);
@@ -192,7 +192,7 @@ public class EncodingDetector {
     return encoding;
   }
 
-  public void autoDetectClues(WrappedWebPage page, boolean filter) {
+  public void autoDetectClues(WebPage page, boolean filter) {
     autoDetectClues(page.getContent(), page.getContentType(),
         parseCharacterEncoding(page.getHeaders().get(CONTENT_TYPE_UTF8)),
         filter);
@@ -309,7 +309,7 @@ public class EncodingDetector {
    * 
    * @return Guessed encoding or defaultValue
    */
-  public String guessEncoding(WrappedWebPage page, String defaultValue) {
+  public String guessEncoding(WebPage page, String defaultValue) {
     CharSequence baseUrlUtf8 = page.getBaseUrl();
     String baseUrl = TableUtil.toString(baseUrlUtf8);
     return guessEncoding(baseUrl, defaultValue);

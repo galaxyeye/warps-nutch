@@ -26,7 +26,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.Host;
+import org.apache.nutch.storage.gora.Host;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
@@ -57,7 +57,7 @@ public class HostDbUpdateJob implements Tool {
   }
 
   /**
-   * Maps each WrappedWebPage to a host key.
+   * Maps each WebPage to a host key.
    */
   public static class Mapper extends GoraMapper<String, GoraWebPage, Text, GoraWebPage> {
 

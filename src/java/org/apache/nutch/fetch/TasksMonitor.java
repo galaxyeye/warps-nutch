@@ -14,8 +14,8 @@ import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.host.HostDb;
-import org.apache.nutch.storage.Host;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.Host;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
@@ -127,7 +127,7 @@ public class TasksMonitor {
     doProduce(item);
   }
 
-  public synchronized void produce(int jobID, String url, WrappedWebPage page) {
+  public synchronized void produce(int jobID, String url, WebPage page) {
     int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
     FetchTask task = FetchTask.create(jobID, priority, url, page, hostGroupMode);
 
@@ -337,7 +337,7 @@ public class TasksMonitor {
   /**
    * Available hosts statistics
    * */
-  public synchronized void statHost(String url, WrappedWebPage page) {
+  public synchronized void statHost(String url, WebPage page) {
     if (url == null || url.isEmpty()) {
       return;
     }

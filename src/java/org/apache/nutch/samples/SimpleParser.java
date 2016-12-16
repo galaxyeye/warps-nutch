@@ -37,8 +37,8 @@ import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ProtocolStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +97,7 @@ public class SimpleParser extends Configured {
   private Map<String, Object> results = Maps.newHashMap();
 
   private String url;
-  private WrappedWebPage page;
+  private WebPage page;
   private Parse parse;
 
   public SimpleParser(Configuration conf) {
@@ -129,7 +129,7 @@ public class SimpleParser extends Configured {
     }
   }
 
-  public void parse(WrappedWebPage page) {
+  public void parse(WebPage page) {
     try {
       ParseUtil parseUtil = new ParseUtil(getConf());
       if (page != null && page.getBaseUrl() != null) {
@@ -155,7 +155,7 @@ public class SimpleParser extends Configured {
     }
   }
 
-  private InputSource getContentAsInputSource(WrappedWebPage page) {
+  private InputSource getContentAsInputSource(WebPage page) {
     ByteBuffer contentInOctets = page.getContent();
 
     ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
@@ -165,7 +165,7 @@ public class SimpleParser extends Configured {
     return new InputSource(stream);
   }
 
-  public void extract(WrappedWebPage page) throws IOException, SAXException, ProcessingException {
+  public void extract(WebPage page) throws IOException, SAXException, ProcessingException {
     InputSource input = getContentAsInputSource(page);
 
     EncodingDetector encodingDetector = new EncodingDetector(getConf());
@@ -177,7 +177,7 @@ public class SimpleParser extends Configured {
     System.out.println(scentDoc.getText(true, true));
   }
 
-  public WrappedWebPage getWebPage() {
+  public WebPage getWebPage() {
     return page;
   }
 
@@ -191,16 +191,16 @@ public class SimpleParser extends Configured {
     return results;
   }
 
-  public WrappedWebPage download(String url) throws ProtocolNotFound {
+  public WebPage download(String url) throws ProtocolNotFound {
     return download(url, null);
   }
 
-  public WrappedWebPage download(String url, String contentType) throws ProtocolNotFound {
+  public WebPage download(String url, String contentType) throws ProtocolNotFound {
     LOG.info("Fetching: " + url);
 
     ProtocolFactory factory = new ProtocolFactory(getConf());
     Protocol protocol = factory.getProtocol(url);
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
 
     ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
     ProtocolStatus pstatus = protocolOutput.getStatus();
@@ -229,7 +229,7 @@ public class SimpleParser extends Configured {
     return page;
   }
 
-  private void saveWebPage(WrappedWebPage page) {
+  private void saveWebPage(WebPage page) {
     try {
       Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl().toString()));
 

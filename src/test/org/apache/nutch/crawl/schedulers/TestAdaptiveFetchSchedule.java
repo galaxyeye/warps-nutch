@@ -18,7 +18,7 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public class TestAdaptiveFetchSchedule {
     FetchSchedule fs = new AdaptiveFetchSchedule();
     fs.setConf(conf);
 
-    WrappedWebPage p = prepareWebpage();
+    WebPage p = prepareWebpage();
 
     changed = FetchSchedule.STATUS_UNKNOWN;
     fs.setFetchSchedule("http://www.example.com", p, p.getFetchTime(), p.getModifiedTime(), curTime, lastModified, changed);
@@ -80,8 +80,8 @@ public class TestAdaptiveFetchSchedule {
    * 
    * @return wp :Webpage
    */
-  public WrappedWebPage prepareWebpage() {
-    WrappedWebPage wp = WrappedWebPage.newWebPage();
+  public WebPage prepareWebpage() {
+    WebPage wp = WebPage.newWebPage();
     wp.setStatus(1);
     wp.setScore(1.0f);
 

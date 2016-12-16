@@ -20,7 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.mapreduce.GenerateJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
@@ -294,7 +294,7 @@ public class TestGenerator extends AbstractNutchTest {
    * @return Constructed object
    */
   private URLWebPage createURLWebPage(final String url, final int fetchInterval, final float score) {
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
     page.setFetchInterval(fetchInterval);
     page.setScore(score);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);

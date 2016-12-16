@@ -21,7 +21,7 @@ import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
@@ -78,7 +78,7 @@ public class CleaningJob extends NutchJob implements Tool {
     @Override
     public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
       try {
-        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(key, WrappedWebPage.wrap(page))) {
+        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(key, WebPage.wrap(page))) {
           context.write(key, page);
         }
       } catch (IndexingException e) {

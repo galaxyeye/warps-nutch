@@ -12,7 +12,7 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ public class ReduceDatumBuilder {
 
   public Params getParams() { return params; }
 
-  public void process(String url, WrappedWebPage page, WrappedWebPage oldPage, boolean additionsAllowed) {
+  public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
     //check if page is already in the db
     if(page == null && oldPage != null) {
       // if we return here inlinks will not be updated
@@ -89,17 +89,17 @@ public class ReduceDatumBuilder {
   public void reset() { inlinkedScoreData.clear(); }
 
   /**
-   * In the mapper phrase, NutchWritable is sets to be a WrappedWebPage or a ScoreDatum,
+   * In the mapper phrase, NutchWritable is sets to be a WebPage or a ScoreDatum,
    * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
-  public WrappedWebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
-    WrappedWebPage page = null;
+  public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
+    WebPage page = null;
     inlinkedScoreData.clear();
 
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = new WrappedWebPage(((WebPageWritable) val).getWebPage());
+        page = new WebPage(((WebPageWritable) val).getWebPage());
       } else {
         inlinkedScoreData.add((ScoreDatum) val);
 
@@ -113,7 +113,7 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateRow(String url, WrappedWebPage page) {
+  public void updateRow(String url, WebPage page) {
     calculateDistance(page);
 
     updateScore(url, page);
@@ -123,8 +123,8 @@ public class ReduceDatumBuilder {
     updateStatusCounter(page);
   }
 
-  public WrappedWebPage createNewRow(String url, int depth) {
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+  public WebPage createNewRow(String url, int depth) {
+    WebPage page = WebPage.newWebPage();
 
     fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
@@ -142,7 +142,7 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateNewRow(String url, WrappedWebPage sourcePage, WrappedWebPage nepage) {
+  public void updateNewRow(String url, WebPage sourcePage, WebPage nepage) {
     nepage.setReferrer(sourcePage.getBaseUrl().toString());
 
     updateScore(url, nepage);
@@ -156,7 +156,7 @@ public class ReduceDatumBuilder {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  public boolean updateExistOutPage(WrappedWebPage mainPage, WrappedWebPage oldPage, int depth, int oldDepth) {
+  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
     boolean changed = false;
     boolean detail = oldPage.veryLikeDetailPage();
 
@@ -189,7 +189,7 @@ public class ReduceDatumBuilder {
    * If the new distance is smaller than old one (or if old did not exist yet),
    * write it to the page.
    * */
-  private void calculateDistance(WrappedWebPage page) {
+  private void calculateDistance(WebPage page) {
     if (page.getInlinks() != null) {
       page.getInlinks().clear();
     }
@@ -216,7 +216,7 @@ public class ReduceDatumBuilder {
     }
   }
 
-  private void updateScore(String url, WrappedWebPage page) {
+  private void updateScore(String url, WebPage page) {
     try {
       scoringFilters.updateScore(url, page, inlinkedScoreData);
     } catch (ScoringFilterException e) {
@@ -228,7 +228,7 @@ public class ReduceDatumBuilder {
     // it should have a very high score
   }
 
-  private void updateMetadata(WrappedWebPage page) {
+  private void updateMetadata(WebPage page) {
     // Clear temporary metadata
     page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
     page.clearMetadata(PARAM_GENERATE_TIME);
@@ -246,7 +246,7 @@ public class ReduceDatumBuilder {
     }
   }
 
-  public void updateFetchSchedule(String url, WrappedWebPage page) {
+  public void updateFetchSchedule(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {
@@ -307,7 +307,7 @@ public class ReduceDatumBuilder {
     }
   }
 
-  private void updateStatusCounter(WrappedWebPage page) {
+  private void updateStatusCounter(WebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {

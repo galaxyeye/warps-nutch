@@ -29,8 +29,8 @@ import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.net.proxy.ProxyPool;
 import org.apache.nutch.net.proxy.ProxyPoolFactory;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ProtocolStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.DeflateUtils;
 import org.apache.nutch.util.GZIPUtils;
 import org.apache.nutch.util.MimeUtil;
@@ -233,7 +233,7 @@ public abstract class HttpBase implements Protocol {
     return this.conf;
   }
 
-  public ProtocolOutput getProtocolOutput(String url, WrappedWebPage page) {
+  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
     try {
       URL u = new URL(url);
       Response response = null; // make a request
@@ -525,7 +525,7 @@ public abstract class HttpBase implements Protocol {
         url = args[i];
     }
 
-    ProtocolOutput out = http.getProtocolOutput(url, WrappedWebPage.newWebPage());
+    ProtocolOutput out = http.getProtocolOutput(url, WebPage.newWebPage());
     Content content = out.getContent();
 
     System.out.println("Status: " + out.getStatus());
@@ -545,11 +545,11 @@ public abstract class HttpBase implements Protocol {
     
   }
 
-  protected abstract Response getResponse(URL url, WrappedWebPage page,
+  protected abstract Response getResponse(URL url, WebPage page,
       boolean followRedirects) throws ProtocolException, IOException, NoProxyException;
 
   @Override
-  public BaseRobotRules getRobotRules(String url, WrappedWebPage page) {
+  public BaseRobotRules getRobotRules(String url, WebPage page) {
     return robots.getRobotRulesSet(this, url);
   }
 }

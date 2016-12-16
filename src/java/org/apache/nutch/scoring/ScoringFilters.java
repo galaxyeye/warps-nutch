@@ -24,7 +24,7 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 
@@ -93,7 +93,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a sort value for Generate. */
   @Override
-  public float generatorSortValue(String url, WrappedWebPage row, float initSort) throws ScoringFilterException {
+  public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       initSort = filter.generatorSortValue(url, row, initSort);
     }
@@ -102,7 +102,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a new initial score, used when adding newly discovered pages. */
   @Override
-  public void initialScore(String url, WrappedWebPage row) throws ScoringFilterException {
+  public void initialScore(String url, WebPage row) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.initialScore(url, row);
     }
@@ -110,14 +110,14 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a new initial score, used when injecting new pages. */
   @Override
-  public void injectedScore(String url, WrappedWebPage row) throws ScoringFilterException {
+  public void injectedScore(String url, WebPage row) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.injectedScore(url, row);
     }
   }
 
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WrappedWebPage row,
+  public void distributeScoreToOutlinks(String fromUrl, WebPage row,
                                         Collection<ScoreDatum> scoreData, int allCount) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
@@ -125,14 +125,14 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public void updateScore(String url, WrappedWebPage row, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }
   }
 
   @Override
-  public float indexerScore(String url, IndexDocument doc, WrappedWebPage row, float initScore) throws ScoringFilterException {
+  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       initScore = filter.indexerScore(url, doc, row, initScore);
     }

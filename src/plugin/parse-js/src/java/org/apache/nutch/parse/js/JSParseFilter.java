@@ -20,8 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.TableUtil;
@@ -59,9 +59,9 @@ public class JSParseFilter implements ParseFilter, Parser {
    * Scan the JavaScript looking for possible {@link Outlink}'s
    * 
    * @param url
-   *          URL of the {@link WrappedWebPage} to be parsed
+   *          URL of the {@link WebPage} to be parsed
    * @param page
-   *          {@link WrappedWebPage} object relative to the URL
+   *          {@link WebPage} object relative to the URL
    * @param parse
    *          {@link Parse} object holding parse status
    * @param metaTags
@@ -71,7 +71,7 @@ public class JSParseFilter implements ParseFilter, Parser {
    * @return parse the actual {@link Parse} object
    */
   @Override
-  public Parse filter(String url, WrappedWebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
 
     ArrayList<Outlink> outlinks = new ArrayList<Outlink>();
     walk(doc, parse, metaTags, url, outlinks);
@@ -154,13 +154,13 @@ public class JSParseFilter implements ParseFilter, Parser {
    * Set the {@link Configuration} object
    * 
    * @param url
-   *          URL of the {@link WrappedWebPage} which is parsed
+   *          URL of the {@link WebPage} which is parsed
    * @param page
-   *          {@link WrappedWebPage} object relative to the URL
+   *          {@link WebPage} object relative to the URL
    * @return parse the actual {@link Parse} object
    */
   @Override
-  public Parse getParse(String url, WrappedWebPage page) {
+  public Parse getParse(String url, WebPage page) {
     String type = TableUtil.toString(page.getContentType());
     if (type != null && !type.trim().equals("")
         && !type.toLowerCase().startsWith("application/x-javascript"))
@@ -321,9 +321,9 @@ public class JSParseFilter implements ParseFilter, Parser {
   }
 
   /**
-   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
+   * Gets all the fields for a given {@link WebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WrappedWebPage are able to specify what fields they need.
+   * that work on WebPage are able to specify what fields they need.
    */
   @Override
   public Collection<GoraWebPage.Field> getFields() {

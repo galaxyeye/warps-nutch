@@ -23,7 +23,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public class LanguageIndexingFilter implements IndexingFilter {
   public LanguageIndexingFilter() {
   }
 
-  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
 
     // check if LANGUAGE found, possibly put there by HTMLLanguageParser

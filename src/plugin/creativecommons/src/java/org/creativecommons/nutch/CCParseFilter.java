@@ -21,7 +21,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.CreativeCommons;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class CCParseFilter implements ParseFilter {
     }
 
     /** Scan the document adding attributes to metadata. */
-    public static void walk(Node doc, URL base, WrappedWebPage page, Configuration conf)
+    public static void walk(Node doc, URL base, WebPage page, Configuration conf)
         throws ParseException {
 
       // walk the DOM tree, scanning for license data
@@ -291,7 +291,7 @@ public class CCParseFilter implements ParseFilter {
    * DOM tree of a page.
    */
   @Override
-  public Parse filter(String url, WrappedWebPage page, Parse parse,
+  public Parse filter(String url, WebPage page, Parse parse,
                       HTMLMetaTags metaTags, DocumentFragment doc) {
     // construct base url
     URL base;

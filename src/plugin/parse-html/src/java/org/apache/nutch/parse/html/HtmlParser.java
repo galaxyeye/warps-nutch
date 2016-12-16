@@ -25,8 +25,8 @@ import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
@@ -103,7 +103,7 @@ public class HtmlParser implements Parser {
     ));
   }
 
-  public Parse getParse(String url, WrappedWebPage page) {
+  public Parse getParse(String url, WebPage page) {
     URL baseURL;
     try {
       baseURL = new URL(TableUtil.toString(page.getBaseUrl()));
@@ -169,13 +169,13 @@ public class HtmlParser implements Parser {
     return null;
   }
 
-  private InputSource getContentAsInputSource(WrappedWebPage page, String encoding) {
+  private InputSource getContentAsInputSource(WebPage page, String encoding) {
     InputSource input = getContentAsInputSource(page);
     input.setEncoding(encoding);
     return input;
   }
 
-  private InputSource getContentAsInputSource(WrappedWebPage page) {
+  private InputSource getContentAsInputSource(WebPage page) {
     ByteBuffer contentInOctets = page.getContent();
 
     ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
@@ -197,7 +197,7 @@ public class HtmlParser implements Parser {
     return status;
   }
 
-  private void tryGetValidOutlinks(WrappedWebPage page, String url, URL base) {
+  private void tryGetValidOutlinks(WebPage page, String url, URL base) {
     /*
      * TODO : This is a temporary solution, and should be configured
      * */
@@ -220,13 +220,13 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void setEncoding(WrappedWebPage page, String encoding) {
+  private void setEncoding(WebPage page, String encoding) {
     page.setTmporaryVariable("encoding", encoding);
     page.putMetadata(Nutch.ORIGINAL_CHAR_ENCODING, encoding);
     page.putMetadata(Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
 
-  private void setMetadata(WrappedWebPage page, HTMLMetaTags metaTags) {
+  private void setMetadata(WebPage page, HTMLMetaTags metaTags) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Meta tags for " + page.getBaseUrl() + ": " + metaTags.toString());
     }
@@ -237,7 +237,7 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void extract(WrappedWebPage page, InputSource input) {
+  private void extract(WebPage page, InputSource input) {
     LOG.trace("Try extract by Scent");
 
     if (page.getContent() == null) {
@@ -365,7 +365,7 @@ public class HtmlParser implements Parser {
 
     HtmlParser parser = new HtmlParser();
     parser.setConf(conf);
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8(url));
     page.setContent(ByteBuffer.wrap(bytes));
     page.setContentType(new Utf8("text/html"));

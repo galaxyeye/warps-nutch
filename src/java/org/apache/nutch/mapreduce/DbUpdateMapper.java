@@ -22,7 +22,7 @@ import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScor
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-    WrappedWebPage page = new WrappedWebPage(row);
+    WebPage page = new WebPage(row);
     String url = TableUtil.unreverseUrl(reversedUrl);
 
     if (!Mark.FETCH_MARK.hasMark(page)) {

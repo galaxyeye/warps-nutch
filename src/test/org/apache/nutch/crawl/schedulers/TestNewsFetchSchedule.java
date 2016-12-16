@@ -19,7 +19,7 @@ package org.apache.nutch.crawl.schedulers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.filter.CrawlFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +63,7 @@ public class TestNewsFetchSchedule {
   int totalRounds = 1000;
   int changeBefore = 500;
 
-  WrappedWebPage p = WrappedWebPage.newWebPage();
+  WebPage p = WebPage.newWebPage();
   FetchSchedule fs = new NewsFetchSchedule();
 
   @Before
@@ -151,7 +151,7 @@ public class TestNewsFetchSchedule {
     LOG.info("Page changed " + changeCnt + " times, fetched " + fetchCnt + " times.");
   }
 
-  private void choosePageType(String type, WrappedWebPage p) {
+  private void choosePageType(String type, WebPage p) {
     if ("seed".equalsIgnoreCase(type)) {
       p.putMetadata(META_IS_SEED, YES_STRING);
     }
@@ -161,11 +161,11 @@ public class TestNewsFetchSchedule {
     }
   }
 
-  private long getRoundNumber(WrappedWebPage p, Instant time, Duration timeDelta) {
+  private long getRoundNumber(WebPage p, Instant time, Duration timeDelta) {
     return (time.toEpochMilli() - startTime.toEpochMilli()) / timeDelta.toMillis();
   }
 
-  private String getRoundString(WrappedWebPage p, Duration timeDelta) {
+  private String getRoundString(WebPage p, Duration timeDelta) {
     final DecimalFormat df = new DecimalFormat("0.00");
 
     long inteval = p.getFetchInterval().toMillis();
@@ -177,7 +177,7 @@ public class TestNewsFetchSchedule {
     return df.format(round) + " rounds (" + (days >= 1 ? (df.format(days) + " days") : df.format(hours) + " hours") + "), ";
   }
 
-  private void updateScore(WrappedWebPage p) {
+  private void updateScore(WebPage p) {
     float f1 = 1.0f;
     float f2 = 2.0f;
 

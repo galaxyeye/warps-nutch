@@ -19,7 +19,7 @@ package org.apache.nutch.util;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -50,7 +50,7 @@ public class TestEncodingDetector {
     // Content content;
     String encoding;
 
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -61,7 +61,7 @@ public class TestEncodingDetector {
     // no information is available, so it should return default encoding
     assertEquals("windows-1252", encoding.toLowerCase());
 
-    page = WrappedWebPage.newWebPage();
+    page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -73,7 +73,7 @@ public class TestEncodingDetector {
     encoding = detector.guessEncoding(page, "windows-1252");
     assertEquals("utf-16", encoding.toLowerCase());
 
-    page = WrappedWebPage.newWebPage();
+    page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));
@@ -86,7 +86,7 @@ public class TestEncodingDetector {
 
     // enable autodetection
     conf.setInt(EncodingDetector.MIN_CONFIDENCE_KEY, 50);
-    page = WrappedWebPage.newWebPage();
+    page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("http://www.example.com/"));
     page.setContentType(new Utf8("text/plain"));
     page.setContent(ByteBuffer.wrap(contentInOctets));

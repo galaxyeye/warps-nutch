@@ -60,7 +60,7 @@ public class HttpResponse implements Response {
    * @param url
    *          URL to be fetched
    * @param page
-   *          WrappedWebPage
+   *          WebPage
    * @param followRedirects
    *          Whether to follow redirects; follows redirect if and only if this
    *          is true

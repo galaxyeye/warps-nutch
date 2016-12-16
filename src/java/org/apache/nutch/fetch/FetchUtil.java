@@ -4,8 +4,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ProtocolStatus;
+import org.apache.nutch.storage.WebPage;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -16,11 +16,11 @@ import java.time.Instant;
  */
 public class FetchUtil {
 
-  static public void updateStatus(WrappedWebPage page, byte status) {
+  static public void updateStatus(WebPage page, byte status) {
     updateStatus(page, status, null);
   }
 
-  static public void updateStatus(WrappedWebPage page, byte status, ProtocolStatus pstatus) {
+  static public void updateStatus(WebPage page, byte status, ProtocolStatus pstatus) {
     page.setStatus((int) status);
     if (pstatus != null) {
       page.setProtocolStatus(pstatus);
@@ -29,18 +29,18 @@ public class FetchUtil {
     page.increaseFetchCount();
   }
 
-  static public void updateMarks(WrappedWebPage page) {
+  static public void updateMarks(WebPage page) {
     /** Set fetch mark */
     Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
     /** Unset index mark if exist, this page should be re-indexed */
     Mark.INDEX_MARK.removeMarkIfExist(page);
   }
 
-  static public void updateContent(WrappedWebPage page, Content content) {
+  static public void updateContent(WebPage page, Content content) {
     updateContent(page, content, null);
   }
 
-  static public void updateContent(WrappedWebPage page, Content content, String contentType) {
+  static public void updateContent(WebPage page, Content content, String contentType) {
     if (content == null) {
       return;
     }
@@ -61,7 +61,7 @@ public class FetchUtil {
     }
   }
 
-  static public void updateFetchTime(WrappedWebPage page, byte status) {
+  static public void updateFetchTime(WebPage page, byte status) {
     Instant prevFetchTime = page.getFetchTime();
     Instant fetchTime = Instant.now();
 

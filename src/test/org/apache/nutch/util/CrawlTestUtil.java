@@ -26,7 +26,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.TestInjector;
 import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -116,7 +116,7 @@ public class CrawlTestUtil {
     Result<String, GoraWebPage> results = store.execute(query);
     while (results.next()) {
       try {
-        WrappedWebPage page = WrappedWebPage.wrap(results.get());
+        WebPage page = WebPage.wrap(results.get());
         String url = results.getKey();
 
         if (page.get() == null) {
@@ -126,7 +126,7 @@ public class CrawlTestUtil {
         if (requiredMark != null && requiredMark.checkMark(page) == null)
           continue;
 
-        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WrappedWebPage.wrap(GoraWebPage.newBuilder(page.get()).build())));
+        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WebPage.wrap(GoraWebPage.newBuilder(page.get()).build())));
       } catch (Exception e) {
         e.printStackTrace();
       }

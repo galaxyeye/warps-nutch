@@ -18,7 +18,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class TextMD5Signature extends Signature {
   Signature fallback = new MD5Signature();
 
   @Override
-  public byte[] calculate(WrappedWebPage page) {
+  public byte[] calculate(WebPage page) {
     CharSequence text = page.getText();
 
     if (text == null || text.length() == 0) {

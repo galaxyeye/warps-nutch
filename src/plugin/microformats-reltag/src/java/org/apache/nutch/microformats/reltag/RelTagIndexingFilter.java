@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.nio.ByteBuffer;
@@ -51,9 +51,9 @@ public class RelTagIndexingFilter implements IndexingFilter {
   }
 
   /**
-   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
+   * Gets all the fields for a given {@link WebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WrappedWebPage are able to specify what fields they need.
+   * that work on WebPage are able to specify what fields they need.
    */
   @Override
   public Collection<GoraWebPage.Field> getFields() {
@@ -82,11 +82,11 @@ public class RelTagIndexingFilter implements IndexingFilter {
    * @param url
    *          URL to be filtered for rel-tag's
    * @param page
-   *          {@link WrappedWebPage} object relative to the URL
+   *          {@link WebPage} object relative to the URL
    * @return filtered NutchDocument
    */
   @Override
-  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page)
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page)
       throws IndexingException {
     // Check if some Rel-Tags found, possibly put there by RelTagParser
     ByteBuffer bb = page.get().getMetadata().get(new Utf8(RelTagParser.REL_TAG));

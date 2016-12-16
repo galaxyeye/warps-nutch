@@ -16,18 +16,20 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
+import org.apache.nutch.storage.gora.ParseStatus;
+
 public class Parse {
 
   private String text;
   private String title;
   private Outlink[] outlinks;
-  private org.apache.nutch.storage.ParseStatus parseStatus;
+  private ParseStatus parseStatus;
 
   public Parse() {
   }
 
   public Parse(String text, String title, Outlink[] outlinks,
-      org.apache.nutch.storage.ParseStatus parseStatus) {
+      ParseStatus parseStatus) {
     this.text = text;
     this.title = title;
     this.outlinks = outlinks;
@@ -46,7 +48,7 @@ public class Parse {
     return outlinks;
   }
 
-  public org.apache.nutch.storage.ParseStatus getParseStatus() {
+  public ParseStatus getParseStatus() {
     return parseStatus;
   }
 
@@ -62,7 +64,7 @@ public class Parse {
     this.outlinks = outlinks;
   }
 
-  public void setParseStatus(org.apache.nutch.storage.ParseStatus parseStatus) {
+  public void setParseStatus(ParseStatus parseStatus) {
     this.parseStatus = parseStatus;
   }
 }

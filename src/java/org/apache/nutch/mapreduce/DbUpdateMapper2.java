@@ -26,7 +26,7 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
 
   @Override
   public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
-    if (Mark.GENERATE_MARK.checkMark(WrappedWebPage.wrap(page)) == null) {
+    if (Mark.GENERATE_MARK.checkMark(WebPage.wrap(page)) == null) {
       LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; not generated yet");
       return;
     }
@@ -77,7 +77,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
 
     // TODO: Outlink filtering (i.e. "only keep the first n outlinks")
     try {
-      scoringFilters.distributeScoreToOutlinks(url, WrappedWebPage.wrap(page), scoreData, (outlinks == null ? 0 : outlinks.size()));
+      scoringFilters.distributeScoreToOutlinks(url, WebPage.wrap(page), scoreData, (outlinks == null ? 0 : outlinks.size()));
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL: " + key + " exception:" + StringUtils.stringifyException(e));
     }

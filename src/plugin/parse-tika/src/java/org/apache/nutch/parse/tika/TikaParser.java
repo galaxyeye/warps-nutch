@@ -23,8 +23,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.storage.ParseStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.MimeUtil;
 import org.apache.nutch.util.NutchConfiguration;
@@ -74,7 +74,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
   private HtmlMapper HTMLMapper;
 
   @Override
-  public Parse getParse(String url, WrappedWebPage page) {
+  public Parse getParse(String url, WebPage page) {
 
     String baseUrl = TableUtil.toString(page.getBaseUrl());
     URL base;
@@ -255,7 +255,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     Configuration conf = NutchConfiguration.create();
     // TikaParser parser = new TikaParser();
     // parser.setConf(conf);
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+    WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8(url));
     page.setContent(ByteBuffer.wrap(bytes));
     MimeUtil mimeutil = new MimeUtil(conf);

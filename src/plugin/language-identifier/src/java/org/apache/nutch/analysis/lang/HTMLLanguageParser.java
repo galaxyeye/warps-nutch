@@ -26,7 +26,7 @@ import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NodeWalker;
 import org.apache.tika.language.LanguageIdentifier;
@@ -88,7 +88,7 @@ public class HTMLLanguageParser implements ParseFilter {
    * -html.shtml#language) <li>3. meta http-equiv (content-language)
    * (http://www.w3.org/TR/REC-html40/struct/global.html#h-7.4.4.2) <br>
    */
-  public Parse filter(String url, WrappedWebPage page, Parse parse,
+  public Parse filter(String url, WebPage page, Parse parse,
                       HTMLMetaTags metaTags, DocumentFragment doc) {
     String lang = null;
 
@@ -120,7 +120,7 @@ public class HTMLLanguageParser implements ParseFilter {
   }
 
   /** Try to find the document's language from page headers and metadata */
-  private String detectLanguage(WrappedWebPage page, DocumentFragment doc) {
+  private String detectLanguage(WebPage page, DocumentFragment doc) {
     String lang = null;
     ByteBuffer blang = getLanguageFromMetadata(page.get().getMetadata());
     if (blang == null) {

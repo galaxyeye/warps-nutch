@@ -33,7 +33,8 @@ import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
@@ -118,7 +119,7 @@ public class ParseUtil {
    *
    * @throws ParseException If there is an error parsing.
    */
-  public Parse parse(String url, WrappedWebPage page) throws ParseException {
+  public Parse parse(String url, WebPage page) throws ParseException {
     Parser[] parsers;
 
     String contentType = TableUtil.toString(page.getContentType());
@@ -152,7 +153,7 @@ public class ParseUtil {
    * @param url
    * @param page
    */
-  public Parse process(String url, WrappedWebPage page) {
+  public Parse process(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
     if (status != CrawlStatus.STATUS_FETCHED) {
       if (LOG.isDebugEnabled()) {
@@ -180,7 +181,7 @@ public class ParseUtil {
       return null;
     }
 
-    org.apache.nutch.storage.ParseStatus pstatus = parse.getParseStatus();
+    ParseStatus pstatus = parse.getParseStatus();
     page.setParseStatus(pstatus);
     if (ParseStatusUtils.isSuccess(pstatus)) {
       if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
@@ -195,7 +196,7 @@ public class ParseUtil {
 
   public Set<CharSequence> getUnparsableTypes() { return unparsableTypes; }
 
-  private Parse runParser(Parser p, String url, WrappedWebPage page) {
+  private Parse runParser(Parser p, String url, WebPage page) {
     ParseCallable pc = new ParseCallable(p, page, url);
     Future<Parse> task = executorService.submit(pc);
 
@@ -210,7 +211,7 @@ public class ParseUtil {
     return res;
   }
 
-  private void processSuccess(String url, WrappedWebPage page, Parse parse) {
+  private void processSuccess(String url, WebPage page, Parse parse) {
     page.setText(new Utf8(parse.getText()));
     page.setTitle(new Utf8(parse.getTitle()));
     ByteBuffer prevSig = page.getSignature();
@@ -266,7 +267,7 @@ public class ParseUtil {
     }
   }
 
-  private void processRedirect(String url, WrappedWebPage page, org.apache.nutch.storage.ParseStatus pstatus) {
+  private void processRedirect(String url, WebPage page, ParseStatus pstatus) {
     String newUrl = ParseStatusUtils.getMessage(pstatus);
     int refreshTime = StringUtil.tryParseInt(ParseStatusUtils.getArg(pstatus, 1), 0);
     try {
@@ -311,7 +312,7 @@ public class ParseUtil {
   }
 
   @Contract("_, null -> !null")
-  private String normalizeUrlToEmpty(WrappedWebPage page, final String url) {
+  private String normalizeUrlToEmpty(WebPage page, final String url) {
     if (url == null) {
       return "";
     }

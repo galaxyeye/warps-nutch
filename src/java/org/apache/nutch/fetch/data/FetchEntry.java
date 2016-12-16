@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -33,13 +33,13 @@ import java.io.IOException;
 public class FetchEntry extends Configured implements Writable {
 
   private String key;
-  private WrappedWebPage page;
+  private WebPage page;
 
   public FetchEntry() {
     super(null);
   }
 
-  public FetchEntry(Configuration conf, String key, WrappedWebPage page) {
+  public FetchEntry(Configuration conf, String key, WebPage page) {
     super(conf);
     this.key = key;
     this.page = page;
@@ -48,20 +48,20 @@ public class FetchEntry extends Configured implements Writable {
   @Override
   public void readFields(DataInput in) throws IOException {
     key = Text.readString(in);
-    page = IOUtils.deserialize(getConf(), in, null, WrappedWebPage.class);
+    page = IOUtils.deserialize(getConf(), in, null, WebPage.class);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     Text.writeString(out, key);
-    IOUtils.serialize(getConf(), out, page, WrappedWebPage.class);
+    IOUtils.serialize(getConf(), out, page, WebPage.class);
   }
 
   public String getKey() {
     return key;
   }
 
-  public WrappedWebPage getWebPage() {
+  public WebPage getWebPage() {
     return page;
   }
 

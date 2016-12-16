@@ -19,7 +19,7 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.storage;
+package org.apache.nutch.storage.gora;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -255,20 +255,20 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
   }
 
   /** Creates a new Host RecordBuilder */
-  public static org.apache.nutch.storage.Host.Builder newBuilder() {
-    return new org.apache.nutch.storage.Host.Builder();
+  public static Host.Builder newBuilder() {
+    return new Host.Builder();
   }
 
   /** Creates a new Host RecordBuilder by copying an existing Builder */
-  public static org.apache.nutch.storage.Host.Builder newBuilder(
-      org.apache.nutch.storage.Host.Builder other) {
-    return new org.apache.nutch.storage.Host.Builder(other);
+  public static Host.Builder newBuilder(
+      Host.Builder other) {
+    return new Host.Builder(other);
   }
 
   /** Creates a new Host RecordBuilder by copying an existing Host instance */
-  public static org.apache.nutch.storage.Host.Builder newBuilder(
-      org.apache.nutch.storage.Host other) {
-    return new org.apache.nutch.storage.Host.Builder(other);
+  public static Host.Builder newBuilder(
+      Host other) {
+    return new Host.Builder(other);
   }
 
   private static java.nio.ByteBuffer deepCopyToReadOnlyBuffer(
@@ -307,17 +307,17 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
 
     /** Creates a new Builder */
     private Builder() {
-      super(org.apache.nutch.storage.Host.SCHEMA$);
+      super(Host.SCHEMA$);
     }
 
     /** Creates a Builder by copying an existing Builder */
-    private Builder(org.apache.nutch.storage.Host.Builder other) {
+    private Builder(Host.Builder other) {
       super(other);
     }
 
     /** Creates a Builder by copying an existing Host instance */
-    private Builder(org.apache.nutch.storage.Host other) {
-      super(org.apache.nutch.storage.Host.SCHEMA$);
+    private Builder(Host other) {
+      super(Host.SCHEMA$);
       if (isValidValue(fields()[0], other.metadata)) {
         this.metadata = (java.util.Map<java.lang.CharSequence, java.nio.ByteBuffer>) data()
             .deepCopy(fields()[0].schema(), other.metadata);
@@ -341,7 +341,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Sets the value of the 'metadata' field */
-    public org.apache.nutch.storage.Host.Builder setMetadata(
+    public Host.Builder setMetadata(
         java.util.Map<java.lang.CharSequence, java.nio.ByteBuffer> value) {
       validate(fields()[0], value);
       this.metadata = value;
@@ -355,7 +355,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Clears the value of the 'metadata' field */
-    public org.apache.nutch.storage.Host.Builder clearMetadata() {
+    public Host.Builder clearMetadata() {
       metadata = null;
       fieldSetFlags()[0] = false;
       return this;
@@ -367,7 +367,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Sets the value of the 'outlinks' field */
-    public org.apache.nutch.storage.Host.Builder setOutlinks(
+    public Host.Builder setOutlinks(
         java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
       validate(fields()[1], value);
       this.outlinks = value;
@@ -381,7 +381,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Clears the value of the 'outlinks' field */
-    public org.apache.nutch.storage.Host.Builder clearOutlinks() {
+    public Host.Builder clearOutlinks() {
       outlinks = null;
       fieldSetFlags()[1] = false;
       return this;
@@ -393,7 +393,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Sets the value of the 'inlinks' field */
-    public org.apache.nutch.storage.Host.Builder setInlinks(
+    public Host.Builder setInlinks(
         java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
       validate(fields()[2], value);
       this.inlinks = value;
@@ -407,7 +407,7 @@ public class Host extends org.apache.gora.persistency.impl.PersistentBase
     }
 
     /** Clears the value of the 'inlinks' field */
-    public org.apache.nutch.storage.Host.Builder clearInlinks() {
+    public Host.Builder clearInlinks() {
       inlinks = null;
       fieldSetFlags()[2] = false;
       return this;

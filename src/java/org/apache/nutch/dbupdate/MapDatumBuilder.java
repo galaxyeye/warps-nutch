@@ -10,7 +10,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -62,7 +62,7 @@ public class MapDatumBuilder {
   /**
    * Build map phrase datum
    * */
-  public Pair<UrlWithScore, NutchWritable> createMainDatum(String reversedUrl, WrappedWebPage mainPage) {
+  public Pair<UrlWithScore, NutchWritable> createMainDatum(String reversedUrl, WebPage mainPage) {
     NutchWritable nutchWritable = new NutchWritable();
     nutchWritable.set(new WebPageWritable(conf, mainPage.get()));
     return Pair.of(new UrlWithScore(reversedUrl, Float.MAX_VALUE), nutchWritable);
@@ -73,7 +73,7 @@ public class MapDatumBuilder {
    *
    * TODO : Write the result into hdfs directly to deduce memory consumption
    * */
-  public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WrappedWebPage sourcePage) {
+  public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = sourcePage.getDepth();
     if (depth >= maxDistance) {
       return Collections.emptyMap();

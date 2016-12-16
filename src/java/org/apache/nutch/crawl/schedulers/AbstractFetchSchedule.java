@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @param page
    */
   @Override
-  public void initializeSchedule(String url, WrappedWebPage page) {
+  public void initializeSchedule(String url, WebPage page) {
     page.setFetchTime(Instant.now());
     page.setFetchInterval(defaultInterval);
     page.setRetriesSinceFetch(0);
@@ -97,7 +97,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * preserve this behavior.
    */
   @Override
-  public void setFetchSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
+  public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     page.setRetriesSinceFetch(0);
   }
@@ -114,7 +114,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *         NOTE: this may be a different instance than
    */
   @Override
-  public void setPageGoneSchedule(String url, WrappedWebPage page, Instant prevFetchTime,
+  public void setPageGoneSchedule(String url, WebPage page, Instant prevFetchTime,
                                   Instant prevModifiedTime, Instant fetchTime) {
     // no page is truly GONE ... just increase the interval by 50%
     // and try much later.
@@ -143,7 +143,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *          current fetch time
    */
   @Override
-  public void setPageRetrySchedule(String url, WrappedWebPage page,
+  public void setPageRetrySchedule(String url, WebPage page,
       Instant prevFetchTime, Instant prevModifiedTime, Instant fetchTime) {
     page.setFetchTime(fetchTime.plus(1, ChronoUnit.DAYS));
     page.setRetriesSinceFetch(page.getRetriesSinceFetch() + 1);
@@ -155,7 +155,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @return the date as a long.
    */
   @Override
-  public Instant calculateLastFetchTime(WrappedWebPage page) {
+  public Instant calculateLastFetchTime(WebPage page) {
     return page.getFetchTime().minus(page.getFetchInterval());
   }
 
@@ -180,7 +180,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *         fetchlist, otherwise false.
    */
   @Override
-  public boolean shouldFetch(String url, WrappedWebPage page, Instant curTime) {
+  public boolean shouldFetch(String url, WebPage page, Instant curTime) {
     // pages are marked as never fetch again
     if (page.isNoFetch()) {
       return false;
@@ -223,7 +223,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *          time is set.
    */
   @Override
-  public void forceRefetch(String url, WrappedWebPage page, boolean asap) {
+  public void forceRefetch(String url, WebPage page, boolean asap) {
     // reduce fetchInterval so that it fits within the max value
     if (page.getFetchInterval().compareTo(maxInterval) > 0) {
       page.setFetchInterval(Math.round(maxInterval.getSeconds() * 0.9f));

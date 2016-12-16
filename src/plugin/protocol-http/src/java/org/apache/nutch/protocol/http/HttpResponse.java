@@ -29,7 +29,7 @@ import org.apache.nutch.net.proxy.ProxyEntry;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.protocol.http.api.HttpException;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -57,7 +57,7 @@ public class HttpResponse implements Response {
     HTTP, HTTPS,
   }
 
-  public HttpResponse(HttpBase http, URL url, WrappedWebPage page)
+  public HttpResponse(HttpBase http, URL url, WebPage page)
       throws ProtocolException, IOException, InterruptedException, NoProxyException {
 
     this.http = http;

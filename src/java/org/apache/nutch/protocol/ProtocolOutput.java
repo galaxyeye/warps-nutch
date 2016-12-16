@@ -17,6 +17,8 @@
 
 package org.apache.nutch.protocol;
 
+import org.apache.nutch.storage.gora.ProtocolStatus;
+
 /**
  * Simple aggregate to pass from protocol plugins both content and protocol
  * status.
@@ -25,10 +27,10 @@ package org.apache.nutch.protocol;
  */
 public class ProtocolOutput {
   private Content content;
-  private org.apache.nutch.storage.ProtocolStatus status;
+  private ProtocolStatus status;
 
   public ProtocolOutput(Content content,
-      org.apache.nutch.storage.ProtocolStatus status) {
+      ProtocolStatus status) {
     this.content = content;
     this.status = status;
   }
@@ -46,11 +48,11 @@ public class ProtocolOutput {
     this.content = content;
   }
 
-  public org.apache.nutch.storage.ProtocolStatus getStatus() {
+  public ProtocolStatus getStatus() {
     return status;
   }
 
-  public void setStatus(org.apache.nutch.storage.ProtocolStatus status) {
+  public void setStatus(ProtocolStatus status) {
     this.status = status;
   }
 }

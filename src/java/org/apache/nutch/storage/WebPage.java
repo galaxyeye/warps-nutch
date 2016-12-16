@@ -24,6 +24,8 @@ import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 
@@ -42,19 +44,19 @@ import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 /**
  * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency
  * */
-public class WrappedWebPage {
+public class WebPage {
 
   private GoraWebPage page;
 
-  public WrappedWebPage(GoraWebPage page) {
+  public WebPage(GoraWebPage page) {
     this.page = page;
   }
 
-  public static WrappedWebPage newWebPage() {
-    return new WrappedWebPage(GoraWebPage.newBuilder().build());
+  public static WebPage newWebPage() {
+    return new WebPage(GoraWebPage.newBuilder().build());
   }
 
-  public static WrappedWebPage wrap(GoraWebPage page) { return new WrappedWebPage(page); }
+  public static WebPage wrap(GoraWebPage page) { return new WebPage(page); }
 
   public GoraWebPage get() {
     return page;
@@ -156,8 +158,8 @@ public class WrappedWebPage {
   }
 
   /**
-   * An implementation of a WrappedWebPage's signature from which it can be identified and referenced at any point in time.
-   * This is essentially the WrappedWebPage's fingerprint represnting its state for any point in time.
+   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time.
+   * This is essentially the WebPage's fingerprint represnting its state for any point in time.
    * */
   public ByteBuffer getSignature() {
     return page.getSignature();
@@ -434,7 +436,7 @@ public class WrappedWebPage {
    * TODO : We need a better solution to track all voted pages
    * TODO : optimization, consider byte array to track vote history
    * */
-  public boolean voteIfAbsent(WrappedWebPage candidate) {
+  public boolean voteIfAbsent(WebPage candidate) {
     String baseUrl = candidate.getBaseUrl().toString();
     String hash;
     try {
@@ -461,7 +463,7 @@ public class WrappedWebPage {
     return false;
   }
 
-  public boolean isVoted(WrappedWebPage candidate) {
+  public boolean isVoted(WebPage candidate) {
     String baseUrl = candidate.getBaseUrl().toString();
     String hash;
     try {

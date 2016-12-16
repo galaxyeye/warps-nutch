@@ -23,7 +23,7 @@ import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
@@ -142,7 +142,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(reversedUrl);
-    WrappedWebPage page = WrappedWebPage.wrap(row);
+    WebPage page = WebPage.wrap(row);
 
     if (!shouldFetch(url, reversedUrl, page)) {
       return;
@@ -173,7 +173,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   /**
    * TODO : We may move some filters to hbase query filters directly
    * */
-  private boolean shouldFetch(String url, String reversedUrl, WrappedWebPage page) {
+  private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
     if (!checkHost(url)) {
       return false;
     }
@@ -258,7 +258,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   /**
    * Fetch schedule, timing filter
    * */
-  private boolean checkFetchSchedule(String url, WrappedWebPage page, int depth) {
+  private boolean checkFetchSchedule(String url, WebPage page, int depth) {
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       Instant fetchTime = page.getFetchTime();
 
@@ -298,11 +298,11 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     return true;
   }
 
-  private void output(String url, SelectorEntry entry, WrappedWebPage page, Context context) throws IOException, InterruptedException {
+  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     context.write(entry, page.get());
   }
 
-  private void updateStatus(String url, WrappedWebPage page) throws IOException, InterruptedException {
+  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
     if (page.isSeed()) {
       getCounter().increase(Counter.rowsIsSeed);
     }
@@ -338,7 +338,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     getCounter().updateAffectedRows(url);
   }
 
-  private void debugFetchLaterSeeds(WrappedWebPage page) {
+  private void debugFetchLaterSeeds(WebPage page) {
     String report = Params.formatAsLine(
         "CurrTime", DateTimeUtil.format(pseudoCurrTime),
         "LastRefPT", DateTimeUtil.format(page.getReferredPublishTime()),

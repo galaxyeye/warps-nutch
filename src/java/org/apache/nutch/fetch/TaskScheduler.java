@@ -29,9 +29,9 @@ import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.ProtocolStatus;
+import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
@@ -333,7 +333,7 @@ public class TaskScheduler extends Configured {
       return 0;
     }
 
-    WrappedWebPage page = seedBuiler.buildWebPage(urlLine);
+    WebPage page = seedBuiler.buildWebPage(urlLine);
     String url = page.getTemporaryVariableAsString("url");
     // set score?
 
@@ -735,7 +735,7 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WrappedWebPage page)
+  private void handleRedirect(String url, String newUrl, boolean temp, String redirType, WebPage page)
       throws URLFilterException, IOException, InterruptedException {
     newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
     newUrl = urlFilters.filter(newUrl);
@@ -762,7 +762,7 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.rowsRedirect);
   }
 
-  private String setRedirectRepresentativeUrl(WrappedWebPage page, String url, String newUrl, boolean temp) {
+  private String setRedirectRepresentativeUrl(WebPage page, String url, String newUrl, boolean temp) {
     long threadId = Thread.currentThread().getId();
 
     String reprUrl = reprUrls.get(threadId);
@@ -784,7 +784,7 @@ public class TaskScheduler extends Configured {
   private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
-    WrappedWebPage mainPage = new WrappedWebPage(fetchTask.getPage().get());
+    WebPage mainPage = new WebPage(fetchTask.getPage().get());
 
     FetchUtil.updateContent(mainPage, content);
     FetchUtil.updateStatus(mainPage, status, pstatus);
@@ -831,7 +831,7 @@ public class TaskScheduler extends Configured {
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  private void persistWithDbUpdate(String url, String reversedUrl, WrappedWebPage mainPage) throws IOException, InterruptedException {
+  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
     synchronized(mapDatumBuilder) {
       mapDatumBuilder.reset();
       reduceDatumBuilder.reset();
@@ -847,7 +847,7 @@ public class TaskScheduler extends Configured {
   }
 
   @SuppressWarnings("unchecked")
-  private void persistMainPage(String url, String reversedUrl, WrappedWebPage mainPage) {
+  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
     counter.increase(Counter.pagesPeresist);
 
     // Process the main page, update fetch schedule
@@ -863,7 +863,7 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void persistOutPage(WrappedWebPage mainPage, UrlWithScore urlWithScore) {
+  private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
     String reversedUrl = urlWithScore.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
@@ -872,9 +872,9 @@ public class TaskScheduler extends Configured {
       newDepth += 1;
     }
 
-    WrappedWebPage oldPage;
+    WebPage oldPage;
     synchronized(context) {
-      oldPage = WrappedWebPage.wrap(datastore.get(reversedUrl));
+      oldPage = WebPage.wrap(datastore.get(reversedUrl));
     }
 
     if (oldPage != null) {
@@ -889,7 +889,7 @@ public class TaskScheduler extends Configured {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  private void tryUpdateOldPage(String url, String reversedUrl, WrappedWebPage mainPage, WrappedWebPage oldPage, int newDepth) {
+  private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
     int oldDepth = oldPage.getDepth();
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
@@ -906,8 +906,8 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.existOutPages);
   }
 
-  private void createNepage(String url, String reversedUrl, WrappedWebPage mainPage, int depth) {
-    WrappedWebPage nepage = reduceDatumBuilder.createNewRow(url, depth);
+  private void createNepage(String url, String reversedUrl, WebPage mainPage, int depth) {
+    WebPage nepage = reduceDatumBuilder.createNewRow(url, depth);
     // Update distance/score
     reduceDatumBuilder.updateNewRow(url, mainPage, nepage);
 
@@ -921,7 +921,7 @@ public class TaskScheduler extends Configured {
   }
 
   @SuppressWarnings("unchecked")
-  private void output(String reversedUrl, WrappedWebPage page) {
+  private void output(String reversedUrl, WebPage page) {
     try {
       synchronized(context) {
         context.write(reversedUrl, page);
@@ -931,7 +931,7 @@ public class TaskScheduler extends Configured {
     }
   }
 
-  private void updateStatus(String url, WrappedWebPage page) throws IOException {
+  private void updateStatus(String url, WebPage page) throws IOException {
     int pageLength = 0;
     ByteBuffer content = page.getContent();
     if (content != null) {
@@ -967,7 +967,7 @@ public class TaskScheduler extends Configured {
     counter.updateAffectedRows(url);
   }
 
-  private void debugFetchHistory(FetchTask fetchTask, WrappedWebPage mainPage, byte status) {
+  private void debugFetchHistory(FetchTask fetchTask, WebPage mainPage, byte status) {
     // Debug fetch time history
     String fetchTimeHistory = mainPage.getFetchTimeHistory("");
     if (fetchTimeHistory.contains(",")) {

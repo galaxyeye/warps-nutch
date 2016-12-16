@@ -29,7 +29,7 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -85,15 +85,15 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
   protected void reduce(UrlWithScore key, Iterable<NutchWritable> values, Context context) throws IOException, InterruptedException {
     String keyUrl = key.getReversedUrl();
 
-    WrappedWebPage page = null;
+    WebPage page = null;
     // Initialize old_page for checking if the outlink is already in the datastore
-    WrappedWebPage old_page = null;
+    WebPage old_page = null;
     inlinkedScoreData.clear();
 
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = WrappedWebPage.wrap(((WebPageWritable) val).getWebPage());
+        page = WebPage.wrap(((WebPageWritable) val).getWebPage());
       } else {
         inlinkedScoreData.add((ScoreDatum) val);
         if (inlinkedScoreData.size() >= maxLinks) {
@@ -114,7 +114,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     }
 
     //check if page is already in the db
-    old_page = WrappedWebPage.wrap(datastore.get(keyUrl));
+    old_page = WebPage.wrap(datastore.get(keyUrl));
     if(page == null && old_page.get() != null) {
       //if we return here inlinks will not be updated
       page=old_page;
@@ -123,7 +123,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
       if (!additionsAllowed) {
         return;
       }
-      page = WrappedWebPage.newWebPage();
+      page = WebPage.newWebPage();
       schedule.initializeSchedule(url, page);
       page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
       try {

@@ -1,6 +1,6 @@
 package org.apache.nutch.fetch.data;
 
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.URLUtil;
 
 import java.net.URL;
@@ -41,19 +41,19 @@ public class FetchTask implements Comparable<FetchTask> {
   }
 
   private Key key;
-  private WrappedWebPage page;
+  private WebPage page;
   private URL u;
   private Instant pendingStart = Instant.EPOCH;
 
-  public FetchTask(int jobID, int priority, String url, WrappedWebPage page, URL u, String queueId) {
+  public FetchTask(int jobID, int priority, String url, WebPage page, URL u, String queueId) {
     this.page = page;
     this.key = new Key(jobID, priority, queueId, url);
     this.u = u;
   }
 
-  public WrappedWebPage getPage() { return page; }
+  public WebPage getPage() { return page; }
 
-  public void setPage(WrappedWebPage page) { this.page = page; }
+  public void setPage(WebPage page) { this.page = page; }
 
   public int getPriority() { return key.priority; }
 
@@ -80,7 +80,7 @@ public class FetchTask implements Comparable<FetchTask> {
    * argument, either as a protocol + hostname pair, protocol + IP
    * address pair or protocol+domain pair.
    */
-  public static FetchTask create(int jobId, int priority, String url, WrappedWebPage page, URLUtil.HostGroupMode hostGroupMode) {
+  public static FetchTask create(int jobId, int priority, String url, WebPage page, URLUtil.HostGroupMode hostGroupMode) {
     final URL u = URLUtil.getUrl(url);
 
     if (u == null) {

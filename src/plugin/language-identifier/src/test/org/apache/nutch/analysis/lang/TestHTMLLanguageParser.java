@@ -22,7 +22,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.NutchConfiguration;
 import org.apache.tika.language.LanguageIdentifier;
@@ -59,7 +59,7 @@ public class TestHTMLLanguageParser {
       ParseUtil parser = new ParseUtil(NutchConfiguration.create());
       /* loop through the test documents and validate result */
       for (int t = 0; t < docs.length; t++) {
-        WrappedWebPage page = getPage(docs[t]);
+        WebPage page = getPage(docs[t]);
         parser.parse(URL.toString(), page);
         ByteBuffer blang = page.get().getMetadata().get(new Utf8(Metadata.LANGUAGE));
         String lang = Bytes.toString(blang.array());
@@ -146,8 +146,8 @@ public class TestHTMLLanguageParser {
     }
   }
 
-  private WrappedWebPage getPage(String text) {
-    WrappedWebPage page = WrappedWebPage.newWebPage();
+  private WebPage getPage(String text) {
+    WebPage page = WebPage.newWebPage();
     page.setBaseUrl(BASE);
     page.setContent(ByteBuffer.wrap(text.getBytes()));
     page.setContentType(new Utf8("text/html"));

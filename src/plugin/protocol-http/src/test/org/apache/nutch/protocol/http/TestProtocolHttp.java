@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.junit.After;
 import org.junit.Test;
 import org.mortbay.jetty.Server;
@@ -121,7 +121,7 @@ public class TestProtocolHttp {
    */
   private void fetchPage(String page, int expectedCode) throws Exception {
     URL url = new URL("http", "127.0.0.1", port, page);
-    WrappedWebPage p = WrappedWebPage.newWebPage();
+    WebPage p = WebPage.newWebPage();
     Response response = http.getResponse(url, p, true);
     ProtocolOutput out = http.getProtocolOutput(url.toString(), p);
     Content content = out.getContent();

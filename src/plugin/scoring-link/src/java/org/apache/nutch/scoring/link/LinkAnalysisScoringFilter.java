@@ -21,7 +21,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
 import java.util.Collection;
@@ -59,35 +59,35 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public void injectedScore(String url, WrappedWebPage page)
+  public void injectedScore(String url, WebPage page)
       throws ScoringFilterException {
   }
 
   @Override
-  public void initialScore(String url, WrappedWebPage page)
+  public void initialScore(String url, WebPage page)
       throws ScoringFilterException {
     page.setScore(0.0f);
   }
 
   @Override
-  public float generatorSortValue(String url, WrappedWebPage page, float initSort)
+  public float generatorSortValue(String url, WebPage page, float initSort)
       throws ScoringFilterException {
     return page.getScore() * initSort;
   }
 
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WrappedWebPage page,
+  public void distributeScoreToOutlinks(String fromUrl, WebPage page,
       Collection<ScoreDatum> scoreData, int allCount)
       throws ScoringFilterException {
   }
 
   @Override
-  public void updateScore(String url, WrappedWebPage page,
+  public void updateScore(String url, WebPage page,
       List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
   }
 
   @Override
-  public float indexerScore(String url, IndexDocument doc, WrappedWebPage page,
+  public float indexerScore(String url, IndexDocument doc, WebPage page,
       float initScore) throws ScoringFilterException {
     return (normalizedScore * page.getScore());
   }

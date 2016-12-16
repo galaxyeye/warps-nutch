@@ -31,16 +31,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class DbPageConverter {
 
-  public static Map<String, Object> convertPage(WrappedWebPage page, Set<String> fields) {
+  public static Map<String, Object> convertPage(WebPage page, Set<String> fields) {
     Map<String, Object> result = Maps.newHashMap();
     for (Field field : filterFields(page.get(), fields)) {
       Object value = convertField(page, field);
@@ -51,7 +50,7 @@ public class DbPageConverter {
     return result;
   }
 
-  private static Object convertField(WrappedWebPage page, Field field) {
+  private static Object convertField(WebPage page, Field field) {
     int index = field.pos();
     if (index < 0) {
       return null;

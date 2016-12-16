@@ -23,7 +23,7 @@ import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
@@ -66,7 +66,7 @@ public class Http extends HttpBase {
   }
 
   @Override
-  protected Response getResponse(URL url, WrappedWebPage page, boolean redirect)
+  protected Response getResponse(URL url, WebPage page, boolean redirect)
       throws ProtocolException, IOException, NoProxyException {
       Response r = null;
       try {

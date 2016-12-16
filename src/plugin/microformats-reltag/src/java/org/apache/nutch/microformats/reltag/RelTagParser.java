@@ -23,7 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
@@ -136,9 +136,9 @@ public class RelTagParser implements ParseFilter {
   }
 
   /**
-   * Gets all the fields for a given {@link WrappedWebPage} Many datastores need to
+   * Gets all the fields for a given {@link WebPage} Many datastores need to
    * setup the mapreduce job by specifying the fields needed. All extensions
-   * that work on WrappedWebPage are able to specify what fields they need.
+   * that work on WebPage are able to specify what fields they need.
    */
   @Override
   public Collection<GoraWebPage.Field> getFields() {
@@ -148,14 +148,14 @@ public class RelTagParser implements ParseFilter {
   @Override
   /**
    * Scan the HTML document looking at possible rel-tags
-   * @param url URL of the {@link WrappedWebPage} to be parsed
-   * @param page {@link WrappedWebPage} object relative to the URL
+   * @param url URL of the {@link WebPage} to be parsed
+   * @param page {@link WebPage} object relative to the URL
    * @param parse {@link Parse} object holding parse status
    * @param metatags within the {@link NutchDocument}
    * @param doc The {@link NutchDocument} object
    * @return parse the actual {@link Parse} object
    */
-  public Parse filter(String url, WrappedWebPage page, Parse parse,
+  public Parse filter(String url, WebPage page, Parse parse,
                       HTMLMetaTags metaTags, DocumentFragment doc) {
     // Trying to find the document's rel-tags
     Parser parser = new Parser(doc);

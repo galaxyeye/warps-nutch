@@ -3,11 +3,11 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.storage;  
+package org.apache.nutch.storage.gora;
 @SuppressWarnings("all")
 /** A nested container representing data captured from web server responses. */
 public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"ProtocolStatus\",\"namespace\":\"org.apache.nutch.storage\",\"doc\":\"A nested container representing data captured from web server responses.\",\"fields\":[{\"name\":\"code\",\"type\":\"int\",\"doc\":\"A protocol response code which can be one of SUCCESS - content was retrieved without errors, FAILED - Content was not retrieved. Any further errors may be indicated in args, PROTO_NOT_FOUND - This protocol was not found. Application may attempt to retry later, GONE - Resource is gone, MOVED - Resource has moved permanently. New url should be found in args, TEMP_MOVED - Resource has moved temporarily. New url should be found in args., NOTFOUND - Resource was not found, RETRY - Temporary failure. Application may retry immediately., EXCEPTION - Unspecified exception occured. Further information may be provided in args., ACCESS_DENIED - Access denied - authorization required, but missing/incorrect., ROBOTS_DENIED - Access denied by robots.txt rules., REDIR_EXCEEDED - Too many redirects., NOTFETCHING - Not fetching., NOTMODIFIED - Unchanged since the last fetch., WOULDBLOCK - Request was refused by protocol plugins, because it would block. The expected number of milliseconds to wait before retry may be provided in args., BLOCKED - Thread was blocked http.max.delays times during fetching.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the response code.\",\"default\":[]},{\"name\":\"lastModified\",\"type\":\"long\",\"doc\":\"A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.\",\"default\":0}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"ProtocolStatus\",\"namespace\":\"org.apache.nutch.storage\",\"doc\":\"A nested container representing data captured from web server responses.\",\"fields\":[{\"name\":\"code\",\"type\":\"int\",\"doc\":\"A protocol response code which can be one of SUCCESS - content was retrieved without errors, FAILED - Content was not retrieved. Any further errors may be indicated in args, PROTO_NOT_FOUND - This protocol was not found. Application may attempt to retry later, GONE - Resource is gone, MOVED - Resource has moved permanently. New url should be found in args, TEMP_MOVED - Resource has moved temporarily. New url should be found in args., NOTFOUND - Resource was not found, RETRY - Temporary failure. Application may retry immediately., EXCEPTION - Unspecified exception occured. Further information may be provided in args., ACCESS_DENIED - Access denied - authorization required, but missing/incorrect., ROBOTS_DENIED - Access denied by robots.txt rules., REDIR_EXCEEDED - Too many redirects., NOTFETCHING - Not fetching., NOTMODIFIED - Unchanged since the last fetch., WOULDBLOCK - Request was refused by protocol plugins, because it would block. The expected number of milliseconds to wait before retry may be provided in args., BLOCKED - Thread was blocked http.max.delays times during fetching.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the response code.\",\"default\":[]},{\"name\":\"lastModified\",\"type\":\"long\",\"doc\":\"A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.\",\"default\":0}]}");
 
   /** Enum containing all data bean's fields. */
   public static enum Field {
@@ -69,7 +69,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
   private int code;
   /** Optional arguments supplied to compliment and/or justify the response code. */
   private java.util.List<java.lang.CharSequence> args;
-  /** A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself. */
+  /** A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself. */
   private long lastModified;
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call. 
@@ -143,14 +143,14 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 
   /**
    * Gets the value of the 'lastModified' field.
-   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.   */
+   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.   */
   public java.lang.Long getLastModified() {
     return lastModified;
   }
 
   /**
    * Sets the value of the 'lastModified' field.
-   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.   * @param value the value to set.
+   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.   * @param value the value to set.
    */
   public void setLastModified(java.lang.Long value) {
     this.lastModified = value;
@@ -159,25 +159,25 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
   
   /**
    * Checks the dirty status of the 'lastModified' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.   * @param value the value to set.
+   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.   * @param value the value to set.
    */
   public boolean isLastModifiedDirty() {
     return isDirty(2);
   }
 
   /** Creates a new ProtocolStatus RecordBuilder */
-  public static org.apache.nutch.storage.ProtocolStatus.Builder newBuilder() {
-    return new org.apache.nutch.storage.ProtocolStatus.Builder();
+  public static ProtocolStatus.Builder newBuilder() {
+    return new ProtocolStatus.Builder();
   }
   
   /** Creates a new ProtocolStatus RecordBuilder by copying an existing Builder */
-  public static org.apache.nutch.storage.ProtocolStatus.Builder newBuilder(org.apache.nutch.storage.ProtocolStatus.Builder other) {
-    return new org.apache.nutch.storage.ProtocolStatus.Builder(other);
+  public static ProtocolStatus.Builder newBuilder(ProtocolStatus.Builder other) {
+    return new ProtocolStatus.Builder(other);
   }
   
   /** Creates a new ProtocolStatus RecordBuilder by copying an existing ProtocolStatus instance */
-  public static org.apache.nutch.storage.ProtocolStatus.Builder newBuilder(org.apache.nutch.storage.ProtocolStatus other) {
-    return new org.apache.nutch.storage.ProtocolStatus.Builder(other);
+  public static ProtocolStatus.Builder newBuilder(ProtocolStatus other) {
+    return new ProtocolStatus.Builder(other);
   }
   
   private static java.nio.ByteBuffer deepCopyToReadOnlyBuffer(
@@ -215,17 +215,17 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 
     /** Creates a new Builder */
     private Builder() {
-      super(org.apache.nutch.storage.ProtocolStatus.SCHEMA$);
+      super(ProtocolStatus.SCHEMA$);
     }
     
     /** Creates a Builder by copying an existing Builder */
-    private Builder(org.apache.nutch.storage.ProtocolStatus.Builder other) {
+    private Builder(ProtocolStatus.Builder other) {
       super(other);
     }
     
     /** Creates a Builder by copying an existing ProtocolStatus instance */
-    private Builder(org.apache.nutch.storage.ProtocolStatus other) {
-            super(org.apache.nutch.storage.ProtocolStatus.SCHEMA$);
+    private Builder(ProtocolStatus other) {
+            super(ProtocolStatus.SCHEMA$);
       if (isValidValue(fields()[0], other.code)) {
         this.code = (java.lang.Integer) data().deepCopy(fields()[0].schema(), other.code);
         fieldSetFlags()[0] = true;
@@ -246,7 +246,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'code' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder setCode(int value) {
+    public ProtocolStatus.Builder setCode(int value) {
       validate(fields()[0], value);
       this.code = value;
       fieldSetFlags()[0] = true;
@@ -259,7 +259,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'code' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder clearCode() {
+    public ProtocolStatus.Builder clearCode() {
       fieldSetFlags()[0] = false;
       return this;
     }
@@ -270,7 +270,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'args' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
+    public ProtocolStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
       validate(fields()[1], value);
       this.args = value;
       fieldSetFlags()[1] = true;
@@ -283,7 +283,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'args' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder clearArgs() {
+    public ProtocolStatus.Builder clearArgs() {
       args = null;
       fieldSetFlags()[1] = false;
       return this;
@@ -295,7 +295,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'lastModified' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder setLastModified(long value) {
+    public ProtocolStatus.Builder setLastModified(long value) {
       validate(fields()[2], value);
       this.lastModified = value;
       fieldSetFlags()[2] = true;
@@ -308,7 +308,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'lastModified' field */
-    public org.apache.nutch.storage.ProtocolStatus.Builder clearLastModified() {
+    public ProtocolStatus.Builder clearLastModified() {
       fieldSetFlags()[2] = false;
       return this;
     }
@@ -400,14 +400,14 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 	
 				  /**
 	   * Gets the value of the 'lastModified' field.
-	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.	   */
+	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.	   */
 	  public java.lang.Long getLastModified() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'lastModified' field.
-	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.	   * @param value the value to set.
+	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.	   * @param value the value to set.
 	   */
 	  public void setLastModified(java.lang.Long value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -415,7 +415,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 	  
 	  /**
 	   * Checks the dirty status of the 'lastModified' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WrappedWebPage itself.	   * @param value the value to set.
+	   * A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.	   * @param value the value to set.
 	   */
 	  public boolean isLastModifiedDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");

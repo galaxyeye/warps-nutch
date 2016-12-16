@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
@@ -97,7 +97,7 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
     getCounter().increase(rows);
 
     String url = TableUtil.unreverseUrl(key);
-    WrappedWebPage page = WrappedWebPage.wrap(row);
+    WebPage page = WebPage.wrap(row);
 
     if (unreachableHosts.contains(URLUtil.getDomainName(url))) {
       getCounter().increase(Counter.hostsUnreachable);
@@ -132,7 +132,7 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
     }
   }
 
-  private void updateStatus(String url, WrappedWebPage page) throws IOException, InterruptedException {
+  private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
     Counter counter;
     int depth = page.getDepth();
     if (depth == 0) {

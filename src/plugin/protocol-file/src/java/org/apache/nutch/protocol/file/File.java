@@ -21,10 +21,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.storage.gora.GoraWebPage.Field;
+import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +106,7 @@ public class File implements Protocol {
    * @return {@link ProtocolOutput} object for the content of the file indicated
    *         by url
    */
-  public ProtocolOutput getProtocolOutput(String url, WrappedWebPage page) {
+  public ProtocolOutput getProtocolOutput(String url, WebPage page) {
     String urlString = url;
     try {
       URL u = new URL(urlString);
@@ -149,7 +149,7 @@ public class File implements Protocol {
   }
 
   @Override
-  public BaseRobotRules getRobotRules(String url, WrappedWebPage page) {
+  public BaseRobotRules getRobotRules(String url, WebPage page) {
     return null;
   }
 
@@ -191,7 +191,7 @@ public class File implements Protocol {
     if (maxContentLength != Integer.MIN_VALUE) // set maxContentLength
       file.setMaxContentLength(maxContentLength);
 
-    ProtocolOutput output = file.getProtocolOutput(urlString, WrappedWebPage.newWebPage());
+    ProtocolOutput output = file.getProtocolOutput(urlString, WebPage.newWebPage());
     Content content = output.getContent();
 
     System.err.println("URL: " + content.getUrl());

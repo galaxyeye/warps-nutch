@@ -20,7 +20,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.mapreduce.InjectJob;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
@@ -111,7 +111,7 @@ public class TestInjector extends AbstractNutchTest {
         fields);
     ArrayList<String> read = new ArrayList<String>();
     for (URLWebPage up : pages) {
-      WrappedWebPage page = up.getDatum();
+      WebPage page = up.getDatum();
       String representation = up.getUrl();
       representation += "\tnutch.score=" + page.getScore().intValue();
       ByteBuffer bb = page.get().getMetadata().get(new Utf8("custom.attribute"));

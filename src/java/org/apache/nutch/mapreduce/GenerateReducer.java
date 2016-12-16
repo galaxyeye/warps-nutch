@@ -22,7 +22,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.Params;
@@ -110,7 +110,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     }
 
     for (GoraWebPage value : values) {
-      WrappedWebPage page = WrappedWebPage.wrap(value);
+      WebPage page = WebPage.wrap(value);
       try {
         if (count >= limit) {
           stop("Enough pages generated, quit");
@@ -141,7 +141,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     } // for
   }
 
-  private WrappedWebPage updatePage(String url, WrappedWebPage page) {
+  private WebPage updatePage(String url, WebPage page) {
     if (page.isSeed()) {
       // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
       page = seedBuiler.buildWebPage(url);
@@ -158,7 +158,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     return page;
   }
 
-  private void updateStatus(String url, WrappedWebPage page, Context context) throws IOException {
+  private void updateStatus(String url, WebPage page, Context context) throws IOException {
     Counter counter;
     int depth = page.getDepth();
     if (depth == 0) {

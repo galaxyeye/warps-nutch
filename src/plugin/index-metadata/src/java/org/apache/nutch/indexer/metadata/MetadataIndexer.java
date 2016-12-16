@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WrappedWebPage;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
@@ -85,7 +85,7 @@ public class MetadataIndexer implements IndexingFilter {
 //    ));
   }
 
-  public IndexDocument filter(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
+  public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
     try {
       addTime(doc, url, page);
 
@@ -103,7 +103,7 @@ public class MetadataIndexer implements IndexingFilter {
     return doc;
   }
 
-  private void addHost(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
+  private void addHost(IndexDocument doc, String url, WebPage page) throws IndexingException {
     String reprUrlString = page.getReprUrl() != null ? page.getReprUrl().toString() : null;
 
     url = reprUrlString == null ? url : reprUrlString;
@@ -127,7 +127,7 @@ public class MetadataIndexer implements IndexingFilter {
     }
   }
 
-  private void addTime(IndexDocument doc, String url, WrappedWebPage page) {
+  private void addTime(IndexDocument doc, String url, WebPage page) {
     Instant now = Instant.now();
 
     String crawlTimeStr = DateTimeUtil.solrCompatibleFormat(now);
@@ -147,7 +147,7 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("index_time_history", indexTimeHistory);
   }
 
-  private void addGeneralMetadata(IndexDocument doc, String url, WrappedWebPage page) throws IndexingException {
+  private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {
     String contentType = TableUtil.toString(page.getContentType());
     if (contentType == null || !contentType.contains("html")) {
       LOG.warn("Content type " + contentType + " is not fully supported");
@@ -160,7 +160,7 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("content_type", contentType);
   }
 
-  private IndexDocument addPageMetadata(IndexDocument doc, String url, WrappedWebPage page) {
+  private IndexDocument addPageMetadata(IndexDocument doc, String url, WebPage page) {
     if (doc == null || parseFieldnames.isEmpty()) {
       return doc;
     }
