@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
+import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
 import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchEntry;
@@ -34,13 +35,14 @@ import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Nutch.*;
 
@@ -76,12 +78,20 @@ public class FetchJob extends NutchJob implements Tool {
 
   /**
    * The field list affects which field to reads, but does not affect which field to to write
-   * */
+   */
   public Collection<GoraWebPage.Field> getFields(Job job) {
     Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
-    if (job.getConfiguration().getBoolean(PARAM_PARSE, false)) {
-      ParserJob parserJob = new ParserJob();
-      fields.addAll(parserJob.getFields(job));
+    Configuration conf = job.getConfiguration();
+    if (conf.getBoolean(PARAM_PARSE, false)) {
+      fields.addAll(ParserJob.getFields(job));
+    }
+
+    if (conf.getBoolean(PARAM_INDEX_JUST_IN_TIME, false)) {
+      fields.addAll(IndexJob.getFields(job));
+    }
+
+    if (conf.getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, false)) {
+      fields.addAll(DbUpdateJob.getFields(job));
     }
 
     ProtocolFactory protocolFactory = new ProtocolFactory(job.getConfiguration());
@@ -107,18 +117,23 @@ public class FetchJob extends NutchJob implements Tool {
     int limit = params.getInt(ARG_LIMIT, -1);
     numTasks = params.getInt(ARG_NUMTASKS, conf.getInt(PARAM_MAPREDUCE_JOB_REDUCES, 2));
     boolean index = params.getBoolean(ARG_INDEX, false);
+    boolean update = params.getBoolean(ARG_UPDATE, false);
 
-    /** Solr */
+    /* Solr */
     String solrUrl = params.get(ARG_SOLR_URL, conf.get(PARAM_SOLR_SERVER_URL));
     String zkHostString = params.get(ARG_ZK, conf.get(PARAM_SOLR_ZK));
     String solrCollection = params.get(ARG_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
 
+    /* Schedule & Scoring */
+    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
+
+
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
-    /** Set re-computed config variables */
-    NutchConfiguration.setIfNotNull(conf, PARAM_CRAWL_ID, crawlId);
+    /* Set re-computed config variables */
+    ConfigUtils.setIfNotEmpty(conf, PARAM_CRAWL_ID, crawlId);
     conf.setEnum(PARAM_FETCH_MODE, fetchMode);
-    NutchConfiguration.setIfNotNull(conf, PARAM_BATCH_ID, batchId);
+    ConfigUtils.setIfNotEmpty(conf, PARAM_BATCH_ID, batchId);
 
     conf.setInt(PARAM_THREADS, threads);
     conf.setBoolean(PARAM_RESUME, resume);
@@ -126,9 +141,10 @@ public class FetchJob extends NutchJob implements Tool {
     conf.setInt(PARAM_MAPREDUCE_JOB_REDUCES, numTasks);
 
     conf.setBoolean(PARAM_INDEX_JUST_IN_TIME, index);
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_SERVER_URL, solrUrl);
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_ZK, zkHostString);
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_COLLECTION, solrCollection);
+    conf.setBoolean(PARAM_DBUPDATE_JUST_IN_TIME, update);
+    ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_SERVER_URL, solrUrl);
+    ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_ZK, zkHostString);
+    ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_COLLECTION, solrCollection);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -140,10 +156,12 @@ public class FetchJob extends NutchJob implements Tool {
         "threads", threads,
         "resume", resume,
         "limit", limit,
+        "update", update,
         "index", index,
         "solrUrl", solrUrl,
         "zkHostString", zkHostString,
-        "solrCollection", solrCollection
+        "solrCollection", solrCollection,
+        "fetchScheduler", fetchScheduler
     ));
   }
 
@@ -164,7 +182,7 @@ public class FetchJob extends NutchJob implements Tool {
     // used to get schema name
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
-    LOG.debug("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
+    LOG.info("Loaded Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -176,12 +194,8 @@ public class FetchJob extends NutchJob implements Tool {
     currentJob.waitForCompletion(true);
   }
 
-  public int fetch(String crawlId, String fetchMode, String batchId, int threads, boolean resume, int limit) throws Exception {
-    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, 2, false, null, null, null);
-  }
-
   public int fetch(String crawlId, String fetchMode, String batchId, int threads, boolean resume, int limit, int numTasks) throws Exception {
-    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks, false, null, null, null);
+    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks);
   }
 
   /**
@@ -200,7 +214,7 @@ public class FetchJob extends NutchJob implements Tool {
    * @throws Exception
    * */
   public int fetch(String crawlId, String fetchMode, String batchId, int threads, boolean resume, int limit, int numTasks,
-                   boolean index, String solrUrl, String zkHostString, String collection) throws Exception {
+                   boolean update, boolean index, String solrUrl, String zkHostString, String collection) throws Exception {
     run(Params.toArgMap(
         ARG_CRAWL, crawlId,
         ARG_FETCH_MODE, fetchMode,
@@ -210,6 +224,7 @@ public class FetchJob extends NutchJob implements Tool {
         ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
         ARG_LIMIT, limit > 0 ? limit : null,
         ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
+        ARG_UPDATE, update,
         ARG_INDEX, index,
         ARG_SOLR_URL, solrUrl,
         ARG_ZK, zkHostString,
@@ -270,6 +285,7 @@ public class FetchJob extends NutchJob implements Tool {
     int numTasks = -1;
     int threads = 10;
     boolean resume = false;
+    boolean update = false;
     boolean index = false;
     int limit = -1;
 
@@ -287,6 +303,8 @@ public class FetchJob extends NutchJob implements Tool {
         numTasks = Integer.parseInt(args[++i]);
       } else if ("-limit".equals(args[i])) {
         limit = Integer.parseInt(args[++i]);
+      } else if ("-update".equals(args[i])) {
+        update = true;
       } else if ("-index".equals(args[i])) {
         index = true;
       } else if ("-solrUrl".equals(args[i])) {
@@ -300,13 +318,13 @@ public class FetchJob extends NutchJob implements Tool {
       }
     }
 
-    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks, index, solrUrl, zkHostString, collection);
+    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks, update, index, solrUrl, zkHostString, collection);
   }
 
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     // NutchMaster should run on master instance
     NutchMaster.startAsDaemon(conf);
 

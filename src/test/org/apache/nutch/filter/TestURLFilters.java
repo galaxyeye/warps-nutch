@@ -20,7 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 public class TestURLFilters {
@@ -32,7 +32,7 @@ public class TestURLFilters {
    */
   @Test
   public void testNonExistingUrlFilter() throws URLFilterException {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     String class1 = "NonExistingFilter";
     String class2 = "org.apache.nutch.urlfilter.prefix.PrefixURLFilter";
     conf.set(URLFilters.URLFILTER_ORDER, class1 + " " + class2);

@@ -28,8 +28,8 @@ import org.apache.hadoop.io.Writable;
 /* An outgoing link from a page. */
 public class Outlink implements Writable {
 
-  private String toUrl;
-  private String anchor;
+  private String toUrl = "";
+  private String anchor = "";
 
   public Outlink() {
   }

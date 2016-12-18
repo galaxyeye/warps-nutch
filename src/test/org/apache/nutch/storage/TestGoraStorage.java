@@ -21,9 +21,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
+import org.apache.nutch.util.TableUtil;
 import org.hsqldb.Server;
 import org.junit.After;
 import org.junit.Before;
@@ -40,7 +43,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -66,14 +71,16 @@ public class TestGoraStorage extends AbstractNutchTest {
    * @throws Exception
    */
   @Test
-  @Ignore("GORA-326 Removal of _g_dirty field from _ALL_FIELDS array and Field Enum in Persistent classes")
+  // @Ignore("GORA-326 Removal of _g_dirty field from _ALL_FIELDS array and Field Enum in Persistent classes")
   public void testSinglethreaded() throws Exception {
     String id = "singlethread";
-    readWrite(id, webPageStore);
+    readWriteGoraWebPage(id, webPageStore);
+    readWriteWebPage(id, webPageStore);
   }
 
-  private static void readWrite(String id, DataStore<String, GoraWebPage> store) throws Exception {
+  private static void readWriteGoraWebPage(String id, DataStore<String, GoraWebPage> store) throws Exception {
     GoraWebPage page = GoraWebPage.newBuilder().build();
+
     int max = 1000;
     for (int i = 0; i < max; i++) {
       // store a page with title
@@ -87,6 +94,51 @@ public class TestGoraStorage extends AbstractNutchTest {
       page = store.get(key);
       assertNotNull(page);
       assertEquals(title, page.getTitle().toString());
+    }
+
+    // scan over the rows
+    Result<String, GoraWebPage> result = store.execute(store.newQuery());
+    int count = 0;
+    while (result.next()) {
+      try {
+        // only count keys in the store for the current id
+        if (result.getKey().contains(id))
+          count++;
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    // check amount
+    assertEquals(max, count);
+  }
+
+  private static void readWriteWebPage(String id, DataStore<String, GoraWebPage> store) throws Exception {
+    int max = 1000;
+    for (int i = 0; i < max; i++) {
+      String url = SHORTEST_VALID_URL + "/" + i;
+//      System.out.println(url);
+
+      WebPage page = WebPage.newWebPage();
+
+      page.setBaseUrl(url);
+      page.setText("text");
+      page.setDistance(0);
+      page.putHeader("header1", "header1");
+      page.putMark(Mark.FETCH, "mark1");
+      page.putMetadata(Metadata.Name.CASH_KEY, "metadata1");
+
+      store.put(url, page.get());
+      store.flush();
+
+      // retrieve page and check title
+      page = WebPage.wrap(store.get(url));
+      assertNotNull(page.get());
+      assertEquals(page.getText(), "text");
+      assertEquals(page.getDistance(), 0);
+      assertEquals(page.getHeader("header1", ""), "header1");
+      assertNotEquals(page.getMark(Mark.FETCH), "mark1");
+      assertEquals(page.getMark(Mark.FETCH), new Utf8("mark1"));
+      assertEquals(page.getMetadata(Metadata.Name.CASH_KEY, ""), "metadata1");
     }
 
     // scan over the rows
@@ -127,7 +179,7 @@ public class TestGoraStorage extends AbstractNutchTest {
         public Integer call() {
           try {
             // run a sequence
-            readWrite(Thread.currentThread().getName(), webPageStore);
+            readWriteGoraWebPage(Thread.currentThread().getName(), webPageStore);
             // everything ok, return 0
             return 0;
           } catch (Exception e) {
@@ -229,12 +281,11 @@ public class TestGoraStorage extends AbstractNutchTest {
     System.out.println("Starting!");
 
     Configuration localConf = CrawlTestUtil.createConfiguration();
-    localConf.set("storage.data.store.class",
-        "org.apache.gora.memory.store.MemStore");
+    localConf.set("storage.data.store.class", "org.apache.gora.memory.store.MemStore");
 
-    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(localConf,
-        String.class, GoraWebPage.class);
-    readWrite("single_id", store);
+    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(localConf, String.class, GoraWebPage.class);
+    readWriteGoraWebPage("single_id", store);
+    readWriteWebPage("single_id", store);
     System.out.println("Done.");
   }
 }

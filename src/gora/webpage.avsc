@@ -1,8 +1,8 @@
 { 
-  "name": "WebPage",
+  "name": "GoraWebPage",
   "type": "record",
-  "namespace": "org.apache.nutch.storage",
-  "doc": "WebPage is the primary data structure in Nutch representing crawl data for a given WebPage at some point in time",
+  "namespace": "org.apache.nutch.storage.gora",
+  "doc": "GoraWebPage is the primary data structure in Nutch representing crawl data for a given WebPage at some point in time",
   "fields": [
     {
       "name": "baseUrl",
@@ -62,7 +62,7 @@
         {
           "name": "ProtocolStatus",
           "type": "record",
-          "namespace": "org.apache.nutch.storage",
+          "namespace": "org.apache.nutch.storage.gora",
           "doc": "A nested container representing data captured from web server responses.",
           "fields": [
             {
@@ -154,7 +154,7 @@
         {
           "name": "ParseStatus",
           "type": "record",
-          "namespace": "org.apache.nutch.storage",
+          "namespace": "org.apache.nutch.storage.gora",
           "doc": "A nested container representing parse status data captured from invocation of parsers on fetch of a WebPage",
           "fields": [
             {

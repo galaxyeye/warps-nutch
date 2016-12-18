@@ -105,7 +105,7 @@ if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
     exit -1;
   fi
 
-  if [ $SEEDDIR != "false" ]; then
+  if [ -e $SEEDDIR ]; then
     HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
     hadoop fs -test -e $HDFS_SEED_DIR
     (( $?==0 )) && hadoop fs -mkdir -p $HDFS_SEED_DIR
@@ -174,9 +174,18 @@ fi
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))
 do
-  if ( __is_crawl_loop_stopped ); then
-     echo "STOP file found - escaping loop"
-     exit 0
+#  if ( __is_crawl_loop_stopped ); then
+#     echo "STOP file found - escaping loop"
+#     exit 0
+#  fi
+
+  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
+   if [ -e ".STOP" ]; then
+     mv .STOP ".STOP_EXECUTED_`date +%Y%m%d.%H%M%S`"
+   fi
+
+   echo "STOP file found - escaping loop"
+   exit 0
   fi
 
   if ( ! __check_index_server_available ); then
@@ -207,7 +216,7 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -update -index -collection $SOLR_COLLECTION
 
 done
 

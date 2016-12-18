@@ -39,13 +39,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class CrawlTestUtil {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(CrawlTestUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CrawlTestUtil.class);
 
   /**
    * For now we need to manually construct our Configuration, because we need to
@@ -87,9 +85,7 @@ public class CrawlTestUtil {
     Path file = new Path(urlPath, "urls.txt");
     fs.mkdirs(urlPath);
     out = fs.create(file);
-    Iterator<String> iterator = contents.iterator();
-    while (iterator.hasNext()) {
-      String url = iterator.next();
+    for (String url : contents) {
       out.writeBytes(url);
       out.writeBytes("\n");
     }
@@ -119,14 +115,15 @@ public class CrawlTestUtil {
         WebPage page = WebPage.wrap(results.get());
         String url = results.getKey();
 
-        if (page.get() == null) {
+        if (page.isEmpty()) {
           continue;
         }
 
-        if (requiredMark != null && requiredMark.checkMark(page) == null)
+        if (page.hasMark(requiredMark)) {
           continue;
+        }
 
-        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WebPage.wrap(GoraWebPage.newBuilder(page.get()).build())));
+        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WebPage.newWebPage(page.get())));
       } catch (Exception e) {
         e.printStackTrace();
       }

@@ -20,14 +20,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 public class TestSignatureFactory {
 
   @Test
   public void testGetSignature() {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     Signature signature1 = SignatureFactory.getSignature(conf);
     Signature signature2 = SignatureFactory.getSignature(conf);
     assertNotNull(signature1);

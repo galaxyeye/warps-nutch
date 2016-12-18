@@ -2,7 +2,7 @@ package org.apache.nutch.parse;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.CrawlFilters;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class TestCrawlFilter {
   @Before
   public void setUp() throws IOException {
     String crawlFilterRules = new String(Files.readAllBytes(Paths.get("/tmp/crawl_filters.json")));
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.set(CrawlFilters.CRAWL_FILTER_RULES, crawlFilterRules);
 
     crawlFilters = CrawlFilters.create(conf);

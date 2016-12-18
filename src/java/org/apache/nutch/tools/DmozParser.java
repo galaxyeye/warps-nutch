@@ -42,7 +42,7 @@ import org.apache.hadoop.io.MD5Hash;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.xerces.util.XMLChar;
 import org.slf4j.Logger;
@@ -394,7 +394,7 @@ public class DmozParser {
     Pattern topicPattern = null;
     Vector<String> topics = new Vector<>();
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     store = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     FileSystem fs = FileSystem.get(conf);
     try {

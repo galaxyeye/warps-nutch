@@ -22,16 +22,16 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
+import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.gora.ParseStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.EncodingDetector;
-import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
@@ -106,7 +106,7 @@ public class HtmlParser implements Parser {
   public Parse getParse(String url, WebPage page) {
     URL baseURL;
     try {
-      baseURL = new URL(TableUtil.toString(page.getBaseUrl()));
+      baseURL = new URL(page.getBaseUrl());
     } catch (MalformedURLException e) {
       return ParseStatusUtils.getEmptyParse(e, getConf());
     }
@@ -133,7 +133,7 @@ public class HtmlParser implements Parser {
       extract(page, input2);
     }
 
-    String pageTitle = page.getTitle() != null ? page.getTitle().toString() : "";
+    String pageTitle = page.getTemporaryVariableAsString(DOC_FIELD_PAGE_TITLE, "");
     String textContent = page.getTemporaryVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
 
     tryGetValidOutlinks(page, url, baseURL);
@@ -150,7 +150,7 @@ public class HtmlParser implements Parser {
       page.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
-    CrawlFilter.PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
+    PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
     page.setPageCategory(pageCategory);
     if (pageCategory.isDetail()) {
       page.setPageCategoryLikelihood(0.9f);
@@ -247,7 +247,7 @@ public class HtmlParser implements Parser {
 
     try {
       TextDocument doc = new SAXInput(input).getTextDocument();
-      doc.setBaseUrl(page.getBaseUrl().toString());
+      doc.setBaseUrl(page.getBaseUrl());
 
       ChineseNewsExtractor extractor = new ChineseNewsExtractor();
       extractor.setRegexFieldRules(regexExtractor.getRegexFieldRules());
@@ -358,7 +358,7 @@ public class HtmlParser implements Parser {
     DataInputStream in = new DataInputStream(new FileInputStream(file));
     in.readFully(bytes);
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
 
     String rules = new String(Files.readAllBytes(Paths.get(args[1])));
     conf.set(CrawlFilters.CRAWL_FILTER_RULES, rules);
@@ -366,9 +366,9 @@ public class HtmlParser implements Parser {
     HtmlParser parser = new HtmlParser();
     parser.setConf(conf);
     WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(new Utf8(url));
-    page.setContent(ByteBuffer.wrap(bytes));
-    page.setContentType(new Utf8("text/html"));
+    page.setBaseUrl(url);
+    page.setContent(bytes);
+    page.setContentType("text/html");
     Parse parse = parser.getParse(url, page);
 
     System.out.println("title: " + parse.getTitle());

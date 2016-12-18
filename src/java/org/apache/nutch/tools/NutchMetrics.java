@@ -1,9 +1,9 @@
 package org.apache.nutch.tools;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.mapreduce.NutchReporter;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class NutchMetrics implements AutoCloseable {
     this.conf = conf;
 
     try {
-      reportDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
+      reportDir = ConfigUtils.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
       reportDir = Paths.get(reportDir.toAbsolutePath().toString(), DateTimeUtil.format(System.currentTimeMillis(), "yyyyMMdd"));
       Files.createDirectories(reportDir);
 
@@ -125,7 +125,7 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report + "\n", "depth-updated-" + reportSuffix + ".txt");
   }
 
-  public void debugUrls(String report, CrawlFilter.PageCategory pageCategory, String reportSuffix) {
+  public void debugUrls(String report, PageCategory pageCategory, String reportSuffix) {
     writeReport(report + "\n", "urls-" + pageCategory.name().toLowerCase() + "-" + reportSuffix + ".txt");
   }
 

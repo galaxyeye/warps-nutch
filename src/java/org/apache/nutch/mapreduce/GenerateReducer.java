@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.ByteBuffer;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -51,11 +52,6 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     rowsInjected, rowsIsSeed, rowsIsFromSeed,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN
   }
-
-  /**
-   * Injector
-   */
-  private SeedBuilder seedBuiler;
 
   private long limit;
   private long maxCountPerHost;
@@ -81,7 +77,6 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     maxCountPerHost = conf.getLong(PARAM_GENERATOR_MAX_TASKS_PER_HOST, 10000);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     nutchMetrics = NutchMetrics.getInstance(conf);
-    this.seedBuiler = new SeedBuilder(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -142,18 +137,15 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
   }
 
   private WebPage updatePage(String url, WebPage page) {
-    if (page.isSeed()) {
-      // TODO : check why some fields (eg, metadata) are not passed properly from mapper phrase
-      page = seedBuiler.buildWebPage(url);
-    }
-
     page.setBatchId(batchId);
     // Generate time, we will use this mark to decide if we re-generate this page
     page.setGenerateTime(startTime);
     page.setFetchPriority(page.calculateFetchPriority());
 
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+//    page.get().getMetadata().put("test", ByteBuffer.wrap("test".getBytes()));
+
+    page.removeMark(Mark.INJECT);
+    page.putMark(Mark.GENERATE, batchId);
 
     return page;
   }

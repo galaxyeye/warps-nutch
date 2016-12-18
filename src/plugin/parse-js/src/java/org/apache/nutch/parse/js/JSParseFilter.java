@@ -17,14 +17,12 @@
 package org.apache.nutch.parse.js;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.storage.gora.ParseStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.oro.text.regex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,8 +70,7 @@ public class JSParseFilter implements ParseFilter, Parser {
    */
   @Override
   public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
-
-    ArrayList<Outlink> outlinks = new ArrayList<Outlink>();
+    ArrayList<Outlink> outlinks = new ArrayList<>();
     walk(doc, parse, metaTags, url, outlinks);
     if (outlinks.size() > 0) {
       Outlink[] old = parse.getOutlinks();
@@ -161,16 +158,16 @@ public class JSParseFilter implements ParseFilter, Parser {
    */
   @Override
   public Parse getParse(String url, WebPage page) {
-    String type = TableUtil.toString(page.getContentType());
-    if (type != null && !type.trim().equals("")
-        && !type.toLowerCase().startsWith("application/x-javascript"))
-      return ParseStatusUtils.getEmptyParse(
-          ParseStatusCodes.FAILED_INVALID_FORMAT, "Content not JavaScript: '"
-              + type + "'", getConf());
-    String script = Bytes.toString(page.getContent().array());
+    String type = page.getContentType();
+    if (!type.startsWith("application/x-javascript"))
+      return ParseStatusUtils.getEmptyParse(ParseStatusCodes.FAILED_INVALID_FORMAT,
+          "Content not JavaScript: '" + type + "'", getConf());
+    String script = page.getContentAsString();
+
     Outlink[] outlinks = getJSLinks(script, "", url);
-    if (outlinks == null)
+    if (outlinks == null) {
       outlinks = new Outlink[0];
+    }
     // Title? use the first line of the script...
     String title;
     int idx = script.indexOf('\n');
@@ -182,9 +179,8 @@ public class JSParseFilter implements ParseFilter, Parser {
       idx = Math.min(MAX_TITLE_LEN, script.length());
       title = script.substring(0, idx);
     }
-    Parse parse = new Parse(script, title, outlinks,
-        ParseStatusUtils.STATUS_SUCCESS);
-    return parse;
+
+    return new Parse(script, title, outlinks, ParseStatusUtils.STATUS_SUCCESS);
   }
 
   private static final String STRING_PATTERN = "(\\\\*(?:\"|\'))([^\\s\"\']+?)(?:\\1)";
@@ -270,9 +266,10 @@ public class JSParseFilter implements ParseFilter, Parser {
     final Outlink[] retval;
 
     // create array of the Outlinks
-    if (outlinks != null && outlinks.size() > 0) {
+    if (!outlinks.isEmpty()) {
       retval = outlinks.toArray(new Outlink[0]);
-    } else {
+    }
+    else {
       retval = new Outlink[0];
     }
 
@@ -292,18 +289,20 @@ public class JSParseFilter implements ParseFilter, Parser {
       System.err.println(JSParseFilter.class.getName() + " file.js baseURL");
       return;
     }
+
     InputStream in = new FileInputStream(args[0]);
     BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-    StringBuffer sb = new StringBuffer();
-    String line = null;
-    while ((line = br.readLine()) != null)
-      sb.append(line + "\n");
+    StringBuilder sb = new StringBuilder();
+    String line;
+    while ((line = br.readLine()) != null) {
+      sb.append(line).append("\n");
+    }
+
     JSParseFilter parseFilter = new JSParseFilter();
-    parseFilter.setConf(NutchConfiguration.create());
+    parseFilter.setConf(ConfigUtils.create());
     Outlink[] links = parseFilter.getJSLinks(sb.toString(), "", args[1]);
     System.out.println("Outlinks extracted: " + links.length);
-    for (int i = 0; i < links.length; i++)
-      System.out.println(" - " + links[i]);
+    Arrays.stream(links).map(l -> " - " + l).forEach(System.out::println);
   }
 
   /**

@@ -302,14 +302,9 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
       doc.addIfAbsent("id", key);
 
-      // TODO : we may not need digest
-      if (page.getSignature() != null) {
-        doc.add("digest", StringUtil.toHexString(page.getSignature()));
-      }
+      doc.add("digest", page.getSignatureAsString());
 
-      if (page.getBatchId() != null) {
-        doc.add("batchId", page.getBatchId().toString());
-      }
+      doc.add("batchId", page.getBatchId());
 
       float boost = 1.0f;
       // run scoring indexingFilters

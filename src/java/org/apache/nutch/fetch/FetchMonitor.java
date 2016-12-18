@@ -87,10 +87,10 @@ public class FetchMonitor {
     fetchMode = conf.getEnum(PARAM_FETCH_MODE, FetchMode.NATIVE);
     fetchThreadCount = conf.getInt("fetcher.threads.fetch", 5);
 
-    fetchJobTimeout = NutchConfiguration.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
-    fetchTaskTimeout = NutchConfiguration.getDuration(conf, "fetcher.task.timeout", Duration.ofMinutes(10));
-    queueRetuneInterval = NutchConfiguration.getDuration(conf, "fetcher.pending.queue.check.time", Duration.ofMinutes(8));
-    queuePendingTimeout = NutchConfiguration.getDuration(conf, "fetcher.pending.timeout", queueRetuneInterval.multipliedBy(2));
+    fetchJobTimeout = ConfigUtils.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
+    fetchTaskTimeout = ConfigUtils.getDuration(conf, "fetcher.task.timeout", Duration.ofMinutes(10));
+    queueRetuneInterval = ConfigUtils.getDuration(conf, "fetcher.pending.queue.check.time", Duration.ofMinutes(8));
+    queuePendingTimeout = ConfigUtils.getDuration(conf, "fetcher.pending.timeout", queueRetuneInterval.multipliedBy(2));
     queueRetuneTime = startTime;
 
     /*
@@ -109,10 +109,10 @@ public class FetchMonitor {
     fetchMonitor = taskScheduler.getTasksMonitor();
 
     // report
-    reportInterval = NutchConfiguration.getDuration(conf, "fetcher.report.interval", Duration.ofSeconds(20));
+    reportInterval = ConfigUtils.getDuration(conf, "fetcher.report.interval", Duration.ofSeconds(20));
 
     // scripts
-    Path nutchTmpDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_TMP_DIR, Paths.get(PATH_NUTCH_TMP_DIR));
+    Path nutchTmpDir = ConfigUtils.getPath(conf, PARAM_NUTCH_TMP_DIR, Paths.get(PATH_NUTCH_TMP_DIR));
     commandFile = PATH_LOCAL_COMMAND;
     finishScript = nutchTmpDir + "/scripts/finish_" + jobName + ".sh";
 

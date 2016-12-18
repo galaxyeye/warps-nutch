@@ -8,6 +8,7 @@ if [ $# -le 1 ]; then
   exit 1
 fi
 
+CLUSTER_CONFIG_DIR=conf/configsets/information/cluster
 ADD_CONFIG_DIR=
 ANT_TARGET=runtime
 VERSION=
@@ -88,7 +89,8 @@ echo "Working direcotry : `pwd`"
 echo "Nutch version : `cat $NUTCH_SRC_HOME/VERSION`"
 echo "Log file : $BUILD_LOGOUT_PATH"
 
-[[ -d $ADD_CONFIG_DIR ]] && cp -r $NUTCH_SRC_HOME/$ADD_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/
+cp -r $NUTCH_SRC_HOME/$CLUSTER_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/configsets/default/
+[[ -d $ADD_CONFIG_DIR ]] && cp -r $NUTCH_SRC_HOME/$ADD_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/configsets/default/
 
 # TODO : deploy to test environment
 $ANT -Dversion=$VERSION $ANT_TARGET -logfile $BUILD_LOGOUT_PATH -buildfile $BUILD_FILE

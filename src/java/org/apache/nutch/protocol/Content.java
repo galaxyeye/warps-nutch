@@ -27,8 +27,8 @@ import org.apache.hadoop.io.VersionMismatchException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 
 import java.io.*;
 import java.util.Arrays;
@@ -277,7 +277,7 @@ public final class Content implements Writable {
     }
 
     GenericOptionsParser optParser = new GenericOptionsParser(
-        NutchConfiguration.create(), args);
+        ConfigUtils.create(), args);
     String[] argv = optParser.getRemainingArgs();
     Configuration conf = optParser.getConfiguration();
 

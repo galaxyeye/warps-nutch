@@ -28,7 +28,6 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
@@ -54,6 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.joining;
 import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.storage.Mark.*;
 
 public class TaskScheduler extends Configured {
 
@@ -81,7 +81,7 @@ public class TaskScheduler extends Configured {
     rowsRedirect,
     seeds,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
-    pagesPeresist, existOutPages, nepages, newDetailPages
+    pagesPeresist, existOutPages, newPages, newDetailPages
   }
 
   private static final AtomicInteger objectSequence = new AtomicInteger(0);
@@ -212,7 +212,7 @@ public class TaskScheduler extends Configured {
     boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
-    boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, true);
+    boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, false);
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (ClassNotFoundException e) {
@@ -227,7 +227,7 @@ public class TaskScheduler extends Configured {
     this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
-    this.outputDir = NutchConfiguration.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
+    this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
 
     this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
@@ -337,8 +337,10 @@ public class TaskScheduler extends Configured {
     String url = page.getTemporaryVariableAsString("url");
     // set score?
 
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.putMark(page, new Utf8(batchId));
+//    INJECT.removeMarkIfExist(page);
+//    GENERATE.putMark(page, new Utf8(batchId));
+    page.removeMark(INJECT);
+    page.putMark(GENERATE, new Utf8(batchId));
     page.setBatchId(batchId);
 
     tasksMonitor.produce(context.getJobId(), url, page);
@@ -769,9 +771,10 @@ public class TaskScheduler extends Configured {
     if (reprUrl == null) {
       reprUrl = url;
     }
+
     reprUrl = URLUtil.chooseRepr(reprUrl, newUrl, temp);
     if (reprUrl != null) {
-      page.setReprUrl(new Utf8(reprUrl));
+      page.setReprUrl(reprUrl);
       reprUrls.put(threadId, reprUrl);
     } else {
       LOG.warn("reprUrl is null");
@@ -784,11 +787,11 @@ public class TaskScheduler extends Configured {
   private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
-    WebPage mainPage = new WebPage(fetchTask.getPage().get());
+    WebPage mainPage = fetchTask.getPage();
 
     FetchUtil.updateContent(mainPage, content);
     FetchUtil.updateStatus(mainPage, status, pstatus);
-    FetchUtil.updateFetchTime(mainPage, status);
+    FetchUtil.updateFetchTime(mainPage);
     FetchUtil.updateMarks(mainPage);
 
     debugFetchHistory(fetchTask, mainPage, status);
@@ -802,9 +805,9 @@ public class TaskScheduler extends Configured {
           parseUtil.process(url, mainPage);
         }
 
-        Utf8 parseMark = Mark.PARSE_MARK.checkMark(mainPage);
+        // Utf8 parseMark = Mark.PARSE.getMark(mainPage);
         // JIT Index
-        if (jitIndexer != null && parseMark != null) {
+        if (jitIndexer != null && mainPage.hasMark(PARSE)) {
           jitIndexer.produce(fetchTask);
         }
       }
@@ -813,14 +816,14 @@ public class TaskScheduler extends Configured {
     // Remove content if storingContent is false. Content is added to page above
     // for ParseUtil be able to parse it
     if (content != null && !storingContent) {
-      mainPage.setContent(ByteBuffer.wrap(new byte[0]));
+      mainPage.setContent(new byte[0]);
     }
 
     if (updateJIT()) {
       persistWithDbUpdate(url, reversedUrl, mainPage);
     }
     else {
-      context.write(reversedUrl, mainPage);
+      output(reversedUrl, mainPage);
       counter.increase(Counter.pagesPeresist);
     }
 
@@ -854,13 +857,7 @@ public class TaskScheduler extends Configured {
     reduceDatumBuilder.updateFetchSchedule(url, mainPage);
     reduceDatumBuilder.updateRow(url, mainPage);
 
-    try {
-      synchronized(context) {
-        context.write(reversedUrl, mainPage);
-      }
-    } catch (IOException|InterruptedException e) {
-      LOG.error("Failed to write to hdfs" + e.toString());
-    }
+    output(reversedUrl, mainPage);
   }
 
   private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
@@ -877,11 +874,11 @@ public class TaskScheduler extends Configured {
       oldPage = WebPage.wrap(datastore.get(reversedUrl));
     }
 
-    if (oldPage != null) {
-      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
+    if (oldPage.isEmpty()) {
+      createNewPage(url, reversedUrl, mainPage, newDepth);
     }
     else {
-      createNepage(url, reversedUrl, mainPage, newDepth);
+      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
     }
   }
 
@@ -891,6 +888,9 @@ public class TaskScheduler extends Configured {
    * */
   private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
     int oldDepth = oldPage.getDepth();
+//    if (oldDepth == MAX_DISTANCE) {
+//      LOG.warn("Unexpected max depth, url : " + url + ", key : " + reversedUrl);
+//    }
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
     if (changed) {
@@ -906,28 +906,34 @@ public class TaskScheduler extends Configured {
     counter.increase(Counter.existOutPages);
   }
 
-  private void createNepage(String url, String reversedUrl, WebPage mainPage, int depth) {
-    WebPage nepage = reduceDatumBuilder.createNewRow(url, depth);
+  private void createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
+    WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
     // Update distance/score
-    reduceDatumBuilder.updateNewRow(url, mainPage, nepage);
+    reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
 
     mainPage.increaseTotalOutLinkCount(1);
-    counter.increase(Counter.nepages);
-    if (CrawlFilter.sniffPageCategoryByUrlPattern(url).isDetail()) {
+    counter.increase(Counter.newPages);
+    if (CrawlFilter.sniffPageCategory(url).isDetail()) {
       counter.increase(Counter.newDetailPages);
     }
 
-    output(reversedUrl, nepage);
+//    if(newPage.getDepth() > 20) {
+//      LOG.warn("bad depth : " + url + ", " + reversedUrl);
+//    }
+
+    output(reversedUrl, newPage);
   }
 
   @SuppressWarnings("unchecked")
   private void output(String reversedUrl, WebPage page) {
     try {
       synchronized(context) {
-        context.write(reversedUrl, page);
+        context.write(reversedUrl, page.get());
       }
     } catch (IOException|InterruptedException e) {
-      LOG.error("Failed to write to hdfs" + e.toString());
+      LOG.error("Failed to write to hdfs" + StringUtil.stringifyException(e));
+    } catch (Throwable e) {
+      LOG.error(StringUtil.stringifyException(e));
     }
   }
 

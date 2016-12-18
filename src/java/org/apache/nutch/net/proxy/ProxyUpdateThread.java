@@ -2,7 +2,7 @@ package org.apache.nutch.net.proxy;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.NetUtil;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ public class ProxyUpdateThread extends Thread {
   }
 
   public static void main(String[] args) throws Exception {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
 
     ProxyUpdateThread updateThread = new ProxyUpdateThread(conf);
     updateThread.start();

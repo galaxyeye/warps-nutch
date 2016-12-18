@@ -24,7 +24,7 @@ import org.apache.nutch.service.ConfManager;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.service.model.request.NutchConfig;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 
 import java.text.MessageFormat;
@@ -44,7 +44,7 @@ public class ConfManagerImpl implements ConfManager {
   private AtomicInteger configSequence = new AtomicInteger();
 
   public ConfManagerImpl() {
-    configurations.put(ConfManager.DEFAULT, NutchConfiguration.create());
+    configurations.put(ConfManager.DEFAULT, ConfigUtils.create());
   }
 
   public Set<String> list() {
@@ -141,7 +141,7 @@ public class ConfManagerImpl implements ConfManager {
   }
 
   private void createHadoopConfig(NutchConfig nutchConfig) {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
 
     conf.set("nutch.config.id", nutchConfig.getConfigId());
 

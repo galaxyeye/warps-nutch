@@ -104,19 +104,19 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
       return;
     }
 
-    if (!Mark.GENERATE_MARK.hasMark(page)) {
+    if (!page.hasMark(Mark.GENERATE)) {
       getCounter().increase(Counter.notGenerated);
       return;
     }
 
-    /**
+    /*
      * Resume the batch, but ignore rows that are already fetched.
      * If FetchJob runs again but no resume flag set, the pages already fetched should be fetched again.
      *
-     * NOTE : Nutch removes marks only in DbUpdatejob, include INJECT_MARK, GENERATE_MARK, FETCH_MARK, PARSE_MARK,
+     * NOTE : Nutch removes marks only in DbUpdatejob, include INJECT, GENERATE, FETCH, PARSE,
      * so a page row can have multiple marks.
      * */
-    if (resume && Mark.FETCH_MARK.hasMark(page)) {
+    if (resume && page.hasMark(Mark.FETCH)) {
       getCounter().increase(Counter.alreadyFetched);
       return;
     }
@@ -157,7 +157,7 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page)) {
+    if (page.hasMark(Mark.INJECT)) {
       getCounter().increase(Counter.rowsInjected);
     }
 

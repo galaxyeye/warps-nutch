@@ -48,6 +48,12 @@
   </property>
 
   <property>
+    <name>fetcher.store.content</name>
+    <value>false</value>
+    <description>since every content is index into solr, we do not store the content</description>
+  </property>
+
+  <property>
     <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
     <value>true</value>
   </property>

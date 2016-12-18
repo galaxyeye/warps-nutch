@@ -18,12 +18,12 @@ package org.apache.nutch.storage;
 
 import org.apache.gora.store.DataStore;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 
 public class WebTableCreator {
   public static void main(String[] args) throws Exception {
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
-        NutchConfiguration.create(), String.class, GoraWebPage.class);
+        ConfigUtils.create(), String.class, GoraWebPage.class);
 
     System.out.println(store);
   }

@@ -23,8 +23,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.EncodingDetector;
-import org.apache.nutch.util.NutchConfiguration;
 import org.apache.tika.language.LanguageIdentifier;
 import org.junit.Test;
 
@@ -56,7 +56,7 @@ public class TestHTMLLanguageParser {
   public void testMetaHTMLParsing() {
 
     try {
-      ParseUtil parser = new ParseUtil(NutchConfiguration.create());
+      ParseUtil parser = new ParseUtil(ConfigUtils.create());
       /* loop through the test documents and validate result */
       for (int t = 0; t < docs.length; t++) {
         WebPage page = getPage(docs[t]);
@@ -149,10 +149,9 @@ public class TestHTMLLanguageParser {
   private WebPage getPage(String text) {
     WebPage page = WebPage.newWebPage();
     page.setBaseUrl(BASE);
-    page.setContent(ByteBuffer.wrap(text.getBytes()));
-    page.setContentType(new Utf8("text/html"));
-    page.getHeaders().put(EncodingDetector.CONTENT_TYPE_UTF8,
-        new Utf8("text/html"));
+    page.setContent(text);
+    page.setContentType("text/html");
+    page.getHeaders().put(EncodingDetector.CONTENT_TYPE_UTF8, new Utf8("text/html"));
     return page;
   }
 }

@@ -55,7 +55,7 @@ import java.util.*;
  */
 public class TextProfileSignature extends Signature {
 
-  private final static Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
+  private final static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
     FIELDS.add(GoraWebPage.Field.CONTENT);
@@ -65,17 +65,16 @@ public class TextProfileSignature extends Signature {
 
   @Override
   public byte[] calculate(WebPage page) {
-    int MIN_TOKEN_LEN = getConf().getInt(
-        "db.signature.text_profile.min_token_len", 2);
-    float QUANT_RATE = getConf().getFloat(
-        "db.signature.text_profile.quant_rate", 0.01f);
-    HashMap<String, Token> tokens = new HashMap<String, Token>();
-    String text = null;
-    if (page.getText() != null)
-      text = page.getText().toString();
-    if (text == null || text.length() == 0)
+    int MIN_TOKEN_LEN = getConf().getInt("db.signature.text_profile.min_token_len", 2);
+    float QUANT_RATE = getConf().getFloat("db.signature.text_profile.quant_rate", 0.01f);
+
+    HashMap<String, Token> tokens = new HashMap<>();
+    String text = page.getText();
+    if (text.isEmpty()) {
       return fallback.calculate(page);
-    StringBuffer curToken = new StringBuffer();
+    }
+
+    StringBuilder curToken = new StringBuilder();
     int maxFreq = 0;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -113,7 +112,7 @@ public class TextProfileSignature extends Signature {
         maxFreq = tok.cnt;
     }
     Iterator<Token> it = tokens.values().iterator();
-    ArrayList<Token> profile = new ArrayList<Token>();
+    ArrayList<Token> profile = new ArrayList<>();
     // calculate the QUANT value
     int QUANT = Math.round(maxFreq * QUANT_RATE);
     if (QUANT < 2) {
@@ -132,8 +131,9 @@ public class TextProfileSignature extends Signature {
       }
       profile.add(t);
     }
+
     Collections.sort(profile, new TokenComparator());
-    StringBuffer newText = new StringBuffer();
+    StringBuilder newText = new StringBuilder();
     it = profile.iterator();
     while (it.hasNext()) {
       Token t = it.next();

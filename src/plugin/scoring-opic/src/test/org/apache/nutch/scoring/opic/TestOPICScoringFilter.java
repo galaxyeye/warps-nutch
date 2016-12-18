@@ -19,7 +19,7 @@ package org.apache.nutch.scoring.opic;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,7 +120,7 @@ public class TestOPICScoringFilter {
   @Before
   public void setUp() throws Exception {
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     // LinkedHashMap dbWebPages is used instead of a persistent
     // data store for this test class
     Map<String, Map<WebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<>();

@@ -108,7 +108,7 @@ public class SimpleIndexer {
       System.exit(0);
     }
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.set("plugin.includes", "protocol-(http)|urlfilter-regex|parse-(html|tika)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic");
 
     String contentType = null;

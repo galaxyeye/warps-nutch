@@ -31,7 +31,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 // Hadoop imports
 import org.apache.hadoop.conf.Configuration;
 // Nutch imports
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 // Commons Logging imports
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,7 +203,7 @@ public class ParsePluginsReader {
       reader.setFParsePluginsFile(parsePluginFile);
     }
 
-    ParsePluginList prefs = reader.parse(NutchConfiguration.create());
+    ParsePluginList prefs = reader.parse(ConfigUtils.create());
 
     for (String mimeType : prefs.getSupportedMimeTypes()) {
 

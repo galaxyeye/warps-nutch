@@ -35,7 +35,7 @@ import org.apache.nutch.storage.local.model.ServerInstance;
 import org.apache.nutch.storage.local.service.BrowserInstanceService;
 import org.apache.nutch.storage.local.service.ServerInstanceService;
 import org.apache.nutch.util.NetUtil;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.restlet.Component;
 import org.restlet.Context;
 import org.restlet.data.Protocol;
@@ -354,6 +354,6 @@ public class NutchMaster extends Application {
       return;
     }
 
-    startServer(NutchConfiguration.create());
+    startServer(ConfigUtils.create());
   }
 }

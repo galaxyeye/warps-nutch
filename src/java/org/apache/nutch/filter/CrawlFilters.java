@@ -23,9 +23,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.filter.CrawlFilter.PageCategory;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,7 +226,7 @@ public class CrawlFilters extends Configured {
       return false;
     }
 
-    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
     if (pageType == PageCategory.DETAIL) {
       return true;
@@ -243,13 +242,13 @@ public class CrawlFilters extends Configured {
   }
 
   public PageCategory sniffPageCategory(String url) {
-    return CrawlFilter.sniffPageCategoryByUrlPattern(url);
+    return CrawlFilter.sniffPageCategory(url);
   }
 
   public boolean veryLikelyBeIndexUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
     if (pageType.isIndex()) {
       return true;
@@ -267,7 +266,7 @@ public class CrawlFilters extends Configured {
   public boolean veryLikelyBeMediaUrl(String url) {
     if (url == null) return false;
 
-    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
     if (pageType == PageCategory.MEDIA) {
       return true;
@@ -290,7 +289,7 @@ public class CrawlFilters extends Configured {
       return false;
     }
 
-    PageCategory pageType = CrawlFilter.sniffPageCategoryByUrlPattern(url);
+    PageCategory pageType = CrawlFilter.sniffPageCategory(url);
 
     if (pageType == PageCategory.SEARCH) {
       return true;
@@ -324,7 +323,7 @@ public class CrawlFilters extends Configured {
   }
 
   public static void main(String[] args) throws Exception {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     byte[] json = Files.readAllBytes(Paths.get("/tmp/crawl_filters.json"));
     conf.set(CRAWL_FILTER_RULES, new String(json));
 

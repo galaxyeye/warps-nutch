@@ -101,7 +101,8 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return false;
     }
 
-    Utf8 mark = Mark.UPDATEDB_MARK.checkMark(WebPage.wrap(result.get()));
+    WebPage page = WebPage.wrap(result.get());
+    Utf8 mark = page.getMark(Mark.UPDATEDB);
     return batchId == null || shouldProcess(mark, batchId);
   }
 
@@ -109,7 +110,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     return hasNext;
   }
 
-  public boolean shouldProcess(CharSequence mark, Utf8 batchId) {
+  public boolean shouldProcess(Utf8 mark, Utf8 batchId) {
     if (mark == null) {
       return false;
     }

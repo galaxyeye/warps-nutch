@@ -59,6 +59,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Parser checker, useful for testing parser. It also accurately reports
@@ -130,14 +131,9 @@ public class SimpleParser extends Configured {
   }
 
   public void parse(WebPage page) {
-    try {
-      ParseUtil parseUtil = new ParseUtil(getConf());
-      if (page != null && page.getBaseUrl() != null) {
-        String reverseUrl = TableUtil.reverseUrl(page.getBaseUrl().toString());
-        parse = parseUtil.process(url, page);
-      }
-    } catch (MalformedURLException e) {
-      LOG.error(e.getMessage());
+    ParseUtil parseUtil = new ParseUtil(getConf());
+    if (page != null && !page.getBaseUrl().isEmpty()) {
+      parse = parseUtil.process(url, page);
     }
   }
 
@@ -216,7 +212,7 @@ public class SimpleParser extends Configured {
 
     FetchUtil.updateStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
     FetchUtil.updateContent(page, content);
-    FetchUtil.updateFetchTime(page, CrawlStatus.STATUS_FETCHED);
+    FetchUtil.updateFetchTime(page);
     FetchUtil.updateMarks(page);
 
     if (content == null) {
@@ -231,7 +227,7 @@ public class SimpleParser extends Configured {
 
   private void saveWebPage(WebPage page) {
     try {
-      Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl().toString()));
+      Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl()));
 
       if (!Files.exists(path)) {
         FileUtils.forceMkdir(path.getParent().toFile());
@@ -275,11 +271,10 @@ public class SimpleParser extends Configured {
       results.put("Metadata", sb);
     }
 
-    Set<String> filteredOutlinks = Sets.newTreeSet();
-    for (CharSequence link : page.getOutlinks().keySet()) {
-      filteredOutlinks.add(link.toString());
-    }
-    results.put("Outlinks", StringUtils.join(filteredOutlinks, '\n'));
+    // Set<String> filteredOutlinks = page.getOutlinks().keySet().stream().map(CharSequence::toString).collect(Collectors.toSet());
+    String filteredOutlinks = page.getOutlinks().keySet().stream()
+        .map(CharSequence::toString).sorted().distinct().collect(Collectors.joining(", "));
+    results.put("Outlinks", filteredOutlinks);
 
     // DiscardedOutlinks
     Set<String> discardedOutlinks = Sets.newTreeSet();
@@ -332,7 +327,7 @@ public class SimpleParser extends Configured {
       }
     }
 
-    SimpleParser parser = new SimpleParser(NutchConfiguration.create());
+    SimpleParser parser = new SimpleParser(ConfigUtils.create());
     // parser.parse(url, contentType);
     parser.extract(url, contentType);
 

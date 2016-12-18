@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * Utility to create Hadoop {@link Configuration}s that include Nutch-specific
  * resources.
  */
-public class NutchConfiguration {
+public class ConfigUtils {
 
   public static final String UUID_KEY = "nutch.conf.uuid";
 

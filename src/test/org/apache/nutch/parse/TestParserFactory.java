@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import org.apache.hadoop.conf.Configuration;
 // Nutch imports
 import org.apache.nutch.plugin.Extension;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,7 +40,7 @@ public class TestParserFactory {
   /** Inits the Test Case with the test parse-plugin file */
   @Before
   public void setUp() throws Exception {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.set("plugin.includes", ".*");
     conf.set("parse.plugin.file",
         "org/apache/nutch/parse/parse-plugin-test.xml");

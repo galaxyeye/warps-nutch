@@ -23,7 +23,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 

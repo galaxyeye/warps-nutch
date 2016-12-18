@@ -23,13 +23,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.Parser;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertEquals;
@@ -87,16 +86,16 @@ public class TestHtmlParser {
 
   @Before
   public void setup() {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     parser = new HtmlParser();
     parser.setConf(conf);
   }
 
   protected WebPage page(byte[] contentBytes) {
     WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(new Utf8(dummyUrl));
-    page.setContent(ByteBuffer.wrap(contentBytes));
-    page.setContentType(new Utf8("text/html"));
+    page.setBaseUrl(dummyUrl);
+    page.setContent(contentBytes);
+    page.setContentType("text/html");
     return page;
   }
 

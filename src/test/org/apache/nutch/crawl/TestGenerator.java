@@ -89,7 +89,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(NUM_RESULTS, conf, false);
 
-    ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // sort urls by score desc
     Collections.sort(l, new ScoreComparator());
@@ -151,7 +151,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -160,7 +160,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as 2 + 1 skipped (already generated)
@@ -169,7 +169,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as now all have generate mark
@@ -204,7 +204,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -213,7 +213,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 2 + 1 skipped (already generated)
@@ -222,7 +222,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(6, fetchList.size()); // 3 + 3 skipped (already generated)
@@ -253,13 +253,13 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, true);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     assertEquals(0, fetchList.size());
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK, FIELDS);
+    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
 
     // verify nothing got filtered
     assertEquals(list.size(), fetchList.size());

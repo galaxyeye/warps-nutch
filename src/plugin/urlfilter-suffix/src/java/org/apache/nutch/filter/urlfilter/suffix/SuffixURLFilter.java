@@ -20,7 +20,7 @@ package org.apache.nutch.filter.urlfilter.suffix;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLFilter;
 
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.SuffixStringMatcher;
 
 import org.apache.nutch.plugin.Extension;
@@ -238,7 +238,7 @@ public class SuffixURLFilter implements URLFilter {
       filter = new SuffixURLFilter(new FileReader(args[0]));
     else {
       filter = new SuffixURLFilter();
-      filter.setConf(NutchConfiguration.create());
+      filter.setConf(ConfigUtils.create());
     }
 
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));

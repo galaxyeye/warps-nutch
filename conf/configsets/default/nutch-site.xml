@@ -39,8 +39,18 @@
   </property>
 
   <property>
+    <name>db.fetch.schedule.class</name>
+    <value>org.apache.nutch.crawl.schedulers.NewsFetchSchedule</value>
+    <description>The implementation of fetch schedule. NewsFetchSchedule has the following rules :
+      1. Seed pages are fetched very frequently if it changes
+      2. Detail pages are fetched just once
+      3. Other pages are fetched using AdaptiveFetchSchedule, but with lower priority
+    </description>
+  </property>
+
+  <property>
     <name>fetcher.store.content</name>
-    <value>true</value>
+    <value>false</value>
     <description>since every content is index into solr, we do not store the content</description>
   </property>
 

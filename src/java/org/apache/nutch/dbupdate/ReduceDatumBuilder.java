@@ -1,6 +1,7 @@
 package org.apache.nutch.dbupdate;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
@@ -8,11 +9,12 @@ import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +23,13 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.storage.Mark.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -48,7 +53,7 @@ public class ReduceDatumBuilder {
 
     retryMax = conf.getInt("db.fetch.retry.max", 3);
     maxFetchInterval = Duration.ofSeconds(conf.getLong("db.fetch.interval.max", Duration.ofDays(90).getSeconds()));
-    // maxFetchInterval = NutchConfiguration.getDuration(conf, "db.fetch.interval.max", Duration.ofDays(90));
+    // maxFetchInterval = ConfigUtils.getDuration(conf, "db.fetch.interval.max", Duration.ofDays(90));
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
@@ -58,7 +63,7 @@ public class ReduceDatumBuilder {
         "maxFetchInterval", maxFetchInterval,
         "maxLinks", maxLinks,
         "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
-        "scoringFilters", Stream.of(scoringFilters.getScoringFilterNames())
+        "scoringFilters", StringUtils.join(scoringFilters.getScoringFilterNames(), ",")
     );
   }
 
@@ -142,14 +147,12 @@ public class ReduceDatumBuilder {
     return page;
   }
 
-  public void updateNewRow(String url, WebPage sourcePage, WebPage nepage) {
-    nepage.setReferrer(sourcePage.getBaseUrl().toString());
+  public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
+    newPage.setReferrer(sourcePage.getBaseUrl());
 
-    updateScore(url, nepage);
+    updateScore(url, newPage);
 
-    updateMetadata(nepage);
-
-    updateStatusCounter(nepage);
+    updateStatusCounter(newPage);
   }
 
   /**
@@ -161,20 +164,20 @@ public class ReduceDatumBuilder {
     boolean detail = oldPage.veryLikeDetailPage();
 
     Instant publishTime = oldPage.getPublishTime();
-    if (detail && publishTime.isAfter(Instant.EPOCH)) {
-      mainPage.updateReferredPublishTime(publishTime);
+    if (detail && publishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
+      mainPage.updateRefPublishTime(publishTime);
       changed = true;
     }
 
     // Vote the main page if not voted
     if (detail && oldPage.voteIfAbsent(mainPage)) {
-      mainPage.increaseReferredArticles(1);
-      mainPage.increaseReferredChars(oldPage.sniffTextLength());
+      mainPage.increaseRefArticles(1);
+      mainPage.increaseRefChars(oldPage.sniffTextLength());
       changed = true;
     }
 
     if (depth < oldDepth) {
-      mainPage.setReferrer(mainPage.getBaseUrl().toString());
+      mainPage.setReferrer(mainPage.getBaseUrl());
       oldPage.setDistance(depth);
       changed = true;
     }
@@ -190,9 +193,7 @@ public class ReduceDatumBuilder {
    * write it to the page.
    * */
   private void calculateDistance(WebPage page) {
-    if (page.getInlinks() != null) {
-      page.getInlinks().clear();
-    }
+    page.getInlinks().clear();
 
     int smallestDist = MAX_DISTANCE;
     for (ScoreDatum inlink : inlinkedScoreData) {
@@ -201,7 +202,7 @@ public class ReduceDatumBuilder {
         smallestDist = inlinkDist;
       }
 
-      LOG.debug("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getUrl());
+      LOG.trace("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getUrl());
 
       page.getInlinks().put(new Utf8(inlink.getUrl()), new Utf8(inlink.getAnchor()));
     }
@@ -231,19 +232,26 @@ public class ReduceDatumBuilder {
   private void updateMetadata(WebPage page) {
     // Clear temporary metadata
     page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
-    page.clearMetadata(PARAM_GENERATE_TIME);
+    page.clearMetadata(Metadata.Name.GENERATE_TIME);
 
     // Clear markers
-    Mark.INJECT_MARK.removeMarkIfExist(page);
-    Mark.GENERATE_MARK.removeMarkIfExist(page);
-    Mark.FETCH_MARK.removeMarkIfExist(page);
+//    Mark.INJECT.removeMarkIfExist(page);
+//    Mark.GENERATE.removeMarkIfExist(page);
+//    Mark.FETCH.removeMarkIfExist(page);
+//
+//    Utf8 parseMark = Mark.PARSE.getMark(page);
+//    if (parseMark != null) {
+//      Mark.PARSE.removeMark(page);
+//      // What about INDEX?
+//      Mark.UPDATEDB.putMark(page, parseMark);
+//    }
 
-    Utf8 parseMark = Mark.PARSE_MARK.checkMark(page);
-    if (parseMark != null) {
-      Mark.PARSE_MARK.removeMark(page);
-      // What about INDEX_MARK?
-      Mark.UPDATEDB_MARK.putMark(page, parseMark);
-    }
+    page.putMarkIfNonNull(UPDATEDB, page.getMark(PARSE));
+
+    page.removeMark(INJECT);
+    page.removeMark(GENERATE);
+    page.removeMark(FETCH);
+    page.removeMark(PARSE);
   }
 
   public void updateFetchSchedule(String url, WebPage page) {

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+import static org.apache.nutch.storage.Mark.FETCH;
 
 public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScore, NutchWritable> {
 
@@ -64,7 +65,7 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScor
     WebPage page = new WebPage(row);
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!Mark.FETCH_MARK.hasMark(page)) {
+    if (!page.hasMark(FETCH)) {
       getCounter().increase(Counter.notFetched);
       return;
     }

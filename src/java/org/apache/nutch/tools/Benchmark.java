@@ -32,7 +32,7 @@ import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.mapreduce.WebTableReader;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.mapreduce.ParserJob;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class Benchmark extends Configured implements Tool {
   private static final Logger LOG = LoggerFactory.getLogger(Benchmark.class);
 
   public static void main(String[] args) throws Exception {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     int res = ToolRunner.run(conf, new Benchmark(), args);
     System.exit(res);
   }
@@ -251,7 +251,7 @@ public class Benchmark extends Configured implements Tool {
       boolean isParsing = getConf().getBoolean("fetcher.parse", false);
       start = System.currentTimeMillis();
 
-      fetcher.fetch("", FetchMode.NATIVE.name(), batchId, threads, false, -1); // fetch it
+      fetcher.fetch("", FetchMode.NATIVE.name(), batchId, threads, false, -1, 1); // fetch it
       delta = System.currentTimeMillis() - start;
       res.addTiming("fetch", i + "", delta);
       if (!isParsing) {

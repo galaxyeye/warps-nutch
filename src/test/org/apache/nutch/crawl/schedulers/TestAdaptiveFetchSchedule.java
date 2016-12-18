@@ -19,7 +19,7 @@ package org.apache.nutch.crawl.schedulers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,7 +43,7 @@ public class TestAdaptiveFetchSchedule {
 
   @Before
   public void setUp() throws Exception {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     inc_rate = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     dec_rate = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
     interval = Duration.ofSeconds(100);

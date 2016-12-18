@@ -85,7 +85,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
         return;
       }
 
-      // if where is FETCH_MARK set, we also have PARSE_MARK set after the parse
+      // if where is FETCH set, we also have PARSE set after the parse
 
       ParseStatus pstatus = page.getParseStatus();
 
@@ -122,7 +122,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
   }
 
   private boolean shouldProcess(String url, WebPage page) {
-    if (!reparse && !Mark.FETCH_MARK.hasMark(page)) {
+    if (!reparse && !page.hasMark(Mark.FETCH)) {
       getCounter().increase(Counter.notFetchedPages);
 
       if (LOG.isDebugEnabled()) {
@@ -132,7 +132,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
       return false;
     }
 
-    if (!reparse && resume && Mark.PARSE_MARK.hasMark(page)) {
+    if (!reparse && resume && page.hasMark(Mark.PARSE)) {
       getCounter().increase(Counter.alreadyParsedPages);
 
       if (!force) {

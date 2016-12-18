@@ -22,6 +22,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.storage.WebPage;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,24 +174,20 @@ public class EncodingDetector {
 
   private final int minConfidence;
 
-  private final CharsetDetector detector;
+  private final CharsetDetector detector = new CharsetDetector();
 
-  private final List<EncodingClue> clues;
+  private final List<EncodingClue> clues = new ArrayList<>();
 
   public EncodingDetector(Configuration conf) {
-    minConfidence = conf.getInt(MIN_CONFIDENCE_KEY, -1);
-    detector = new CharsetDetector();
-    clues = new ArrayList<>();
-
+    this.minConfidence = conf.getInt(MIN_CONFIDENCE_KEY, -1);
     this.defaultCharEncoding = conf.get("parser.character.encoding.default", "windows-1252");
   }
 
   public String sniffEncoding(WebPage page) {
     autoDetectClues(page, true);
     addClue(sniffCharacterEncoding(page.getContent().array()), "sniffed");
-    String encoding = guessEncoding(page, defaultCharEncoding);
 
-    return encoding;
+    return guessEncoding(page, defaultCharEncoding);
   }
 
   public void autoDetectClues(WebPage page, boolean filter) {
@@ -254,11 +252,10 @@ public class EncodingDetector {
     return encoding;
   }
 
-  private void autoDetectClues(ByteBuffer dataBuffer, CharSequence typeUtf8, String encoding, boolean filter) {
+  private void autoDetectClues(ByteBuffer dataBuffer, String contentType, String encoding, boolean filter) {
     int length = dataBuffer.remaining();
-    String type = TableUtil.toString(typeUtf8);
 
-    if (minConfidence >= 0 && DETECTABLES.contains(type) && length > MIN_LENGTH) {
+    if (minConfidence >= 0 && DETECTABLES.contains(contentType) && length > MIN_LENGTH) {
       CharsetMatch[] matches = null;
 
       // do all these in a try/catch; setText and detect/detectAll
@@ -310,9 +307,7 @@ public class EncodingDetector {
    * @return Guessed encoding or defaultValue
    */
   public String guessEncoding(WebPage page, String defaultValue) {
-    CharSequence baseUrlUtf8 = page.getBaseUrl();
-    String baseUrl = TableUtil.toString(baseUrlUtf8);
-    return guessEncoding(baseUrl, defaultValue);
+    return guessEncoding(page.getBaseUrl(), defaultValue);
   }
 
   /**
@@ -357,7 +352,7 @@ public class EncodingDetector {
         if (LOG.isTraceEnabled()) {
           LOG.trace(baseUrl + ": Choosing encoding: " + charset + " with confidence " + clue.confidence);
         }
-        return resolveEncodingAlias(charset).toLowerCase();
+        return resolveEncodingAlias(charset);
       } else if (clue.confidence == NO_THRESHOLD && bestClue == defaultClue) {
         bestClue = clue;
       }
@@ -382,8 +377,8 @@ public class EncodingDetector {
    * better heuristic.
    */
   private void findDisagreements(String url, List<EncodingClue> newClues) {
-    HashSet<String> valsSeen = new HashSet<String>();
-    HashSet<String> sourcesSeen = new HashSet<String>();
+    HashSet<String> valsSeen = new HashSet<>();
+    HashSet<String> sourcesSeen = new HashSet<>();
     boolean disagreement = false;
     for (int i = 0; i < newClues.size(); i++) {
       EncodingClue clue = newClues.get(i);
@@ -400,8 +395,8 @@ public class EncodingDetector {
     }
     if (disagreement) {
       // dump all values in case of disagreement
-      StringBuffer sb = new StringBuffer();
-      sb.append("Disagreement: " + url + "; ");
+      StringBuilder sb = new StringBuilder();
+      sb.append("Disagreement: ").append(url).append("; ");
       for (int i = 0; i < newClues.size(); i++) {
         if (i > 0) {
           sb.append(", ");
@@ -412,13 +407,16 @@ public class EncodingDetector {
     }
   }
 
+  @Nullable
   public static String resolveEncodingAlias(String encoding) {
     try {
-      if (encoding == null || !Charset.isSupported(encoding))
+      if (encoding == null || !Charset.isSupported(encoding)) {
         return null;
-      String canonicalName = new String(Charset.forName(encoding).name());
-      return ALIASES.containsKey(canonicalName) ? ALIASES.get(canonicalName)
-          : canonicalName;
+      }
+
+      String canonicalName = Charset.forName(encoding).name();
+      String encodingAlias = ALIASES.containsKey(canonicalName) ? ALIASES.get(canonicalName) : canonicalName;
+      return encodingAlias.toLowerCase();
     } catch (Exception e) {
       LOG.warn("Invalid encoding " + encoding + " detected, using default.");
       return null;
@@ -434,6 +432,7 @@ public class EncodingDetector {
    * 
    * @param contentTypeUtf8
    */
+  @Contract("null -> null")
   public static String parseCharacterEncoding(CharSequence contentTypeUtf8) {
     if (contentTypeUtf8 == null) {
       return null;
@@ -464,8 +463,8 @@ public class EncodingDetector {
    * != 1) { System.err.println("Usage: EncodingDetector <file>");
    * System.exit(1); }
    * 
-   * Configuration conf = NutchConfiguration.create(); EncodingDetector detector
-   * = new EncodingDetector(NutchConfiguration.create());
+   * Configuration conf = ConfigUtils.create(); EncodingDetector detector
+   * = new EncodingDetector(ConfigUtils.create());
    * 
    * // do everything as bytes; don't want any conversion BufferedInputStream
    * istr = new BufferedInputStream(new FileInputStream(args[0]));

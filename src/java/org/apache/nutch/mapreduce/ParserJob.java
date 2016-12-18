@@ -27,8 +27,8 @@ import org.apache.nutch.parse.ParseFilters;
 import org.apache.nutch.parse.ParserFactory;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.IdentityPageReducer;
-import org.apache.nutch.util.NutchConfiguration;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class ParserJob extends NutchJob implements Tool {
     setConf(conf);
   }
 
-  public Collection<GoraWebPage.Field> getFields(Job job) {
+  public static Collection<GoraWebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
     Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     ParserFactory parserFactory = new ParserFactory(conf);
@@ -217,7 +217,7 @@ public class ParserJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    final int res = ToolRunner.run(NutchConfiguration.create(), new ParserJob(), args);
+    final int res = ToolRunner.run(ConfigUtils.create(), new ParserJob(), args);
     System.exit(res);
   }
 }

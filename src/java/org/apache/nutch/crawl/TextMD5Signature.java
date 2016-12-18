@@ -39,6 +39,10 @@ public class TextMD5Signature extends Signature {
 
   Signature fallback = new MD5Signature();
 
+  /**
+   * We need calculate signature using a more clean text content, eg, extracted by text-scent
+   * */
+  @Deprecated
   @Override
   public byte[] calculate(WebPage page) {
     CharSequence text = page.getText();

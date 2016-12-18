@@ -20,7 +20,7 @@ package org.apache.nutch.parse.html;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.junit.Before;
 import org.junit.Test;
@@ -166,7 +166,7 @@ public class TestDOMContentUtils {
 
   @Before
   public void setup() {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.setBoolean("parser.html.form.use_action", true);
     utils = new DOMContentUtils(conf);
     DOMFragmentParser parser = new DOMFragmentParser();

@@ -16,7 +16,6 @@
  */
 package org.apache.nutch.parse.js;
 
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.Parse;
@@ -24,8 +23,8 @@ import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +32,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -61,7 +59,7 @@ public class TestJSParseFilter {
 
   @Before
   public void setUp() {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.set("file.content.limit", "-1");
   }
 
@@ -78,24 +76,26 @@ public class TestJSParseFilter {
     dip.close();
 
     WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(new Utf8(urlString));
-    page.setContent(ByteBuffer.wrap(bytes));
+    page.setBaseUrl(urlString);
+    page.setContent(bytes);
     MimeUtil mutil = new MimeUtil(conf);
     String mime = mutil.getMimeType(file);
-    page.setContentType(new Utf8(mime));
+    page.setContentType(mime);
 
     parse = new ParseUtil(conf).parse(urlString, page);
     return parse.getOutlinks();
   }
 
   @Test
-  public void testOutlinkExtraction() throws ProtocolException, ParseException,
-      IOException {
+  public void testOutlinkExtraction() throws ProtocolException, ParseException, IOException {
     String[] filenames = new File(sampleDir).list();
+    if (filenames == null) {
+      return;
+    }
+
     for (int i = 0; i < filenames.length; i++) {
-      if (filenames[i].endsWith(".js") == true) {
-        assertEquals("number of outlinks in .js test file should be 5", 5,
-            getOutlinks(sampleFiles));
+      if (filenames[i].endsWith(".js")) {
+        assertEquals("number of outlinks in .js test file should be 5", 5, getOutlinks(sampleFiles));
         // temporarily disabled as a suitable pure JS file could not be be
         // found.
         // } else {

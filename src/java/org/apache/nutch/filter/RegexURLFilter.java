@@ -24,7 +24,7 @@ import java.io.StringReader;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 
 /**
  * Filters URLs based on a file of regular expressions using the
@@ -103,7 +103,7 @@ public class RegexURLFilter extends RegexURLFilterBase {
    */
   public static void main(String args[]) throws IOException {
     RegexURLFilter filter = new RegexURLFilter();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.set(URLFILTER_REGEX_RULES, "+^http://sh.lianjia.com/ershoufang/pg(.*)$\n+^http://sh.lianjia.com/ershoufang/SH(.+)/{0,1}$\n-.+\n ");
 //    conf.set(URLFILTER_REGEX_RULES, "+.+");
     filter.setConf(conf);

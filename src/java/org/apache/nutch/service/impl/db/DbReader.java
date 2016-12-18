@@ -26,7 +26,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +89,7 @@ public class DbReader {
       urlFilter = "+.";
     }
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.set("urlfilter.regex.rules", urlFilter);
 
     Result<String, GoraWebPage> result = store.execute(query);

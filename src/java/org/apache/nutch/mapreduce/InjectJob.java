@@ -34,7 +34,7 @@ import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
@@ -218,7 +218,7 @@ public class InjectJob extends NutchJob implements Tool {
 
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
-    int res = ToolRunner.run(NutchConfiguration.create(), new InjectJob(), args);
+    int res = ToolRunner.run(ConfigUtils.create(), new InjectJob(), args);
     System.exit(res);
   }
 }

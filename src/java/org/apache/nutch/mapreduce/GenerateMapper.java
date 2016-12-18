@@ -106,8 +106,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
     pseudoCurrTime = Instant.ofEpochMilli(conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime));
-    long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
-    detailPageRate = 0.667f;
+    long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 10000);
+    detailPageRate = conf.getFloat(PARAM_GENERATOR_DETAIL_PAGE_RATE, 0.80f);
     maxDetailPageCount = Math.round(topN * detailPageRate);
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
@@ -127,7 +127,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
         "maxDistance", maxDistance,
         "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "fetchSchedule", fetchSchedule.getClass().getName(),
-        "scoringFilters", scoringFilters.getClass().getName(),
+        "scoringFilters", scoringFilters,
         "crawlFilters", crawlFilters,
         "keyRange", keyRange[0] + " - " + keyRange[1],
         "ignoreGenerated", ignoreGenerated,
@@ -149,16 +149,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
 
     int priority = page.calculateFetchPriority();
-    float initSortScore = 1.0f + page.getScore();
+    float initSortScore = calculateInitSortScore(page);
     float sortScore = 0.0f;
-    /*
-     * Raise detail page's priority so them can be fetched sooner
-     * Detail pages comes first, but we still need keep chances for pages with other category
-     * */
-    if (page.veryLikeDetailPage() && ++detailPages < maxDetailPageCount) {
-      priority = FETCH_PRIORITY_DETAIL_PAGE;
-      initSortScore = SCORE_DETAIL_PAGE - page.getDepth();
-    }
 
     try {
       // Typically, we use OPIC scoring filter
@@ -170,6 +162,19 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     updateStatus(url, page);
   }
 
+  /*
+   * Raise detail page's priority so them can be fetched sooner
+   * Detail pages comes first, but we still need keep chances for pages with other category
+   * */
+  private float calculateInitSortScore(WebPage page) {
+    boolean raise = page.veryLikeDetailPage() && ++detailPages < maxDetailPageCount;
+
+    float factor = raise ? 1.0f : 0.0f;
+    int depth = page.getDepth();
+
+    return (10000.0f - 100 * depth) + factor * 100000.0f;
+  }
+
   /**
    * TODO : We may move some filters to hbase query filters directly
    * */
@@ -178,7 +183,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       return false;
     }
 
-    if (Mark.GENERATE_MARK.hasMark(page)) {
+    if (page.hasMark(Mark.GENERATE)) {
       getCounter().increase(Counter.pagesGenerated);
 
       /*
@@ -307,7 +312,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       getCounter().increase(Counter.rowsIsSeed);
     }
 
-    if (Mark.INJECT_MARK.hasMark(page)) {
+    if (page.hasMark(Mark.INJECT)) {
       getCounter().increase(Counter.rowsInjected);
     }
 
@@ -341,8 +346,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   private void debugFetchLaterSeeds(WebPage page) {
     String report = Params.formatAsLine(
         "CurrTime", DateTimeUtil.format(pseudoCurrTime),
-        "LastRefPT", DateTimeUtil.format(page.getReferredPublishTime()),
-        "RefPC", page.getReferredArticles(),
+        "LastRefPT", DateTimeUtil.format(page.getRefPublishTime()),
+        "RefPC", page.getRefArticles(),
         "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
         "FetchTime", DateTimeUtil.format(page.getFetchTime()),
         "seeds", page.isSeed(),

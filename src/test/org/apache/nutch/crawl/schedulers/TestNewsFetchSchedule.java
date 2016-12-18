@@ -18,9 +18,9 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
-import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -30,9 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
-import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * Test cases for AdaptiveFetchSchedule.
@@ -68,13 +66,13 @@ public class TestNewsFetchSchedule {
 
   @Before
   public void setUp() throws Exception {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     inc_rate = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     dec_rate = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
 
     lastModified = startTime;
 
-    fs.setConf(NutchConfiguration.create());
+    fs.setConf(ConfigUtils.create());
 
     p.setBaseUrl("http://www.example.com");
     p.setStatus(0);
@@ -93,10 +91,10 @@ public class TestNewsFetchSchedule {
     for (int i = 0; i < totalRounds; i++) {
       if (lastModified.plus(update).isBefore(curTime)) {
         if (i < changeBefore) {
-          // TableUtil.updateReferredPublishTime(p, curTime.minus(2, ChronoUnit.DAYS));
-          p.updateReferredPublishTime(curTime);
-          p.increaseReferredArticles(1);
-          p.increaseReferredChars(2500);
+          // TableUtil.updateRefPublishTime(p, curTime.minus(2, ChronoUnit.DAYS));
+          p.updateRefPublishTime(curTime);
+          p.increaseRefArticles(1);
+          p.increaseRefChars(2500);
           updateScore(p);
 
           changed = true;
@@ -153,10 +151,10 @@ public class TestNewsFetchSchedule {
 
   private void choosePageType(String type, WebPage p) {
     if ("seed".equalsIgnoreCase(type)) {
-      p.putMetadata(META_IS_SEED, YES_STRING);
+      p.markAsSeed();
     }
     else if ("detail".equalsIgnoreCase(type)) {
-      p.setPageCategory(CrawlFilter.PageCategory.DETAIL);
+      p.setPageCategory(PageCategory.DETAIL);
       p.setPageCategoryLikelihood(0.9f);
     }
   }
@@ -181,8 +179,8 @@ public class TestNewsFetchSchedule {
     float f1 = 1.0f;
     float f2 = 2.0f;
 
-    long ra = p.getReferredArticles();
-    long rc = p.getReferredChars();
+    long ra = p.getRefArticles();
+    long rc = p.getRefChars();
 
     p.setScore(p.getScore() + f1 * ra + f2 * ((rc - 1000) / 1000));
   }

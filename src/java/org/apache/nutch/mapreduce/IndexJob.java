@@ -17,6 +17,7 @@
 package org.apache.nutch.mapreduce;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.mapreduce.StringComparator;
@@ -33,8 +34,9 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.StorageUtils;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +72,7 @@ public class IndexJob extends NutchJob implements Tool {
     FIELDS.add(GoraWebPage.Field.MARKERS);
   }
 
-  private static Collection<GoraWebPage.Field> getFields(Job job) {
+  public static Collection<GoraWebPage.Field> getFields(Job job) {
     Configuration conf = job.getConfiguration();
 
     Collection<GoraWebPage.Field> columns = new HashSet<>(FIELDS);
@@ -116,9 +118,9 @@ public class IndexJob extends NutchJob implements Tool {
     conf.setInt(PARAM_LIMIT, limit);
     conf.setBoolean(PARAM_REINDEX, reindex);
 
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_SERVER_URL, solrUrl);
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_ZK, zkHostString);
-    NutchConfiguration.setIfNotNull(conf, PARAM_SOLR_COLLECTION, solrCollection);
+    ConfigUtils.setIfNotNull(conf, PARAM_SOLR_SERVER_URL, solrUrl);
+    ConfigUtils.setIfNotNull(conf, PARAM_SOLR_ZK, zkHostString);
+    ConfigUtils.setIfNotNull(conf, PARAM_SOLR_COLLECTION, solrCollection);
 
     /**
      * Report parameters
@@ -157,6 +159,8 @@ public class IndexJob extends NutchJob implements Tool {
     // used to get schema name
     DataStore<String, GoraWebPage> storage = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
+    LOG.info("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
+
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "workingDir", currentJob.getWorkingDirectory(),
@@ -176,8 +180,8 @@ public class IndexJob extends NutchJob implements Tool {
     filter.setFieldName(GoraWebPage.Field.MARKERS.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.setMapKey(Mark.UPDATEDB_MARK.getName());
-    filter.getOperands().add(new Utf8(batchId));
+    filter.setMapKey(WebPage.wrapKey(Mark.UPDATEDB));
+    filter.getOperands().add(WebPage.wrapValue(batchId));
 
     return filter;
   }
@@ -286,7 +290,7 @@ public class IndexJob extends NutchJob implements Tool {
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    final int res = ToolRunner.run(NutchConfiguration.create(), new IndexJob(), args);
+    final int res = ToolRunner.run(ConfigUtils.create(), new IndexJob(), args);
     System.exit(res);
   }
 }

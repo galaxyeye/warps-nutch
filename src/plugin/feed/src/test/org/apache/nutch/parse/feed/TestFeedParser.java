@@ -33,7 +33,6 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.protocol.ProtocolNotFound;
-import org.apache.nutch.util.NutchConfiguration;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

@@ -19,7 +19,7 @@ package org.apache.nutch.plugin;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +90,7 @@ public class PluginRepository {
    * @return a cached instance of the plugin repository
    */
   public static synchronized PluginRepository get(Configuration conf) {
-    String uuid = NutchConfiguration.getUUID(conf);
+    String uuid = ConfigUtils.getUUID(conf);
     if (uuid == null) {
       uuid = "nonNutchConf@" + conf.hashCode(); // fallback
     }
@@ -415,7 +415,7 @@ public class PluginRepository {
           .println("Usage: PluginRepository pluginId className [arg1 arg2 ...]");
       return;
     }
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     PluginRepository repo = new PluginRepository(conf);
     // args[0] - plugin ID
     PluginDescriptor d = repo.getPluginDescriptor(args[0]);

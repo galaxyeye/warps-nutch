@@ -24,15 +24,14 @@ import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertTrue;
 
@@ -57,13 +56,13 @@ public class TestPdfParser {
   public void testIt() throws ProtocolException, ParseException, IOException {
     String urlString;
     Parse parse;
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
-    for (int i = 0; i < sampleFiles.length; i++) {
-      urlString = "file:" + sampleDir + fileSeparator + sampleFiles[i];
+    for (String sampleFile : sampleFiles) {
+      urlString = "file:" + sampleDir + fileSeparator + sampleFile;
 
-      File file = new File(sampleDir + fileSeparator + sampleFiles[i]);
+      File file = new File(sampleDir + fileSeparator + sampleFile);
       byte[] bytes = new byte[(int) file.length()];
       DataInputStream in = new DataInputStream(new FileInputStream(file));
       in.readFully(bytes);
@@ -71,9 +70,9 @@ public class TestPdfParser {
 
       WebPage page = WebPage.newWebPage();
       page.setBaseUrl(new Utf8(urlString));
-      page.setContent(ByteBuffer.wrap(bytes));
+      page.setContent(bytes);
       String mtype = mimeutil.getMimeType(file);
-      page.setContentType(new Utf8(mtype));
+      page.setContentType(mtype);
 
       parse = new ParseUtil(conf).parse(urlString, page);
 

@@ -1,14 +1,16 @@
 package org.apache.nutch.fetch;
 
-import org.apache.avro.util.Utf8;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.storage.WebPage;
 
-import java.nio.ByteBuffer;
 import java.time.Instant;
+
+import static org.apache.nutch.storage.Mark.FETCH;
+import static org.apache.nutch.storage.Mark.GENERATE;
+import static org.apache.nutch.storage.Mark.INDEX;
 
 /**
  * Created by vincent on 16-9-10.
@@ -30,10 +32,8 @@ public class FetchUtil {
   }
 
   static public void updateMarks(WebPage page) {
-    /** Set fetch mark */
-    Mark.FETCH_MARK.putMark(page, Mark.GENERATE_MARK.checkMark(page));
-    /** Unset index mark if exist, this page should be re-indexed */
-    Mark.INDEX_MARK.removeMarkIfExist(page);
+    page.putMarkIfNonNull(FETCH, page.getMark(GENERATE));
+    page.removeMark(INDEX);
   }
 
   static public void updateContent(WebPage page, Content content) {
@@ -46,8 +46,10 @@ public class FetchUtil {
     }
 
     // Content is added to page here for ParseUtil be able to parse it.
-    page.setBaseUrl(new Utf8(content.getBaseUrl()));
-    page.setContent(ByteBuffer.wrap(content.getContent()));
+//    page.setBaseUrl(new Utf8(content.getBaseUrl()));
+    page.setBaseUrl(content.getBaseUrl());
+//    page.setContent(ByteBuffer.wrap(content.getContent()));
+    page.setContent(content.getContent());
 
     if (contentType != null) {
       content.setContentType(contentType);
@@ -56,20 +58,18 @@ public class FetchUtil {
     }
 
     if (contentType != null) {
-      page.setContentType(new Utf8(contentType));
+      page.setContentType(contentType);
       // LOG.error("Failed to determine content type!");
     }
   }
 
-  static public void updateFetchTime(WebPage page, byte status) {
+  static public void updateFetchTime(WebPage page) {
     Instant prevFetchTime = page.getFetchTime();
     Instant fetchTime = Instant.now();
 
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(fetchTime);
 
-    if (status == CrawlStatus.STATUS_FETCHED) {
-      page.putFetchTimeHistory(fetchTime);
-    }
+    page.putFetchTimeHistory(fetchTime);
   }
 }

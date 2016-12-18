@@ -149,8 +149,10 @@ public class OPICScoringFilter implements ScoringFilter {
     float f1 = 1.0f;
     float f2 = 2.0f;
 
-    long ra = row.getReferredArticles();
-    long rc = row.getReferredChars();
+    // Every article contributes 1 base score
+    long ra = row.getRefArticles();
+    // Every one thousand chars contributes another 1 base score
+    long rc = row.getRefChars();
 
     return f1 * ra + f2 * ((rc - 1000) / 1000);
   }

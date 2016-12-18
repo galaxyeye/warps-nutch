@@ -92,8 +92,7 @@ public class HttpRobotRulesParser extends RobotRulesParser {
         LOG.trace("cache miss " + url);
       }
       try {
-        Response response = ((HttpBase) http).getResponse(new URL(url,
-            "/robots.txt"), WebPage.newWebPage(), true);
+        Response response = ((HttpBase) http).getResponse(new URL(url, "/robots.txt"), WebPage.newWebPage(), true);
         // try one level of redirection ?
         if (response.getCode() == 301 || response.getCode() == 302) {
           String redirection = response.getHeader("Location");

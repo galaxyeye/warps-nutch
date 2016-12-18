@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchUtil;
@@ -122,8 +123,8 @@ public abstract class NutchJob extends Configured {
     filter.setFieldName(GoraWebPage.Field.MARKERS.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.setMapKey(Mark.GENERATE_MARK.getName());
-    filter.getOperands().add(new Utf8(batchId));
+    filter.setMapKey(WebPage.wrapKey(Mark.GENERATE));
+    filter.getOperands().add(WebPage.wrapValue((batchId)));
 
     return filter;
   }

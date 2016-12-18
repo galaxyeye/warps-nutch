@@ -17,8 +17,11 @@
 package org.apache.nutch.metadata;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.collections4.SortedBidiMap;
+import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.nutch.fetch.data.FetchQueue;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -37,32 +40,39 @@ import java.util.Properties;
  */
 public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHeaders, Nutch {
 
-  /** Fetch time history, comma seperated fetch timestamp */
-  public static final String META_FETCH_TIME_HISTORY = "FETCH_TIME_HISTORY";
-  public static final String META_INDEX_TIME_HISTORY = "INDEX_TIME_HISTORY";
-  public static final String META_VOTE_HISTORY = "VOTE_HISTORY";
-  public static final String META_PUBLISH_TIME = "PUBLISH_TIME";
-  public static final String META_TEXT_CONTENT_LENGTH = "TEXT_CONTENT_LENGTH";
+  public enum Name {
+    IS_NAVIGATOR("IN"),
+    IS_SEED("IS"),
+
+    GENERATE_TIME("GT"),
+    NO_FETCH("NF"),
+    DISTANCE("DIST"),
+
+    IP("IP"),
+    FETCH_TIME_HISTORY("FTH"),
+    INDEX_TIME_HISTORY("ITH"),
+
+    VOTE_HISTORY("VH"),
+    PUBLISH_TIME("PT"),
+    TEXT_CONTENT_LENGTH("TCL"),
+    FETCH_COUNT("FC"),
+    FETCH_PRIORITY("FP"),
+    REFERRER("R"),
+    REFERRED_PUBLISH_TIME("RPT"),
+    REFERRED_ARTICLES("RA"),
+    REFERRED_CHARS("RC"),
+    OUT_LINK_COUNT("OLC"),
+
+    PAGE_CATEGORY_LIKELIHOOD("PCL"),
+    PAGE_CATEGORY("PC"),
+
+    CASH_KEY("CASH");
+    private String value;
+    Name(String value) {this.value = value; }
+    public String value() { return this.value; }
+  }
 
   public static final String META_TMP = "TMP_";
-  public static final String META_FETCH_TIMES = "FETCH_TIMES";
-  public static final String META_FETCH_PRIORITY = "FETCH_PRIORITY";
-  public static final String META_REFERRER = "REFERRER";
-  public static final String META_REFERRED_PUBLISH_TIME = "REF_PUB_TIME";
-  public static final String META_REFERRED_ARTICLES = "REF_ARTICLES";
-  public static final String META_REFERRED_CHARS = "REF_CHARS";
-  public static final String META_OUT_LINK_COUNT = "OUT_LINK_COUNT";
-  public static final String META_IS_NAVIGATOR = "IS_NAVIGATOR";
-  public static final String META_IS_SEED = "IS_SEED";
-  public static final String META_PAGE_CATEGORY_LIKELIHOOD = "PAGE_CATEGORY_LIKELIHOOD";
-  public static final String META_NO_FETCH = "NO_FETCH";
-  public static final String META_PAGE_CATEGORY = "PAGE_CATEGORY";
-
-  public static final String META_CASH_KEY = "_csh_";
-  public static final Utf8 META_CASH_KEY_U8 = new Utf8("_csh_");
-
-  public static final String META_DISTANCE = "DIST";
-  public static final Utf8 DISTANCE_U8 = new Utf8("dist");
 
   /**
    * A map of all metadata attributes.

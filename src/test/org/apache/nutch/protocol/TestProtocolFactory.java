@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.ObjectCache;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +35,7 @@ public class TestProtocolFactory {
 
   @Before
   public void setUp() throws Exception {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.set("plugin.includes", ".*");
     conf.set("http.agent.name", "test-bot");
     factory = new ProtocolFactory(conf);

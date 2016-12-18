@@ -19,7 +19,7 @@ package org.apache.nutch.filter.urlnormalizer.basic;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class TestBasicURLNormalizer {
   @Before
   public void setUp() {
     normalizer = new BasicURLNormalizer();
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     normalizer.setConf(conf);
   }
 

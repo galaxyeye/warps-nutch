@@ -20,9 +20,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.apache.nutch.metadata.Metadata.META_IS_SEED;
 import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL_LENGTH;
-import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * Created by vincent on 16-9-24.
@@ -114,8 +112,9 @@ public class SeedBuilder {
 
     page.setFetchCount(0);
     page.setDistance(0);
+    page.markAsSeed();
 
-    Mark.INJECT_MARK.putMark(page, Nutch.YES_UTF8);
+    page.putMark(Mark.INJECT, Nutch.YES_STRING);
 
     return page;
   }
@@ -133,7 +132,6 @@ public class SeedBuilder {
 
   private Map<String, String> buildMetadata(String seedUrl) {
     Map<String, String> metadata = new TreeMap<>();
-    metadata.put(META_IS_SEED, YES_STRING);
 
     // if tabs : metadata that could be stored
     // must be name=value and separated by \t

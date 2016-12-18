@@ -31,7 +31,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.storage.gora.Host;
 import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,7 +174,7 @@ public class HostInjectorJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    int res = ToolRunner.run(NutchConfiguration.create(),
+    int res = ToolRunner.run(ConfigUtils.create(),
         new HostInjectorJob(), args);
     System.exit(res);
   }

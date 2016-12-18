@@ -86,10 +86,10 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
       // Referred publish time is not initialized yet for this seed page
-      return Duration.ofSeconds(1);
+      return MIN_INTERVAL;
     }
 
-    Instant referredPublishTime = page.getReferredPublishTime();
+    Instant referredPublishTime = page.getRefPublishTime();
     if (referredPublishTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       LOG.warn("Unexpected referred publish time : " + referredPublishTime + ", " + page.getBaseUrl());
     }
@@ -97,7 +97,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     long hours = ChronoUnit.HOURS.between(referredPublishTime, fetchTime);
     if (hours <= 24) {
       // There are updates today, keep re-fetch the page in every crawl loop
-      interval = Duration.ofSeconds(1);
+      interval = MIN_INTERVAL;
     }
     else if (hours <= 72) {
       // If there is not updates in 24 hours but there are updates in 72 hours, re-fetch the page a hour later
@@ -105,9 +105,9 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     }
     else {
       // If there is no any updates in 72 hours, check the page at least 1 hour later
-      long adjust = (long)(interval.getSeconds() * INC_RATE);
+      long inc = (long)(interval.getSeconds() * INC_RATE);
 
-      interval = interval.plusSeconds(adjust);
+      interval = interval.plusSeconds(inc);
       if (interval.toHours() < 1) {
         interval = Duration.ofHours(1);
       }
@@ -115,6 +115,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
 
     // No longer than SEED_MAX_INTERVAL
     if (interval.compareTo(SEED_MAX_INTERVAL) > 0) {
+      // TODO : LOG non-updating seeds
       interval = SEED_MAX_INTERVAL;
     }
 

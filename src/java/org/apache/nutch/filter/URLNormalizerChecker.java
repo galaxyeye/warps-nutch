@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 
 /**
  * Checks one given normalizer or all normalizers.
@@ -103,7 +103,7 @@ public class URLNormalizerChecker {
     }
 
     URLNormalizerChecker checker = new URLNormalizerChecker(
-        NutchConfiguration.create());
+        ConfigUtils.create());
     if (normalizerName != null) {
       checker.checkOne(normalizerName, scope);
     } else {

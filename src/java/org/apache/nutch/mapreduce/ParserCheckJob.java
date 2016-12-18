@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.samples.SimpleParser;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -133,7 +133,7 @@ public class ParserCheckJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    int res = ToolRunner.run(NutchConfiguration.create(), new ParserCheckJob(), args);
+    int res = ToolRunner.run(ConfigUtils.create(), new ParserCheckJob(), args);
     System.exit(res);
   }
 

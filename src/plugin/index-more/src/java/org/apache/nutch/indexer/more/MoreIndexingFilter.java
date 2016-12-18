@@ -112,12 +112,14 @@ public class MoreIndexingFilter implements IndexingFilter {
    * @return
    */
   private IndexDocument addType(IndexDocument doc, WebPage page, String url) {
-    String mimeType = null;
-    CharSequence contentType = page.getContentType();
-    if (contentType == null) {
-      contentType = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_TYPE));
+    String mimeType;
+    String contentType = page.getContentType();
+    if (contentType.isEmpty()) {
+//      contentType = page.getHeaders().get(new Utf8(HttpHeaders.CONTENT_TYPE));
+      contentType = page.getHeader(HttpHeaders.CONTENT_TYPE, "");
     }
-    if (contentType == null) {
+
+    if (contentType.isEmpty()) {
       // Note by Jerome Charron on 20050415:
       // Content Type not solved by a previous plugin
       // Or unable to solve it... Trying to find it
@@ -131,7 +133,7 @@ public class MoreIndexingFilter implements IndexingFilter {
       // }
       mimeType = MIME.getMimeType(url);
     } else {
-      mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType.toString()));
+      mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType));
     }
 
     // Checks if we solved the content-type.

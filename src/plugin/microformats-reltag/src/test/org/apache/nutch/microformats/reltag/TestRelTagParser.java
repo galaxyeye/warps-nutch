@@ -24,7 +24,7 @@ import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 import java.io.DataInputStream;
@@ -65,7 +65,7 @@ public class TestRelTagParser {
   @Test
   public void testRelTagParser() throws ParseException, ProtocolException,
       IOException {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.set("file.content.limit", "-1");
     @SuppressWarnings("unused")
     Parse parse;
@@ -78,11 +78,11 @@ public class TestRelTagParser {
     in.close();
 
     WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(new Utf8(urlString));
-    page.setContent(ByteBuffer.wrap(bytes));
+    page.setBaseUrl(urlString);
+    page.setContent(bytes);
     MimeUtil mimeutil = new MimeUtil(conf);
     String mtype = mimeutil.getMimeType(file);
-    page.setContentType(new Utf8(mtype));
+    page.setContentType(mtype);
     parse = new ParseUtil(conf).parse(urlString, page);
     // begin assertion for tests
     ByteBuffer bbuf = page.get().getMetadata().get(new Utf8("Rel-Tag"));

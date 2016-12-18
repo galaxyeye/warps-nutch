@@ -23,6 +23,7 @@ import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.model.request.JobConfig;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ public class NutchUtil {
     return (System.currentTimeMillis() / 1000) + "-" + Math.abs(new Random().nextInt());
   }
 
+  @NotNull
   public static String generateJobId(JobConfig jobConfig, int hashCode) {
     if (jobConfig.getCrawlId() == null) {
       return MessageFormat.format("{0}-{1}-{2}", jobConfig.getConfId(),

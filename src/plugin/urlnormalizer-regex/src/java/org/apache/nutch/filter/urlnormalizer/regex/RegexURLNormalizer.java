@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.filter.URLNormalizer;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
@@ -273,7 +273,7 @@ public class RegexURLNormalizer extends Configured implements URLNormalizer {
   public static void main(String args[]) throws PatternSyntaxException,
       IOException {
     RegexURLNormalizer normalizer = new RegexURLNormalizer();
-    normalizer.setConf(NutchConfiguration.create());
+    normalizer.setConf(ConfigUtils.create());
     HashMap<String, List<Rule>> scopedRules = normalizer.getScopedRules();
     Iterator<Rule> i = normalizer.defaultRules.iterator();
 

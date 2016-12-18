@@ -81,7 +81,7 @@ public class TestMimeUtil extends TestCase {
 
   private String getMimeType(String url, byte[] bytes, String contentType,
       boolean useMagic) {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setBoolean("mime.type.magic", useMagic);
     MimeUtil mimeUtil = new MimeUtil(conf);
     return mimeUtil.autoResolveContentType(contentType, url, bytes);

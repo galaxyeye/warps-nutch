@@ -23,7 +23,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,7 +163,7 @@ public class CleaningJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    int result = ToolRunner.run(NutchConfiguration.create(), new CleaningJob(), args);
+    int result = ToolRunner.run(ConfigUtils.create(), new CleaningJob(), args);
     System.exit(result);
   }
 }

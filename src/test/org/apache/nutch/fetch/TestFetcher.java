@@ -98,17 +98,15 @@ public class TestFetcher extends AbstractNutchTest {
     time = System.currentTimeMillis();
     conf.setBoolean(PARAM_PARSE, true);
     FetchJob fetcher = new FetchJob(conf);
-    fetcher.fetch(crawlId, "native", batchId, 1, false, -1);
+    fetcher.fetch(crawlId, "native", batchId, 1, false, -1, 1);
 
     time = System.currentTimeMillis() - time;
 
     // verify politeness, time taken should be more than (num_of_pages +1)*delay
-    int minimumTime = (int) ((urls.size() + 1) * 1000 * conf.getFloat(
-        "fetcher.server.delay", 5));
+    int minimumTime = (int) ((urls.size() + 1) * 1000 * conf.getFloat("fetcher.server.delay", 5));
     assertTrue(time > minimumTime);
 
-    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore,
-        Mark.FETCH_MARK, (String[]) null);
+    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, Mark.FETCH, (String[]) null);
     assertEquals(urls.size(), pages.size());
     List<String> handledurls = new ArrayList<String>();
     for (URLWebPage up : pages) {
@@ -117,7 +115,7 @@ public class TestFetcher extends AbstractNutchTest {
         continue;
       }
       String content = Bytes.toString(bb.array());
-      if (content.indexOf("Nutch fetcher test page") != -1) {
+      if (content.contains("Nutch fetcher test page")) {
         handledurls.add(up.getUrl());
       }
     }

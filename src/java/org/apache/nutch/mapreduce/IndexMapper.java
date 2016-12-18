@@ -103,20 +103,18 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
 
       if (!reindex) {
         // ParseStatus pstatus = page.getParseStatus();
-        if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
+        if (!isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
           getCounter().increase(Counter.unmatchStatus);
           return; // filter urls not parsed
         }
 
-        Utf8 mark = Mark.UPDATEDB_MARK.checkMark(page);
-        if (mark == null) {
+        if (!page.hasMark(Mark.UPDATEDB)) {
           getCounter().increase(Counter.notUpdated);
           // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
           return;
         }
 
-        mark = Mark.INDEX_MARK.checkMark(page);
-        if (mark != null) {
+        if (page.hasMark(Mark.INDEX)) {
           getCounter().increase(Counter.alreadyIndexed);
           // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
           return;
@@ -162,8 +160,8 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
       // LOG.debug("Indexing : " + TableUtil.unreverseUrl(key));
 
       if (!reindex) {
-        // Mark.INDEX_MARK.putMark(page, Mark.UPDATEDB_MARK.checkMark(page));
-        Mark.INDEX_MARK.putMark(page, new Utf8(batchId));
+        // Mark.INDEX.putMark(page, Mark.UPDATEDB.getMark(page));
+        page.putMark(Mark.INDEX, batchId);
       }
 
       // LOG.debug(TableUtil.toString(page.getText()));

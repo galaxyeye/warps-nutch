@@ -29,7 +29,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.gora.Host;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +132,7 @@ public class HostDbUpdateJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    final int res = ToolRunner.run(NutchConfiguration.create(),
+    final int res = ToolRunner.run(ConfigUtils.create(),
         new HostDbUpdateJob(), args);
     System.exit(res);
   }

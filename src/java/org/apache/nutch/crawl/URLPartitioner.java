@@ -26,6 +26,7 @@ import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.mapreduce.GenerateJob;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -103,12 +104,12 @@ public class URLPartitioner implements Configurable {
     return (hashCode & Integer.MAX_VALUE) % numReduceTasks;
   }
 
-  public static class SelectorEntryPartitioner extends Partitioner<SelectorEntry, WebPage> implements Configurable {
+  public static class SelectorEntryPartitioner extends Partitioner<SelectorEntry, GoraWebPage> implements Configurable {
     private URLPartitioner partitioner = new URLPartitioner();
     private Configuration conf;
 
     @Override
-    public int getPartition(SelectorEntry selectorEntry, WebPage page, int numReduces) {
+    public int getPartition(SelectorEntry selectorEntry, GoraWebPage page, int numReduces) {
       return partitioner.getPartition(selectorEntry.getUrl(), numReduces);
     }
 
@@ -124,14 +125,12 @@ public class URLPartitioner implements Configurable {
     }
   }
 
-  public static class FetchEntryPartitioner extends
-      Partitioner<IntWritable, FetchEntry> implements Configurable {
+  public static class FetchEntryPartitioner extends Partitioner<IntWritable, FetchEntry> implements Configurable {
     private URLPartitioner partitioner = new URLPartitioner();
     private Configuration conf;
 
     @Override
-    public int getPartition(IntWritable intWritable, FetchEntry fetchEntry,
-        int numReduces) {
+    public int getPartition(IntWritable intWritable, FetchEntry fetchEntry, int numReduces) {
       String key = fetchEntry.getKey();
       String url = TableUtil.unreverseUrl(key);
       return partitioner.getPartition(url, numReduces);

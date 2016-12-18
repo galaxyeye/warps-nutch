@@ -35,7 +35,7 @@ package org.apache.nutch.tools.proxy;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.tools.proxy.FakeHandler.Mode;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.bio.SocketConnector;
@@ -89,7 +89,7 @@ public class TestbedProxy {
       System.exit(-1);
     }
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     int port = conf.getInt("batch.proxy.port", 8181);
     boolean forward = false;
     boolean fake = false;

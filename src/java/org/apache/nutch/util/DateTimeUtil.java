@@ -134,6 +134,10 @@ public class DateTimeUtil {
     return elapsedTime(start, System.currentTimeMillis());
   }
 
+  public static String elapsedTime(Instant start) {
+    return elapsedTime(start.toEpochMilli(), System.currentTimeMillis());
+  }
+
   public static double elapsedSeconds(long start) {
     return (System.currentTimeMillis() - start) / 1000.0;
   }

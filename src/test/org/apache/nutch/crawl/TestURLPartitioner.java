@@ -23,7 +23,7 @@ import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class TestURLPartitioner {
   @Test
   public void testOneReducer() {
     URLPartitioner partitioner = new URLPartitioner();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
@@ -63,7 +63,7 @@ public class TestURLPartitioner {
   @Test
   public void testModeHost() {
     URLPartitioner partitioner = new URLPartitioner();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
@@ -90,7 +90,7 @@ public class TestURLPartitioner {
   @Test
   public void testModeDomain() {
     URLPartitioner partitioner = new URLPartitioner();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_DOMAIN);
     partitioner.setConf(conf);
 
@@ -117,7 +117,7 @@ public class TestURLPartitioner {
   @Test
   public void testModeIP() {
     URLPartitioner partitioner = new URLPartitioner();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_IP);
     partitioner.setConf(conf);
 
@@ -146,7 +146,7 @@ public class TestURLPartitioner {
   @Test
   public void testSeed() {
     URLPartitioner partitioner = new URLPartitioner();
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
     partitioner.setConf(conf);
 
@@ -172,7 +172,7 @@ public class TestURLPartitioner {
     // The to be tested partitioner with specific signature
     URLPartitioner.SelectorEntryPartitioner sigPartitioner = new URLPartitioner.SelectorEntryPartitioner();
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
 
     refPartitioner.setConf(conf);
@@ -202,7 +202,7 @@ public class TestURLPartitioner {
     // The to be tested partitioner with specific signature
     URLPartitioner.FetchEntryPartitioner sigPartitioner = new URLPartitioner.FetchEntryPartitioner();
 
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.setEnum(URLPartitioner.PARTITION_MODE_KEY, URLUtil.HostGroupMode.BY_HOST);
 
     refPartitioner.setConf(conf);

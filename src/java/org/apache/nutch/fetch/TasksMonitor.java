@@ -11,13 +11,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
 import org.apache.nutch.fetch.data.FetchTask;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
+import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.host.HostDb;
 import org.apache.nutch.storage.gora.Host;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
+import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class TasksMonitor {
 
     crawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.delay", 1.0f) * 1000));
     minCrawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000));
-    queuePendingTimeout = NutchConfiguration.getDuration(conf, "fetcher.pending.timeout", Duration.ofMinutes(3));
+    queuePendingTimeout = ConfigUtils.getDuration(conf, "fetcher.pending.timeout", Duration.ofMinutes(3));
 
     reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
     nutchMetrics = NutchMetrics.getInstance(conf);
@@ -186,6 +187,7 @@ public class TasksMonitor {
 
   public synchronized FetchTask consume(FetchQueue queue) { return consumeUnchecked(checkFetchQueue(queue)); }
 
+  @Contract("null -> null")
   private FetchTask consumeUnchecked(FetchQueue queue) {
     if (queue == null) {
       return null;
@@ -202,6 +204,7 @@ public class TasksMonitor {
     return item;
   }
 
+  @Contract("null -> null")
   private FetchQueue checkFetchQueue(FetchQueue queue) {
     if (queue == null) {
       return null;
@@ -213,6 +216,7 @@ public class TasksMonitor {
   }
 
   /** Maintain queue life time, return true if the life time status is changed, false otherwise */
+  @Contract("null -> false")
   private boolean maintainFetchQueueLifeTime(FetchQueue queue) {
     if (queue == null) {
       return false;
@@ -354,7 +358,7 @@ public class TasksMonitor {
 
     ++hostStat.urls;
 
-    CrawlFilter.PageCategory pageCategory = crawlFilters.sniffPageCategory(url);
+    PageCategory pageCategory = crawlFilters.sniffPageCategory(url);
     if (pageCategory.isIndex()) {
       ++hostStat.indexUrls;
     } else if (pageCategory.isDetail()) {
@@ -377,8 +381,8 @@ public class TasksMonitor {
       Params params = Params.of(
           "FT", DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime()),
           "FC", page.getFetchCount(),
-          "RefPT", DateTimeUtil.format(page.getReferredPublishTime()),
-          "RefPC", page.getReferredArticles(),
+          "RefPT", DateTimeUtil.format(page.getRefPublishTime()),
+          "RefPC", page.getRefArticles(),
           "OLink", page.getTotalOutLinkCount(),
           "Score", page.getScore(),
           "Cash", page.getCash(),

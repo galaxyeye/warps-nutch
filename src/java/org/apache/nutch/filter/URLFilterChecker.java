@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 
 /**
  * Checks one given filter or all filters.
@@ -120,7 +120,7 @@ public class URLFilterChecker {
       filterName = args[1];
     }
 
-    URLFilterChecker checker = new URLFilterChecker(NutchConfiguration.create());
+    URLFilterChecker checker = new URLFilterChecker(ConfigUtils.create());
     if (filterName != null) {
       checker.checkOne(filterName);
     } else {

@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -52,6 +53,23 @@ public class TestDateTime {
     String formatted = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(time);
 
     System.out.println(formatted);
+  }
+
+  @Test
+  public void testDuration() {
+    Instant epoch = Instant.EPOCH;
+    Instant now = Instant.now();
+
+    Duration gap = Duration.between(epoch, now);
+    System.out.println(gap.toDays());
+    System.out.println(gap);
+
+    long days = ChronoUnit.DAYS.between(epoch, now);
+    System.out.println(days);
+
+    System.out.println(Duration.ofDays(365 * 100).getSeconds());
+
+    System.out.println(Duration.ofMinutes(60).toMillis());
   }
 
   @Test

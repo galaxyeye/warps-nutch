@@ -20,16 +20,15 @@ import org.apache.nutch.storage.gora.ParseStatus;
 
 public class Parse {
 
-  private String text;
-  private String title;
-  private Outlink[] outlinks;
+  private String text = "";
+  private String title = "";
+  private Outlink[] outlinks = new Outlink[1];
   private ParseStatus parseStatus;
 
   public Parse() {
   }
 
-  public Parse(String text, String title, Outlink[] outlinks,
-      ParseStatus parseStatus) {
+  public Parse(String text, String title, Outlink[] outlinks, ParseStatus parseStatus) {
     this.text = text;
     this.title = title;
     this.outlinks = outlinks;
@@ -40,9 +39,7 @@ public class Parse {
     return text;
   }
 
-  public String getTitle() {
-    return title;
-  }
+  public String getTitle() { return title; }
 
   public Outlink[] getOutlinks() {
     return outlinks;

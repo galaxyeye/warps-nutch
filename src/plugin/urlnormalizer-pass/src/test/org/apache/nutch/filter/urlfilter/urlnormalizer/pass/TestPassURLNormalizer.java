@@ -19,7 +19,7 @@ package org.apache.nutch.filter.urlfilter.urlnormalizer.pass;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.filter.urlnormalizer.pass.PassURLNormalizer;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -31,7 +31,7 @@ public class TestPassURLNormalizer {
 
   @Test
   public void testPassURLNormalizer() {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
 
     PassURLNormalizer normalizer = new PassURLNormalizer();
     normalizer.setConf(conf);

@@ -25,7 +25,7 @@ import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.junit.Test;
 import org.w3c.dom.DocumentFragment;
@@ -64,7 +64,7 @@ public class TestMetaTagsParser {
   public Map<CharSequence, ByteBuffer> parseMetaTags(String fileName,
       boolean useUtil) {
     try {
-      Configuration conf = NutchConfiguration.create();
+      Configuration conf = ConfigUtils.create();
       String urlString = "file:" + sampleDir + fileSeparator + fileName;
 
       File file = new File(sampleDir + fileSeparator + fileName);
@@ -74,9 +74,9 @@ public class TestMetaTagsParser {
       in.close();
 
       WebPage page = WebPage.newWebPage();
-      page.setBaseUrl(new Utf8(urlString));
-      page.setContent(ByteBuffer.wrap(bytes));
-      page.setContentType(new Utf8("text/html"));
+      page.setBaseUrl(urlString);
+      page.setContent(bytes);
+      page.setContentType("text/html");
 
       if (useUtil) {
         ParseUtil parser = new ParseUtil(conf);

@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 /**
@@ -34,7 +34,7 @@ import org.junit.Test;
  */
 public class TestOutlinkExtractor {
 
-  private static Configuration conf = NutchConfiguration.create();
+  private static Configuration conf = ConfigUtils.create();
 
   public void testGetNoOutlinks() {
     Outlink[] outlinks = null;

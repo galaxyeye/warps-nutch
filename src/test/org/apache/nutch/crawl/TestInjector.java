@@ -109,11 +109,11 @@ public class TestInjector extends AbstractNutchTest {
   private List<String> readDb() throws Exception {
     List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
         fields);
-    ArrayList<String> read = new ArrayList<String>();
+    ArrayList<String> read = new ArrayList<>();
     for (URLWebPage up : pages) {
       WebPage page = up.getDatum();
       String representation = up.getUrl();
-      representation += "\tnutch.score=" + page.getScore().intValue();
+      representation += "\tnutch.score=" + page.getScore();
       ByteBuffer bb = page.get().getMetadata().get(new Utf8("custom.attribute"));
       if (bb != null) {
         representation += "\tcustom.attribute=" + Bytes.toString(bb.array());

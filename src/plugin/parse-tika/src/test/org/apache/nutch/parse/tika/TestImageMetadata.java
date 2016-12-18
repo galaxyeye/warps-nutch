@@ -23,8 +23,8 @@ import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
 
 import java.io.DataInputStream;
@@ -48,7 +48,7 @@ public class TestImageMetadata {
     String urlString;
     @SuppressWarnings("unused")
     Parse parse;
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
     for (int i = 0; i < sampleFiles.length; i++) {
@@ -62,9 +62,9 @@ public class TestImageMetadata {
 
       WebPage page = WebPage.newWebPage();
       page.setBaseUrl(new Utf8(urlString));
-      page.setContent(ByteBuffer.wrap(bytes));
+      page.setContent(bytes);
       String mtype = mimeutil.getMimeType(file);
-      page.setContentType(new Utf8(mtype));
+      page.setContentType(mtype);
 
       parse = new ParseUtil(conf).parse(urlString, page);
 

@@ -1,7 +1,6 @@
 package org.apache.nutch.parse.html;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
 

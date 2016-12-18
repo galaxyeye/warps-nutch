@@ -41,7 +41,7 @@ import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -426,7 +426,7 @@ public class WebTableReader extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    int res = ToolRunner.run(NutchConfiguration.create(), new WebTableReader(),
+    int res = ToolRunner.run(ConfigUtils.create(), new WebTableReader(),
         args);
     System.exit(res);
   }

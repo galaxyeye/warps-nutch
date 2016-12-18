@@ -150,8 +150,8 @@ public class NetUtil {
       LOG.warn("No content for " + url);
       return null;
     }
-    page.setBaseUrl(new org.apache.avro.util.Utf8(url));
-    page.setContent(ByteBuffer.wrap(content.getContent()));
+    page.setBaseUrl(url);
+    page.setContent(content.getContent());
 
     if (contentType != null) {
       content.setContentType(contentType);      
@@ -165,7 +165,7 @@ public class NetUtil {
       return null;
     }
 
-    page.setContentType(new Utf8(contentType));
+    page.setContentType(contentType);
 
     if (ParserMapper.isTruncated(url, page)) {
       LOG.warn("Content is truncated, parse may fail!");

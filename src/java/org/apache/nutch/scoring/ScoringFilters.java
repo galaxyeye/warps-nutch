@@ -62,8 +62,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
         Extension[] extensions = point.getExtensions();
         HashMap<String, ScoringFilter> filterMap = new HashMap<>();
-        for (int i = 0; i < extensions.length; i++) {
-          Extension extension = extensions[i];
+        for (Extension extension : extensions) {
           ScoringFilter filter = (ScoringFilter) extension.getExtensionInstance();
           if (!filterMap.containsKey(filter.getClass().getName())) {
             filterMap.put(filter.getClass().getName(), filter);
@@ -149,5 +148,12 @@ public class ScoringFilters extends Configured implements ScoringFilter {
       }
     }
     return fields;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    Arrays.stream(this.scoringFilters).forEach(scroingFilter -> sb.append(scroingFilter.getClass().getSimpleName()).append(", "));
+    return sb.toString();
   }
 }

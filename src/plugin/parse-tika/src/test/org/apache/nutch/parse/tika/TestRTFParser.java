@@ -25,15 +25,14 @@ import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -57,7 +56,7 @@ public class TestRTFParser {
 
     String urlString;
     Parse parse;
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
     urlString = "file:" + sampleDir + fileSeparator + rtfFile;
@@ -70,9 +69,9 @@ public class TestRTFParser {
 
     WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8(urlString));
-    page.setContent(ByteBuffer.wrap(bytes));
+    page.setContent(bytes);
     String mtype = mimeutil.getMimeType(file);
-    page.setContentType(new Utf8(mtype));
+    page.setContentType(mtype);
 
     parse = new ParseUtil(conf).parse(urlString, page);
 

@@ -42,6 +42,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
+import static org.apache.nutch.storage.Mark.*;
+import static org.apache.nutch.storage.Mark.FETCH;
+import static org.apache.nutch.storage.Mark.PARSE;
 
 public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, String, GoraWebPage> {
 
@@ -186,9 +189,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
       }
     }
 
-    if (page.getInlinks() != null) {
-      page.getInlinks().clear();
-    }
+    page.getInlinks().clear();
 
     // Distance calculation.
     // Retrieve smallest distance from all inlinks distances
@@ -229,13 +230,21 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     if (page.get().getMetadata().get(REDIRECT_DISCOVERED) != null) {
       page.get().getMetadata().put(REDIRECT_DISCOVERED, null);
     }
-    Mark.GENERATE_MARK.removeMarkIfExist(page);
-    Mark.FETCH_MARK.removeMarkIfExist(page);
-    Utf8 parse_mark = Mark.PARSE_MARK.checkMark(page);
-    if (parse_mark != null) {
-      Mark.UPDATEDB_MARK.putMark(page, parse_mark);
-      Mark.PARSE_MARK.removeMark(page);
-    }
+
+//    Mark.GENERATE.removeMarkIfExist(page);
+//    Mark.FETCH.removeMarkIfExist(page);
+//    Utf8 parse_mark = Mark.PARSE.getMark(page);
+//    if (parse_mark != null) {
+//      Mark.UPDATEDB.putMark(page, parse_mark);
+//      Mark.PARSE.removeMark(page);
+//    }
+
+    page.putMarkIfNonNull(UPDATEDB, page.getMark(PARSE));
+
+    page.removeMark(INJECT);
+    page.removeMark(GENERATE);
+    page.removeMark(FETCH);
+    page.removeMark(PARSE);
 
     context.write(keyUrl, page.get());
   }

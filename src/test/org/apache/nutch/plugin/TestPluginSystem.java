@@ -33,7 +33,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class TestPluginSystem {
 
   @Before
   public void setUp() throws Exception {
-    this.conf = NutchConfiguration.create();
+    this.conf = ConfigUtils.create();
     conf.set("plugin.includes", ".*");
     // String string = this.conf.get("plugin.includes", "");
     // conf.set("plugin.includes", string + "|Dummy*");
@@ -102,7 +102,7 @@ public class TestPluginSystem {
 
   @Test
   public void testRepositoryCache() {
-    Configuration config = NutchConfiguration.create();
+    Configuration config = ConfigUtils.create();
     PluginRepository repo = PluginRepository.get(config);
     JobConf job = new JobConf(config);
     PluginRepository repo1 = PluginRepository.get(job);

@@ -57,8 +57,9 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
   private WebPageWritable pageWritable;
 
   @Override
-  public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
-    if (Mark.GENERATE_MARK.checkMark(WebPage.wrap(page)) == null) {
+  public void map(String key, GoraWebPage row, Context context) throws IOException, InterruptedException {
+    WebPage page = WebPage.wrap(row);
+    if (page.hasMark(Mark.GENERATE)) {
       LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; not generated yet");
       return;
     }
@@ -77,14 +78,14 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
 
     // TODO: Outlink filtering (i.e. "only keep the first n outlinks")
     try {
-      scoringFilters.distributeScoreToOutlinks(url, WebPage.wrap(page), scoreData, (outlinks == null ? 0 : outlinks.size()));
+      scoringFilters.distributeScoreToOutlinks(url, page, scoreData, (outlinks == null ? 0 : outlinks.size()));
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL: " + key + " exception:" + StringUtils.stringifyException(e));
     }
 
     urlWithScore.setReversedUrl(key);
     urlWithScore.setScore(Float.MAX_VALUE);
-    pageWritable.setWebPage(page);
+    pageWritable.setWebPage(page.get());
     nutchWritable.set(pageWritable);
     context.write(urlWithScore, nutchWritable);
 
@@ -104,5 +105,4 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
     pageWritable = new WebPageWritable(context.getConfiguration(), null);
     batchId = new Utf8(context.getConfiguration().get(PARAM_BATCH_ID, Nutch.ALL_BATCH_ID_STR));
   }
-
 }

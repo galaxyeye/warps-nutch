@@ -27,6 +27,7 @@ import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
+import org.jetbrains.annotations.Contract;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -148,8 +149,8 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   private void addGeneralMetadata(IndexDocument doc, String url, WebPage page) throws IndexingException {
-    String contentType = TableUtil.toString(page.getContentType());
-    if (contentType == null || !contentType.contains("html")) {
+    String contentType = page.getContentType();
+    if (!contentType.contains("html")) {
       LOG.warn("Content type " + contentType + " is not fully supported");
       // return doc;
     }
@@ -160,6 +161,7 @@ public class MetadataIndexer implements IndexingFilter {
     doc.add("content_type", contentType);
   }
 
+  @Contract("null, _, _ -> null")
   private IndexDocument addPageMetadata(IndexDocument doc, String url, WebPage page) {
     if (doc == null || parseFieldnames.isEmpty()) {
       return doc;

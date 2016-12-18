@@ -16,11 +16,10 @@
  */
 package org.apache.nutch.indexer;
 
-import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +45,7 @@ public class TestIndexingFilters {
    */
   @Test
   public void testNonExistingIndexingFilter() throws IndexingException, MalformedURLException {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
 
@@ -56,8 +55,8 @@ public class TestIndexingFilters {
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText(new Utf8("text"));
-    page.setTitle(new Utf8("title"));
+    page.setText("text");
+    page.setTitle("title");
 
     String url = "http://www.example.com/";
     String key = TableUtil.reverseUrl(url);
@@ -71,14 +70,14 @@ public class TestIndexingFilters {
    */
   @Test
   public void testNutchDocumentNullIndexingFilter() throws IndexingException {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText(new Utf8("text"));
-    page.setTitle(new Utf8("title"));
+    page.setText("text");
+    page.setTitle("title");
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
 
     assertNull(doc);
@@ -91,7 +90,7 @@ public class TestIndexingFilters {
    */
   @Test
   public void testFilterCacheIndexingFilter() throws IndexingException, MalformedURLException {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
 
@@ -103,8 +102,8 @@ public class TestIndexingFilters {
 
     IndexingFilters filters1 = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText(new Utf8("text"));
-    page.setTitle(new Utf8("title"));
+    page.setText("text");
+    page.setTitle("title");
 
     IndexDocument fdoc1 = filters1.filter(new IndexDocument(key), url, page);
 
@@ -138,14 +137,14 @@ public class TestIndexingFilters {
    */
   @Test
   public void testIndexingFilterRealWordDoc() throws IndexingException {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     conf.addResource("nutch-default.xml");
     conf.addResource("crawl-tests.xml");
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText(new Utf8("text"));
-    page.setTitle(new Utf8("title"));
+    page.setText("text");
+    page.setTitle("title");
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
 
     assertNull(doc);

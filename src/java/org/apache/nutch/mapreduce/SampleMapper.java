@@ -63,7 +63,7 @@ public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWeb
     String url = TableUtil.unreverseUrl(reversedUrl);
     LOG.debug("Map : " + url);
 
-    if (!Mark.FETCH_MARK.hasMark(page)) {
+    if (!page.hasMark(Mark.FETCH)) {
       getCounter().increase(Counter.notFetched);
       return;
     }

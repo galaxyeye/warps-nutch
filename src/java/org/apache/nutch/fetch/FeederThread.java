@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -55,10 +55,10 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
     this.setDaemon(true);
     this.setName(getClass().getSimpleName() + "-" + id);
 
-    Duration fetchJobTimeout = NutchConfiguration.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
+    Duration fetchJobTimeout = ConfigUtils.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
     fetchJobTimeLimit = Instant.now().plus(fetchJobTimeout);
 
-    LOG.info(Params.format(
+    LOG.info(Params.formatAsLine(
         "className", getClass().getSimpleName(),
         "id", id
     ));

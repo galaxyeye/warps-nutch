@@ -30,7 +30,6 @@ import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.storage.gora.GoraWebPage.Field;
-import org.apache.nutch.util.NutchConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;

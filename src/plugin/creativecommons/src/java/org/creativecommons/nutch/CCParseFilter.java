@@ -296,7 +296,7 @@ public class CCParseFilter implements ParseFilter {
     // construct base url
     URL base;
     try {
-      base = new URL(page.getBaseUrl().toString());
+      base = new URL(page.getBaseUrl());
       // extract license metadata
       Walker.walk(doc, base, page, getConf());
     } catch (Exception e) {

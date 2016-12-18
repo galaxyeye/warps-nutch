@@ -30,6 +30,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
+import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.*;
@@ -98,10 +99,10 @@ public class GenerateJob extends NutchJob implements Tool {
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
+    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
-    conf.setLong(GENERATE_TIME_KEY, startTime); // seems not used, (or pseudoCurrTime used?)
     conf.setLong(PARAM_GENERATOR_CUR_TIME, pseudoCurrTime);
     conf.setBoolean(PARAM_GENERATE_REGENERATE, reGenerate);
     conf.setLong(PARAM_GENERATOR_TOP_N, topN);
@@ -123,7 +124,8 @@ public class GenerateJob extends NutchJob implements Tool {
         "reGenerate", reGenerate,
         "hostGroupMode", hostGroupMode,
         "partitionMode", hostGroupMode,
-        "nutchTmpDir", nutchTmpDir
+        "nutchTmpDir", nutchTmpDir,
+        "fetchScheduler", fetchScheduler
     ));
 
     Files.write(Paths.get(PATH_LAST_BATCH_ID), (batchId + "\n").getBytes(),
@@ -167,7 +169,7 @@ public class GenerateJob extends NutchJob implements Tool {
     Collection<GoraWebPage.Field> fields = getFields(currentJob);
     query.setFields(StorageUtils.toStringArray(fields));
 
-    LOG.debug("Loaded Query Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
+    LOG.debug("Loaded Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
 
     return query;
   }
@@ -376,7 +378,7 @@ public class GenerateJob extends NutchJob implements Tool {
   public static void main(String args[]) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    int res = ToolRunner.run(NutchConfiguration.create(), new GenerateJob(), args);
+    int res = ToolRunner.run(ConfigUtils.create(), new GenerateJob(), args);
 
     System.exit(res);
   }

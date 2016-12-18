@@ -31,6 +31,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
 
 /**
  * This class provides common methods for implementations of
@@ -116,14 +119,18 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   @Override
   public void setPageGoneSchedule(String url, WebPage page, Instant prevFetchTime,
                                   Instant prevModifiedTime, Instant fetchTime) {
+    long prevInterval = page.getFetchInterval(TimeUnit.SECONDS);
+    float newInterval = prevInterval;
+
     // no page is truly GONE ... just increase the interval by 50%
     // and try much later.
-    if ((page.getFetchInterval().getSeconds() * 1.5f) < maxInterval.getSeconds()) {
-      int newFetchInterval = (int) (page.getFetchInterval().getSeconds() * 1.5f);
-      page.setFetchInterval(newFetchInterval);
+    if (newInterval < maxInterval.getSeconds()) {
+      newInterval = prevInterval * 1.5f;
     } else {
-      page.setFetchInterval((int) (maxInterval.getSeconds() * 0.9f));
+      newInterval = maxInterval.getSeconds() * 0.9f;
     }
+
+    page.setFetchInterval(newInterval);
     page.setFetchTime(fetchTime.plus(page.getFetchInterval()));
   }
 
@@ -135,6 +142,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @param url
    *          URL of the page
    * @param page
+   *          WebPage to retry
    * @param prevFetchTime
    *          previous fetch time
    * @param prevModifiedTime
@@ -143,14 +151,14 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    *          current fetch time
    */
   @Override
-  public void setPageRetrySchedule(String url, WebPage page,
-      Instant prevFetchTime, Instant prevModifiedTime, Instant fetchTime) {
+  public void setPageRetrySchedule(
+      String url, WebPage page, Instant prevFetchTime, Instant prevModifiedTime, Instant fetchTime) {
     page.setFetchTime(fetchTime.plus(1, ChronoUnit.DAYS));
     page.setRetriesSinceFetch(page.getRetriesSinceFetch() + 1);
   }
 
   /**
-   * This method return the last fetch time of the CrawlDatum
+   * This method return the last fetch time of the WebPage
    * 
    * @return the date as a long.
    */
@@ -173,6 +181,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * @param url
    *          URL of the page
    * @param page
+   *          Web page to fetch
    * @param curTime
    *          reference time (usually set to the time when the fetchlist
    *          generation process was started).
@@ -202,7 +211,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
 
     if (curTime.plus(maxInterval).isBefore(fetchTime)) {
       if (page.getFetchInterval().compareTo(maxInterval) > 0) {
-        page.setFetchInterval(Math.round(maxInterval.getSeconds() * 0.9f));
+        page.setFetchInterval(maxInterval.getSeconds() * 0.9f);
       }
       page.setFetchTime(curTime);
     }
@@ -226,8 +235,9 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   public void forceRefetch(String url, WebPage page, boolean asap) {
     // reduce fetchInterval so that it fits within the max value
     if (page.getFetchInterval().compareTo(maxInterval) > 0) {
-      page.setFetchInterval(Math.round(maxInterval.getSeconds() * 0.9f));
+      page.setFetchInterval(maxInterval.getSeconds() * 0.9f);
     }
+
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
     page.setRetriesSinceFetch(0);
     // TODO: row.setSignature(null) ??
@@ -235,6 +245,13 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
     if (asap) {
       page.setFetchTime(Instant.now());
     }
+  }
+
+  protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
+    page.setFetchInterval(interval);
+    page.setFetchTime(fetchTime.plus(interval));
+    page.setPrevModifiedTime(prevModifiedTime);
+    page.setModifiedTime(modifiedTime);
   }
 
   public Set<GoraWebPage.Field> getFields() {

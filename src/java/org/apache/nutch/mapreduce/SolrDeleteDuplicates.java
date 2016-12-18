@@ -17,7 +17,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -448,7 +448,7 @@ public class SolrDeleteDuplicates
   }
 
   public static void main(String[] args) throws Exception {
-    int result = ToolRunner.run(NutchConfiguration.create(), new SolrDeleteDuplicates(), args);
+    int result = ToolRunner.run(ConfigUtils.create(), new SolrDeleteDuplicates(), args);
     System.exit(result);
   }
 }

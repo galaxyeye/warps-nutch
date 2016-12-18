@@ -48,7 +48,7 @@ public class MD5Signature extends Signature {
     int of;
     int cb;
     if (buf == null) {
-      Utf8 baseUrl = (Utf8) page.getBaseUrl();
+      Utf8 baseUrl = page.getBaseUrlUtf8();
       if (baseUrl == null) {
         data = null;
         of = 0;

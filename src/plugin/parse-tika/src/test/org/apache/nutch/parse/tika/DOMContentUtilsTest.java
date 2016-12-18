@@ -21,12 +21,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.tika.DOMBuilder;
-import org.apache.nutch.parse.tika.DOMContentUtils;
-import org.apache.nutch.parse.tika.TikaParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -190,7 +187,7 @@ public class DOMContentUtilsTest {
   }
 
   private static void setup() throws Exception {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.setBoolean("parser.html.form.use_action", true);
     utils = new DOMContentUtils(conf);
     TikaParser tikaParser = new TikaParser();

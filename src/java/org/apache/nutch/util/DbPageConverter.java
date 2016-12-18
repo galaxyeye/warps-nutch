@@ -72,10 +72,10 @@ public class DbPageConverter {
       return ParseStatusUtils.toString(page.getParseStatus());
     }
     if (StringUtils.equals(fieldName, "signature")) {
-      return StringUtil.toHexString(page.getSignature());
+      return page.getSignatureAsString();
     }
     if (StringUtils.equals(fieldName, "content")) {
-      return Bytes.toString(page.getContent().array());
+      return page.getContentAsString();
     }
     if (StringUtils.equals(fieldName, "markers")) {
       return convertToStringsMap(page.getMarkers());

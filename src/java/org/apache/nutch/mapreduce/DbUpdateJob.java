@@ -16,9 +16,11 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.NutchWritable;
@@ -30,7 +32,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +73,10 @@ public class DbUpdateJob extends NutchJob implements Tool {
 
   public DbUpdateJob(Configuration conf) {
     setConf(conf);
+  }
+
+  public static Collection<GoraWebPage.Field> getFields(Job job) {
+    return FIELDS;
   }
 
   @Override
@@ -117,6 +123,8 @@ public class DbUpdateJob extends NutchJob implements Tool {
     StorageUtils.initReducerJob(currentJob, DbUpdateReducer.class);
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
+
+    LOG.info("Loaded Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -173,7 +181,7 @@ public class DbUpdateJob extends NutchJob implements Tool {
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    int res = ToolRunner.run(NutchConfiguration.create(), new DbUpdateJob(), args);
+    int res = ToolRunner.run(ConfigUtils.create(), new DbUpdateJob(), args);
     System.exit(res);
   }
 }

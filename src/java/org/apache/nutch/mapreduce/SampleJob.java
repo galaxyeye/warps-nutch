@@ -24,7 +24,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,7 +142,7 @@ public class SampleJob extends NutchJob implements Tool {
   public static void main(String[] args) throws Exception {
     LOG.info("---------------------------------------------------\n\n");
 
-    int res = ToolRunner.run(NutchConfiguration.create(), new SampleJob(), args);
+    int res = ToolRunner.run(ConfigUtils.create(), new SampleJob(), args);
     System.exit(res);
   }
 }

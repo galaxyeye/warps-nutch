@@ -16,53 +16,10 @@
  ******************************************************************************/
 package org.apache.nutch.storage;
 
-import org.apache.avro.util.Utf8;
-
 public enum Mark {
-  INJECT_MARK("_injmrk_"), GENERATE_MARK("_gnmrk_"), FETCH_MARK("_ftcmrk_"), PARSE_MARK(
-      "__prsmrk__"), UPDATEDB_MARK("_updmrk_"), INDEX_MARK("_idxmrk_");
+  INJECT("inj"), GENERATE("gn"), FETCH("fth"), PARSE("prs"), UPDATEDB("upd"), INDEX("idx");
 
-  private Utf8 name;
-
-  Mark(String name) {
-    this.name = new Utf8(name);
-  }
-
-  public void putMark(WebPage page, Utf8 markValue) {
-    page.getMarkers().put(name, markValue);
-  }
-
-  public void putMark(WebPage page, String markValue) {
-    putMark(page, new Utf8(markValue));
-  }
-
-  public Utf8 removeMark(WebPage page) {
-    return (Utf8) page.getMarkers().put(name, null);
-  }
-
-  public Utf8 checkMark(WebPage page) {
-    return (Utf8) page.getMarkers().get(name);
-  }
-
-  public boolean hasMark(WebPage page) {
-    return page.getMarkers().get(name) != null;
-  }
-
-  /**
-   * Remove the mark only if the mark is present on the page.
-   * 
-   * @param page
-   *          The page to remove the mark from.
-   * @return If the mark was present.
-   */
-  public Utf8 removeMarkIfExist(WebPage page) {
-    if (checkMark(page) != null) {
-      return removeMark(page);
-    }
-    return null;
-  }
-
-  public Utf8 getName() {
-    return name;
-  }
+  private String value;
+  Mark(String value) {this.value = value; }
+  public String value() { return value; }
 }

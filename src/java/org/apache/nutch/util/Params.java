@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -82,6 +84,16 @@ public class Params {
     Path path = value == null ? Paths.get(value) : defaultValue;
     Files.createDirectories(path.getParent());
     return path;
+  }
+
+  public Instant getInstant(String name, Instant defaultValue) {
+    Instant value = (Instant) paramsMap.get(name);
+    return value == null ? defaultValue : value;
+  }
+
+  public Duration getDuration(String name, Duration defaultValue) {
+    Duration value = (Duration) paramsMap.get(name);
+    return value == null ? defaultValue : value;
   }
 
   public String format() {

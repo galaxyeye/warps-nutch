@@ -134,7 +134,7 @@ public final class MimeUtil {
    * registry, by its cleaned name. If the {@link MimeType} is found, then that
    * mime type is used, otherwise URL resolution is used to try and determine
    * the mime type. However, if <code>mime.type.magic</code> is enabled in
-   * {@link NutchConfiguration}, then mime type magic resolution is used to try
+   * {@link ConfigUtils}, then mime type magic resolution is used to try
    * and obtain a better-than-the-default approximation of the {@link MimeType}.
    * 
    * @param typeName

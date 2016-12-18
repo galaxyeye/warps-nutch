@@ -19,13 +19,16 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.FetchSchedule;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
+
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * This class implements an adaptive re-fetch algorithm. This works as follows:
@@ -61,13 +64,13 @@ import java.time.Instant;
  * @author Andrzej Bialecki
  */
 public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
-  public static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
+  public static final Logger LOG = AbstractFetchSchedule.LOG;
 
   protected float INC_RATE = 0.2f;
 
   protected float DEC_RATE = 0.2f;
 
-  protected Duration MIN_INTERVAL = Duration.ofSeconds(1);
+  protected Duration MIN_INTERVAL = Duration.ofMinutes(1);
 
   protected Duration MAX_INTERVAL = Duration.ofDays(365);
 
@@ -85,9 +88,9 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
     INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
     DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
-    MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.min_interval", Duration.ofSeconds(60));
-    MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365));
-    SEED_MAX_INTERVAL = NutchConfiguration.getDuration(conf, "db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
+    MIN_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.min_interval", Duration.ofMinutes(1));
+    MAX_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365));
+    SEED_MAX_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
@@ -96,40 +99,34 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
   public void setFetchSchedule(String url, WebPage page, Instant prevFetchTime,
                                Instant prevModifiedTime, Instant fetchTime, Instant modifiedTime, int state) {
     super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    if (modifiedTime.toEpochMilli() <= 0) {
+    if (modifiedTime.compareTo(TCP_IP_STANDARDIZED_TIME) < 0) {
       modifiedTime = fetchTime;
     }
 
-    long adjustInterval = page.getFetchInterval().getSeconds();
+    long interval = page.getFetchInterval(TimeUnit.SECONDS);
     switch (state) {
       case FetchSchedule.STATUS_MODIFIED:
-        adjustInterval *= (1.0f - DEC_RATE);
+        interval *= (1.0f - DEC_RATE);
         break;
       case FetchSchedule.STATUS_NOTMODIFIED:
-        adjustInterval *= (1.0f + INC_RATE);
+        interval *= (1.0f + INC_RATE);
         break;
       case FetchSchedule.STATUS_UNKNOWN:
         break;
     }
 
     if (SYNC_DELTA) {
-      long delta = fetchTime.getEpochSecond() - modifiedTime.getEpochSecond();
-      if (delta > adjustInterval) {
-        adjustInterval = delta;
+      long gap = fetchTime.getEpochSecond() - modifiedTime.getEpochSecond();
+      if (gap > interval) {
+        interval = gap;
       }
-      fetchTime = fetchTime.minusSeconds(Math.round(delta * SYNC_DELTA_RATE));
+      fetchTime = fetchTime.minusSeconds(Math.round(gap * SYNC_DELTA_RATE));
     }
 
-    if (adjustInterval < MIN_INTERVAL.getSeconds()) adjustInterval = MIN_INTERVAL.getSeconds();
-    if (adjustInterval > MAX_INTERVAL.getSeconds()) adjustInterval = MAX_INTERVAL.getSeconds();
+    Duration newInterval = Duration.ofSeconds(interval);
+    if (newInterval.compareTo(MIN_INTERVAL) < 0) newInterval = MIN_INTERVAL;
+    if (newInterval.compareTo(MAX_INTERVAL) > 0) newInterval = MAX_INTERVAL;
 
-    updateRefetchTime(page, Duration.ofSeconds(adjustInterval), fetchTime, prevModifiedTime, modifiedTime);
-  }
-
-  protected void updateRefetchTime(WebPage page, Duration interval, Instant fetchTime, Instant prevModifiedTime, Instant modifiedTime) {
-    page.setFetchInterval(interval);
-    page.setFetchTime(fetchTime.plus(interval));
-    page.setPrevModifiedTime(prevModifiedTime);
-    page.setModifiedTime(modifiedTime);
+    updateRefetchTime(page, newInterval, fetchTime, prevModifiedTime, modifiedTime);
   }
 }

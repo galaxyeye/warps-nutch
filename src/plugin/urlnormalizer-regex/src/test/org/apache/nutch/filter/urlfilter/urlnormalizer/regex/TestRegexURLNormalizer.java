@@ -20,7 +20,7 @@ package org.apache.nutch.filter.urlfilter.urlnormalizer.regex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.filter.urlnormalizer.regex.RegexURLNormalizer;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public class TestRegexURLNormalizer {
   @Before
   public void setUp() throws IOException {
     normalizer = new RegexURLNormalizer();
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     normalizer.setConf(conf);
     File[] configs = new File(sampleDir).listFiles(new FileFilter() {
       public boolean accept(File f) {

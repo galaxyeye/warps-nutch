@@ -122,7 +122,7 @@ public class ParseUtil {
   public Parse parse(String url, WebPage page) throws ParseException {
     Parser[] parsers;
 
-    String contentType = TableUtil.toString(page.getContentType());
+    String contentType = page.getContentType();
 
     parsers = this.parserFactory.getParsers(contentType, url);
 
@@ -166,7 +166,7 @@ public class ParseUtil {
     try {
       parse = parse(url, page);
     } catch (ParserNotFound e) {
-      CharSequence contentType = page.getContentType();
+      String contentType = page.getContentType();
       if (!unparsableTypes.contains(contentType)) {
         unparsableTypes.add(contentType);
         LOG.warn("No suitable parser found: " + e.getMessage());
@@ -212,15 +212,14 @@ public class ParseUtil {
   }
 
   private void processSuccess(String url, WebPage page, Parse parse) {
-    page.setText(new Utf8(parse.getText()));
-    page.setTitle(new Utf8(parse.getTitle()));
+    page.setText(parse.getText());
+    page.setTitle(parse.getTitle());
     ByteBuffer prevSig = page.getSignature();
     if (prevSig != null) {
       page.setPrevSignature(prevSig);
     }
 
-    final byte[] signature = sig.calculate(page);
-    page.setSignature(ByteBuffer.wrap(signature));
+    page.setSignature(sig.calculate(page));
 
     String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
     Map<CharSequence, CharSequence> outlinks = Stream.of(parse.getOutlinks())
@@ -232,39 +231,13 @@ public class ParseUtil {
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
     page.setOutlinks(outlinks);
 
-    // LOG.debug(url + " -> " + outlinks.keySet().stream().collect(Collectors.joining(", ")));
-
-//    if (page.getOutlinks() != null) {
-//      page.getOutlinks().clear();
-//    }
-//    int outlinksToStore = Math.min(maxOutlinks, outlinks.length);
-//    int validCount = 0;
-//    for (int i = 0; validCount < outlinksToStore && i < outlinks.length; i++) {
-//      String toUrl = normalizeUrl(page, outlinks[i].getToUrl());
-//      if (toUrl == null) {
-//        // LOG.debug("Violate filter or urlNormalizers");
-//        continue;
-//      }
-//
-//      Utf8 toUrlU8 = new Utf8(toUrl);
-//      if (page.getOutlinks().containsKey(toUrlU8)) {
-//        continue;
-//      }
-//
-//      String toHost = getToHost(toUrl);
-//      if (toHost == null || toHost.equals(fromHost)) {
-//        continue;
-//      }
-//
-//      validCount++;
-//      page.getOutlinks().put(toUrlU8, new Utf8(outlinks[i].getAnchor()));
-//    }
-
     // TODO : Marks should be set in mapper or reducer, not util methods
-    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
-    if (fetchMark != null) {
-      Mark.PARSE_MARK.putMark(page, fetchMark);
-    }
+//    Utf8 fetchMark = Mark.FETCH.getMark(page);
+//    if (fetchMark != null) {
+//      Mark.PARSE.putMark(page, fetchMark);
+//    }
+
+    page.putMarkIfNonNull(Mark.PARSE, page.getMark(Mark.FETCH));
   }
 
   private void processRedirect(String url, WebPage page, ParseStatus pstatus) {
@@ -302,7 +275,7 @@ public class ParseUtil {
       if (reprUrl == null) {
         LOG.warn("Null repr url for " + url);
       } else {
-        page.setReprUrl(new Utf8(reprUrl));
+        page.setReprUrl(reprUrl);
       }
     }
   }

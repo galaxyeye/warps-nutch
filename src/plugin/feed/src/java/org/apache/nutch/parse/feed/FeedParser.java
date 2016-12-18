@@ -44,7 +44,6 @@ import org.apache.nutch.parse.ParserFactory;
 import org.apache.nutch.parse.ParserNotFound;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.util.EncodingDetector;
-import org.apache.nutch.util.NutchConfiguration;
 import org.xml.sax.InputSource;
 
 // ROME imports

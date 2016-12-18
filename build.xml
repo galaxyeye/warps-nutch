@@ -964,8 +964,8 @@
 				<source path="${basedir}/src/plugin/parse-tika/src/java/" />
 				<source path="${basedir}/src/plugin/parse-tika/src/test/" />
 
-				<!--<source path="${basedir}/src/plugin/protocol-file/src/java/" />-->
-				<!--<source path="${basedir}/src/plugin/protocol-file/src/test/" />-->
+				<source path="${basedir}/src/plugin/protocol-file/src/java/" />
+				<source path="${basedir}/src/plugin/protocol-file/src/test/" />
 				<!--<source path="${basedir}/src/plugin/protocol-ftp/src/java/" />-->
 				<!--<source path="${basedir}/src/plugin/protocol-httpclient/src/java/" />-->
 				<!--<source path="${basedir}/src/plugin/protocol-httpclient/src/test/" />-->

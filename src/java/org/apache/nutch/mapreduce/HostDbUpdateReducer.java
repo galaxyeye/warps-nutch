@@ -58,19 +58,16 @@ public class HostDbUpdateReducer extends
       // build host link db
       // TODO: limit number of links
       if (buildLinkDb) {
-        if (page.getInlinks() != null) {
-          Set<CharSequence> inlinks = page.getInlinks().keySet();
-          for (CharSequence inlink : inlinks) {
-            String host = URLUtil.getHostName(inlink.toString());
-            inlinkCount.add(host);
-          }
+        Set<CharSequence> inlinks = page.getInlinks().keySet();
+        for (CharSequence inlink : inlinks) {
+          String host = URLUtil.getHostName(inlink.toString());
+          inlinkCount.add(host);
         }
-        if (page.getOutlinks() != null) {
-          Set<CharSequence> outlinks = page.getOutlinks().keySet();
-          for (CharSequence outlink : outlinks) {
-            String host = URLUtil.getHostName(outlink.toString());
-            outlinkCount.add(host);
-          }
+
+        Set<CharSequence> outlinks = page.getOutlinks().keySet();
+        for (CharSequence outlink : outlinks) {
+          String host = URLUtil.getHostName(outlink.toString());
+          outlinkCount.add(host);
         }
       }
     }

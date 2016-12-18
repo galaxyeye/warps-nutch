@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.WritableTestUtils;
 import org.apache.tika.mime.MimeTypes;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import org.junit.Test;
 
 public class TestContent {
 
-  private static Configuration conf = NutchConfiguration.create();
+  private static Configuration conf = ConfigUtils.create();
 
   @Test
   public void testContent() throws Exception {

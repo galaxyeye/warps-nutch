@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
+import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
@@ -67,13 +68,13 @@ public class CrawlFilter extends Configured {
   /**
    * TODO : need carefully test
    */
-  public static CrawlFilter.PageCategory sniffPageCategory(WebPage page) {
-    if (page.getBaseUrl() == null) {
-      return CrawlFilter.PageCategory.UNKNOWN;
+  public static PageCategory sniffPageCategory(WebPage page) {
+    String url = page.getBaseUrl();
+    if (url.isEmpty()) {
+      return PageCategory.UNKNOWN;
     }
 
-    String url = page.getBaseUrl().toString();
-    CrawlFilter.PageCategory pageCategory = sniffPageCategoryByUrlPattern(url);
+    PageCategory pageCategory = sniffPageCategory(url);
     if (pageCategory.isDetail()) {
       return pageCategory;
     }
@@ -100,10 +101,11 @@ public class CrawlFilter extends Configured {
   public static PageCategory sniffPageCategory(String url, double _char, double _a) {
     PageCategory pageCategory = sniffPageCategoryByTextDensity(_char, _a);
 
-    return pageCategory == PageCategory.UNKNOWN ? sniffPageCategoryByUrlPattern(url) : pageCategory;
+    return pageCategory == PageCategory.UNKNOWN ? sniffPageCategory(url) : pageCategory;
   }
 
   /* TODO : use machine learning to calculate the parameters */
+  @Contract(pure = true)
   public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
     PageCategory pageCategory = PageCategory.UNKNOWN;
 
@@ -121,17 +123,15 @@ public class CrawlFilter extends Configured {
     return pageCategory;
   }
 
-  public static PageCategory sniffPageCategoryByUrlPattern(CharSequence urlString) {
-    return sniffPageCategoryByUrlPattern(urlString.toString());
-  }
-
   /**
    * A simple regex rule to sniff the possible category of a web page
    * */
-  public static PageCategory sniffPageCategoryByUrlPattern(String urlString) {
-    Objects.requireNonNull(urlString);
-
+  public static PageCategory sniffPageCategory(String urlString) {
     PageCategory pageCategory = PageCategory.UNKNOWN;
+
+    if (StringUtils.isEmpty(urlString)) {
+      return pageCategory;
+    }
 
     final String url = urlString.toLowerCase();
 
@@ -157,20 +157,6 @@ public class CrawlFilter extends Configured {
     }
 
     return pageCategory;
-  }
-
-  public enum PageCategory {
-    INDEX, DETAIL, SEARCH, MEDIA, BBS, TIEBA, BLOG, UNKNOWN;
-
-    public boolean is(PageCategory pageCategory) { return pageCategory == this; }
-    public boolean isIndex() { return this == INDEX; }
-    public boolean isDetail() { return this == DETAIL; }
-    public boolean isSearch() { return this == SEARCH; }
-    public boolean isMedia() { return this == MEDIA; }
-    public boolean isBBS() { return this == BBS; }
-    public boolean isTieBa() { return this == TIEBA; }
-    public boolean isBlog() { return this == BLOG; }
-    public boolean isUnknown() { return this == UNKNOWN; }
   }
 
   @Expose
@@ -416,7 +402,7 @@ public class CrawlFilter extends Configured {
   }
 
   public static void main(String[] args) throws Exception {
-//    Configuration conf = NutchConfiguration.create();
+//    Configuration conf = ConfigUtils.create();
 //    conf.setBoolean(CRAWL_FILTER_FILTER, false);
 //    conf.setBoolean(CRAWL_FILTER_NORMALISE, false);
 //

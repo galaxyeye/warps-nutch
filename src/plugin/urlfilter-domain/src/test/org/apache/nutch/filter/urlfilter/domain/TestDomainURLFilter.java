@@ -16,13 +16,13 @@
  */
 package org.apache.nutch.filter.urlfilter.domain;
 
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
 
 public class TestDomainURLFilter {
 
@@ -36,7 +36,7 @@ public class TestDomainURLFilter {
   public void testFilter() throws Exception {
 
     String domainFile = SAMPLES + SEPARATOR + "hosts.txt";
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     DomainURLFilter domainFilter = new DomainURLFilter(domainFile);
     domainFilter.setConf(conf);
     assertNotNull(domainFilter.filter("http://lucene.apache.org"));

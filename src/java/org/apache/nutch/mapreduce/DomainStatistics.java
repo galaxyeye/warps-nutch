@@ -36,7 +36,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -228,7 +228,7 @@ public class DomainStatistics extends Configured implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    ToolRunner.run(NutchConfiguration.create(), new DomainStatistics(), args);
+    ToolRunner.run(ConfigUtils.create(), new DomainStatistics(), args);
   }
 
 }

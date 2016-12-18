@@ -24,14 +24,14 @@ import static org.junit.Assert.fail;
 import java.net.MalformedURLException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
 
 public class TestURLNormalizers {
 
   @Test
   public void testURLNormalizers() {
-    Configuration conf = NutchConfiguration.create();
+    Configuration conf = ConfigUtils.create();
     String clazz1 = "org.apache.nutch.net.urlnormalizer.regex.RegexURLNormalizer";
     String clazz2 = "org.apache.nutch.net.urlnormalizer.basic.BasicURLNormalizer";
     conf.set("urlnormalizer.order", clazz1 + " " + clazz2);

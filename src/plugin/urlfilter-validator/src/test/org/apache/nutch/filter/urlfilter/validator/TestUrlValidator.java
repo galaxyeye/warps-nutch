@@ -17,8 +17,7 @@
 package org.apache.nutch.filter.urlfilter.validator;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.filter.urlfilter.validator.UrlValidator;
-import org.apache.nutch.util.NutchConfiguration;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +41,7 @@ public class TestUrlValidator extends TestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     tldLength = conf.getInt("urlfilter.tld.length", 8);
   }
 

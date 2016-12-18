@@ -48,7 +48,7 @@
       <ant dir="parse-tika" target="deploy"/>
       <!--<ant dir="parse-zip" target="deploy"/>-->
       <!--<ant dir="parse-metatags" target="deploy"/>-->
-      <!--<ant dir="protocol-file" target="deploy"/>-->
+      <ant dir="protocol-file" target="deploy"/>
       <!--<ant dir="protocol-ftp" target="deploy"/>-->
       <!--<ant dir="protocol-httpclient" target="deploy"/>-->
       <ant dir="protocol-crowd" target="deploy"/>
@@ -93,7 +93,7 @@
       <ant dir="parse-tika" target="test"/>
       <!--<ant dir="parse-zip" target="test"/>-->
       <!--<ant dir="parse-metatags" target="test"/>-->
-      <!--<ant dir="protocol-file" target="test"/>-->
+      <ant dir="protocol-file" target="test"/>
       <!--<ant dir="protocol-ftp" target="test"/>-->
       <!--<ant dir="protocol-httpclient" target="test"/>-->
       <ant dir="protocol-crowd" target="test"/>
@@ -138,7 +138,7 @@
     <ant dir="parse-tika" target="clean"/>
     <!--<ant dir="parse-zip" target="clean"/>-->
     <!--<ant dir="parse-metatags" target="clean"/>-->
-    <!--<ant dir="protocol-file" target="clean"/>-->
+    <ant dir="protocol-file" target="clean"/>
     <!--<ant dir="protocol-ftp" target="clean"/>-->
     <!--<ant dir="protocol-httpclient" target="clean"/>-->
     <ant dir="protocol-crowd" target="clean"/>

@@ -24,8 +24,8 @@ import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.NutchConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +33,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertTrue;
 
@@ -58,7 +57,7 @@ public class TestMSWordParser {
 
   @Before
   public void setUp() {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
     conf.set("file.content.limit", "-1");
   }
 
@@ -74,11 +73,11 @@ public class TestMSWordParser {
     Parse parse;
     WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("file:" + urlString));
-    page.setContent(ByteBuffer.wrap(bytes));
+    page.setContent(bytes);
     // set the content type?
     MimeUtil mimeutil = new MimeUtil(conf);
     String mtype = mimeutil.getMimeType(file);
-    page.setContentType(new Utf8(mtype));
+    page.setContentType(mtype);
 
     parse = new ParseUtil(conf).parse("file:" + urlString, page);
     return parse.getText();

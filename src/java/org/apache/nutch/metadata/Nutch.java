@@ -100,8 +100,8 @@ public interface Nutch {
 
   float SCORE_DEFAULT = 1.0f;
   float SCORE_INDEX_PAGE = 1.0f;
+  float SCORE_SEED = 1.0f;
   float SCORE_INJECTED = Float.MAX_VALUE / 1000;
-  float SCORE_SEED = SCORE_INJECTED / 1000;
   float SCORE_DETAIL_PAGE = 10000.0f;
   float SCORE_PAGES_FROM_SEED = 10000.0f;
 
@@ -172,6 +172,8 @@ public interface Nutch {
    * */
   /** Index immediately once the content is fetched. */
   String ARG_INDEX = "index";
+  /** Update immediately once the content is fetched. */
+  String ARG_UPDATE = "update";
   /** Solr URL. */
   String ARG_SOLR_URL = "solrUrl";
   /** ZooKeeper. */
@@ -262,6 +264,7 @@ public interface Nutch {
   String PARAM_GENERATOR_COUNT_MODE = "generate.count.mode";
   String PARAM_GENERATOR_TOP_N = "generate.topN";
   String PARAM_GENERATOR_CUR_TIME = "generate.curr.time";
+  String PARAM_GENERATOR_DETAIL_PAGE_RATE = "generate.detail.page.rate";
   String PARAM_GENERATOR_DELAY = "crawl.gen.delay";
   String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
   String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
@@ -281,15 +284,9 @@ public interface Nutch {
   String DOC_FIELD_OUTLINKS_COUNT = "outlinks_count";
 
   /**
-   * Variable holders
+   * Temporary variable holders
    * */
   String VAR_OUTLINKS_COUNT = "outlinks_count";
-
-  /**
-   * Program keys
-   * */
-  String GENERATE_TIME_KEY = "_ngt_";
-  Text WRITABLE_GENERATE_TIME_KEY = new Text(GENERATE_TIME_KEY);
 
   /**
    * Variable values
