@@ -67,23 +67,23 @@ public class ReduceDatumBuilder {
     );
   }
 
-  public Params getParams() { return params; }
+  public Params getParams() {
+    return params;
+  }
 
   public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
     //check if page is already in the db
-    if(page == null && oldPage != null) {
+    if (page == null && oldPage != null) {
       // if we return here inlinks will not be updated
       page = oldPage;
-    }
-    else if (page == null) {
+    } else if (page == null) {
       // Here we got a new webpage from outlink
       if (!additionsAllowed) {
         return;
       }
 
       page = createNewRow(url, MAX_DISTANCE);
-    }
-    else {
+    } else {
       // process the main page
       updateFetchSchedule(url, page);
     }
@@ -91,7 +91,17 @@ public class ReduceDatumBuilder {
     updateRow(url, page);
   }
 
-  public void reset() { inlinkedScoreData.clear(); }
+  public void reset() {
+    inlinkedScoreData.clear();
+  }
+
+  /**
+   *
+   * */
+  public void calculateInlinks(List<ScoreDatum> scoreDatum) {
+    inlinkedScoreData.clear();
+    inlinkedScoreData.addAll(scoreDatum);
+  }
 
   /**
    * In the mapper phrase, NutchWritable is sets to be a WebPage or a ScoreDatum,
@@ -131,11 +141,10 @@ public class ReduceDatumBuilder {
   public WebPage createNewRow(String url, int depth) {
     WebPage page = WebPage.newWebPage();
 
+    page.setDistance(depth);
+
     fetchSchedule.initializeSchedule(url, page);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-
-    page.setDistance(depth);
-    page.setFetchCount(0);
 
     try {
       scoringFilters.initialScore(url, page);
@@ -147,6 +156,9 @@ public class ReduceDatumBuilder {
     return page;
   }
 
+  /**
+   * In Update JIT mode, there is only one inlink score data
+   * */
   public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
     newPage.setReferrer(sourcePage.getBaseUrl());
 
@@ -157,7 +169,6 @@ public class ReduceDatumBuilder {
 
   /**
    * Updated the old row if necessary
-   * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
   public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
     boolean changed = false;
@@ -177,8 +188,8 @@ public class ReduceDatumBuilder {
     }
 
     if (depth < oldDepth) {
-      mainPage.setReferrer(mainPage.getBaseUrl());
       oldPage.setDistance(depth);
+      oldPage.setReferrer(mainPage.getBaseUrl());
       changed = true;
     }
 

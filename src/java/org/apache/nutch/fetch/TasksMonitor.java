@@ -379,14 +379,21 @@ public class TasksMonitor {
 
     if (debugUrls) {
       Params params = Params.of(
-          "FT", DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime()),
+          "FT", DateTimeUtil.format(page.getPrevFetchTime())
+              + " -> "
+              + DateTimeUtil.format(page.getFetchTime()) + " ("
+              + Duration.between(page.getPrevFetchTime(), page.getFetchTime())
+              + ")",
+          "DEP", page.getDepth(),
           "FC", page.getFetchCount(),
-          "RefPT", DateTimeUtil.format(page.getRefPublishTime()),
-          "RefPC", page.getRefArticles(),
-          "OLink", page.getTotalOutLinkCount(),
-          "Score", page.getScore(),
-          "Cash", page.getCash(),
-          "Url -> ", url
+          "PT", DateTimeUtil.format(page.getPublishTime()),
+          "RPT", DateTimeUtil.format(page.getRefPublishTime()),
+          "RPC", page.getRefArticles(),
+          "RC", page.getRefChars(),
+          "OL", page.getTotalOutLinkCount(),
+          "S", page.getScore(),
+          "C", page.getCash(),
+          "U", url
       );
       nutchMetrics.debugUrls(params.formatAsLine(), pageCategory, reportSuffix);
     }

@@ -28,6 +28,7 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
+import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
@@ -651,7 +652,7 @@ public class TaskScheduler extends Configured {
    * Dump fetch threads
    */
   public void dumpFetchThreads() {
-    LOG.debug("There are " + activeFetchThreads.size() + " active fetch threads and " + idleFetchThreads.size() + " idle ones");
+    LOG.debug("Fetch threads : active : " + activeFetchThreads.size() + ", idle : " + idleFetchThreads.size());
 
     activeFetchThreads.stream().filter(Thread::isAlive).forEach(fetchThread -> {
       StackTraceElement[] stack = fetchThread.getStackTrace();
@@ -755,7 +756,7 @@ public class TaskScheduler extends Configured {
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
-    page.get().getMetadata().put(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    page.get().getMetadata().put(FetchJob.REDIRECT_DISCOVERED, YES_VAL);
 
     String reprUrl = setRedirectRepresentativeUrl(page, url, newUrl, temp);
 
@@ -861,24 +862,26 @@ public class TaskScheduler extends Configured {
   }
 
   private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
-    String reversedUrl = urlWithScore.getReversedUrl();
-    String url = TableUtil.unreverseUrl(reversedUrl);
+    String outReversedUrl = urlWithScore.getReversedUrl();
+    String outUrl = TableUtil.unreverseUrl(outReversedUrl);
 
     int newDepth = mainPage.getDepth();
     if (newDepth != MAX_DISTANCE) {
       newDepth += 1;
     }
+    float initScore = urlWithScore.getScore().get();
+    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new ScoreDatum(initScore, outUrl, "", newDepth)));
 
     WebPage oldPage;
     synchronized(context) {
-      oldPage = WebPage.wrap(datastore.get(reversedUrl));
+      oldPage = WebPage.wrap(datastore.get(outReversedUrl));
     }
 
     if (oldPage.isEmpty()) {
-      createNewPage(url, reversedUrl, mainPage, newDepth);
+      createNewPage(outUrl, outReversedUrl, mainPage, newDepth);
     }
     else {
-      tryUpdateOldPage(url, reversedUrl, mainPage, oldPage, newDepth);
+      tryUpdateOldPage(outUrl, outReversedUrl, mainPage, oldPage, newDepth);
     }
   }
 

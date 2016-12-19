@@ -30,6 +30,7 @@ import org.apache.nutch.storage.gora.ParseStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -266,8 +268,8 @@ public class HtmlParser implements Parser {
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
       page.setTextContentLength(doc.getTextContent().length());
-      String publishTime = doc.getField(DOC_FIELD_PUBLISH_TIME);
-      if (publishTime != null) {
+      Instant publishTime = DateTimeUtil.parseTime(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH);
+      if (publishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
         page.setPublishTime(publishTime);
       }
 

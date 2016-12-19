@@ -21,6 +21,10 @@
 # UNLIKE THE NUTCH ALL-IN-ONE-CRAWL COMMAND THIS SCRIPT DOES THE LINK INVERSION AND 
 # INDEXING FOR EACH BATCH
 
+echo "Starting the crawl ..."
+echo "$BASH_SOURCE $@"
+echo
+
 bin="`dirname "$0"`"
 bin="`cd "$bin"; pwd`"
 
@@ -136,16 +140,16 @@ function __bin_nutch {
 }
 
 function __is_crawl_loop_stopped {
-  local STOP=false
+  STOP=0
   if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
    if [ -e ".STOP" ]; then
      mv .STOP ".STOP_EXECUTED_`date +%Y%m%d.%H%M%S`"
    fi
 
-    STOP=true
+    STOP=1
   fi
 
-  [[ $STOP ]] && return 1 || return 0
+  (( $STOP==1 )) && return 0 || return 1
 }
 
 function __check_index_server_available {
@@ -155,6 +159,11 @@ function __check_index_server_available {
 
     if (( $?==0 )); then
       return 0;
+    fi
+
+    if ( __is_crawl_loop_stopped ); then
+      echo "STOP file found - escaping loop"
+      exit 0
     fi
 
     echo "Index server not available, check 15s later ..."
@@ -174,18 +183,9 @@ fi
 # main loop : rounds of generate - fetch - parse - update
 for ((a=1; a <= LIMIT ; a++))
 do
-#  if ( __is_crawl_loop_stopped ); then
-#     echo "STOP file found - escaping loop"
-#     exit 0
-#  fi
-
-  if [ -e ".STOP" ] || [ -e ".KEEP_STOP" ]; then
-   if [ -e ".STOP" ]; then
-     mv .STOP ".STOP_EXECUTED_`date +%Y%m%d.%H%M%S`"
-   fi
-
-   echo "STOP file found - escaping loop"
-   exit 0
+  if ( __is_crawl_loop_stopped ); then
+     echo "STOP file found - escaping loop"
+     exit 0
   fi
 
   if ( ! __check_index_server_available ); then

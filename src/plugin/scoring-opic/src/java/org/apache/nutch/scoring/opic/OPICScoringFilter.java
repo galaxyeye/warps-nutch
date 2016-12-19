@@ -19,6 +19,7 @@ package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
@@ -29,10 +30,14 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * This plugin implements a variant of an Online Page Importance Computation
@@ -95,20 +100,18 @@ public class OPICScoringFilter implements ScoringFilter {
   /** Increase the score by a sum of inlinked scores. */
   @Override
   public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) {
-    float adjust = 0.0f;
-    float factor = 1.0f;
+    float addInlinkedScore = 0.0f;
+    float factor1 = 1.0f;
+    float addArticleScore = getArticleScoreIncrease(row);
+    float factor2 = 2.0f;
 
     // There is no inlinked score data in updateJIT mode
     for (ScoreDatum scoreDatum : inlinkedScoreData) {
-      adjust += scoreDatum.getScore();
+      addInlinkedScore += scoreDatum.getScore();
     }
-    adjust += adjustArticlePageScore(row);
 
-    float oldScore = row.getScore();
-    row.setScore(oldScore + adjust);
-
-    float cash = row.getCash();
-    row.setCash(cash + factor * adjust);
+    row.setScore(row.getScore() + addInlinkedScore + addArticleScore);
+    row.setCash(row.getCash() + factor1 * addInlinkedScore + factor2 * addArticleScore);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
@@ -145,16 +148,26 @@ public class OPICScoringFilter implements ScoringFilter {
     row.setCash(0.0f);
   }
 
-  private float adjustArticlePageScore(WebPage row) {
-    float f1 = 1.0f;
-    float f2 = 2.0f;
+  private float getArticleScoreIncrease(WebPage row) {
+    float oldScore = row.getArticleScore();
 
-    // Every article contributes 1 base score
+    float f1 = 2.0f;
+    float f2 = 1.0f;
+    float f3 = 2.0f;
+
+    // Each article contributes 2 base score
     long ra = row.getRefArticles();
-    // Every one thousand chars contributes another 1 base score
+    // Each one thousand chars contributes another 1 base score
     long rc = row.getRefChars();
+    // Each day descreases 1 base score
+    Instant rpt = row.getRefPublishTime();
+    long rptd = rpt.isBefore(TCP_IP_STANDARDIZED_TIME) ? 0 : ChronoUnit.DAYS.between(rpt, Instant.now());
 
-    return f1 * ra + f2 * ((rc - 1000) / 1000);
+    float newScore = f1 * ra + f2 * ((rc - 1000) / 1000) - f3 * rptd;
+
+    row.setArticleScore(newScore);
+
+    return newScore - oldScore;
   }
 
   /** Dampen the boost value by scorePower. */

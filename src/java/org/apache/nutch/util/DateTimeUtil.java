@@ -100,11 +100,15 @@ public class DateTimeUtil {
 
   public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.HHmmss");
 
-  public static long[] TIME_FACTOR = { 60 * 60 * 1000, 60 * 1000, 1000 };
+  public static long[] TIME_FACTOR = {60 * 60 * 1000, 60 * 1000, 1000};
 
-  public static String format(long time) { return DateFormat.format(time); }
+  public static String format(long time) {
+    return DateFormat.format(time);
+  }
 
-  public static String format(Instant time) { return DateFormat.format(time.toEpochMilli()); }
+  public static String format(Instant time) {
+    return DateFormat.format(time.toEpochMilli());
+  }
 
   public static String format(long time, String format) {
     return new SimpleDateFormat(format).format(time);
@@ -145,12 +149,10 @@ public class DateTimeUtil {
   /**
    * Calculate the elapsed time between two times specified in milliseconds.
    *
-   * @param start
-   *          The start of the time period
-   * @param end
-   *          The end of the time period
+   * @param start The start of the time period
+   * @param end   The end of the time period
    * @return a string of the form "XhYmZs" when the elapsed time is X hours, Y
-   *         minutes and Z seconds or null if start > end.
+   * minutes and Z seconds or null if start > end.
    */
   public static String elapsedTime(long start, long end) {
     if (start > end) {
@@ -177,18 +179,18 @@ public class DateTimeUtil {
     return sb.toString();
   }
 
-  public static Instant parseTime(String date) {
-    Instant time = Instant.EPOCH;
+  public static Instant parseTime(String dateTime, Instant defaultValue) {
+    Instant time = defaultValue;
 
-    if (date == null) {
+    if (dateTime == null) {
       return time;
     }
 
     try {
-      time = Instant.ofEpochMilli(HttpDateFormat.toLong(date));
+      time = Instant.ofEpochMilli(HttpDateFormat.toLong(dateTime));
     } catch (ParseException e) {
       try {
-        Date parsedDate = DateUtils.parseDate(date, GENERAL_DATE_TIME_FORMATS);
+        Date parsedDate = DateUtils.parseDate(dateTime, GENERAL_DATE_TIME_FORMATS);
         time = parsedDate.toInstant();
       } catch (Exception ignored) {}
     }
