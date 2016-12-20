@@ -16,12 +16,8 @@
  */
 package org.apache.nutch.metadata;
 
-import org.apache.avro.util.Utf8;
-import org.apache.commons.collections4.SortedBidiMap;
-import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.fetch.data.FetchQueue;
 
 import java.io.DataInput;
 import java.io.DataOutput;

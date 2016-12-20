@@ -28,7 +28,7 @@ import java.util.List;
 public class ParseStatusUtils {
 
   public static ParseStatus STATUS_SUCCESS = ParseStatus.newBuilder().build();
-  public static final HashMap<Short, String> minorCodes = new HashMap<Short, String>();
+  public static final HashMap<Short, String> minorCodes = new HashMap<>();
 
   static {
     STATUS_SUCCESS.setMajorCode((int) ParseStatusCodes.SUCCESS);
@@ -87,8 +87,7 @@ public class ParseStatusUtils {
     return new Parse("", "", new Outlink[0], status);
   }
 
-  public static Parse getEmptyParse(int minorCode, String message,
-      Configuration conf) {
+  public static Parse getEmptyParse(int minorCode, String message, Configuration conf) {
     ParseStatus status = ParseStatus.newBuilder().build();
     status.setMajorCode((int) ParseStatusCodes.FAILED);
     status.setMinorCode(minorCode);

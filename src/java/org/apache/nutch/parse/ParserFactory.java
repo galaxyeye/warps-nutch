@@ -40,7 +40,7 @@ public final class ParserFactory {
   public static final String DEFAULT_PLUGIN = "*";
 
   /** Empty extension list for caching purposes. */
-  private final List<Extension> EMPTY_EXTENSION_LIST = new ArrayList<Extension>();
+  private final List<Extension> EMPTY_EXTENSION_LIST = new ArrayList<>();
 
   private final Configuration conf;
   private final ExtensionPoint extensionPoint;
@@ -49,22 +49,19 @@ public final class ParserFactory {
   public ParserFactory(Configuration conf) {
     this.conf = conf;
     ObjectCache objectCache = ObjectCache.get(conf);
-    this.extensionPoint = PluginRepository.get(conf).getExtensionPoint(
-        Parser.X_POINT_ID);
-    this.parsePluginList = (ParsePluginList) objectCache
-        .getObject(ParsePluginList.class.getName());
+    this.extensionPoint = PluginRepository.get(conf).getExtensionPoint(Parser.X_POINT_ID);
+    this.parsePluginList = (ParsePluginList) objectCache.getObject(ParsePluginList.class.getName());
     if (this.parsePluginList == null) {
       this.parsePluginList = new ParsePluginsReader().parse(conf);
-      objectCache.setObject(ParsePluginList.class.getName(),
-          this.parsePluginList);
+      objectCache.setObject(ParsePluginList.class.getName(), this.parsePluginList);
     }
 
     if (this.extensionPoint == null) {
       throw new RuntimeException("x point " + Parser.X_POINT_ID + " not found.");
     }
+
     if (this.parsePluginList == null) {
-      throw new RuntimeException(
-          "Parse Plugins preferences could not be loaded.");
+      throw new RuntimeException("Parse Plugins preferences could not be loaded.");
     }
   }
 
@@ -136,6 +133,7 @@ public final class ParserFactory {
         }
       }
     }
+
     return parsers.toArray(new Parser[] {});
   }
 
@@ -227,7 +225,6 @@ public final class ParserFactory {
    */
   @SuppressWarnings("unchecked")
   protected List<Extension> getExtensions(String contentType) {
-
     ObjectCache objectCache = ObjectCache.get(conf);
     // First of all, tries to clean the content-type
     String type;

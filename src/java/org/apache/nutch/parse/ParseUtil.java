@@ -36,7 +36,6 @@ import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
@@ -221,6 +220,7 @@ public class ParseUtil {
 
     page.setSignature(sig.calculate(page));
 
+    // TODO : preformance issue
     String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
     Map<CharSequence, CharSequence> outlinks = Stream.of(parse.getOutlinks())
         .map(l -> Pair.of(new Utf8(normalizeUrlToEmpty(page, l.getToUrl())), new Utf8(l.getAnchor())))
@@ -232,11 +232,6 @@ public class ParseUtil {
     page.setOutlinks(outlinks);
 
     // TODO : Marks should be set in mapper or reducer, not util methods
-//    Utf8 fetchMark = Mark.FETCH.getMark(page);
-//    if (fetchMark != null) {
-//      Mark.PARSE.putMark(page, fetchMark);
-//    }
-
     page.putMarkIfNonNull(Mark.PARSE, page.getMark(Mark.FETCH));
   }
 

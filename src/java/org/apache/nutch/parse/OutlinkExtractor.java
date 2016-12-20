@@ -17,20 +17,13 @@
 
 package org.apache.nutch.parse;
 
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.oro.text.regex.MatchResult;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternCompiler;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.PatternMatcherInput;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
+import org.apache.oro.text.regex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Extractor to extract {@link org.apache.nutch.parse.Outlink}s / URLs from
@@ -47,8 +40,7 @@ import org.slf4j.LoggerFactory;
  * @since 0.7
  */
 public class OutlinkExtractor {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(OutlinkExtractor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OutlinkExtractor.class);
 
   /**
    * Regex pattern to get URLs within a plain text.
@@ -85,16 +77,14 @@ public class OutlinkExtractor {
    * 
    * @return Array of <code>Outlink</code>s within found in plainText
    */
-  public static Outlink[] getOutlinks(final String plainText, String anchor,
-      Configuration conf) {
+  public static Outlink[] getOutlinks(final String plainText, String anchor, Configuration conf) {
     long start = System.currentTimeMillis();
-    final List<Outlink> outlinks = new ArrayList<Outlink>();
+    final List<Outlink> outlinks = new ArrayList<>();
 
     try {
       final PatternCompiler cp = new Perl5Compiler();
       final Pattern pattern = cp.compile(URL_PATTERN,
-          Perl5Compiler.CASE_INSENSITIVE_MASK | Perl5Compiler.READ_ONLY_MASK
-              | Perl5Compiler.MULTILINE_MASK);
+          Perl5Compiler.CASE_INSENSITIVE_MASK | Perl5Compiler.READ_ONLY_MASK | Perl5Compiler.MULTILINE_MASK);
       final PatternMatcher matcher = new Perl5Matcher();
 
       final PatternMatcherInput input = new PatternMatcherInput(plainText);
@@ -128,7 +118,7 @@ public class OutlinkExtractor {
     final Outlink[] retval;
 
     // create array of the Outlinks
-    if (outlinks != null && outlinks.size() > 0) {
+    if (outlinks.size() > 0) {
       retval = outlinks.toArray(new Outlink[0]);
     } else {
       retval = new Outlink[0];

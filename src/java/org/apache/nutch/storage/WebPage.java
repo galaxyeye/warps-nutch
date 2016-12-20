@@ -330,7 +330,17 @@ public class WebPage {
 
   /**
    * Header information returned from the web server used to server the content which is subsequently fetched from.
-   * This includes keys such as TRANSFER_ENCODING, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_LOCATION, CONTENT_DISPOSITION, CONTENT_MD5, CONTENT_TYPE, LAST_MODIFIED and LOCATION.
+   * This includes keys such as
+   * TRANSFER_ENCODING,
+   * CONTENT_ENCODING,
+   * CONTENT_LANGUAGE,
+   * CONTENT_LENGTH,
+   * CONTENT_LOCATION,
+   * CONTENT_DISPOSITION,
+   * CONTENT_MD5,
+   * CONTENT_TYPE,
+   * LAST_MODIFIED
+   * and LOCATION.
    * * @param value the value to set.
    */
   public void setHeaders(Map<CharSequence, CharSequence> value) {
@@ -413,27 +423,6 @@ public class WebPage {
 
   public boolean isSeed() {
     return hasMetadata(Name.IS_SEED);
-  }
-
-  public float getFloatMetadata(Name name, float defaultValue) {
-    return getFloatMetadata(name.value(), defaultValue);
-  }
-
-  public float getFloatMetadata(String name, float defaultValue) {
-    ByteBuffer raw = page.getMetadata().get(u8(name));
-    float value = defaultValue;
-    if (raw != null) {
-      value = Bytes.toFloat(raw.array(), raw.arrayOffset() + raw.position());
-    }
-    return value;
-  }
-
-  public void setFloatMetadata(Name name, float value) {
-    setFloatMetadata(name.value(), value);
-  }
-
-  public void setFloatMetadata(String key, float value) {
-    page.getMetadata().put(u8(key), ByteBuffer.wrap(Bytes.toBytes(value)));
   }
 
   public void setTextContentLength(int length) {
@@ -897,6 +886,27 @@ public class WebPage {
   public Map<String, String> getMetadataAsStringBinary() {
     return page.getMetadata().entrySet().stream()
         .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Bytes.toStringBinary(e.getValue())));
+  }
+
+  public float getFloatMetadata(Name name, float defaultValue) {
+    return getFloatMetadata(name.value(), defaultValue);
+  }
+
+  public float getFloatMetadata(String name, float defaultValue) {
+    ByteBuffer raw = page.getMetadata().get(u8(name));
+    float value = defaultValue;
+    if (raw != null) {
+      value = Bytes.toFloat(raw.array(), raw.arrayOffset() + raw.position());
+    }
+    return value;
+  }
+
+  public void setFloatMetadata(Name name, float value) {
+    setFloatMetadata(name.value(), value);
+  }
+
+  public void setFloatMetadata(String key, float value) {
+    page.getMetadata().put(u8(key), ByteBuffer.wrap(Bytes.toBytes(value)));
   }
 
   @Contract("_ -> !null")

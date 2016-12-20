@@ -19,7 +19,6 @@ import java.util.Set;
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
-
 /**
  * <p>
  * Mapper class for SimpleFetcher.
