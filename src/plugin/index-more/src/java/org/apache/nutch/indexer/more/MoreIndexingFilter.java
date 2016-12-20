@@ -63,7 +63,7 @@ public class MoreIndexingFilter implements IndexingFilter {
 
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
-      time = DateTimeUtil.parseTime(lastModified.toString()); // use as time
+      time = DateTimeUtil.parseTime(lastModified.toString(), Instant.EPOCH); // use as time
     }
 
     if (time.toEpochMilli() > 0) { // if no last-modified

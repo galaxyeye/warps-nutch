@@ -285,12 +285,16 @@ public class WebPage {
     page.setParseStatus(value);
   }
 
-  public float getScore() {
-    return page.getScore();
-  }
+  public float getScore() { return page.getScore(); }
 
   public void setScore(float value) {
     page.setScore(value);
+  }
+
+  public float getArticleScore() { return getFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f); }
+
+  public void setArticleScore(float value) {
+    setFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f);
   }
 
   public CharSequence getReprUrl() {
@@ -599,21 +603,12 @@ public class WebPage {
     return getMetadata(Name.VOTE_HISTORY, "");
   }
 
-  public void setPublishTime(String publishTime) {
-    putMetadata(Name.PUBLISH_TIME, publishTime);
-  }
-
-  public void setPublishTime(Date publishTime) {
+  public void setPublishTime(Instant publishTime) {
     putMetadata(Name.PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
-  public String getPublishTimeStr() {
-    return getMetadata(Name.PUBLISH_TIME);
-  }
-
   public Instant getPublishTime() {
-    String publishTimeStr = getPublishTimeStr();
-    return DateTimeUtil.parseTime(publishTimeStr);
+    return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH);
   }
 
   public String getReferrer() {
@@ -693,17 +688,27 @@ public class WebPage {
   }
 
   public Instant getRefPublishTime() {
-    String publishTimeStr = getMetadata(Name.REFERRED_PUBLISH_TIME);
-    return DateTimeUtil.parseTime(publishTimeStr);
+    String time = getMetadata(Name.REFERRED_PUBLISH_TIME);
+    return DateTimeUtil.parseTime(time, Instant.EPOCH);
   }
 
   public void setRefPublishTime(Instant publishTime) {
     putMetadata(Name.REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
+  public Instant getPrevRefPublishTime() {
+    String time = getMetadata(Name.PREV_REFERRED_PUBLISH_TIME);
+    return DateTimeUtil.parseTime(time, Instant.EPOCH);
+  }
+
+  public void setPrevRefPublishTime(Instant publishTime) {
+    putMetadata(Name.PREV_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+  }
+
   public boolean updateRefPublishTime(Instant newPublishTime) {
     Instant latestTime = getRefPublishTime();
     if (newPublishTime.isAfter(latestTime)) {
+      setPrevRefPublishTime(latestTime);
       setRefPublishTime(newPublishTime);
       return true;
     }
@@ -714,7 +719,7 @@ public class WebPage {
   public Instant getHeaderLastModifiedTime(Instant defaultValue) {
     CharSequence lastModified = page.getHeaders().get(u8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) {
-      return DateTimeUtil.parseTime(lastModified.toString());
+      return DateTimeUtil.parseTime(lastModified.toString(), Instant.EPOCH);
     }
 
     return defaultValue;
@@ -737,7 +742,7 @@ public class WebPage {
     String fetchTimeHistory = getFetchTimeHistory("");
     if (!fetchTimeHistory.isEmpty()) {
       String[] times = fetchTimeHistory.split(",");
-      Instant time = DateTimeUtil.parseTime(times[0]);
+      Instant time = DateTimeUtil.parseTime(times[0], Instant.EPOCH);
       if (time.isAfter(Instant.EPOCH)) {
         firstCrawlTime = time;
       }
@@ -766,7 +771,7 @@ public class WebPage {
     String indexTimeHistory = getIndexTimeHistory("");
     if (!indexTimeHistory.isEmpty()) {
       String[] times = indexTimeHistory.split(",");
-      Instant time = DateTimeUtil.parseTime(times[0]);
+      Instant time = DateTimeUtil.parseTime(times[0], Instant.EPOCH);
       if (time.isAfter(Instant.EPOCH)) {
         firstIndexTime = time;
       }

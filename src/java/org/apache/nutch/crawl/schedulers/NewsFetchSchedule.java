@@ -105,6 +105,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     }
     else {
       // If there is no any updates in 72 hours, check the page at least 1 hour later
+      // TODO : fetch it at night
       long inc = (long)(interval.getSeconds() * INC_RATE);
 
       interval = interval.plusSeconds(inc);

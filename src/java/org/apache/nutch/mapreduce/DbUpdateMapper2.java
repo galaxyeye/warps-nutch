@@ -91,9 +91,9 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
 
     for (ScoreDatum scoreDatum : scoreData) {
       String reversedOut = TableUtil.reverseUrl(scoreDatum.getUrl());
-      scoreDatum.setUrl(url);
-      urlWithScore.setReversedUrl(reversedOut);
-      urlWithScore.setScore(scoreDatum.getScore());
+      scoreDatum.setUrl(url); // the referrer page's url
+      urlWithScore.setReversedUrl(reversedOut); // out page's url
+      urlWithScore.setScore(scoreDatum.getScore()); // out page's init score
       nutchWritable.set(scoreDatum);
       context.write(urlWithScore, nutchWritable);
     }

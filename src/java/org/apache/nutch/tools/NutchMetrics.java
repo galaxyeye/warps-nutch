@@ -96,7 +96,7 @@ public class NutchMetrics implements AutoCloseable {
   }
 
   public void reportRedirects(String redirectString, String reportSuffix) {
-    writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
+    // writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
   }
 
   public void reportUrlsFromSeed(String url, String seedUrl, String reportSuffix) {
@@ -105,7 +105,7 @@ public class NutchMetrics implements AutoCloseable {
   }
 
   public void reportFetchTimeHistory(String fetchTimeHistory, String reportSuffix) {
-    writeReport(fetchTimeHistory, "fetch-time-history-" + reportSuffix + ".txt");
+    // writeReport(fetchTimeHistory, "fetch-time-history-" + reportSuffix + ".txt");
   }
 
   public void reportGeneratedHosts(Set<String> hostNames, String postfix) {

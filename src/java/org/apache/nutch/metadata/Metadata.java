@@ -54,6 +54,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     FETCH_COUNT("FC"),
     FETCH_PRIORITY("FP"),
     REFERRER("R"),
+    PREV_REFERRED_PUBLISH_TIME("PRPT"),
     REFERRED_PUBLISH_TIME("RPT"),
     REFERRED_ARTICLES("RA"),
     REFERRED_CHARS("RC"),
@@ -62,6 +63,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     PAGE_CATEGORY_LIKELIHOOD("PCL"),
     PAGE_CATEGORY("PC"),
 
+    ARTICLE_SCORE_KEY("ask"),
     CASH_KEY("CASH");
     private String value;
     Name(String value) {this.value = value; }
