@@ -18,8 +18,6 @@ package org.apache.nutch.mapreduce;
 
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
-import org.apache.avro.util.Utf8;
-import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
@@ -33,7 +31,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -140,9 +137,7 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     page.setBatchId(batchId);
     // Generate time, we will use this mark to decide if we re-generate this page
     page.setGenerateTime(startTime);
-    page.setFetchPriority(page.calculateFetchPriority());
-
-//    page.get().getMetadata().put("test", ByteBuffer.wrap("test".getBytes()));
+    page.setFetchPriority(page.sniffFetchPriority());
 
     page.removeMark(Mark.INJECT);
     page.putMark(Mark.GENERATE, batchId);

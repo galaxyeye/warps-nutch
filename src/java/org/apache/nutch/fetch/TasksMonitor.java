@@ -7,6 +7,7 @@ import com.google.common.collect.TreeMultiset;
 import org.apache.commons.collections4.SortedBidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
@@ -378,23 +379,26 @@ public class TasksMonitor {
     }
 
     if (debugUrls) {
+      Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
+      String fetchTimeString =
+          DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime())
+              + " (" + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss") + ")";
+      final DecimalFormat df = new DecimalFormat("0.00");
+
       Params params = Params.of(
-          "FT", DateTimeUtil.format(page.getPrevFetchTime())
-              + " -> "
-              + DateTimeUtil.format(page.getFetchTime()) + " ("
-              + Duration.between(page.getPrevFetchTime(), page.getFetchTime())
-              + ")",
+          "FT", fetchTimeString,
           "DEP", page.getDepth(),
           "FC", page.getFetchCount(),
           "PT", DateTimeUtil.format(page.getPublishTime()),
           "RPT", DateTimeUtil.format(page.getRefPublishTime()),
-          "RPC", page.getRefArticles(),
+          "RA", page.getRefArticles(),
           "RC", page.getRefChars(),
           "OL", page.getTotalOutLinkCount(),
-          "S", page.getScore(),
-          "C", page.getCash(),
-          "U", url
-      );
+          "S", df.format(page.getScore()),
+          "AS", df.format(page.getArticleScore()),
+          "C", df.format(page.getCash()),
+          "U", StringUtils.substring(url, 0, 80)
+      ).withKVDelimiter(":");
       nutchMetrics.debugUrls(params.formatAsLine(), pageCategory, reportSuffix);
     }
 

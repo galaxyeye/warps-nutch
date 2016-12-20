@@ -16,6 +16,8 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.filter.*;
@@ -34,6 +36,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -41,6 +44,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+import static org.apache.nutch.metadata.Metadata.Name.TMP_PAGE_FROM_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEntry, GoraWebPage> {
@@ -148,7 +152,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       return;
     }
 
-    int priority = page.calculateFetchPriority();
+    int priority = page.sniffFetchPriority();
     float initSortScore = calculateInitSortScore(page);
     float sortScore = 0.0f;
 
@@ -156,6 +160,23 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       // Typically, we use OPIC scoring filter
       sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
     } catch (ScoringFilterException ignored) {}
+
+    boolean debugPageFromSeed = true;
+    int depth = page.getDepth();
+    if (debugPageFromSeed && page.hasMetadata(TMP_PAGE_FROM_SEED)) {
+      if (depth != 1 || priority < FETCH_PRIORITY_DETAIL_PAGE || initSortScore < SCORE_DETAIL_PAGE) {
+        String report = Params.of(
+            "fromSeed", true,
+            "depth", depth,
+            "priority", priority,
+            "score", page.getScore(),
+            "initSortScore", initSortScore,
+            "sortScore", sortScore,
+            " -> ", url
+        ).formatAsLine();
+        nutchMetrics.reportPageFromSeed(report, reportSuffix);
+      }
+    }
 
     output(url, new SelectorEntry(url, priority, sortScore), page, context);
 
@@ -277,7 +298,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
       if (depth == 0) {
         getCounter().increase(Counter.seedsFetchLater);
-        debugFetchLaterSeeds(page);
+        debugFetchLaterSeeds(url, page);
       }
 
       return false;
@@ -343,17 +364,28 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     getCounter().updateAffectedRows(url);
   }
 
-  private void debugFetchLaterSeeds(WebPage page) {
-    String report = Params.formatAsLine(
-        "CurrTime", DateTimeUtil.format(pseudoCurrTime),
-        "LastRefPT", DateTimeUtil.format(page.getRefPublishTime()),
-        "RefPC", page.getRefArticles(),
-        "PrevFetchTime", DateTimeUtil.format(page.getPrevFetchTime()),
-        "FetchTime", DateTimeUtil.format(page.getFetchTime()),
-        "seeds", page.isSeed(),
-        "->\t", page.getBaseUrl()
-    );
+  private void debugFetchLaterSeeds(String url, WebPage page) {
+    Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
+    String fetchTimeString =
+        DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime())
+            + " (" + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss") + ")";
+    final DecimalFormat df = new DecimalFormat("0.00");
 
-    nutchMetrics.debugFetchLaterSeeds(report, reportSuffix);
+    Params params = Params.of(
+        "FT", fetchTimeString,
+        "DEP", page.getDepth(),
+        "FC", page.getFetchCount(),
+        "PT", DateTimeUtil.format(page.getPublishTime()),
+        "RPT", DateTimeUtil.format(page.getRefPublishTime()),
+        "RA", page.getRefArticles(),
+        "RC", page.getRefChars(),
+        "OL", page.getTotalOutLinkCount(),
+        "S", df.format(page.getScore()),
+        "AS", df.format(page.getArticleScore()),
+        "C", df.format(page.getCash()),
+        "U", StringUtils.substring(url, 0, 80)
+    ).withKVDelimiter(":");
+
+    nutchMetrics.debugFetchLaterSeeds(params.formatAsLine(), reportSuffix);
   }
 }

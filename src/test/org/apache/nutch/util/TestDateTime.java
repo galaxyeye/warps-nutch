@@ -2,6 +2,7 @@ package org.apache.nutch.util;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.junit.Test;
 
 import java.sql.Timestamp;
@@ -70,6 +71,9 @@ public class TestDateTime {
     System.out.println(Duration.ofDays(365 * 100).getSeconds());
 
     System.out.println(Duration.ofMinutes(60).toMillis());
+
+    System.out.println(DurationFormatUtils.formatDuration(gap.toMillis(), "d\' days \'H\' hours \'m\' minutes \'s\' seconds\'"));
+    System.out.println(DurationFormatUtils.formatDuration(gap.toMillis(), "d\'days\' H:mm:ss"));
   }
 
   @Test

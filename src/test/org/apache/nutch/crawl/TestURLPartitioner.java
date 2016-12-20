@@ -184,7 +184,7 @@ public class TestURLPartitioner {
     // init selector entry (score shouldn't matter)
     SelectorEntry selectorEntry = new SelectorEntry("http://www.example.org/", 1337);
     WebPage page = WebPage.newWebPage();
-    int partitionFromSig = sigPartitioner.getPartition(selectorEntry, page, numReduceTasks);
+    int partitionFromSig = sigPartitioner.getPartition(selectorEntry, page.get(), numReduceTasks);
 
     assertEquals("partitions should be same", partitionFromRef, partitionFromSig);
   }

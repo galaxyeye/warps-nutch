@@ -50,6 +50,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
 
     VOTE_HISTORY("VH"),
     PUBLISH_TIME("PT"),
+    PREV_PUBLISH_TIME("PPT"),
     TEXT_CONTENT_LENGTH("TCL"),
     FETCH_COUNT("FC"),
     FETCH_PRIORITY("FP"),
@@ -63,8 +64,10 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     PAGE_CATEGORY_LIKELIHOOD("PCL"),
     PAGE_CATEGORY("PC"),
 
-    ARTICLE_SCORE_KEY("ask"),
-    CASH_KEY("CASH");
+    ARTICLE_SCORE_KEY("ASK"),
+    CASH_KEY("CASH"),
+
+    TMP_PAGE_FROM_SEED("TPFS");
     private String value;
     Name(String value) {this.value = value; }
     public String value() { return this.value; }

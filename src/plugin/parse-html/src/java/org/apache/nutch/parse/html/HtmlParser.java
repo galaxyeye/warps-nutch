@@ -268,10 +268,7 @@ public class HtmlParser implements Parser {
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
 
       page.setTextContentLength(doc.getTextContent().length());
-      Instant publishTime = DateTimeUtil.parseTime(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH);
-      if (publishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
-        page.setPublishTime(publishTime);
-      }
+      page.updatePublishTime(DateTimeUtil.parseTime(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH));
 
     } catch (ProcessingException|SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());

@@ -14,7 +14,6 @@ import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +22,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.storage.Mark.*;
@@ -170,7 +166,7 @@ public class ReduceDatumBuilder {
   /**
    * Updated the old row if necessary
    * */
-  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int depth, int oldDepth) {
+  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int newDepth, int oldDepth) {
     boolean changed = false;
     boolean detail = oldPage.veryLikeDetailPage();
 
@@ -187,8 +183,8 @@ public class ReduceDatumBuilder {
       changed = true;
     }
 
-    if (depth < oldDepth) {
-      oldPage.setDistance(depth);
+    if (newDepth < oldDepth) {
+      oldPage.setDistance(newDepth);
       oldPage.setReferrer(mainPage.getBaseUrl());
       changed = true;
     }
@@ -244,18 +240,6 @@ public class ReduceDatumBuilder {
     // Clear temporary metadata
     page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
     page.clearMetadata(Metadata.Name.GENERATE_TIME);
-
-    // Clear markers
-//    Mark.INJECT.removeMarkIfExist(page);
-//    Mark.GENERATE.removeMarkIfExist(page);
-//    Mark.FETCH.removeMarkIfExist(page);
-//
-//    Utf8 parseMark = Mark.PARSE.getMark(page);
-//    if (parseMark != null) {
-//      Mark.PARSE.removeMark(page);
-//      // What about INDEX?
-//      Mark.UPDATEDB.putMark(page, parseMark);
-//    }
 
     page.putMarkIfNonNull(UPDATEDB, page.getMark(PARSE));
 

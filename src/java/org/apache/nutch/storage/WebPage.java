@@ -36,7 +36,6 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -217,11 +216,6 @@ public class WebPage {
     page.setContentType(u8(value.trim().toLowerCase()));
   }
 
-  @Deprecated
-  public void setContentType(CharSequence value) {
-    page.setContentType(value);
-  }
-
   public ByteBuffer getPrevSignature() {
     return page.getPrevSignature();
   }
@@ -242,11 +236,6 @@ public class WebPage {
     return getSignature() == null ? "" : StringUtil.toHexString(getSignature());
   }
 
-  @Deprecated
-  public void setSignature(ByteBuffer value) {
-    page.setSignature(value);
-  }
-
   public void setSignature(byte[] value) {
     page.setSignature(ByteBuffer.wrap(value));
   }
@@ -259,18 +248,8 @@ public class WebPage {
     if (value != null) page.setTitle(u8(value));
   }
 
-  @Deprecated
-  public void setTitle(CharSequence value) {
-    page.setTitle(value);
-  }
-
   public String getText() {
     return page.getText() == null ? "" : page.getText().toString();
-  }
-
-  @Deprecated
-  public void setText(CharSequence value) {
-    page.setText(value);
   }
 
   public void setText(String value) {
@@ -299,11 +278,6 @@ public class WebPage {
 
   public CharSequence getReprUrl() {
     return page.getReprUrl();
-  }
-
-  @Deprecated
-  public void setReprUrl(CharSequence value) {
-    page.setReprUrl(value);
   }
 
   public void setReprUrl(String value) {
@@ -518,12 +492,12 @@ public class WebPage {
     }
   }
 
-  public int calculateFetchPriority() {
-    int depth = getDepth();
-    int priority = FETCH_PRIORITY_DEFAULT;
+  public int sniffFetchPriority() {
+    int priority = getFetchPriority(FETCH_PRIORITY_DEFAULT);
 
+    int depth = getDepth();
     if (depth < FETCH_PRIORITY_DEPTH_BASE) {
-      priority = FETCH_PRIORITY_DEPTH_BASE - depth;
+      priority = Math.max(priority, FETCH_PRIORITY_DEPTH_BASE - depth);
     }
 
     return priority;
@@ -603,12 +577,28 @@ public class WebPage {
     return getMetadata(Name.VOTE_HISTORY, "");
   }
 
+  public Instant getPublishTime() {
+    return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH);
+  }
+
   public void setPublishTime(Instant publishTime) {
     putMetadata(Name.PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
-  public Instant getPublishTime() {
-    return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH);
+  public void updatePublishTime(Instant newPublishTime) {
+    Instant publishTime = getPublishTime();
+    if (newPublishTime.isAfter(publishTime) && newPublishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
+      setPrevPublishTime(publishTime);
+      setPublishTime(newPublishTime);
+    }
+  }
+
+  public Instant getPrevPublishTime() {
+    return DateTimeUtil.parseTime(getMetadata(Name.PREV_PUBLISH_TIME), Instant.EPOCH);
+  }
+
+  public void setPrevPublishTime(Instant publishTime) {
+    putMetadata(Name.PREV_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
   public String getReferrer() {
@@ -705,11 +695,14 @@ public class WebPage {
     putMetadata(Name.PREV_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
   }
 
-  public boolean updateRefPublishTime(Instant newPublishTime) {
+  public boolean updateRefPublishTime(Instant newRefPublishTime) {
     Instant latestTime = getRefPublishTime();
-    if (newPublishTime.isAfter(latestTime)) {
+    if (newRefPublishTime.isAfter(latestTime)) {
       setPrevRefPublishTime(latestTime);
-      setRefPublishTime(newPublishTime);
+      setRefPublishTime(newRefPublishTime);
+
+      updatePublishTime(newRefPublishTime);
+
       return true;
     }
 

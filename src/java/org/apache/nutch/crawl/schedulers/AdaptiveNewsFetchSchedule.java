@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
@@ -39,7 +40,7 @@ import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
  *
  * @author Vincent Zhang
  */
-public class NewsFetchSchedule extends AdaptiveFetchSchedule {
+public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   public static final Logger LOG = AbstractFetchSchedule.LOG;
 
   public void setConf(Configuration conf) {
@@ -57,7 +58,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
 
     boolean changed = false;
     if (page.isSeed()) {
-      interval = MIN_INTERVAL;
+      interval = adjustSeedFetchInterval(page, fetchTime, interval);
       changed = true;
     }
     else if (page.veryLikeDetailPage()) {
@@ -76,5 +77,49 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     else {
       super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
     }
+  }
+
+  /**
+   * Adjust fetch interval for article pages
+   * */
+  private Duration adjustSeedFetchInterval(WebPage page, Instant fetchTime, Duration interval) {
+    int fetchCount = page.getFetchCount();
+    if (fetchCount <= 1) {
+      // Referred publish time is not initialized yet for this seed page
+      return MIN_INTERVAL;
+    }
+
+    Instant refPublishTime = page.getRefPublishTime();
+    if (refPublishTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
+      LOG.warn("Unexpected referred publish time : " + refPublishTime + ", " + page.getBaseUrl());
+    }
+
+    long hours = ChronoUnit.HOURS.between(refPublishTime, fetchTime);
+    if (hours <= 24) {
+      // There are updates today, keep re-fetch the page in every crawl loop
+      interval = MIN_INTERVAL;
+    }
+    else if (hours <= 72) {
+      // If there is not updates in 24 hours but there are updates in 72 hours, re-fetch the page a hour later
+      interval = Duration.ofHours(1);
+    }
+    else {
+      // If there is no any updates in 72 hours, check the page at least 1 hour later
+      // TODO : fetch it at night
+      long inc = (long)(interval.getSeconds() * INC_RATE);
+
+      interval = interval.plusSeconds(inc);
+      if (interval.toHours() < 1) {
+        interval = Duration.ofHours(1);
+      }
+    }
+
+    // No longer than SEED_MAX_INTERVAL
+    if (interval.compareTo(SEED_MAX_INTERVAL) > 0) {
+      // TODO : LOG non-updating seeds
+      interval = SEED_MAX_INTERVAL;
+    }
+
+    return interval;
   }
 }

@@ -99,9 +99,14 @@ public class NutchMetrics implements AutoCloseable {
     // writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
   }
 
-  public void reportUrlsFromSeed(String url, String seedUrl, String reportSuffix) {
-    String reportString = seedUrl + " -> " + url + "\n";
-    writeReport(reportString, "fetch-urls-from-seed-" + reportSuffix + ".txt");
+  public void reportPageFromSeedersist(String report, String reportSuffix) {
+    // String reportString = seedUrl + " -> " + url + "\n";
+    writeReport(report + "\n", "fetch-urls-from-seed-persist-" + reportSuffix + ".txt");
+  }
+
+  public void reportPageFromSeed(String report, String reportSuffix) {
+    // String reportString = seedUrl + " -> " + url + "\n";
+    writeReport(report + "\n", "fetch-urls-from-seed-" + reportSuffix + ".txt");
   }
 
   public void reportFetchTimeHistory(String fetchTimeHistory, String reportSuffix) {

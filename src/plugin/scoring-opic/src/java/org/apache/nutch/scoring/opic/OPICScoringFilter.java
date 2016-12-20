@@ -19,7 +19,6 @@ package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
@@ -36,8 +35,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * This plugin implements a variant of an Online Page Importance Computation
@@ -102,7 +99,7 @@ public class OPICScoringFilter implements ScoringFilter {
   public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) {
     float addInlinkedScore = 0.0f;
     float factor1 = 1.0f;
-    float addArticleScore = getArticleScoreIncrease(row);
+    float articleScoreDelta = updateArticleScore(row);
     float factor2 = 2.0f;
 
     // There is no inlinked score data in updateJIT mode
@@ -110,8 +107,8 @@ public class OPICScoringFilter implements ScoringFilter {
       addInlinkedScore += scoreDatum.getScore();
     }
 
-    row.setScore(row.getScore() + addInlinkedScore + addArticleScore);
-    row.setCash(row.getCash() + factor1 * addInlinkedScore + factor2 * addArticleScore);
+    row.setScore(row.getScore() + addInlinkedScore + articleScoreDelta);
+    row.setCash(row.getCash() + factor1 * addInlinkedScore);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
@@ -148,7 +145,7 @@ public class OPICScoringFilter implements ScoringFilter {
     row.setCash(0.0f);
   }
 
-  private float getArticleScoreIncrease(WebPage row) {
+  private float updateArticleScore(WebPage row) {
     float oldScore = row.getArticleScore();
 
     float f1 = 2.0f;
@@ -160,10 +157,13 @@ public class OPICScoringFilter implements ScoringFilter {
     // Each one thousand chars contributes another 1 base score
     long rc = row.getRefChars();
     // Each day descreases 1 base score
-    Instant rpt = row.getRefPublishTime();
-    long rptd = rpt.isBefore(TCP_IP_STANDARDIZED_TIME) ? 0 : ChronoUnit.DAYS.between(rpt, Instant.now());
+    long rptd = ChronoUnit.DAYS.between(row.getRefPublishTime(), Instant.now());
+    if (rptd > 30) {
+      // Invalid ref publish time, descrease 1 base score
+      rptd = 1;
+    }
 
-    float newScore = f1 * ra + f2 * ((rc - 1000) / 1000) - f3 * rptd;
+    float newScore = f1 * ra + f2 * (rc / 1000) - f3 * rptd;
 
     row.setArticleScore(newScore);
 

@@ -29,16 +29,15 @@ import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.storage.StorageUtils;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,7 +80,7 @@ public class TaskScheduler extends Configured {
     pagesTho, mbTho,
     rowsRedirect,
     seeds,
-    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUpdated,
+    pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUp,
     pagesPeresist, existOutPages, newPages, newDetailPages
   }
 
@@ -94,7 +93,7 @@ public class TaskScheduler extends Configured {
   private final NutchContext context;
   private final NutchCounter counter;
 
-  private final TasksMonitor tasksMonitor;// all fetch items are contained in several queues
+  private final TasksMonitor tasksMonitor; // all fetch items are contained in several queues
   private final Queue<FetchResult> fetchResultQueue = new ConcurrentLinkedQueue<>();
 
   /**
@@ -746,13 +745,8 @@ public class TaskScheduler extends Configured {
       return;
     }
 
-    if (ignoreExternalLinks) {
-      String toHost = new URL(newUrl).getHost().toLowerCase();
-      String fromHost = new URL(url).getHost().toLowerCase();
-      if (!toHost.equals(fromHost)) {
-        // External links
-        return;
-      }
+    if (ignoreExternalLinks && NetUtil.isExternalLink(url, newUrl)) {
+      return;
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
@@ -835,19 +829,17 @@ public class TaskScheduler extends Configured {
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
-    synchronized(mapDatumBuilder) {
-      mapDatumBuilder.reset();
-      reduceDatumBuilder.reset();
+  private synchronized void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
+    mapDatumBuilder.reset();
+    reduceDatumBuilder.reset();
 
-      // Do not follow detail pages for public opinion tracking
-      if (!mainPage.veryLikeDetailPage()) {
-        Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
-        outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
-      }
-
-      persistMainPage(url, reversedUrl, mainPage);
+    // Do not follow detail pages for public opinion tracking
+    if (!mainPage.veryLikeDetailPage()) {
+      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
+      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
     }
+
+    persistMainPage(url, reversedUrl, mainPage);
   }
 
   @SuppressWarnings("unchecked")
@@ -872,44 +864,71 @@ public class TaskScheduler extends Configured {
     float initScore = urlWithScore.getScore().get();
     reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new ScoreDatum(initScore, outUrl, "", newDepth)));
 
+    WebPage outPage;
     WebPage oldPage;
-    synchronized(context) {
-      oldPage = WebPage.wrap(datastore.get(outReversedUrl));
-    }
+//    synchronized(context) {
+//    }
+    oldPage = WebPage.wrap(datastore.get(outReversedUrl));
+//    if (!oldPage.isEmpty() && outReversedUrl.contains("wsjk")) {
+//      LOG.info("1. " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
+//    }
 
     if (oldPage.isEmpty()) {
-      createNewPage(outUrl, outReversedUrl, mainPage, newDepth);
+      outPage = createNewPage(outUrl, outReversedUrl, mainPage, newDepth);
     }
     else {
-      tryUpdateOldPage(outUrl, outReversedUrl, mainPage, oldPage, newDepth);
+      outPage = tryUpdateOldPage(outUrl, outReversedUrl, mainPage, oldPage, newDepth);
     }
+
+//    boolean debugPagesFromSeed = true;
+//    if (debugPagesFromSeed && mainPage.isSeed() && !outPage.isSeed()) {
+//      String report = Params.of(
+//          "fromSeed", true,
+//          "depth", outPage.getDepth(),
+//          "priority", outPage.getFetchPriority(-1),
+//          "score", outPage.getScore(),
+//          " -> ", outUrl
+//      ).formatAsLine();
+//      nutchMetrics.reportPageFromSeedersist(report, reportSuffix);
+//
+//      outPage.setDistance(1);
+//      outPage.putMetadata(TMP_PAGE_FROM_SEED, YES_STRING);
+//      outPage.setFetchPriority(FETCH_PRIORITY_DETAIL_PAGE);
+//      outPage.setScore(SCORE_PAGES_FROM_SEED);
+//    }
+
+    output(outReversedUrl, outPage);
+
+//    if (!oldPage.isEmpty() && outReversedUrl.contains("wsjk")) {
+//      LOG.info("2. " + outPage.getBatchId() + ", " + outPage.isSeed() + ", " + outPage.getMetadataAsString().toString() + " -> " + outUrl);
+//
+//      oldPage = WebPage.wrap(datastore.get(outReversedUrl));
+//      LOG.info("3. " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
+//    }
   }
 
   /**
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  private void tryUpdateOldPage(String url, String reversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
+  private WebPage tryUpdateOldPage(String outUrl, String outReversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
     int oldDepth = oldPage.getDepth();
-//    if (oldDepth == MAX_DISTANCE) {
-//      LOG.warn("Unexpected max depth, url : " + url + ", key : " + reversedUrl);
-//    }
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
     if (changed) {
-      output(reversedUrl, oldPage);
-
       if (newDepth < oldDepth) {
-        String report = oldDepth + " -> " + newDepth + ", " + url;
+        String report = oldDepth + " -> " + newDepth + ", " + outUrl;
         nutchMetrics.debugDepthUpdated(report, reportSuffix);
-        counter.increase(Counter.pagesDepthUpdated);
+        counter.increase(Counter.pagesDepthUp);
       }
     }
 
     counter.increase(Counter.existOutPages);
+
+    return oldPage;
   }
 
-  private void createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
+  private WebPage createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
     WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
     // Update distance/score
     reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
@@ -924,15 +943,15 @@ public class TaskScheduler extends Configured {
 //      LOG.warn("bad depth : " + url + ", " + reversedUrl);
 //    }
 
-    output(reversedUrl, newPage);
+    return newPage;
   }
 
   @SuppressWarnings("unchecked")
   private void output(String reversedUrl, WebPage page) {
     try {
-      synchronized(context) {
-        context.write(reversedUrl, page.get());
-      }
+//      synchronized(context) {
+//      }
+      context.write(reversedUrl, page.get());
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs" + StringUtil.stringifyException(e));
     } catch (Throwable e) {

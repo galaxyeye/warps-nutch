@@ -21,6 +21,7 @@ public class Params {
   private String captionFormat = String.format("%20sParams Table%-25s\n", "----------", "----------");
   private String headerFormat = String.format("%25s   %-25s\n", "Name", "Value");
   private String rowFormat = "%25s : %s";
+  private String kvDelimiter = " : ";
   private Logger logger = LoggerFactory.getLogger(Params.class);
 
   public Params(String key, Object value, Object... others) {
@@ -116,6 +117,11 @@ public class Params {
 
   public Params withRowFormat(String rowFormat) {
     this.rowFormat = rowFormat;
+    return this;
+  }
+
+  public Params withKVDelimiter(String kvDelimiter) {
+    this.kvDelimiter = kvDelimiter;
     return this;
   }
 
@@ -242,7 +248,7 @@ public class Params {
       }
 
       sb.append(arg.getKey());
-      sb.append(" : ");
+      sb.append(kvDelimiter);
       sb.append(arg.getValue());
     }
 

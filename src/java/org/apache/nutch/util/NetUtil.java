@@ -1,6 +1,5 @@
 package org.apache.nutch.util;
 
-import org.apache.avro.util.Utf8;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -125,6 +123,16 @@ public class NetUtil {
     int port = conf.getInt("nutch.server.port", 8081);
 
     return "http://" + host + ":" + port;
+  }
+
+  public static boolean isExternalLink(String sourceUrl, String destUrl) {
+    try {
+      String toHost = new URL(destUrl).getHost().toLowerCase();
+      String fromHost = new URL(sourceUrl).getHost().toLowerCase();
+      return !toHost.equals(fromHost);
+    } catch (MalformedURLException ignored) {}
+
+    return true;
   }
 
   public static WebPage getWebPage(String url, String contentType, Configuration conf) throws ProtocolNotFound {

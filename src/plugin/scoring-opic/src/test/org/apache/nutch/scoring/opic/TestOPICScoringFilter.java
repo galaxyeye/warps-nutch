@@ -49,16 +49,13 @@ public class TestOPICScoringFilter {
 
   DecimalFormat df = new DecimalFormat("#.###");
 
-  private final String[] seedList = new String[] { "http://a.com",
-      "http://b.com", "http://c.com", };
+  private final String[] seedList = new String[] { "http://a.com", "http://b.com", "http://c.com", };
 
   // An example graph; shows websites as connected nodes
   private void fillLinks() {
     linkList.put("http://a.com", new String[] { "http://b.com" });
-    linkList.put("http://b.com",
-        new String[] { "http://a.com", "http://c.com" });
-    linkList.put("http://c.com", new String[] { "http://a.com", "http://b.com",
-        "http://d.com" });
+    linkList.put("http://b.com", new String[] { "http://a.com", "http://c.com" });
+    linkList.put("http://c.com", new String[] { "http://a.com", "http://b.com", "http://d.com" });
     linkList.put("http://d.com", new String[] {});
   }
 
@@ -113,7 +110,7 @@ public class TestOPICScoringFilter {
     }
   };
 
-  private HashMap<Integer, HashMap<String, Float>> resultScores = new HashMap<Integer, HashMap<String, Float>>();
+  private HashMap<Integer, HashMap<String, Float>> resultScores = new HashMap<>();
 
   private OPICScoringFilter scoringFilter;
 
@@ -152,8 +149,7 @@ public class TestOPICScoringFilter {
 
     // Depth Loop
     for (int i = 1; i <= DEPTH; i++) {
-      Iterator<Map.Entry<String, Map<WebPage, List<ScoreDatum>>>> iter = dbWebPages
-          .entrySet().iterator();
+      Iterator<Map.Entry<String, Map<WebPage, List<ScoreDatum>>>> iter = dbWebPages.entrySet().iterator();
 
       // OPIC Score calculated for each website one by one
       while (iter.hasNext()) {
@@ -162,8 +158,7 @@ public class TestOPICScoringFilter {
 
         WebPage row = null;
         List<ScoreDatum> scoreList = null;
-        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> iters = webPageMap
-            .entrySet().iterator();
+        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> iters = webPageMap.entrySet().iterator();
         if (iters.hasNext()) {
           Map.Entry<WebPage, List<ScoreDatum>> values = iters.next();
           row = values.getKey();
@@ -189,15 +184,11 @@ public class TestOPICScoringFilter {
 
         // Existing outlinks are added to outlinkedScoreData
         Map<CharSequence, CharSequence> outlinks = row.getOutlinks();
-        if (outlinks != null) {
-          for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-            int depth = Integer.MAX_VALUE;
-            self.outlinkedScoreData.add(new ScoreDatum(0.0f, e.getKey()
-                .toString(), e.getValue().toString(), depth));
-          }
+        for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
+          self.outlinkedScoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
         }
-        scoringFilter.distributeScoreToOutlinks(url, row,
-            self.outlinkedScoreData, (outlinks == null ? 0 : outlinks.size()));
+
+        scoringFilter.distributeScoreToOutlinks(url, row, self.outlinkedScoreData, outlinks.size());
 
         // DbUpdate Reducer simulation
         for (ScoreDatum sc : self.outlinkedScoreData) {

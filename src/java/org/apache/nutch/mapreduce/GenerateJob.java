@@ -127,6 +127,20 @@ public class GenerateJob extends NutchJob implements Tool {
         "nutchTmpDir", nutchTmpDir,
         "fetchScheduler", fetchScheduler
     ));
+
+    Files.write(Paths.get(PATH_LAST_BATCH_ID), (batchId + "\n").getBytes(),
+        StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+  }
+
+  @Override
+  protected void cleanup(Map<String, Object> args) {
+    Configuration conf = getConf();
+    if (HadoopFSUtil.isDistributedFS(conf)) {
+      // unlock if locked
+      HadoopFSUtil.unlock(new Path("hdfs://" + PATH_ALL_SEED_FILE), getJobName(), conf);
+    }
+
+    super.cleanup(args);
   }
 
   @Override
