@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -35,6 +36,7 @@ import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.storage.gora.ProtocolStatus;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -864,7 +866,7 @@ public class TaskScheduler extends Configured {
     float initScore = urlWithScore.getScore().get();
     reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new ScoreDatum(initScore, outUrl, "", newDepth)));
 
-    WebPage outPage;
+    Pair<WebPage, Boolean> outPage;
     WebPage oldPage;
 //    synchronized(context) {
 //    }
@@ -874,36 +876,22 @@ public class TaskScheduler extends Configured {
 //    }
 
     if (oldPage.isEmpty()) {
-      outPage = createNewPage(outUrl, outReversedUrl, mainPage, newDepth);
+      outPage = Pair.of(createNewPage(outUrl, outReversedUrl, mainPage, newDepth), true);
     }
     else {
       outPage = tryUpdateOldPage(outUrl, outReversedUrl, mainPage, oldPage, newDepth);
     }
 
-//    boolean debugPagesFromSeed = true;
-//    if (debugPagesFromSeed && mainPage.isSeed() && !outPage.isSeed()) {
-//      String report = Params.of(
-//          "fromSeed", true,
-//          "depth", outPage.getDepth(),
-//          "priority", outPage.getFetchPriority(-1),
-//          "score", outPage.getScore(),
-//          " -> ", outUrl
-//      ).formatAsLine();
-//      nutchMetrics.reportPageFromSeedersist(report, reportSuffix);
-//
-//      outPage.setDistance(1);
-//      outPage.putMetadata(TMP_PAGE_FROM_SEED, YES_STRING);
-//      outPage.setFetchPriority(FETCH_PRIORITY_DETAIL_PAGE);
-//      outPage.setScore(SCORE_PAGES_FROM_SEED);
-//    }
-
-    output(outReversedUrl, outPage);
+    if (outPage.getValue()) {
+      output(outReversedUrl, outPage.getKey());
+    }
 
 //    if (!oldPage.isEmpty() && outReversedUrl.contains("wsjk")) {
-//      LOG.info("2. " + outPage.getBatchId() + ", " + outPage.isSeed() + ", " + outPage.getMetadataAsString().toString() + " -> " + outUrl);
+//      LOG.info("2. " + outPage.getValue() + ", " + outPage.getKey().getBatchId() + ", " + outPage.getKey().isSeed() + ", " + outPage.getKey().getMetadataAsString().toString() + " -> " + outUrl);
 //
+//      // TODO : Why we can not find metadata? Dirty is set?
 //      oldPage = WebPage.wrap(datastore.get(outReversedUrl));
-//      LOG.info("3. " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
+//      LOG.info("3. " + outPage.getValue() + ", " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
 //    }
   }
 
@@ -911,7 +899,8 @@ public class TaskScheduler extends Configured {
    * Updated the old row if necessary
    * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
-  private WebPage tryUpdateOldPage(String outUrl, String outReversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
+  @NotNull
+  private Pair<WebPage, Boolean> tryUpdateOldPage(String outUrl, String outReversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
     int oldDepth = oldPage.getDepth();
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 
@@ -925,7 +914,7 @@ public class TaskScheduler extends Configured {
 
     counter.increase(Counter.existOutPages);
 
-    return oldPage;
+    return Pair.of(oldPage, changed);
   }
 
   private WebPage createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {

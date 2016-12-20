@@ -40,10 +40,11 @@
 
   <property>
     <name>db.fetch.schedule.class</name>
-    <value>org.apache.nutch.crawl.schedulers.NewsFetchSchedule</value>
-    <description>The implementation of fetch schedule. DefaultFetchSchedule simply
-      adds the original fetchInterval to the last fetch time, regardless of
-      page changes.
+    <value>org.apache.nutch.crawl.schedulers.AdaptiveNewsFetchSchedule</value>
+    <description>The implementation of fetch schedule. AdaptiveNewsFetchSchedule has the following rules :
+      1. Seed pages are fetched very frequently if it changes
+      2. Detail pages are fetched just once
+      3. Other pages are fetched using AdaptiveFetchSchedule, but with lower priority
     </description>
   </property>
 
