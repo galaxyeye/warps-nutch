@@ -90,13 +90,13 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
 
     WebPage page = null;
     // Initialize old_page for checking if the outlink is already in the datastore
-    WebPage old_page = null;
+    WebPage old_page;
     inlinkedScoreData.clear();
 
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = WebPage.wrap(((WebPageWritable) val).getWebPage());
+        page = ((WebPageWritable) val).getWebPage();
       } else {
         inlinkedScoreData.add((Edge) val);
         if (inlinkedScoreData.size() >= maxLinks) {
@@ -199,11 +199,11 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
     // write it to the page.
     int smallestDist = Integer.MAX_VALUE;
     for (Edge inlink : inlinkedScoreData) {
-      int inlinkDist = inlink.getDistance();
+      int inlinkDist = inlink.getV1().getDepth();
       if (inlinkDist < smallestDist) {
         smallestDist = inlinkDist;
       }
-      page.getInlinks().put(new Utf8(inlink.getUrl()), new Utf8(inlink.getAnchor()));
+      page.getInlinks().put(new Utf8(inlink.getV1().getUrl()), new Utf8(inlink.getV1().getAnchor()));
     }
 
     if (smallestDist != Integer.MAX_VALUE) {

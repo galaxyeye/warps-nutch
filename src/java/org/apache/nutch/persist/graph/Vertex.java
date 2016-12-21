@@ -22,6 +22,7 @@ import java.time.Instant;
 public class Vertex implements Writable, Comparable<Vertex> {
   private Configuration conf;
   private String url;
+  @Deprecated
   private String anchor;
   private WebPage page;
   private int depth;
@@ -68,22 +69,40 @@ public class Vertex implements Writable, Comparable<Vertex> {
     metadata.add(name, value);
   }
 
-  public void addMetadata(Metadata.Name name, long value) {
+  public String getMetadata(Metadata.Name name) {
+    return metadata.get(name);
+  }
+
+  public void addMetadata(Metadata.Name name, int value) {
     metadata.add(name, String.valueOf(value));
   }
 
-  public void addMetadata(Metadata.Name name, Instant value) {
-    metadata.add(name, DateTimeUtil.solrCompatibleFormat(value));
+  public int getMetadata(Metadata.Name name, int defaultValue) {
+    String s = metadata.get(name);
+    Integer.valueOf(s);
+    return StringUtil.tryParseInt(s, defaultValue);
   }
 
-  public String getMetadata(Metadata.Name name) {
-    return metadata.get(name);
+  public void addMetadata(Metadata.Name name, long value) {
+    metadata.add(name, String.valueOf(value));
   }
 
   public long getMetadata(Metadata.Name name, long defaultValue) {
     String s = metadata.get(name);
 
     return StringUtil.tryParseLong(s, defaultValue);
+  }
+
+  public boolean getMetadata(Metadata.Name name, Boolean defaultValue) {
+    String s = metadata.get(name);
+    if (s == null) {
+      return defaultValue;
+    }
+    return Boolean.valueOf(s);
+  }
+
+  public void addMetadata(Metadata.Name name, Instant value) {
+    metadata.add(name, DateTimeUtil.solrCompatibleFormat(value));
   }
 
   public Instant getMetadata(Metadata.Name name, Instant defaultValue) {

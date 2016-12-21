@@ -68,8 +68,9 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     ARTICLE_SCORE_KEY("ASK"),
     CASH_KEY("CASH"),
 
-    TMP_PAGE_FROM_SEED("TPFS"),
-    TMP_CHARS("TC");
+    TMP_PAGE_FROM_SEED("TMP_PAGE_FROM_SEED"),
+    TMP_IS_DETAIL("TMP_IS_DETAIL"),
+    TMP_CHARS("TMP_CHARS");
 
     private String value;
 

@@ -86,7 +86,25 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupK
   }
 
   /**
-   * Build a graph
+   * The following graph shows the in-link graph. Every reduce group contains a center vertex and a batch of edges.
+   * The center vertex has a web page inside, and the edges has in-link information.
+   *
+   *        v1
+   *        |
+   *        v
+   * v2 -> vc <- v3
+   *       ^ ^
+   *      /  \
+   *     v4  v5
+   *
+   * And this is a out-link graph:
+   *        v1
+   *        ^
+   *        |
+   * v2 <- vc -> v3
+   *       / \
+   *      v  v
+   *     v4  v5
    * */
   @Override
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
@@ -114,6 +132,7 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupK
     v1.addMetadata(PUBLISH_TIME, page.getPublishTime());
     v1.addMetadata(TMP_CHARS, page.sniffTextLength());
 
+    /* Self-connected edge  */
     graph.addEdge(new Edge(v1, v1, 0.0f));
 
     page.getOutlinks().entrySet().stream()
@@ -127,9 +146,12 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupK
     }
 
     GraphGroupKey key = new GraphGroupKey(reversedUrl, GraphMode.IN_LINK_GRAPH, Float.MAX_VALUE);
-    context.write(key, graph.getVertex());
-
+    context.write(key, v1);
     graph.getEdges().forEach(edge -> writeEdge(edge, GraphMode.IN_LINK_GRAPH));
+
+    key = new GraphGroupKey(reversedUrl, GraphMode.OUT_LINK_GRAPH, Float.MAX_VALUE);
+    context.write(key, v1);
+    graph.getEdges().forEach(edge -> writeEdge(edge, GraphMode.OUT_LINK_GRAPH));
 
     counter.increase(Counter.rowsMapped);
     counter.increase(Counter.newRowsMapped, graph.edgeCount());
@@ -138,14 +160,14 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupK
   private void writeEdge(Edge edge, GraphMode graphMode) {
     // partition by source url, so the reducer get a group of inlinks
     try {
-      String url;
+      String centerVertexUrl;
       if (graphMode.isInLinkGraph()) {
-        url = TableUtil.reverseUrl(edge.getV2().getUrl());
+        centerVertexUrl = TableUtil.reverseUrl(edge.getV2().getUrl());
       }
       else {
-        url = TableUtil.reverseUrl(edge.getV1().getUrl());
+        centerVertexUrl = TableUtil.reverseUrl(edge.getV1().getUrl());
       }
-      context.write(new GraphGroupKey(url, graphMode, edge.getScore()), edge);
+      context.write(new GraphGroupKey(centerVertexUrl, graphMode, edge.getScore()), edge);
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

@@ -9,6 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by vincent on 16-12-21.
@@ -29,6 +30,22 @@ public class Graph implements Writable, Configurable {
     edges.clear();
   }
 
+  public void addVertex(Vertex vertex) { vertices.put(vertex.getUrl(), vertex); }
+
+  public Vertex getVertex() { return vertices.values().iterator().next(); }
+
+  public Vertex getVertex(String url) { return vertices.get(url); }
+
+  public Collection<Vertex> getVertices() { return vertices.values(); }
+
+  public Collection<Vertex> getStartVertices() {
+    return edges.stream().map(Edge::getV1).collect(Collectors.toList());
+  }
+
+  public Collection<Vertex> getEndVertices() {
+    return edges.stream().map(Edge::getV2).collect(Collectors.toList());
+  }
+
   public void addEdge(Edge edge) {
     Vertex v1 = edge.getV1();
     Vertex v2 = edge.getV2();
@@ -40,12 +57,6 @@ public class Graph implements Writable, Configurable {
   public void addEdges(Collection<Edge> edges) {
     this.edges.addAll(edges);
   }
-
-  public Vertex getVertex() { return vertices.values().iterator().next(); }
-
-  public Vertex getVertex(String url) { return vertices.get(url); }
-
-  public Map<String, Vertex> getVertices() { return vertices; }
 
   public List<Edge> getEdges() { return edges; }
 

@@ -25,6 +25,7 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SignatureComparator;
+import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
@@ -51,6 +52,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
+import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
+import static org.apache.nutch.metadata.Metadata.Name.TMP_CHARS;
+import static org.apache.nutch.metadata.Metadata.Name.TMP_IS_DETAIL;
 import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.persist.Mark.*;
 
@@ -60,7 +64,9 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
 
   public static final String CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
 
-  public enum Counter { newRows };
+  public enum Counter {newRows}
+
+  ;
 
   private int retryMax;
   private Duration maxFetchInterval;
@@ -89,8 +95,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
-    }
-    catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       throw new IOException(e);
     }
 
@@ -112,8 +117,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
   protected void reduce(GraphGroupKey key, Iterable<Writable> values, Context context) {
     try {
       doReduce(key, values, context);
-    }
-    catch(Throwable e) {
+    } catch (Throwable e) {
       LOG.error(StringUtil.stringifyException(e));
     }
   }
@@ -121,10 +125,10 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
   /**
    * We get a list of score datum who are inlinks to a webpage after partition,
    * so the dbupdate phrase calculates the scores of all pages
-   *
+   * <p>
    * The following graph shows the in-link graph. Every reduce group contains a center vertex and a batch of edges.
    * The center vertex has a web page inside, and the edges has in-link information.
-   *
+   * <pre>
    *        v1
    *        |
    *        v
@@ -132,7 +136,18 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
    *       ^ ^
    *      /  \
    *     v4  v5
-   * */
+   * </pre>
+   * And this is a out-link graph:
+   * <pre>
+   *       v1
+   *       ^
+   *       |
+   * v2 <- vc -> v3
+   *      / \
+   *     v  v
+   *    v4  v5
+   *</pre>
+   */
   private void doReduce(GraphGroupKey key, Iterable<Writable> values, Context context)
       throws IOException, InterruptedException {
     getCounter().increase(rows);
@@ -140,50 +155,53 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     String reversedUrl = key.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    // Calculate inlinked score data, and return the main web page
-    Pair<Vertex, Graph> graphPair = buildGraph(key, values);
-    Vertex center = graphPair.getKey();
-    Graph graph = graphPair.getValue();
+    // Calculate in-linked score data, and return the main web page
+    Pair<Vertex, Graph> g = buildGraph(key, values);
+    Vertex focusedVertex = g.getKey();
+    Graph graph = g.getValue();
 
-    WebPage centerPage = center.getWebPage();
-    WebPage oldPage;
-
-    //check if page is already in the db
-    if (!centerPage.isEmpty()) {
-      // process the main page
-      updateFetchSchedule(url, centerPage);
+    WebPage page = focusedVertex.getWebPage();
+    if (!page.isEmpty()) {
+      updateFetchSchedule(url, page);
+    } else {
+      page = getWebPage(url, reversedUrl, focusedVertex);
     }
-    else {
-      oldPage = WebPage.wrap(datastore.get(reversedUrl));
-      if (!oldPage.isEmpty()) {
-        // if we return here inlinks will not be updated
-        centerPage = oldPage;
 
-        WebPage mainPage = WebPage.newWebPage();
-        int newDepth = 0;
-        int oldDepth = 0;
+    if (graph.getGraphMode().isInLinkGraph()) {
+      page = updateInLinkedWebPage(page, graph);
+    } else {
+      page = updateOutLinkedWebPage(page, graph);
+    }
 
-        updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
-      }
-      else {
+    updateDistance(page);
+
+    updateScore(url, page);
+
+    updateMetadata(page);
+
+    updateStatusCounter(url, page);
+
+    context.write(reversedUrl, page.get());
+  }
+
+  private WebPage getWebPage(String url, String reversedUrl, Vertex focusedVertex) {
+    WebPage page = focusedVertex.getWebPage();
+    if (page.isEmpty()) {
+      WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
+
+      // Page is already in the db
+      if (loadedPage.isEmpty()) {
         // Here we got a new webpage from outlink
         if (!additionsAllowed) {
-          return;
+          return page;
         }
-
-        centerPage = createNewRow(url, MAX_DISTANCE);
+        page = createNewRow(url, MAX_DISTANCE);
+      } else {
+        page = loadedPage;
       }
     }
 
-    calculateDistance(centerPage);
-
-    updateScore(url, centerPage);
-
-    updateMetadata(centerPage);
-
-    updateStatusCounter(url, centerPage);
-
-    context.write(reversedUrl, centerPage.get());
+    return page;
   }
 
   private WebPage createNewRow(String url, int depth) {
@@ -204,36 +222,57 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     return page;
   }
 
+  private WebPage updateOutLinkedWebPage(WebPage page, Graph graph) {
+    if (!graph.getGraphMode().isOutLinkGraph()) {
+      return page;
+    }
+
+    for (Vertex referVertex : graph.getEndVertices()) {
+
+    }
+
+    return page;
+  }
+
   /**
    * Updated the old row if necessary
    * */
-  public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int newDepth, int oldDepth) {
-    boolean changed = false;
-
-    // TODO : Why we can get a empty metadata collection? All fields are not dirty?
-
-    boolean detail = oldPage.veryLikeDetailPage();
-
-    Instant publishTime = oldPage.getPublishTime();
-    if (detail && publishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
-      mainPage.updateRefPublishTime(publishTime);
-      changed = true;
+  private WebPage updateInLinkedWebPage(WebPage page, Graph graph) {
+    if (!graph.getGraphMode().isInLinkGraph()) {
+      return page;
     }
 
-    // Vote the main page if not voted
-    if (detail && oldPage.voteIfAbsent(mainPage)) {
-      mainPage.increaseRefArticles(1);
-      mainPage.increaseRefChars(oldPage.sniffTextLength());
-      changed = true;
+    int smallestDistance = Integer.MAX_VALUE;
+    Instant latestRefPublishTime = page.getRefPublishTime();
+    int referredArticles = 0;
+    int referredChars = 0;
+
+    for (Vertex referVertex : graph.getEndVertices()) {
+      if (referVertex.getDepth() < smallestDistance) {
+        smallestDistance = referVertex.getDepth();
+      }
+
+      Instant refPublishTime = referVertex.getMetadata(PUBLISH_TIME, Instant.EPOCH);
+      if (refPublishTime.isAfter(latestRefPublishTime)) {
+        latestRefPublishTime = refPublishTime;
+      }
+
+      boolean isDetail = referVertex.getMetadata(TMP_IS_DETAIL, false);
+      if (isDetail) {
+        ++referredArticles;
+      }
+
+      referredChars += referVertex.getMetadata(TMP_CHARS, 0);
     }
 
-    if (newDepth < oldDepth) {
-      oldPage.setDistance(newDepth);
-      oldPage.setReferrer(mainPage.getBaseUrl());
-      changed = true;
+    if (smallestDistance < page.getDistance()) {
+      page.setDistance(smallestDistance);
     }
+    page.updateRefPublishTime(latestRefPublishTime);
+    page.setRefArticles(page.getRefArticles() + referredArticles);
+    page.setRefChars(page.getRefChars() + referredChars);
 
-    return changed;
+    return page;
   }
 
   /**
@@ -243,7 +282,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
    * If the new distance is smaller than old one (or if old did not exist yet),
    * write it to the page.
    * */
-  private void calculateDistance(WebPage page) {
+  private void updateDistance(WebPage page) {
     page.getInlinks().clear();
 
     int smallestDist = MAX_DISTANCE;
@@ -288,7 +327,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
    * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
   public Pair<Vertex, Graph> buildGraph(GraphGroupKey key, Iterable<Writable> values) {
-    Vertex center = new Vertex(conf);
+    Vertex focusedVertex = new Vertex(conf);
     Graph graph = new Graph(conf);
 
 //    WebPage page = null;
@@ -297,15 +336,15 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     for (Writable val : values) {
       // Writable val = nutchWritable.get();
       if (val instanceof Vertex) {
-        center = (Vertex)val;
+        focusedVertex = (Vertex)val;
 //        page = ((Vertex) val).getWebPage();
       }
       else if (val instanceof Edge) {
         Edge edge = (Edge) val;
 
         if (key.getGraphMode().isInLinkGraph()) {
-          if (edge.getV2().equals(center)) {
-            edge.setV2(center);
+          if (edge.getV2().equals(focusedVertex)) {
+            edge.setV2(focusedVertex);
           }
         }
 
@@ -321,7 +360,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
 //      }
     } // for
 
-    return Pair.of(center, graph);
+    return Pair.of(focusedVertex, graph);
   }
 
   private void updateScore(String url, WebPage page) {
