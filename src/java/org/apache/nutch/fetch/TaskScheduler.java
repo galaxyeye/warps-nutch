@@ -816,13 +816,16 @@ public class TaskScheduler extends Configured {
       mainPage.setContent(new byte[0]);
     }
 
-    if (updateJIT()) {
-      persistWithDbUpdate(url, reversedUrl, mainPage);
-    }
-    else {
-      output(reversedUrl, mainPage);
-      counter.increase(Counter.pagesPeresist);
-    }
+//    if (updateJIT()) {
+//      persistWithDbUpdate(url, reversedUrl, mainPage);
+//    }
+//    else {
+//      output(reversedUrl, mainPage);
+//      counter.increase(Counter.pagesPeresist);
+//    }
+
+    output(reversedUrl, mainPage);
+    counter.increase(Counter.pagesPeresist);
 
     updateStatus(fetchTask.getUrl(), mainPage);
   }
@@ -831,29 +834,29 @@ public class TaskScheduler extends Configured {
    * Write the reduce result back to the backend storage
    * threadsafe
    * */
-  private synchronized void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
-    mapDatumBuilder.reset();
-    reduceDatumBuilder.reset();
-
-    // Do not follow detail pages for public opinion tracking
-    if (!mainPage.veryLikeDetailPage()) {
-      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
-      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
-    }
-
-    persistMainPage(url, reversedUrl, mainPage);
-  }
+//  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
+//    mapDatumBuilder.reset();
+//    reduceDatumBuilder.reset();
+//
+//    // Do not follow detail pages for public opinion tracking
+//    if (!mainPage.veryLikeDetailPage()) {
+//      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
+//      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
+//    }
+//
+//    persistMainPage(url, reversedUrl, mainPage);
+//  }
 
   @SuppressWarnings("unchecked")
-  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
-    counter.increase(Counter.pagesPeresist);
-
-    // Process the main page, update fetch schedule
-    reduceDatumBuilder.updateFetchSchedule(url, mainPage);
-    reduceDatumBuilder.updateRow(url, mainPage);
-
-    output(reversedUrl, mainPage);
-  }
+//  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
+//    counter.increase(Counter.pagesPeresist);
+//
+//    // Process the main page, update fetch schedule
+//    reduceDatumBuilder.updateFetchSchedule(url, mainPage);
+//    reduceDatumBuilder.updateRow(url, mainPage);
+//
+//    output(reversedUrl, mainPage);
+//  }
 
   private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
     String outReversedUrl = urlWithScore.getReversedUrl();
@@ -897,10 +900,14 @@ public class TaskScheduler extends Configured {
 
   /**
    * Updated the old row if necessary
-   * TODO : We need a good algorithm to search the best seed pages automatically, this requires a page rank like scoring system
    * */
   @NotNull
   private Pair<WebPage, Boolean> tryUpdateOldPage(String outUrl, String outReversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
+    if (oldPage.getMetadata().isEmpty()) {
+      LOG.warn("Unexpected empty metadata collection. Url : " + outUrl + ", key : " + outReversedUrl);
+      return Pair.of(oldPage, false);
+    }
+
     int oldDepth = oldPage.getDepth();
     boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
 

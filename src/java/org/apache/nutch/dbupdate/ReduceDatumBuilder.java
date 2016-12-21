@@ -67,33 +67,10 @@ public class ReduceDatumBuilder {
     return params;
   }
 
-  public void process(String url, WebPage page, WebPage oldPage, boolean additionsAllowed) {
-    //check if page is already in the db
-    if (page == null && oldPage != null) {
-      // if we return here inlinks will not be updated
-      page = oldPage;
-    } else if (page == null) {
-      // Here we got a new webpage from outlink
-      if (!additionsAllowed) {
-        return;
-      }
-
-      page = createNewRow(url, MAX_DISTANCE);
-    } else {
-      // process the main page
-      updateFetchSchedule(url, page);
-    }
-
-    updateRow(url, page);
-  }
-
   public void reset() {
     inlinkedScoreData.clear();
   }
 
-  /**
-   *
-   * */
   public void calculateInlinks(List<ScoreDatum> scoreDatum) {
     inlinkedScoreData.clear();
     inlinkedScoreData.addAll(scoreDatum);
@@ -127,11 +104,11 @@ public class ReduceDatumBuilder {
   public void updateRow(String url, WebPage page) {
     calculateDistance(page);
 
-    updateScore(url, page);
-
-    updateMetadata(page);
-
-    updateStatusCounter(page);
+//    updateScore(url, page);
+//
+//    updateMetadata(page);
+//
+//    updateStatusCounter(page);
   }
 
   public WebPage createNewRow(String url, int depth) {
@@ -158,9 +135,9 @@ public class ReduceDatumBuilder {
   public void updateNewRow(String url, WebPage sourcePage, WebPage newPage) {
     newPage.setReferrer(sourcePage.getBaseUrl());
 
-    updateScore(url, newPage);
-
-    updateStatusCounter(newPage);
+//    updateScore(url, newPage);
+//
+//    updateStatusCounter(newPage);
   }
 
   /**
@@ -168,6 +145,9 @@ public class ReduceDatumBuilder {
    * */
   public boolean updateExistOutPage(WebPage mainPage, WebPage oldPage, int newDepth, int oldDepth) {
     boolean changed = false;
+
+    // TODO : Why we can get a empty metadata collection? All fields are not dirty?
+
     boolean detail = oldPage.veryLikeDetailPage();
 
     Instant publishTime = oldPage.getPublishTime();
@@ -224,119 +204,4 @@ public class ReduceDatumBuilder {
     }
   }
 
-  private void updateScore(String url, WebPage page) {
-    try {
-      scoringFilters.updateScore(url, page, inlinkedScoreData);
-    } catch (ScoringFilterException e) {
-      page.setScore(0.0f);
-      counter.increase(NutchCounter.Counter.errors);
-    }
-
-    // if page contains date string of today, and it's an index page
-    // it should have a very high score
-  }
-
-  private void updateMetadata(WebPage page) {
-    // Clear temporary metadata
-    page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
-    page.clearMetadata(Metadata.Name.GENERATE_TIME);
-
-    page.putMarkIfNonNull(UPDATEDB, page.getMark(PARSE));
-
-    page.removeMark(INJECT);
-    page.removeMark(GENERATE);
-    page.removeMark(FETCH);
-    page.removeMark(PARSE);
-  }
-
-  public void updateFetchSchedule(String url, WebPage page) {
-    byte status = page.getStatus().byteValue();
-
-    switch (status) {
-      case CrawlStatus.STATUS_FETCHED: // successful fetch
-      case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
-      case CrawlStatus.STATUS_REDIR_PERM:
-      case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, not modified
-        int modified = FetchSchedule.STATUS_UNKNOWN;
-        if (status == CrawlStatus.STATUS_NOTMODIFIED) {
-          modified = FetchSchedule.STATUS_NOTMODIFIED;
-        }
-
-        ByteBuffer prevSig = page.getPrevSignature();
-        ByteBuffer signature = page.getSignature();
-        if (prevSig != null && signature != null) {
-          if (SignatureComparator.compare(prevSig, signature) != 0) {
-            modified = FetchSchedule.STATUS_MODIFIED;
-          } else {
-            modified = FetchSchedule.STATUS_NOTMODIFIED;
-          }
-        }
-
-        Instant prevFetchTime = page.getPrevFetchTime();
-        Instant fetchTime = page.getFetchTime();
-
-        Instant prevModifiedTime = page.getPrevModifiedTime();
-        Instant modifiedTime = page.getModifiedTime();
-
-        Instant latestModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
-        if (latestModifiedTime.isAfter(modifiedTime)) {
-          modifiedTime = latestModifiedTime;
-          prevModifiedTime = modifiedTime;
-        }
-        else {
-          LOG.trace("Bad last modified time : {} -> {}", modifiedTime, page.getHeader(HttpHeaders.LAST_MODIFIED, "unknown time"));
-        }
-
-        fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
-
-        Duration fetchInterval = page.getFetchInterval();
-        if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && fetchInterval.compareTo(maxFetchInterval) > 0) {
-          LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
-          fetchSchedule.forceRefetch(url, page, false);
-        }
-
-        break;
-      case CrawlStatus.STATUS_RETRY:
-        fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-        if (page.getRetriesSinceFetch() < retryMax) {
-          page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-        } else {
-          page.setStatus((int) CrawlStatus.STATUS_GONE);
-        }
-        break;
-      case CrawlStatus.STATUS_GONE:
-        fetchSchedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-        break;
-    }
-  }
-
-  private void updateStatusCounter(WebPage page) {
-    byte status = page.getStatus().byteValue();
-
-    switch (status) {
-      case CrawlStatus.STATUS_FETCHED:
-        counter.increase(NutchCounter.Counter.stFetched);
-        break;
-      case CrawlStatus.STATUS_REDIR_TEMP:
-        counter.increase(NutchCounter.Counter.stRedirTemp);
-        break;
-      case CrawlStatus.STATUS_REDIR_PERM:
-        counter.increase(NutchCounter.Counter.stRedirPerm);
-        break;
-      case CrawlStatus.STATUS_NOTMODIFIED:
-        counter.increase(NutchCounter.Counter.stNotModified);
-        break;
-      case CrawlStatus.STATUS_RETRY:
-        counter.increase(NutchCounter.Counter.stRetry);
-        break;
-      case CrawlStatus.STATUS_UNFETCHED:
-        counter.increase(NutchCounter.Counter.stUnfetched);
-        break;
-      case CrawlStatus.STATUS_GONE:
-        counter.increase(NutchCounter.Counter.stGone);
-        break;
-      default:
-        break;
-    }
-  }
 }

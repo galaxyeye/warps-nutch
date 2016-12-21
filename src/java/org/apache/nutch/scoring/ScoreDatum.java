@@ -16,15 +16,21 @@
  ******************************************************************************/
 package org.apache.nutch.scoring;
 
+import org.apache.avro.util.Utf8;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.Outlink;
+import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.StringUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,13 +41,17 @@ public class ScoreDatum implements Writable {
   private String url;
   private String anchor;
   private int distance;
-  private Map<String, byte[]> metaData = new HashMap<>();
+  private Metadata metadata = new Metadata();
 
   public ScoreDatum() {
   }
 
   public ScoreDatum(float score, Outlink outlink, int depth) {
     this(score, outlink.getToUrl(), outlink.getAnchor(), depth);
+  }
+
+  public ScoreDatum(float score, CharSequence url, CharSequence anchor, int depth) {
+    this(score, url.toString(), anchor.toString(), depth);
   }
 
   public ScoreDatum(float score, String url, String anchor, int depth) {
@@ -57,14 +67,15 @@ public class ScoreDatum implements Writable {
     url = Text.readString(in);
     anchor = Text.readString(in);
     distance = WritableUtils.readVInt(in);
-    metaData.clear();
+    metadata.clear();
+    metadata.readFields(in);
 
-    int size = WritableUtils.readVInt(in);
-    for (int i = 0; i < size; i++) {
-      String key = Text.readString(in);
-      byte[] value = Bytes.readByteArray(in);
-      metaData.put(key, value);
-    }
+//    int size = WritableUtils.readVInt(in);
+//    for (int i = 0; i < size; i++) {
+//      String key = Text.readString(in);
+//      byte[] value = Bytes.readByteArray(in);
+//      metadata.put(key, ByteBuffer.wrap(value));
+//    }
   }
 
   @Override
@@ -73,25 +84,34 @@ public class ScoreDatum implements Writable {
     Text.writeString(out, url);
     Text.writeString(out, anchor);
     WritableUtils.writeVInt(out, distance);
+    metadata.write(out);
 
-    WritableUtils.writeVInt(out, metaData.size());
-    for (Entry<String, byte[]> e : metaData.entrySet()) {
-      Text.writeString(out, e.getKey());
-      Bytes.writeByteArray(out, e.getValue());
-    }
+//    WritableUtils.writeVInt(out, metadata.size());
+//    for (Entry<CharSequence, ByteBuffer> e : metadata.entrySet()) {
+//      Text.writeString(out, e.getKey());
+//      Bytes.writeByteArray(out, e.getValue().array());
+//    }
   }
 
-  public byte[] getMeta(String key) {
-    return metaData.get(key);
-  }
-
-  public void setMeta(String key, byte[] value) {
-    metaData.put(key, value);
-  }
-
-  public byte[] deleteMeta(String key) {
-    return metaData.remove(key);
-  }
+//  public byte[] getMetadata(String key) {
+//    return metadata.get(key);
+//  }
+//
+//  public void setMetadata(String key, byte[] value) {
+//    metadata.put(key, value);
+//  }
+//
+//  public void setMetadata(Metadata.Name key, byte[] value) {
+//    metadata.put(key.value(), value);
+//  }
+//
+//  public void setMetadata(Metadata.Name key, ByteBuffer value) {
+//    setMetadata(key, value.array());
+//  }
+//
+//  public Instant getRefPublishTime() {
+//
+//  }
 
   public float getScore() {
     return score;
@@ -117,10 +137,38 @@ public class ScoreDatum implements Writable {
     return distance;
   }
 
+  public void addMetadata(Metadata.Name name, String value) {
+    metadata.add(name, value);
+  }
+
+  public void addMetadata(Metadata.Name name, long value) {
+    metadata.add(name, String.valueOf(value));
+  }
+
+  public void addMetadata(Metadata.Name name, Instant value) {
+    metadata.add(name, DateTimeUtil.solrCompatibleFormat(value));
+  }
+
+  public String getMetadata(Metadata.Name name) {
+    return metadata.get(name);
+  }
+
+  public long getMetadata(Metadata.Name name, long defaultValue) {
+    String s = metadata.get(name);
+
+    return StringUtil.tryParseLong(s, defaultValue);
+  }
+
+  public Instant getMetadata(Metadata.Name name, Instant defaultValue) {
+    String s = metadata.get(name);
+
+    return DateTimeUtil.parseTime(s, defaultValue);
+  }
+
   @Override
   public String toString() {
     return "ScoreDatum [score=" + score + ", url=" + url + ", anchor=" + anchor
-        + ", distance=" + distance + ", metaData=" + metaData + "]";
+        + ", distance=" + distance + ", metadata=" + metadata + "]";
   }
 
 }

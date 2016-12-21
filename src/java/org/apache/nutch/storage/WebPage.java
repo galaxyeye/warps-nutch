@@ -264,13 +264,17 @@ public class WebPage {
     page.setParseStatus(value);
   }
 
-  public float getScore() { return page.getScore(); }
+  public float getScore() {
+    return page.getScore();
+  }
 
   public void setScore(float value) {
     page.setScore(value);
   }
 
-  public float getArticleScore() { return getFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f); }
+  public float getArticleScore() {
+    return getFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f);
+  }
 
   public void setArticleScore(float value) {
     setFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f);
@@ -773,13 +777,17 @@ public class WebPage {
     return firstIndexTime == null ? defaultValue : firstIndexTime;
   }
 
-  public Utf8 getMark(Mark mark) { return (Utf8) page.getMarkers().get(u8(mark.value())); }
+  public Utf8 getMark(Mark mark) {
+    return (Utf8) page.getMarkers().get(u8(mark.value()));
+  }
 
   public boolean hasMark(Mark mark) {
     return getMark(mark) != null;
   }
 
-  public void putMark(Mark mark, String value) { putMark(mark, u8(value)); }
+  public void putMark(Mark mark, String value) {
+    putMark(mark, u8(value));
+  }
 
   public void putMark(Mark mark, Utf8 value) {
     page.getMarkers().put(u8(mark.value()), value);
@@ -828,8 +836,12 @@ public class WebPage {
     page.getMetadata().put(key, value);
   }
 
-  public ByteBuffer getRawMetadata(String key) {
-    return page.getMetadata().get(u8(key));
+  public ByteBuffer getRawMetadata(Name name) {
+    return getRawMetadata(name.value());
+  }
+
+  public ByteBuffer getRawMetadata(String name) {
+    return page.getMetadata().get(u8(name));
   }
 
   public String getMetadata(Name name) {

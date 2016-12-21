@@ -59,7 +59,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
   @Override
   public void map(String key, GoraWebPage row, Context context) throws IOException, InterruptedException {
     WebPage page = WebPage.wrap(row);
-    if (page.hasMark(Mark.GENERATE)) {
+    if (!page.hasMark(Mark.GENERATE)) {
       LOG.debug("Skipping " + TableUtil.unreverseUrl(key) + "; not generated yet");
       return;
     }

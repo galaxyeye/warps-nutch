@@ -22,6 +22,7 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,10 +68,18 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     ARTICLE_SCORE_KEY("ASK"),
     CASH_KEY("CASH"),
 
-    TMP_PAGE_FROM_SEED("TPFS");
+    TMP_PAGE_FROM_SEED("TPFS"),
+    TMP_CHARS("TC");
+
     private String value;
-    Name(String value) {this.value = value; }
-    public String value() { return this.value; }
+
+    Name(String value) {
+      this.value = value;
+    }
+
+    public String value() {
+      return this.value;
+    }
   }
 
   public static final String META_TMP = "TMP_";
@@ -89,8 +98,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
   /**
    * Returns true if named value is multivalued.
    *
-   * @param name
-   *          name of metadata
+   * @param name name of metadata
    * @return true is named value is multivalued, false if single value or null
    */
   public boolean isMultiValued(final String name) {
@@ -110,8 +118,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
    * Get the value associated to a metadata name. If many values are assiociated
    * to the specified name, then the first one is returned.
    *
-   * @param name
-   *          of the metadata.
+   * @param name of the metadata.
    * @return the value associated to the specified metadata name.
    */
   public String get(final String name) {
@@ -123,11 +130,14 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     }
   }
 
+  public String get(final Name name) {
+    return get(name.value());
+  }
+
   /**
    * Get the values associated to a metadata name.
    *
-   * @param name
-   *          of the metadata.
+   * @param name of the metadata.
    * @return the values associated to a metadata name.
    */
   public String[] getValues(final String name) {
@@ -146,10 +156,8 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
    * Add a metadata name/value mapping. Add the specified value to the list of
    * values associated to the specified metadata name.
    *
-   * @param name
-   *          the metadata name.
-   * @param value
-   *          the metadata value.
+   * @param name  the metadata name.
+   * @param value the metadata value.
    */
   public void add(final String name, final String value) {
     String[] values = metadata.get(name);
@@ -163,17 +171,20 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     }
   }
 
+  public void add(final Name name, final String value) {
+    add(name.value(), value);
+  }
+
   /**
    * Copy All key-value pairs from properties.
    *
-   * @param properties
-   *          properties to copy from
+   * @param properties properties to copy from
    */
   public void setAll(Properties properties) {
     Enumeration<?> names = properties.propertyNames();
     while (names.hasMoreElements()) {
       String name = (String) names.nextElement();
-      metadata.put(name, new String[] { properties.getProperty(name) });
+      metadata.put(name, new String[]{properties.getProperty(name)});
     }
   }
 
@@ -182,13 +193,15 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
    * metadata name. If some previous values were associated to this name, they
    * are removed.
    *
-   * @param name
-   *          the metadata name.
-   * @param value
-   *          the metadata value.
+   * @param name  the metadata name.
+   * @param value the metadata value.
    */
   public void set(String name, String value) {
-    metadata.put(name, new String[] { value });
+    metadata.put(name, new String[]{value});
+  }
+
+  public void set(Name name, String value) {
+    set(name.value(), value);
   }
 
   /**
