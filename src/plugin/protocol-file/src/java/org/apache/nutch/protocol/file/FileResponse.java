@@ -22,7 +22,7 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.MimeUtil;
 
 import java.io.IOException;

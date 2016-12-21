@@ -1,6 +1,6 @@
 package org.apache.nutch.fetch.data;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.URLUtil;
 
 import java.net.URL;

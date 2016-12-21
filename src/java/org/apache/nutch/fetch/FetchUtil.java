@@ -1,16 +1,12 @@
 package org.apache.nutch.fetch;
 
-import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.gora.ProtocolStatus;
-import org.apache.nutch.storage.WebPage;
 
 import java.time.Instant;
 
-import static org.apache.nutch.storage.Mark.FETCH;
-import static org.apache.nutch.storage.Mark.GENERATE;
-import static org.apache.nutch.storage.Mark.INDEX;
+import static org.apache.nutch.persist.Mark.*;
 
 /**
  * Created by vincent on 16-9-10.

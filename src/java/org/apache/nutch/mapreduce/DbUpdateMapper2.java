@@ -20,14 +20,14 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.NutchWritable;
-import org.apache.nutch.crawl.UrlWithScore;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.persist.Mark;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.graph.GraphGroupKey;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,19 +40,19 @@ import java.util.Map.Entry;
 
 import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
 
-public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScore, NutchWritable> {
+public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, GraphGroupKey, NutchWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper2.class);
 
   private ScoringFilters scoringFilters;
 
-  private final List<ScoreDatum> scoreData = new ArrayList<>();
+  private final List<Edge> scoreData = new ArrayList<>();
 
   @SuppressWarnings("unused")
   private Utf8 batchId;
 
   // reuse writables
-  private UrlWithScore urlWithScore = new UrlWithScore();
+  private GraphGroupKey subGraphGroupKey = new GraphGroupKey();
   private NutchWritable nutchWritable = new NutchWritable();
   private WebPageWritable pageWritable;
 
@@ -71,8 +71,8 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
     if (outlinks != null) {
       for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
 //        int depth = TableUtil.getDepth(page);
-        int depth = 0; // wrong, temp
-        scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), depth));
+//        int depth = 0; // wrong, temp
+//        scoreData.add(new Edge(url, e.getKey(), e.getValue(), 0.0f, depth));
       }
     }
 
@@ -83,19 +83,19 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, UrlWithScor
       LOG.warn("Distributing score failed for URL: " + key + " exception:" + StringUtils.stringifyException(e));
     }
 
-    urlWithScore.setReversedUrl(key);
-    urlWithScore.setScore(Float.MAX_VALUE);
-    pageWritable.setWebPage(page.get());
+    subGraphGroupKey.setReversedUrl(key);
+    subGraphGroupKey.setScore(Float.MAX_VALUE);
+    pageWritable.setWebPage(page);
     nutchWritable.set(pageWritable);
-    context.write(urlWithScore, nutchWritable);
+    context.write(subGraphGroupKey, nutchWritable);
 
-    for (ScoreDatum scoreDatum : scoreData) {
-      String reversedOut = TableUtil.reverseUrl(scoreDatum.getUrl());
-      scoreDatum.setUrl(url); // the referrer page's url
-      urlWithScore.setReversedUrl(reversedOut); // out page's url
-      urlWithScore.setScore(scoreDatum.getScore()); // out page's init score
-      nutchWritable.set(scoreDatum);
-      context.write(urlWithScore, nutchWritable);
+    for (Edge edgeDatum : scoreData) {
+      String reversedOut = TableUtil.reverseUrl(edgeDatum.getV2().getUrl());
+//      edgeDatum.setSourceUrl(url); // the referrer page's url
+      subGraphGroupKey.setReversedUrl(reversedOut); // out page's url
+      subGraphGroupKey.setScore(edgeDatum.getScore()); // out page's init score
+      nutchWritable.set(edgeDatum);
+      context.write(subGraphGroupKey, nutchWritable);
     }
   }
 

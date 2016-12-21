@@ -21,8 +21,8 @@ package org.apache.nutch.protocol.http;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.http.api.HttpBase;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -17,7 +17,6 @@
 package org.apache.nutch.mapreduce;
 
 import com.google.common.collect.Maps;
-import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.hadoop.conf.Configured;
@@ -25,9 +24,9 @@ import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.Mark;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.util.Params;

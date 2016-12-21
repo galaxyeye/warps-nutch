@@ -22,7 +22,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.EncodingDetector;
 import org.apache.tika.language.LanguageIdentifier;

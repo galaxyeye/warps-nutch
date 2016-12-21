@@ -31,8 +31,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

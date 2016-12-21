@@ -20,18 +20,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.crawl.NutchWritable;
-import org.apache.nutch.crawl.UrlWithScore;
-import org.apache.nutch.crawl.UrlWithScore.UrlOnlyPartitioner;
-import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator;
-import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator.UrlOnlyComparator;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator;
+import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator.UrlOnlyComparator;
+import org.apache.nutch.persist.graph.GraphGroupKey.UrlOnlyPartitioner;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -114,12 +114,11 @@ public class DbUpdateJob extends NutchJob implements Tool {
     // the reducer.
 
     currentJob.setPartitionerClass(UrlOnlyPartitioner.class);
-    currentJob.setSortComparatorClass(UrlScoreComparator.class);
+    currentJob.setSortComparatorClass(GraphKeyComparator.class);
     currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
 
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
-    StorageUtils.initMapperJob(currentJob, fields, UrlWithScore.class,
-        NutchWritable.class, DbUpdateMapper.class, batchIdFilter);
+    StorageUtils.initMapperJob(currentJob, fields, GraphGroupKey.class, Writable.class, DbUpdateMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, DbUpdateReducer.class);
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
@@ -144,7 +143,7 @@ public class DbUpdateJob extends NutchJob implements Tool {
   private void printUsage() {
     String usage = "Usage: DbUpdateJob (<batchId> | -all) [-crawlId <id>] "
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n";
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n";
 
     System.err.println(usage);
   }

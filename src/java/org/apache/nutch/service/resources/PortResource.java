@@ -26,7 +26,7 @@ import javax.ws.rs.QueryParam;
 
 import org.apache.nutch.fetch.service.FetchServer;
 import org.apache.nutch.service.impl.PortManager;
-import org.apache.nutch.storage.local.model.ServerInstance;
+import org.apache.nutch.persist.local.model.ServerInstance;
 
 import com.google.common.collect.Maps;
 

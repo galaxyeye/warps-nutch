@@ -20,7 +20,7 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.service.misc.ErrorStatusService;
 import org.apache.nutch.net.client.NutchClient;
-import org.apache.nutch.storage.local.model.ServerInstance;
+import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 import org.restlet.Component;
 import org.restlet.Context;

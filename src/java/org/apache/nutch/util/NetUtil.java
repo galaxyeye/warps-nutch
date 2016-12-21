@@ -5,7 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

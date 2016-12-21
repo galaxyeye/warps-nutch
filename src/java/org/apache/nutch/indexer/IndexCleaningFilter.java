@@ -19,7 +19,7 @@ package org.apache.nutch.indexer;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 /**
  * Extension point for indexing. Permits one to add metadata to the indexed

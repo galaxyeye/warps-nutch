@@ -17,7 +17,7 @@
 
 package org.apache.nutch.crawl.schedulers;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 import java.time.Instant;
 

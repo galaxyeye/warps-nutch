@@ -5,27 +5,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
-import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.storage.Mark.*;
 
 /**
  * Created by vincent on 16-9-25.
@@ -42,7 +37,7 @@ public class ReduceDatumBuilder {
   private final FetchSchedule fetchSchedule;
   private final ScoringFilters scoringFilters;
   private final Params params;
-  private final List<ScoreDatum> inlinkedScoreData = new ArrayList<>(200);
+  private final List<Edge> inlinkedScoreData = new ArrayList<>(200);
 
   public ReduceDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -71,13 +66,13 @@ public class ReduceDatumBuilder {
     inlinkedScoreData.clear();
   }
 
-  public void calculateInlinks(List<ScoreDatum> scoreDatum) {
+  public void calculateInlinks(List<Edge> edge) {
     inlinkedScoreData.clear();
-    inlinkedScoreData.addAll(scoreDatum);
+    inlinkedScoreData.addAll(edge);
   }
 
   /**
-   * In the mapper phrase, NutchWritable is sets to be a WebPage or a ScoreDatum,
+   * In the mapper phrase, NutchWritable is sets to be a WebPage or a Edge,
    * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
   public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
@@ -87,9 +82,9 @@ public class ReduceDatumBuilder {
     for (NutchWritable nutchWritable : values) {
       Writable val = nutchWritable.get();
       if (val instanceof WebPageWritable) {
-        page = new WebPage(((WebPageWritable) val).getWebPage());
+        page = ((WebPageWritable) val).getWebPage();
       } else {
-        inlinkedScoreData.add((ScoreDatum) val);
+        inlinkedScoreData.add((Edge) val);
 
         if (inlinkedScoreData.size() >= maxLinks) {
           LOG.info("Limit reached, skipping further inlinks for " + sourceUrl);
@@ -183,15 +178,15 @@ public class ReduceDatumBuilder {
     page.getInlinks().clear();
 
     int smallestDist = MAX_DISTANCE;
-    for (ScoreDatum inlink : inlinkedScoreData) {
+    for (Edge inlink : inlinkedScoreData) {
       int inlinkDist = inlink.getDistance();
       if (inlinkDist < smallestDist) {
         smallestDist = inlinkDist;
       }
 
-      LOG.trace("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getUrl());
+      LOG.trace("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getDestUrl());
 
-      page.getInlinks().put(new Utf8(inlink.getUrl()), new Utf8(inlink.getAnchor()));
+      page.getInlinks().put(new Utf8(inlink.getDestUrl()), new Utf8(inlink.getDestAnchor()));
     }
 
     if (smallestDist != MAX_DISTANCE) {

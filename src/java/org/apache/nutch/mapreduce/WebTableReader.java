@@ -39,8 +39,8 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
@@ -440,7 +440,7 @@ public class WebTableReader extends NutchJob implements Tool {
       System.err
           .println("Usage: WebTableReader (-stats | -url [url] | -dump <out_dir> [-regex regex]) \n \t \t      [-crawlId <id>] [-content] [-headers] [-links] [-text]");
       System.err
-          .println("    -crawlId <id>  - the id to prefix the schemas to operate on, \n \t \t     (default: storage.crawl.id)");
+          .println("    -crawlId <id>  - the id to prefix the schemas to operate on, \n \t \t     (default: persist.crawl.id)");
       System.err
           .println("    -stats [-sort] - print overall statistics to System.out");
       System.err.println("    [-sort]        - list status sorted by host");

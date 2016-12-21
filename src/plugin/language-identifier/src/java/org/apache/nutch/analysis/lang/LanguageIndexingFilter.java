@@ -23,8 +23,8 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.util.Collection;
 import java.util.HashSet;

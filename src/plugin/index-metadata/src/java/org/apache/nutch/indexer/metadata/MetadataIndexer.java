@@ -21,11 +21,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.jetbrains.annotations.Contract;
 

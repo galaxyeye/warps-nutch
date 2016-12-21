@@ -23,8 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.*;
-import org.apache.nutch.storage.ProtocolStatus;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.ProtocolStatus;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

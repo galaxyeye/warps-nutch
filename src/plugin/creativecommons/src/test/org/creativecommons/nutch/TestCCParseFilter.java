@@ -19,7 +19,7 @@ package org.creativecommons.nutch;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
 import org.junit.Ignore;

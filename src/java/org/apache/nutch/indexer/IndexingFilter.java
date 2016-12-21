@@ -5,8 +5,8 @@ package org.apache.nutch.indexer;
  */
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

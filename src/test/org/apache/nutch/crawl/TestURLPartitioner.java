@@ -22,7 +22,7 @@ import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.mapreduce.GenerateJob.SelectorEntry;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;

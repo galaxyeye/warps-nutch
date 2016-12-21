@@ -18,7 +18,7 @@ package org.apache.nutch.parse;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.TableUtil;
 
 import java.util.HashMap;

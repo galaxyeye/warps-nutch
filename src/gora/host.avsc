@@ -1,7 +1,7 @@
 {
   "name": "Host",
   "type": "record",
-  "namespace": "org.apache.nutch.storage",
+  "namespace": "org.apache.nutch.persist",
   "doc": "Host represents a store of webpages or other data which resides on a server or other computer so that it can be accessed over the Internet",
   "fields": [
     {

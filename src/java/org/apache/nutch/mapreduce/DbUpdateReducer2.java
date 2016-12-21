@@ -23,14 +23,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.*;
+import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.graph.GraphGroupKey;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +42,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
-import static org.apache.nutch.storage.Mark.*;
-import static org.apache.nutch.storage.Mark.FETCH;
-import static org.apache.nutch.storage.Mark.PARSE;
+import static org.apache.nutch.persist.Mark.*;
+import static org.apache.nutch.persist.Mark.FETCH;
+import static org.apache.nutch.persist.Mark.PARSE;
 
-public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, String, GoraWebPage> {
+public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, String, GoraWebPage> {
 
   public static final String CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
 
@@ -57,7 +57,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
   private int maxInterval;
   private FetchSchedule schedule;
   private ScoringFilters scoringFilters;
-  private List<ScoreDatum> inlinkedScoreData = new ArrayList<>();
+  private List<Edge> inlinkedScoreData = new ArrayList<>();
   private int maxLinks;
   public DataStore<String, GoraWebPage> datastore;
 
@@ -85,7 +85,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
   }
 
   @Override
-  protected void reduce(UrlWithScore key, Iterable<NutchWritable> values, Context context) throws IOException, InterruptedException {
+  protected void reduce(GraphGroupKey key, Iterable<NutchWritable> values, Context context) throws IOException, InterruptedException {
     String keyUrl = key.getReversedUrl();
 
     WebPage page = null;
@@ -98,7 +98,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
       if (val instanceof WebPageWritable) {
         page = WebPage.wrap(((WebPageWritable) val).getWebPage());
       } else {
-        inlinkedScoreData.add((ScoreDatum) val);
+        inlinkedScoreData.add((Edge) val);
         if (inlinkedScoreData.size() >= maxLinks) {
           LOG.info("Limit reached, skipping further inlinks for " + keyUrl);
           break;
@@ -198,7 +198,7 @@ public class DbUpdateReducer2 extends GoraReducer<UrlWithScore, NutchWritable, S
     // yet),
     // write it to the page.
     int smallestDist = Integer.MAX_VALUE;
-    for (ScoreDatum inlink : inlinkedScoreData) {
+    for (Edge inlink : inlinkedScoreData) {
       int inlinkDist = inlink.getDistance();
       if (inlinkDist < smallestDist) {
         smallestDist = inlinkDist;

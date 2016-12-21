@@ -17,8 +17,8 @@
 package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class TestOPICScoringFilter {
 
   // These lists will be used when simulating the graph
   private Map<String, String[]> linkList = new LinkedHashMap<String, String[]>();
-  private final List<ScoreDatum> outlinkedScoreData = new ArrayList<ScoreDatum>();
+  private final List<Edge> outlinkedScoreData = new ArrayList<Edge>();
   private static final int DEPTH = 3;
 
   DecimalFormat df = new DecimalFormat("#.###");
@@ -120,7 +120,7 @@ public class TestOPICScoringFilter {
     Configuration conf = ConfigUtils.create();
     // LinkedHashMap dbWebPages is used instead of a persistent
     // data store for this test class
-    Map<String, Map<WebPage, List<ScoreDatum>>> dbWebPages = new LinkedHashMap<>();
+    Map<String, Map<WebPage, List<Edge>>> dbWebPages = new LinkedHashMap<>();
 
     // All WebPages stored in this map with an initial true value.
     // After processing, it is set to false.
@@ -140,8 +140,8 @@ public class TestOPICScoringFilter {
       row.setScore(scoreInjected);
       scoringFilter.injectedScore(url, row);
 
-      List<ScoreDatum> scList = new LinkedList<>();
-      Map<WebPage, List<ScoreDatum>> webPageMap = new HashMap<>();
+      List<Edge> scList = new LinkedList<>();
+      Map<WebPage, List<Edge>> webPageMap = new HashMap<>();
       webPageMap.put(row, scList);
       dbWebPages.put(TableUtil.reverseUrl(url), webPageMap);
       dbWebPagesControl.put(TableUtil.reverseUrl(url), true);
@@ -149,18 +149,18 @@ public class TestOPICScoringFilter {
 
     // Depth Loop
     for (int i = 1; i <= DEPTH; i++) {
-      Iterator<Map.Entry<String, Map<WebPage, List<ScoreDatum>>>> iter = dbWebPages.entrySet().iterator();
+      Iterator<Map.Entry<String, Map<WebPage, List<Edge>>>> iter = dbWebPages.entrySet().iterator();
 
       // OPIC Score calculated for each website one by one
       while (iter.hasNext()) {
-        Map.Entry<String, Map<WebPage, List<ScoreDatum>>> entry = iter.next();
-        Map<WebPage, List<ScoreDatum>> webPageMap = entry.getValue();
+        Map.Entry<String, Map<WebPage, List<Edge>>> entry = iter.next();
+        Map<WebPage, List<Edge>> webPageMap = entry.getValue();
 
         WebPage row = null;
-        List<ScoreDatum> scoreList = null;
-        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> iters = webPageMap.entrySet().iterator();
+        List<Edge> scoreList = null;
+        Iterator<Map.Entry<WebPage, List<Edge>>> iters = webPageMap.entrySet().iterator();
         if (iters.hasNext()) {
-          Map.Entry<WebPage, List<ScoreDatum>> values = iters.next();
+          Map.Entry<WebPage, List<Edge>> values = iters.next();
           row = values.getKey();
           scoreList = values.getValue();
         }
@@ -185,31 +185,31 @@ public class TestOPICScoringFilter {
         // Existing outlinks are added to outlinkedScoreData
         Map<CharSequence, CharSequence> outlinks = row.getOutlinks();
         for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-          self.outlinkedScoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
+          self.outlinkedScoreData.add(new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
         }
 
         scoringFilter.distributeScoreToOutlinks(url, row, self.outlinkedScoreData, outlinks.size());
 
         // DbUpdate Reducer simulation
-        for (ScoreDatum sc : self.outlinkedScoreData) {
+        for (Edge sc : self.outlinkedScoreData) {
           if (dbWebPages.get(TableUtil.reverseUrl(sc.getUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
             WebPage outlinkRow = WebPage.newWebPage();
 
             scoringFilter.initialScore(sc.getUrl(), outlinkRow);
-            List<ScoreDatum> newScoreList = new LinkedList<>();
+            List<Edge> newScoreList = new LinkedList<>();
             newScoreList.add(sc);
-            Map<WebPage, List<ScoreDatum>> values = new HashMap<>();
+            Map<WebPage, List<Edge>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
             dbWebPages.put(TableUtil.reverseUrl(sc.getUrl()), values);
             dbWebPagesControl.put(TableUtil.reverseUrl(sc.getUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WebPage, List<ScoreDatum>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
-            Iterator<Map.Entry<WebPage, List<ScoreDatum>>> value = values.entrySet().iterator();
+            Map<WebPage, List<Edge>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
+            Iterator<Map.Entry<WebPage, List<Edge>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
-              Map.Entry<WebPage, List<ScoreDatum>> list = value.next();
+              Map.Entry<WebPage, List<Edge>> list = value.next();
               scoreList = list.getValue();
               scoreList.add(sc);
             }
@@ -218,17 +218,17 @@ public class TestOPICScoringFilter {
       }
 
       // Simulate Reducing
-      for (Map.Entry<String, Map<WebPage, List<ScoreDatum>>> page : dbWebPages.entrySet()) {
+      for (Map.Entry<String, Map<WebPage, List<Edge>>> page : dbWebPages.entrySet()) {
 
         String reversedUrl = page.getKey();
         String url = TableUtil.unreverseUrl(reversedUrl);
 
-        Iterator<Map.Entry<WebPage, List<ScoreDatum>>> rr = page.getValue().entrySet().iterator();
+        Iterator<Map.Entry<WebPage, List<Edge>>> rr = page.getValue().entrySet().iterator();
 
-        List<ScoreDatum> inlinkedScoreDataList = null;
+        List<Edge> inlinkedScoreDataList = null;
         WebPage row = null;
         if (rr.hasNext()) {
-          Map.Entry<WebPage, List<ScoreDatum>> aa = rr.next();
+          Map.Entry<WebPage, List<Edge>> aa = rr.next();
           inlinkedScoreDataList = aa.getValue();
           row = aa.getKey();
         }

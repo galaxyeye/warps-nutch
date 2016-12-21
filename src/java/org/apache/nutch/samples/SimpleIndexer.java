@@ -7,7 +7,7 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.protocol.ProtocolNotFound;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

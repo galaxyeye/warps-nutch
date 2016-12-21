@@ -23,7 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Protocol;
 import org.apache.nutch.protocol.RobotRulesParser;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

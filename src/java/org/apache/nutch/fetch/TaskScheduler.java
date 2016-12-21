@@ -9,7 +9,10 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.crawl.*;
+import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.crawl.NutchContext;
+import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.fetch.data.FetchTask;
@@ -29,11 +32,10 @@ import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
 import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
-import org.apache.nutch.scoring.ScoreDatum;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
-import org.apache.nutch.storage.gora.ProtocolStatus;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.joining;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.storage.Mark.*;
+import static org.apache.nutch.persist.Mark.*;
 
 public class TaskScheduler extends Configured {
 
@@ -831,7 +833,7 @@ public class TaskScheduler extends Configured {
   }
 
   /**
-   * Write the reduce result back to the backend storage
+   * Write the reduce result back to the backend persist
    * threadsafe
    * */
 //  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
@@ -840,7 +842,7 @@ public class TaskScheduler extends Configured {
 //
 //    // Do not follow detail pages for public opinion tracking
 //    if (!mainPage.veryLikeDetailPage()) {
-//      Map<UrlWithScore, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
+//      Map<GraphGroupKey, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
 //      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
 //    }
 //
@@ -858,16 +860,16 @@ public class TaskScheduler extends Configured {
 //    output(reversedUrl, mainPage);
 //  }
 
-  private void persistOutPage(WebPage mainPage, UrlWithScore urlWithScore) {
-    String outReversedUrl = urlWithScore.getReversedUrl();
+  private void persistOutPage(WebPage mainPage, GraphGroupKey graphGroupKey) {
+    String outReversedUrl = graphGroupKey.getReversedUrl();
     String outUrl = TableUtil.unreverseUrl(outReversedUrl);
 
     int newDepth = mainPage.getDepth();
     if (newDepth != MAX_DISTANCE) {
       newDepth += 1;
     }
-    float initScore = urlWithScore.getScore().get();
-    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new ScoreDatum(initScore, outUrl, "", newDepth)));
+    float initScore = graphGroupKey.getScore().get();
+//    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new Edge(outUrl, "", initScore, newDepth)));
 
     Pair<WebPage, Boolean> outPage;
     WebPage oldPage;

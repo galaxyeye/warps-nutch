@@ -18,8 +18,8 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.util.Collection;
 

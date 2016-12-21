@@ -21,7 +21,7 @@ package org.apache.nutch.protocol.http;
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 import java.net.URL;
 

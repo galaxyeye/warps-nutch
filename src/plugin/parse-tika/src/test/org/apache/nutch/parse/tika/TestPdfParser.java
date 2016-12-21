@@ -23,7 +23,7 @@ import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
 import org.junit.Test;

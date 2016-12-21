@@ -16,7 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 import java.util.concurrent.Callable;
 

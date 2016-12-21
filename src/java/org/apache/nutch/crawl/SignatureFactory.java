@@ -20,7 +20,7 @@ package org.apache.nutch.crawl;
 // Commons Logging imports
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

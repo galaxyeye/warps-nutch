@@ -17,9 +17,10 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.RawComparator;
-import org.apache.nutch.crawl.UrlWithScore.UrlOnlyPartitioner;
-import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator;
-import org.apache.nutch.crawl.UrlWithScore.UrlScoreComparator.UrlOnlyComparator;
+import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.persist.graph.GraphGroupKey.UrlOnlyPartitioner;
+import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator;
+import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator.UrlOnlyComparator;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
 
@@ -28,14 +29,14 @@ import java.io.*;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Tests {@link UrlWithScore} with serialization, partitioning and sorting.
+ * Tests {@link GraphGroupKey} with serialization, partitioning and sorting.
  */
 public class TestUrlWithScore {
 
   @Test
   public void testSerialization() throws IOException {
     // create a key and test basic functionality
-    UrlWithScore keyOut = new UrlWithScore(TableUtil.reverseUrl("http://example.org/"), 1f);
+    GraphGroupKey keyOut = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/"), 1f);
     assertEquals(TableUtil.reverseUrl("http://example.org/"), keyOut.getReversedUrl());
     assertEquals(1f, keyOut.getScore().get(), 0.001);
 
@@ -45,7 +46,7 @@ public class TestUrlWithScore {
     keyOut.write(out);
 
     // read from in
-    UrlWithScore keyIn = new UrlWithScore();
+    GraphGroupKey keyIn = new GraphGroupKey();
     ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
     DataInputStream in = new DataInputStream(bis);
     keyIn.readFields(in);
@@ -60,11 +61,11 @@ public class TestUrlWithScore {
   public void testPartitioner() throws IOException {
     UrlOnlyPartitioner part = new UrlOnlyPartitioner();
 
-    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
-    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
-    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
-    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
-    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
+    GraphGroupKey k1 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    GraphGroupKey k2 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    GraphGroupKey k3 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    GraphGroupKey k4 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    GraphGroupKey k5 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     int numReduces = 7;
 
@@ -83,11 +84,11 @@ public class TestUrlWithScore {
   public void testUrlOnlySorting() throws IOException {
     UrlOnlyComparator comp = new UrlOnlyComparator();
 
-    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
-    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
-    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
-    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
-    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
+    GraphGroupKey k1 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    GraphGroupKey k2 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    GraphGroupKey k3 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    GraphGroupKey k4 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    GraphGroupKey k5 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     // k1 should be equal to k2
     assertEquals(0, compareBothRegularAndRaw(comp, k1, k2));
@@ -106,13 +107,13 @@ public class TestUrlWithScore {
 
   @Test
   public void testUrlScoreSorting() throws IOException {
-    UrlScoreComparator comp = new UrlScoreComparator();
+    GraphKeyComparator comp = new GraphKeyComparator();
 
-    UrlWithScore k1 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 1f);
-    UrlWithScore k2 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/1"), 2f);
-    UrlWithScore k3 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 1f);
-    UrlWithScore k4 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 2f);
-    UrlWithScore k5 = new UrlWithScore(TableUtil.reverseUrl("http://example.org/2"), 3f);
+    GraphGroupKey k1 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 1f);
+    GraphGroupKey k2 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/1"), 2f);
+    GraphGroupKey k3 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 1f);
+    GraphGroupKey k4 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 2f);
+    GraphGroupKey k5 = new GraphGroupKey(TableUtil.reverseUrl("http://example.org/2"), 3f);
 
     // k1 is after k2, because score is lower
     assertEquals(1, comp.compare(k1, k2));
@@ -148,8 +149,8 @@ public class TestUrlWithScore {
    * @return The compare result. (When k1 != k2, assert failure kicks in)
    * @throws IOException
    */
-  private Object compareBothRegularAndRaw(RawComparator<UrlWithScore> comp,
-      UrlWithScore k1, UrlWithScore k2) throws IOException {
+  private Object compareBothRegularAndRaw(RawComparator<GraphGroupKey> comp,
+                                          GraphGroupKey k1, GraphGroupKey k2) throws IOException {
     int regular = comp.compare(k1, k2);
 
     byte[] bytes1 = extractBytes(k1);
@@ -169,7 +170,7 @@ public class TestUrlWithScore {
    * @return
    * @throws IOException
    */
-  private byte[] extractBytes(UrlWithScore k) throws IOException {
+  private byte[] extractBytes(GraphGroupKey k) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(bos);
     k.write(out);

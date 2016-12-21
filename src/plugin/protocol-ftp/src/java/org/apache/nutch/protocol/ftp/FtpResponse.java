@@ -28,7 +28,7 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

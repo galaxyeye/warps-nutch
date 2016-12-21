@@ -18,7 +18,7 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;

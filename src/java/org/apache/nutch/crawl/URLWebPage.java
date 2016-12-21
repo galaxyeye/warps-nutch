@@ -16,7 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.crawl;
 
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 public class URLWebPage {
 

@@ -23,7 +23,7 @@ import crawlercommons.robots.BaseRobotRules;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 /** A retriever of url content. Implemented by protocol extensions. */
 public interface Protocol extends FieldPluggable, Configurable {

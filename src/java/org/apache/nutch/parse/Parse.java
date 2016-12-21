@@ -16,7 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
-import org.apache.nutch.storage.gora.ParseStatus;
+import org.apache.nutch.persist.gora.ParseStatus;
 
 public class Parse {
 

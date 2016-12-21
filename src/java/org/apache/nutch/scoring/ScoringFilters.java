@@ -20,12 +20,13 @@ package org.apache.nutch.scoring;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.ObjectCache;
 
 import java.util.*;
@@ -117,14 +118,14 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row,
-                                        Collection<ScoreDatum> scoreData, int allCount) throws ScoringFilterException {
+                                        Collection<Edge> scoreData, int allCount) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
     }
   }
 
   @Override
-  public void updateScore(String url, WebPage row, List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, List<Edge> inlinkedScoreData) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }

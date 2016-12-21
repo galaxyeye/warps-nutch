@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.gora.store.DataStore;
 import org.apache.gora.util.GoraException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.gora.Host;
-import org.apache.nutch.storage.StorageUtils;
+import org.apache.nutch.persist.gora.Host;
+import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.util.TableUtil;
 
 import java.io.Closeable;

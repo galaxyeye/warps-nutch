@@ -16,65 +16,61 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.crawl.NutchWritable;
-import org.apache.nutch.crawl.UrlWithScore;
-import org.apache.nutch.dbupdate.MapDatumBuilder;
-import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.graph.*;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
+import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Metadata.Name.*;
-import static org.apache.nutch.metadata.Nutch.PARAM_BATCH_ID;
+import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
+import static org.apache.nutch.metadata.Metadata.Name.TMP_CHARS;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
-import static org.apache.nutch.storage.Mark.FETCH;
+import static org.apache.nutch.persist.Mark.FETCH;
 
-public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScore, NutchWritable> {
+public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, Writable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper.class);
 
   public enum Counter { rowsMapped, newRowsMapped, notFetched, urlFiltered, tooDeep }
 
   private Configuration conf;
+  private Mapper.Context context;
+  private NutchCounter counter;
 
   private int maxDistance;
   private int maxOutlinks = 1000;
 
   // reuse writables
-  private UrlWithScore urlWithScore = new UrlWithScore();
-  private NutchWritable nutchWritable = new NutchWritable();
-  private WebPageWritable pageWritable;
+//  private Graph graph;
+//  private NutchWritable nutchWritable = new NutchWritable();
+//  private WebPageWritable pageWritable;
   private ScoringFilters scoringFilters;
-  private final List<ScoreDatum> scoreData = new ArrayList<>();
+//  private final List<Edge> edgeData = new ArrayList<>();
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
 
-    getCounter().register(Counter.class);
-
     conf = context.getConfiguration();
-    pageWritable = new WebPageWritable(context.getConfiguration(), null);
+    this.context = context;
+
+    counter = getCounter();
+    counter.register(Counter.class);
+
+//    pageWritable = new WebPageWritable(context.getConfiguration(), null);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
 
@@ -90,16 +86,16 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScor
   }
 
   /**
-   * One row map to several rows
+   * Build a graph
    * */
   @Override
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
-    getCounter().increase(rows);
+    counter.increase(rows);
 
     WebPage page = WebPage.wrap(row);
 
     if (!page.hasMark(FETCH)) {
-      getCounter().increase(Counter.notFetched);
+      counter.increase(Counter.notFetched);
       return;
     }
 
@@ -107,44 +103,51 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, UrlWithScor
 
     final int depth = page.getDepth();
     if (depth >= maxDistance) {
-      getCounter().increase(Counter.tooDeep);
+      counter.increase(Counter.tooDeep);
       return;
     }
 
-    scoreData.clear();
-    Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
-    outlinks.entrySet().forEach(e -> scoreData.add(createScoreDatum(page, e.getKey(), e.getValue(), depth)));
-    getCounter().increase(NutchCounter.Counter.outlinks, outlinks.size());
+    Graph graph = new Graph(conf);
+//    graph.reset();
+
+    Vertex v1 = new Vertex(url, "", page, depth, conf);
+    v1.addMetadata(PUBLISH_TIME, page.getPublishTime());
+    v1.addMetadata(TMP_CHARS, page.sniffTextLength());
+
+    graph.addEdge(new Edge(v1, v1, 0.0f));
+
+    page.getOutlinks().entrySet().stream()
+        .map(e -> new Vertex(e.getKey().toString(), e.getValue().toString(), null, depth + 1, conf))
+        .forEach(v2 -> graph.addEdge(new Edge(v1, v2, 0.0f)));
 
     try {
-      scoringFilters.distributeScoreToOutlinks(url, page, scoreData, outlinks.size());
+      scoringFilters.distributeScoreToOutlinks(url, page, graph.getEdges(), graph.edgeCount());
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL: " + reversedUrl + StringUtils.stringifyException(e));
     }
 
-    urlWithScore.setReversedUrl(reversedUrl);
-    urlWithScore.setScore(Float.MAX_VALUE);
-    pageWritable.setWebPage(page.get());
-    nutchWritable.set(pageWritable);
-    context.write(urlWithScore, nutchWritable);
-    getCounter().increase(Counter.rowsMapped);
+    GraphGroupKey key = new GraphGroupKey(reversedUrl, GraphMode.IN_LINK_GRAPH, Float.MAX_VALUE);
+    context.write(key, graph.getVertex());
 
-    for (ScoreDatum scoreDatum : scoreData) {
-      String reversedOut = TableUtil.reverseUrl(scoreDatum.getUrl());
-      scoreDatum.setUrl(url); // the referrer page's url
-      urlWithScore.setReversedUrl(reversedOut); // out page's url
-      urlWithScore.setScore(scoreDatum.getScore()); // out page's init score
-      nutchWritable.set(scoreDatum);
-      context.write(urlWithScore, nutchWritable);
-    }
-    getCounter().increase(Counter.newRowsMapped, scoreData.size());
+    graph.getEdges().forEach(edge -> writeEdge(edge, GraphMode.IN_LINK_GRAPH));
+
+    counter.increase(Counter.rowsMapped);
+    counter.increase(Counter.newRowsMapped, graph.edgeCount());
   }
 
-  private ScoreDatum createScoreDatum(WebPage page, CharSequence url, CharSequence anchor, int depth) {
-    ScoreDatum scoreDatum = new ScoreDatum(0.0f, url, anchor, depth);
-    scoreDatum.addMetadata(PUBLISH_TIME, page.getPublishTime());
-    scoreDatum.addMetadata(TMP_CHARS, page.sniffTextLength());
-    // scoreDatum.addMetadata("IS_ARTICLE", 1);
-    return scoreDatum;
+  private void writeEdge(Edge edge, GraphMode graphMode) {
+    // partition by source url, so the reducer get a group of inlinks
+    try {
+      String url;
+      if (graphMode.isInLinkGraph()) {
+        url = TableUtil.reverseUrl(edge.getV2().getUrl());
+      }
+      else {
+        url = TableUtil.reverseUrl(edge.getV1().getUrl());
+      }
+      context.write(new GraphGroupKey(url, graphMode, edge.getScore()), edge);
+    } catch (IOException|InterruptedException e) {
+      LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
+    }
   }
 }

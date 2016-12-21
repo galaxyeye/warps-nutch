@@ -19,11 +19,11 @@ package org.apache.nutch.scoring.tld;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.scoring.ScoreDatum;
+import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.domain.DomainSuffix;
 import org.apache.nutch.util.domain.DomainSuffixes;
 
@@ -80,13 +80,13 @@ public class TLDScoringFilter implements ScoringFilter {
 
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage page,
-      Collection<ScoreDatum> scoreData, int allCount)
+                                        Collection<Edge> scoreData, int allCount)
       throws ScoringFilterException {
   }
 
   @Override
   public void updateScore(String url, WebPage page,
-      List<ScoreDatum> inlinkedScoreData) throws ScoringFilterException {
+      List<Edge> inlinkedScoreData) throws ScoringFilterException {
   }
 
   @Override

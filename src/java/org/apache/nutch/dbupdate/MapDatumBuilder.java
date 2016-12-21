@@ -3,15 +3,14 @@ package org.apache.nutch.dbupdate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
-import org.apache.nutch.crawl.UrlWithScore;
+import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.graph.GraphGroupKey;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoreDatum;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -61,10 +60,10 @@ public class MapDatumBuilder {
   /**
    * Build map phrase datum
    * */
-  public Pair<UrlWithScore, NutchWritable> createMainDatum(String reversedUrl, WebPage mainPage) {
+  public Pair<GraphGroupKey, NutchWritable> createMainDatum(String reversedUrl, WebPage mainPage) {
     NutchWritable nutchWritable = new NutchWritable();
     nutchWritable.set(new WebPageWritable(conf, mainPage.get()));
-    return Pair.of(new UrlWithScore(reversedUrl, Float.MAX_VALUE), nutchWritable);
+    return Pair.of(new GraphGroupKey(reversedUrl, Float.MAX_VALUE), nutchWritable);
   }
 
   /**
@@ -72,16 +71,16 @@ public class MapDatumBuilder {
    *
    * TODO : Write the result into hdfs directly to deduce memory consumption
    * */
-  public Map<UrlWithScore, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
+  public Map<GraphGroupKey, NutchWritable> createRowsFromOutlink(String sourceUrl, WebPage sourcePage) {
     final int depth = sourcePage.getDepth();
     if (depth >= maxDistance) {
       return Collections.emptyMap();
     }
 
     // 1. Create scoreData
-    List<ScoreDatum> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
+    List<Edge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
         .limit(maxOutlinks)
-        .map(e -> new ScoreDatum(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
+        .map(e -> new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
         .collect(Collectors.toList());
     counter.increase(NutchCounter.Counter.outlinks, outlinkScoreData.size());
 
@@ -103,21 +102,21 @@ public class MapDatumBuilder {
    * Build map phrase datum
    * */
   @NotNull
-  private Pair<UrlWithScore, NutchWritable> createOutlinkDatum(String sourceUrl, ScoreDatum scoreDatum) {
-    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(scoreDatum.getUrl());
+  private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, Edge edge) {
+    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
 
     // TODO : why set to be the source url?
-    scoreDatum.setUrl(sourceUrl);
+    edge.setUrl(sourceUrl);
 
-//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(scoreDatum.getUrl());
-//    scoreDatum.setUrl(sourceUrl);
-//    UrlWithScore urlWithScore = new UrlWithScore();
+//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
+//    edge.setUrl(sourceUrl);
+//    GraphGroupKey urlWithScore = new GraphGroupKey();
 //    urlWithScore.setReversedUrl(reversedOutUrl);
-//    urlWithScore.setScore(scoreDatum.getScore());
+//    urlWithScore.setScore(edge.getScore());
 //
 //    NutchWritable nutchWritable = new NutchWritable();
-//    nutchWritable.set(scoreDatum);
+//    nutchWritable.set(edge);
 
-    return Pair.of(new UrlWithScore(reversedOutUrl, scoreDatum.getScore()), new NutchWritable(scoreDatum));
+    return Pair.of(new GraphGroupKey(reversedOutUrl, edge.getScore()), new NutchWritable(edge));
   }
 }

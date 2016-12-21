@@ -7,11 +7,11 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.gora.ParseStatus;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.Mark;
+import org.apache.nutch.persist.gora.ParseStatus;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.TableUtil;
 

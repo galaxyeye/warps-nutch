@@ -20,8 +20,8 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 /**
  * This class provides common routines for setup/teardown of an in-memory data
@@ -37,7 +37,7 @@ public class AbstractNutchTest {
 
   public void setUp() throws Exception {
     conf = CrawlTestUtil.createConfiguration();
-    conf.set("storage.data.store.class", "org.apache.gora.memory.store.MemStore");
+    conf.set("persist.data.store.class", "org.apache.gora.memory.store.MemStore");
     fs = FileSystem.get(conf);
     webPageStore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
   }

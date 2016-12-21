@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.nutch.storage.local.model.ServerInstance;
+import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 
 import com.google.common.collect.Lists;

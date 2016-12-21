@@ -31,8 +31,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -297,7 +297,7 @@ public class GenerateJob extends NutchJob implements Tool {
   private void printUsage() {
     System.out.println("Usage: GenerateJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
         "[-reGen] [-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
-    System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
+    System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\");");
     System.out.println("    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");");
     System.out.println("    -batchId <id>     - the batch id ");
     System.out.println("    -topN <N>         - number of top URLs to be selected, default is Long.MAX_VALUE ");

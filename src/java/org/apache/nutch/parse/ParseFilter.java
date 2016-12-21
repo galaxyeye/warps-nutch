@@ -19,7 +19,7 @@ package org.apache.nutch.parse;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.w3c.dom.DocumentFragment;
 
 /**

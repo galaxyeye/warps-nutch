@@ -19,7 +19,7 @@ package org.apache.nutch.util;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;

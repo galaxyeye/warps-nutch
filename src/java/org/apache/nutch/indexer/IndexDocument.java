@@ -28,9 +28,8 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 
 import java.io.DataInput;

@@ -18,7 +18,7 @@
 package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 
 import java.time.Duration;

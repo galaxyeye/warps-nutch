@@ -32,10 +32,10 @@ import org.apache.nutch.indexer.IndexerOutputFormat;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.storage.Mark;
-import org.apache.nutch.storage.StorageUtils;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.Mark;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -225,7 +225,7 @@ public class IndexJob extends NutchJob implements Tool {
         + "\n \t \t   [-resume] [-threads N] [-limit limit] [-numTasks N]\n"
         + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n"
         + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");"
         + "    -threads N    - number of fetching threads per task\n"
         + "    -limit        - limit\n"

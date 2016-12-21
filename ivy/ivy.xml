@@ -97,7 +97,7 @@
         <dependency org="org.apache.tika" name="tika-core" rev="1.7"/>
         <dependency org="org.ccil.cowan.tagsoup" name="tagsoup" rev="1.2" conf="*->master"/>
 
-        <!-- Local storage -->
+        <!-- Local persist -->
         <!-- hsqldb is used by TestGoraStorage -->
         <dependency org="org.hsqldb" name="hsqldb" rev="2.2.8" conf="*->default"/>
         <dependency org="com.j256.ormlite" name="ormlite-jdbc" rev="4.48" conf="*->default"/>
@@ -106,7 +106,7 @@
 
         <dependency org="org.apache.solr" name="solr-solrj" rev="6.1.0"/>
 
-        <!-- Distributed storage -->
+        <!-- Distributed persist -->
         <!--
 
         <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.5.2" conf="default" />

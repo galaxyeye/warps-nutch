@@ -1252,7 +1252,7 @@
   </description>
 </property>
 
-<!-- storage properties -->
+<!-- persist properties -->
 
 <property>
   <name>storage.data.store.class</name>
@@ -1424,7 +1424,7 @@
   by the count of pages linked into him, 
   which is well know as the "PageRank".
   
-  Since we are not very interested in the weight of each page, 
+  Since we are not very interested in the score of each page,
   we disable this time consuming feature by default
   </description>
 </property>

@@ -20,8 +20,8 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.mapreduce.GoraReducer;
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.storage.gora.Host;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.gora.Host;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.Histogram;
 import org.apache.nutch.util.URLUtil;
 

@@ -7,7 +7,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.storage.local.model.ServerInstance;
+import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

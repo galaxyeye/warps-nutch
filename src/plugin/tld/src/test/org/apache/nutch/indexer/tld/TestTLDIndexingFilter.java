@@ -17,7 +17,7 @@
 package org.apache.nutch.indexer.tld;
 
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
 

@@ -24,7 +24,7 @@ import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.cyberneko.html.parsers.DOMFragmentParser;
 import org.junit.Test;

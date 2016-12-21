@@ -29,7 +29,7 @@ import org.apache.nutch.net.proxy.ProxyEntry;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.protocol.http.api.HttpException;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;

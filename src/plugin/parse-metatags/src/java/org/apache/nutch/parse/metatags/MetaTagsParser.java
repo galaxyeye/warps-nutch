@@ -24,8 +24,8 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.HTMLMetaTags;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseFilter;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.w3c.dom.DocumentFragment;
 
 import java.nio.ByteBuffer;
@@ -83,7 +83,7 @@ public class MetaTagsParser implements ParseFilter {
 
     Metadata generalMetaTags = metaTags.getGeneralTags();
     for (String tagName : generalMetaTags.names()) {
-      // multiple values of a metadata field are separated by '\t' in storage.
+      // multiple values of a metadata field are separated by '\t' in persist.
       StringBuilder sb = new StringBuilder();
       for (String value : generalMetaTags.getValues(tagName)) {
         if (sb.length() > 0) {

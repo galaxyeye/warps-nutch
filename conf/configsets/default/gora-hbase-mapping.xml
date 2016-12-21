@@ -51,7 +51,7 @@ http://gora.apache.org/current/gora-hbase.html
         <family name="mk" maxVersions="1" />
     </table>
 
-    <class table="webpage" keyClass="java.lang.String" name="org.apache.nutch.storage.gora.GoraWebPage">
+    <class table="webpage" keyClass="java.lang.String" name="org.apache.nutch.persist.gora.GoraWebPage">
         <!-- fetch fields                                       -->
         <field name="baseUrl" family="f" qualifier="bas" />
         <field name="status" family="f" qualifier="st" />
@@ -89,7 +89,7 @@ http://gora.apache.org/current/gora-hbase.html
       <family name="ol" maxVersions="1" />
     </table>
 
-    <class table="host" keyClass="java.lang.String" name="org.apache.nutch.storage.gora.Host">
+    <class table="host" keyClass="java.lang.String" name="org.apache.nutch.persist.gora.Host">
       <field name="metadata" family="mtdt" />
       <field name="inlinks" family="il" />
       <field name="outlinks" family="ol" />

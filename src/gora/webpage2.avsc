@@ -1,6 +1,6 @@
 {"name": "GoraWebPage",
  "type": "record",
- "namespace": "org.apache.nutch.storage.gora",
+ "namespace": "org.apache.nutch.persist.gora",
  "fields": [
         {"name": "baseUrl", "type": ["null","string"], "default":null},
         {"name": "status", "type": "int", "default":0},
@@ -13,7 +13,7 @@
         {"name": "protocolStatus", "type": ["null", {
             "name": "ProtocolStatus",
             "type": "record",
-            "namespace": "org.apache.nutch.storage.gora",
+            "namespace": "org.apache.nutch.persist.gora",
             "fields": [
                 {"name": "code", "type": "int", "default":0},
                 {"name": "args", "type": {"type": "array", "items": "string"}, "default":[]},
@@ -29,7 +29,7 @@
         {"name": "parseStatus", "type": ["null", {
             "name": "ParseStatus",
             "type": "record",
-            "namespace": "org.apache.nutch.storage.gora",
+            "namespace": "org.apache.nutch.persist.gora",
             "fields": [
                 {"name": "majorCode", "type": "int", "default":0},
                 {"name": "minorCode", "type": "int", "default":0},

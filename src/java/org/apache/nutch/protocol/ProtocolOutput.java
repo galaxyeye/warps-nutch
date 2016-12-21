@@ -17,7 +17,7 @@
 
 package org.apache.nutch.protocol;
 
-import org.apache.nutch.storage.gora.ProtocolStatus;
+import org.apache.nutch.persist.gora.ProtocolStatus;
 
 /**
  * Simple aggregate to pass from protocol plugins both content and protocol

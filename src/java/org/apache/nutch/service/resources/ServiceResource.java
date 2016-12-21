@@ -26,10 +26,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.nutch.storage.local.model.BrowserInstance;
-import org.apache.nutch.storage.local.model.ServerInstance;
-import org.apache.nutch.storage.local.service.BrowserInstanceService;
-import org.apache.nutch.storage.local.service.ServerInstanceService;
+import org.apache.nutch.persist.local.model.BrowserInstance;
+import org.apache.nutch.persist.local.model.ServerInstance;
+import org.apache.nutch.persist.local.service.BrowserInstanceService;
+import org.apache.nutch.persist.local.service.ServerInstanceService;
 import org.apache.nutch.util.NetUtil;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;

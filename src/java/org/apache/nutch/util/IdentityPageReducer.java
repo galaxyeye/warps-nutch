@@ -17,7 +17,7 @@
 package org.apache.nutch.util;
 
 import org.apache.gora.mapreduce.GoraReducer;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.io.IOException;
 

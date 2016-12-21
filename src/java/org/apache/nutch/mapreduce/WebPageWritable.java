@@ -20,7 +20,8 @@ import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -30,14 +31,21 @@ public class WebPageWritable extends Configured implements Writable {
 
   private GoraWebPage webPage;
 
-  public WebPageWritable() {
-    this(null, GoraWebPage.newBuilder().build());
+  public WebPageWritable() { this(null, WebPage.newWebPage()); }
+
+  public WebPageWritable(Configuration conf, WebPage webPage) {
+    super(conf);
+    this.webPage = webPage.get();
   }
 
-  public WebPageWritable(Configuration conf, GoraWebPage webPage) {
-    super(conf);
-    this.webPage = webPage;
+  public WebPageWritable reset(WebPage page) {
+    this.webPage = page.get();
+    return this;
   }
+
+  public WebPage getWebPage() { return WebPage.wrap(webPage); }
+
+  public void setWebPage(WebPage page) { this.webPage = page.get(); }
 
   @Override
   public void readFields(DataInput in) throws IOException {
@@ -48,13 +56,4 @@ public class WebPageWritable extends Configured implements Writable {
   public void write(DataOutput out) throws IOException {
     IOUtils.serialize(getConf(), out, webPage, GoraWebPage.class);
   }
-
-  public GoraWebPage getWebPage() {
-    return webPage;
-  }
-
-  public void setWebPage(GoraWebPage webPage) {
-    this.webPage = webPage;
-  }
-
 }

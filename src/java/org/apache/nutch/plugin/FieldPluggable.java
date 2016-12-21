@@ -16,7 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.plugin;
 
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.util.Collection;
 

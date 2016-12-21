@@ -21,7 +21,7 @@ import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.fetch.data.FetchEntry;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.StringUtil;
 
 import java.io.IOException;

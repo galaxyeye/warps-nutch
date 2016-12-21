@@ -210,7 +210,7 @@ public interface Nutch {
   String PARAM_NUTCH_TMP_DIR = "nutch.tmp.dir";
   String PARAM_NUTCH_OUTPUT_DIR = "nutch.output.dir";
   String PARAM_NUTCH_REPORT_DIR = "nutch.report.dir";
-  String PARAM_CRAWL_ID = "storage.crawl.id";
+  String PARAM_CRAWL_ID = "persist.crawl.id";
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
   String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
   String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";

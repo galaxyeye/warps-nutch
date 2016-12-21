@@ -1,6 +1,6 @@
 {"name": "CustomJob",
  "type": "record",
- "namespace": "org.apache.nutch.storage",
+ "namespace": "org.apache.nutch.persist",
 
 key : jobid
 fields : 

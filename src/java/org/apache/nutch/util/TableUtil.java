@@ -17,14 +17,11 @@
 package org.apache.nutch.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.nutch.storage.WebPage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency

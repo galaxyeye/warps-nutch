@@ -19,8 +19,8 @@ package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.io.MD5Hash;
-import org.apache.nutch.storage.WebPage;
-import org.apache.nutch.storage.gora.GoraWebPage;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;

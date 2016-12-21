@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.storage.WebPage;
+import org.apache.nutch.persist.WebPage;
 import org.junit.After;
 import org.junit.Test;
 import org.mortbay.jetty.Server;
