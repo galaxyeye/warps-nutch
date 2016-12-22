@@ -17,8 +17,10 @@
 package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.graph.Graph;
+import org.apache.nutch.persist.graph.Vertex;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -26,8 +28,9 @@ import org.junit.Test;
 
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.Map.Entry;
 
+import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
+import static org.apache.nutch.metadata.Metadata.Name.TMP_CHARS;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -43,8 +46,7 @@ import static org.junit.Assert.assertTrue;
 public class TestOPICScoringFilter {
 
   // These lists will be used when simulating the graph
-  private Map<String, String[]> linkList = new LinkedHashMap<String, String[]>();
-  private final List<Edge> outlinkedScoreData = new ArrayList<Edge>();
+  private Map<String, String[]> linkList = new LinkedHashMap<>();
   private static final int DEPTH = 3;
 
   DecimalFormat df = new DecimalFormat("#.###");
@@ -180,38 +182,49 @@ public class TestOPICScoringFilter {
           row.getOutlinks().put(seedOutlink, "");
         }
 
-        self.outlinkedScoreData.clear();
-
         // Existing outlinks are added to outlinkedScoreData
-        Map<CharSequence, CharSequence> outlinks = row.getOutlinks();
-        for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-          self.outlinkedScoreData.add(new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
-        }
+//        Map<CharSequence, CharSequence> outlinks = row.getOutlinks();
+//        for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
+//          self.outlinkedScoreData.add(new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
+//        }
 
-        scoringFilter.distributeScoreToOutlinks(url, row, self.outlinkedScoreData, outlinks.size());
+        Graph graph = new Graph(conf);
+
+        int depth = 0;
+        Vertex v1 = new Vertex(url, "", row, depth, conf);
+        v1.addMetadata(PUBLISH_TIME, row.getPublishTime());
+        v1.addMetadata(TMP_CHARS, row.sniffTextLength());
+
+        graph.addEdge(new Edge(v1, v1, 0.0f));
+
+        row.getOutlinks().entrySet().stream()
+            .map(e -> new Vertex(e.getKey().toString(), e.getValue().toString(), null, depth + 1, conf))
+            .forEach(v2 -> graph.addEdge(new Edge(v1, v2, 0.0f)));
+
+        scoringFilter.distributeScoreToOutlinks(url, row, graph.getEdges(), graph.getEdges().size());
 
         // DbUpdate Reducer simulation
-        for (Edge sc : self.outlinkedScoreData) {
-          if (dbWebPages.get(TableUtil.reverseUrl(sc.getUrl())) == null) {
+        for (Edge edge: graph.getEdges()) {
+          if (dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
             WebPage outlinkRow = WebPage.newWebPage();
 
-            scoringFilter.initialScore(sc.getUrl(), outlinkRow);
+            scoringFilter.initialScore(edge.getV2().getUrl(), outlinkRow);
             List<Edge> newScoreList = new LinkedList<>();
-            newScoreList.add(sc);
+            newScoreList.add(edge);
             Map<WebPage, List<Edge>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
-            dbWebPages.put(TableUtil.reverseUrl(sc.getUrl()), values);
-            dbWebPagesControl.put(TableUtil.reverseUrl(sc.getUrl()), true);
+            dbWebPages.put(TableUtil.reverseUrl(edge.getV2().getUrl()), values);
+            dbWebPagesControl.put(TableUtil.reverseUrl(edge.getV2().getUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WebPage, List<Edge>> values = dbWebPages.get(TableUtil.reverseUrl(sc.getUrl()));
+            Map<WebPage, List<Edge>> values = dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl()));
             Iterator<Map.Entry<WebPage, List<Edge>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
               Map.Entry<WebPage, List<Edge>> list = value.next();
               scoreList = list.getValue();
-              scoreList.add(sc);
+              scoreList.add(edge);
             }
           }
         }

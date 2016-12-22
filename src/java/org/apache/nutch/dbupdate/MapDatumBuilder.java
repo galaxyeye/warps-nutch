@@ -4,10 +4,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.persist.graph.Graph;
 import org.apache.nutch.persist.graph.GraphGroupKey;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.persist.graph.Vertex;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.persist.WebPage;
@@ -62,7 +64,7 @@ public class MapDatumBuilder {
    * */
   public Pair<GraphGroupKey, NutchWritable> createMainDatum(String reversedUrl, WebPage mainPage) {
     NutchWritable nutchWritable = new NutchWritable();
-    nutchWritable.set(new WebPageWritable(conf, mainPage.get()));
+    nutchWritable.set(new WebPageWritable(conf, mainPage));
     return Pair.of(new GraphGroupKey(reversedUrl, Float.MAX_VALUE), nutchWritable);
   }
 
@@ -77,23 +79,30 @@ public class MapDatumBuilder {
       return Collections.emptyMap();
     }
 
+    Graph graph = new Graph(conf);
+    Vertex v1 = new Vertex(sourceUrl, "", sourcePage, depth, conf);
+
     // 1. Create scoreData
-    List<Edge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
-        .limit(maxOutlinks)
-        .map(e -> new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
-        .collect(Collectors.toList());
-    counter.increase(NutchCounter.Counter.outlinks, outlinkScoreData.size());
+//    List<Edge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
+//        .limit(maxOutlinks)
+//        .map(e -> new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
+//        .collect(Collectors.toList());
+    sourcePage.getOutlinks().entrySet().stream()
+        .map(e -> new Vertex(e.getKey().toString(), e.getValue().toString(), null, depth + 1, conf))
+        .forEach(v2 -> graph.addEdge(new Edge(v1, v2, 0.0f)));
+
+    counter.increase(NutchCounter.Counter.outlinks, graph.getEdges().size());
 
     // 2. Distribute score to outlinks
     try {
       // In OPIC, the source page's score is distributed for all inlink/outlink pages
-      scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, outlinkScoreData, outlinkScoreData.size());
+      scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, graph.getEdges(), graph.getEdges().size());
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL : " + sourceUrl + " Exception:" + StringUtil.stringifyException(e));
     }
 
     // 3. Create all new rows from outlink, ready to write to storage
-    return outlinkScoreData.stream()
+    return graph.getEdges().stream()
         .map(d -> createOutlinkDatum(sourceUrl, d))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
   }
@@ -103,10 +112,10 @@ public class MapDatumBuilder {
    * */
   @NotNull
   private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, Edge edge) {
-    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
+    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getV2().getUrl());
 
     // TODO : why set to be the source url?
-    edge.setUrl(sourceUrl);
+//    edge.setUrl(sourceUrl);
 
 //    reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
 //    edge.setUrl(sourceUrl);

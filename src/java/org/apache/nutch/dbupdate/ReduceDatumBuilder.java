@@ -1,16 +1,18 @@
 package org.apache.nutch.dbupdate;
 
-import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.crawl.*;
+import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.crawl.FetchSchedule;
+import org.apache.nutch.crawl.FetchScheduleFactory;
+import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * Created by vincent on 16-9-25.
@@ -175,28 +177,6 @@ public class ReduceDatumBuilder {
    * write it to the page.
    * */
   private void calculateDistance(WebPage page) {
-    page.getInlinks().clear();
-
-    int smallestDist = MAX_DISTANCE;
-    for (Edge inlink : inlinkedScoreData) {
-      int inlinkDist = inlink.getDistance();
-      if (inlinkDist < smallestDist) {
-        smallestDist = inlinkDist;
-      }
-
-      LOG.trace("Inlink : " + inlink.getDistance() + ", " + page.getBaseUrl() + " -> " + inlink.getDestUrl());
-
-      page.getInlinks().put(new Utf8(inlink.getDestUrl()), new Utf8(inlink.getDestAnchor()));
-    }
-
-    if (smallestDist != MAX_DISTANCE) {
-      int oldDistance = page.getDepth();
-      int newDistance = smallestDist + 1;
-
-      if (newDistance < oldDistance) {
-        page.setDistance(newDistance);
-      }
-    }
   }
 
 }

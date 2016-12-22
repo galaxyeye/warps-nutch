@@ -128,7 +128,7 @@ public class OPICScoringFilter implements ScoringFilter {
       float score = edge.getScore();
 
       try {
-        String toHost = new URL(edge.getUrl()).getHost();
+        String toHost = new URL(edge.getV2().getUrl()).getHost();
         String fromHost = new URL(fromUrl).getHost();
 
         if (toHost.equalsIgnoreCase(fromHost)) {
