@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.graph.io.WebEdgeWritable;
+import org.apache.nutch.mapreduce.io.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
@@ -92,12 +93,12 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, GraphGroupK
     nutchWritable.set(pageWritable);
     context.write(subGraphGroupKey, nutchWritable);
 
-    for (WebEdge webEdgeDatum : scoreData) {
-      String reversedOut = TableUtil.reverseUrl(webEdgeDatum.getTarget().getUrl());
-//      webEdgeDatum.setSourceUrl(url); // the referrer page's url
+    for (WebEdge edgeDatum : scoreData) {
+      String reversedOut = TableUtil.reverseUrl(edgeDatum.getTarget().getUrl());
+//      edgeDatum.setSourceUrl(url); // the referrer page's url
       subGraphGroupKey.setReversedUrl(reversedOut); // out page's url
-      subGraphGroupKey.setScore(webEdgeDatum.getWeight()); // out page's init score
-      nutchWritable.set(new WebEdgeWritable(webEdgeDatum, conf));
+      subGraphGroupKey.setScore(edgeDatum.getWeight()); // out page's init score
+      nutchWritable.set(new WebEdgeWritable(edgeDatum, conf));
       context.write(subGraphGroupKey, nutchWritable);
     }
   }

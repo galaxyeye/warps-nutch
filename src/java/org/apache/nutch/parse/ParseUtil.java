@@ -31,7 +31,7 @@ import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.mapreduce.FetchJob;
-import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
@@ -55,6 +55,7 @@ import java.util.stream.Stream;
 
 import static org.apache.nutch.filter.CrawlFilter.MEDIA_URL_SUFFIXES;
 import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_QUEUE_MODE;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
 /**
  * A Utility class containing methods to simply perform parsing utilities such
@@ -262,7 +263,8 @@ public class ParseUtil {
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
 
-    page.putMetadata(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    // page.putMetadata(FetchJob.REDIRECT_DISCOVERED, Nutch.YES_VAL);
+    page.putMetadata(Metadata.Name.REDIRECT_DISCOVERED, YES_STRING);
 
     if (newUrl.equals(url)) {
       String reprUrl = URLUtil.chooseRepr(url, newUrl, refreshTime < FetchJob.PERM_REFRESH_TIME);

@@ -8,7 +8,7 @@ import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.mapreduce.NutchCounter;
-import org.apache.nutch.mapreduce.WebPageWritable;
+import org.apache.nutch.mapreduce.io.WebPageWritable;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.scoring.ScoringFilterException;
@@ -68,9 +68,9 @@ public class ReduceDatumBuilder {
     inlinkedScoreData.clear();
   }
 
-  public void calculateInlinks(List<WebEdge> webEdge) {
+  public void calculateInlinks(List<WebEdge> edge) {
     inlinkedScoreData.clear();
-    inlinkedScoreData.addAll(webEdge);
+    inlinkedScoreData.addAll(edge);
   }
 
   /**

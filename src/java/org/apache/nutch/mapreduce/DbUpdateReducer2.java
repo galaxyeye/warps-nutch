@@ -25,6 +25,7 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.*;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.GraphGroupKey;
+import org.apache.nutch.mapreduce.io.WebPageWritable;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -41,7 +42,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.nutch.mapreduce.FetchJob.REDIRECT_DISCOVERED;
+import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.persist.Mark.*;
 import static org.apache.nutch.persist.Mark.FETCH;
 import static org.apache.nutch.persist.Mark.PARSE;
@@ -227,9 +228,7 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
     // clear markers
     // But only delete when they exist. This is much faster for the underlying
     // store. The markers are on the input anyway.
-    if (page.get().getMetadata().get(REDIRECT_DISCOVERED) != null) {
-      page.get().getMetadata().put(REDIRECT_DISCOVERED, null);
-    }
+    page.clearMetadata(REDIRECT_DISCOVERED);
 
 //    Mark.GENERATE.removeMarkIfExist(page);
 //    Mark.FETCH.removeMarkIfExist(page);

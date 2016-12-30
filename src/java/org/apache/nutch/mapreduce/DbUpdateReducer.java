@@ -16,18 +16,18 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.store.DataStore;
-import org.apache.hadoop.io.Writable;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SignatureComparator;
-import org.apache.nutch.graph.*;
-import org.apache.nutch.graph.io.WebEdgeWritable;
+import org.apache.nutch.graph.GraphGroupKey;
+import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.WebGraph;
+import org.apache.nutch.graph.WebVertex;
+import org.apache.nutch.graph.io.WebGraphWritable;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
@@ -44,14 +44,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Metadata.Name.GENERATE_TIME;
+import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
+import static org.apache.nutch.metadata.Nutch.MAX_DISTANCE;
+import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
 import static org.apache.nutch.persist.Mark.*;
 
-public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, String, GoraWebPage> {
+public class DbUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateReducer.class);
 
@@ -63,7 +65,6 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
   private Duration maxFetchInterval;
   private FetchSchedule fetchSchedule;
   private ScoringFilters scoringFilters;
-  private List<WebEdge> inlinkedScoreData = new ArrayList<>();
   private boolean additionsAllowed;
   private int maxLinks;
   public DataStore<String, GoraWebPage> datastore;
@@ -105,7 +106,7 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
   }
 
   @Override
-  protected void reduce(GraphGroupKey key, Iterable<Writable> values, Context context) {
+  protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> values, Context context) {
     try {
       doReduce(key, values, context);
     } catch (Throwable e) {
@@ -139,34 +140,32 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
    *    v4  v5
    *</pre>
    */
-  private void doReduce(GraphGroupKey key, Iterable<Writable> values, Context context)
+  private void doReduce(GraphGroupKey key, Iterable<WebGraphWritable> values, Context context)
       throws IOException, InterruptedException {
     getCounter().increase(rows);
 
     String reversedUrl = key.getReversedUrl();
     String url = TableUtil.unreverseUrl(reversedUrl);
 
-    // Calculate in-linked score data, and return the main web page
-    WebGraph graph = buildGraph(key, values);
-    WebVertex vertex = graph.vertexSet().iterator().next();
-    WebPage page = vertex.getWebPage();
+//    WebVertex targetVertex = null;
+//
+//    for (WebGraphWritable graphWritable : values) {
+//      targetVertex = graphWritable.get().vertexSet().stream().filter(WebVertex::hasWebPage).findAny().orElse(null);
+//    }
 
-    if (!page.isEmpty()) {
+    // Calculate in-linked score data, and return the main web page
+    WebGraph graph = buildGraph(url, reversedUrl, values);
+    WebVertex targetVertex = graph.getFocus();
+    WebPage page = targetVertex.getWebPage();
+
+    // Passed in
+    if (targetVertex.getWebPage().hasMetadata("TMP_PASSED_FROM_MAPPER")) {
       updateFetchSchedule(url, page);
-    } else {
-      page = getWebPage(url, reversedUrl, vertex);
     }
 
     page = updateInLinkedWebPage(page, graph);
-//    if (webGraph.getGraphMode().isInLinkGraph()) {
-//      page = updateInLinkedWebPage(page, webGraph);
-//    } else {
-//      page = updateOutLinkedWebPage(page, webGraph);
-//    }
 
-    updateDistance(page);
-
-    updateScore(url, page);
+    updateScore(url, targetVertex, graph);
 
     updateMetadata(page);
 
@@ -175,21 +174,19 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     context.write(reversedUrl, page.get());
   }
 
-  private WebPage getWebPage(String url, String reversedUrl, WebVertex vertex) {
-    WebPage page = vertex.getWebPage();
-    if (page.isEmpty()) {
-      WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
+  private WebPage loadOrCreateWebPage(String url, String reversedUrl) {
+    WebPage page;
+    WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
 
-      // Page is already in the db
-      if (loadedPage.isEmpty()) {
-        // Here we got a new webpage from outlink
-        if (!additionsAllowed) {
-          return page;
-        }
-        page = createNewRow(url, MAX_DISTANCE);
-      } else {
-        page = loadedPage;
+    // Page is already in the db
+    if (loadedPage.isEmpty()) {
+      // Here we got a new webpage from outlink
+      if (!additionsAllowed) {
+        return null;
       }
+      page = createNewRow(url, MAX_DISTANCE);
+    } else {
+      page = loadedPage;
     }
 
     return page;
@@ -213,23 +210,11 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     return page;
   }
 
-  private WebPage updateOutLinkedWebPage(WebPage page, WebGraph webGraph) {
-//    if (!webGraph.getGraphMode().isOutLinkGraph()) {
-//      return page;
-//    }
-//
-//    for (Vertex referVertex : webGraph.getEndVertices()) {
-//
-//    }
-
-    return page;
-  }
-
   /**
    * Updated the old row if necessary
    * */
-  private WebPage updateInLinkedWebPage(WebPage page, WebGraph webGraph) {
-//    if (!webGraph.getGraphMode().isInLinkGraph()) {
+  private WebPage updateInLinkedWebPage(WebPage page, WebGraph graph) {
+//    if (!graph.getGraphMode().isInLinkGraph()) {
 //      return page;
 //    }
 
@@ -238,22 +223,22 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
     int referredArticles = 0;
     int referredChars = 0;
 
-    for (WebVertex referVertex : webGraph.vertexSet()) {
+    for (WebVertex referVertex : graph.vertexSet()) {
       if (referVertex.getDepth() < smallestDistance) {
         smallestDistance = referVertex.getDepth();
       }
 
-//      Instant refPublishTime = referVertex.getMetadata(PUBLISH_TIME, Instant.EPOCH);
-//      if (refPublishTime.isAfter(latestRefPublishTime)) {
-//        latestRefPublishTime = refPublishTime;
-//      }
-//
+      Instant refPublishTime = referVertex.getReferredPublishTime();
+      if (refPublishTime.isAfter(latestRefPublishTime)) {
+        latestRefPublishTime = refPublishTime;
+      }
+
 //      boolean isDetail = referVertex.getMetadata(TMP_IS_DETAIL, false);
 //      if (isDetail) {
 //        ++referredArticles;
 //      }
-//
-//      referredChars += referVertex.getMetadata(TMP_CHARS, 0);
+
+      referredChars += referVertex.getReferredChars();
     }
 
     if (smallestDistance < page.getDistance()) {
@@ -267,100 +252,42 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
   }
 
   /**
-   * Distance calculation.
-   * Retrieve smallest distance from all inlinks distances
-   * Calculate new distance for current page: smallest inlink distance plus 1.
-   * If the new distance is smaller than old one (or if old did not exist yet),
-   * write it to the page.
-   * */
-  private void updateDistance(WebPage page) {
-    page.getInlinks().clear();
-
-    int smallestDist = MAX_DISTANCE;
-//    Instant latestRefPublishTime = page.getRefPublishTime();
-//    long refArticles = 0;
-//    long refChars = page.getRefChars();
-
-    for (WebEdge inlink : inlinkedScoreData) {
-      int inlinkDist = inlink.getTarget().getDepth();
-      if (inlinkDist < smallestDist) {
-        smallestDist = inlinkDist;
-      }
-
-//      Instant refPublishTime = inlink.getMetadata(REFERRED_PUBLISH_TIME, Instant.EPOCH);
-//      if (refPublishTime.isAfter(latestRefPublishTime)) {
-//        latestRefPublishTime = refPublishTime;
-//      }
-//      refChars += inlink.getMetadata(TMP_CHARS, 0L);
-//      if (refChars > 1000) {
-//        refArticles += 1;
-//      }
-
-      page.getInlinks().put(new Utf8(inlink.getTarget().getUrl()), new Utf8(inlink.getTarget().getAnchor()));
-    }
-
-    if (smallestDist != MAX_DISTANCE) {
-      int oldDistance = page.getDepth();
-      int newDistance = smallestDist + 1;
-
-      if (newDistance < oldDistance) {
-        page.setDistance(newDistance);
-      }
-    }
-
-//    page.updateRefPublishTime(latestRefPublishTime);
-//    page.setRefArticles(refArticles);
-//    page.setRefChars(refChars);
-  }
-
-  /**
    * In the mapper phrase, NutchWritable is sets to be a WebPage or a WebEdge,
    * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
-  public WebGraph buildGraph(GraphGroupKey key, Iterable<Writable> values) {
-    WebVertex sourceVertext = null;
-    WebVertex targetVertext = null;
-    WebGraph webGraph = new WebGraph();
+  public WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> values) {
+    WebGraph graph = new WebGraph();
+    WebVertex targetVertex = null;
+    WebPage page;
 
-//    WebPage page = null;
-    inlinkedScoreData.clear();
+    for (WebGraphWritable graphWritable : values) {
+      WebEdge edge = graphWritable.get().edgeSet().iterator().next();
 
-    for (Writable val : values) {
-      // Writable val = nutchWritable.get();
-      if (val instanceof WebVertex) {
-        targetVertext = (WebVertex)val;
-//        page = ((Vertex) val).getWebPage();
+      if (edge.getTarget().hasWebPage()) {
+        targetVertex = edge.getTarget();
+        page = targetVertex.getWebPage();
+        page.putMetadata("TMP_PASSED_FROM_MAPPER", YES_STRING);
       }
-      else if (val instanceof WebEdgeWritable) {
-        WebEdge webEdge = ((WebEdgeWritable) val).get();
 
-//        if (key.getGraphMode().isInLinkGraph()) {
-//          if (webEdge.getTarget().equals(targetVertext)) {
-//            // webEdge.setTarget(focusedVertex);
-//
-//          }
-//        }
+      graph.addVerticesAndEdge(edge.getSource(), targetVertex, edge.getWeight());
+    }
 
-        webGraph.addEdge(webEdge.getSource(), targetVertext);
-      }
-//      else {
-//        inlinkedScoreData.add((WebEdge) val);
-//
-//        if (inlinkedScoreData.size() >= maxLinks) {
-//          LOG.info("Limit reached, skipping further inlinks for " + key);
-//          break;
-//        }
-//      }
-    } // for
+    if (targetVertex == null) {
+      page = loadOrCreateWebPage(url, reversedUrl);
+      targetVertex = graph.edgeSet().iterator().next().getTarget();
+      targetVertex.setWebPage(page);
+    }
 
-    return webGraph;
+    graph.setFocus(targetVertex);
+
+    return graph;
   }
 
-  private void updateScore(String url, WebPage page) {
+  private void updateScore(String url, WebVertex vertex, WebGraph graph) {
     try {
-      scoringFilters.updateScore(url, page, inlinkedScoreData);
+      scoringFilters.updateScore(url, vertex.getPage(), graph.edgesOf(vertex));
     } catch (ScoringFilterException e) {
-      page.setScore(0.0f);
+      vertex.getPage().setScore(0.0f);
       getCounter().increase(NutchCounter.Counter.errors);
     }
 
@@ -370,8 +297,8 @@ public class DbUpdateReducer extends NutchReducer<GraphGroupKey, Writable, Strin
 
   private void updateMetadata(WebPage page) {
     // Clear temporary metadata
-    page.clearMetadata(FetchJob.REDIRECT_DISCOVERED);
-    page.clearMetadata(Metadata.Name.GENERATE_TIME);
+    page.clearMetadata(REDIRECT_DISCOVERED);
+    page.clearMetadata(GENERATE_TIME);
 
     page.putMarkIfNonNull(UPDATEDB, page.getMark(PARSE));
 

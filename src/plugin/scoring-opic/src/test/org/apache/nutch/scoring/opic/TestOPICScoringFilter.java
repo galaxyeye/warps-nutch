@@ -204,27 +204,27 @@ public class TestOPICScoringFilter {
         scoringFilter.distributeScoreToOutlinks(url, row, webGraph.getWebEdges(), webGraph.getWebEdges().size());
 
         // DbUpdate Reducer simulation
-        for (WebEdge webEdge : webGraph.getWebEdges()) {
-          if (dbWebPages.get(TableUtil.reverseUrl(webEdge.getV2().getUrl())) == null) {
+        for (WebEdge edge : webGraph.getWebEdges()) {
+          if (dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
             WebPage outlinkRow = WebPage.newWebPage();
 
-            scoringFilter.initialScore(webEdge.getV2().getUrl(), outlinkRow);
+            scoringFilter.initialScore(edge.getV2().getUrl(), outlinkRow);
             List<WebEdge> newScoreList = new LinkedList<>();
-            newScoreList.add(webEdge);
+            newScoreList.add(edge);
             Map<WebPage, List<WebEdge>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
-            dbWebPages.put(TableUtil.reverseUrl(webEdge.getV2().getUrl()), values);
-            dbWebPagesControl.put(TableUtil.reverseUrl(webEdge.getV2().getUrl()), true);
+            dbWebPages.put(TableUtil.reverseUrl(edge.getV2().getUrl()), values);
+            dbWebPagesControl.put(TableUtil.reverseUrl(edge.getV2().getUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WebPage, List<WebEdge>> values = dbWebPages.get(TableUtil.reverseUrl(webEdge.getV2().getUrl()));
+            Map<WebPage, List<WebEdge>> values = dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl()));
             Iterator<Map.Entry<WebPage, List<WebEdge>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
               Map.Entry<WebPage, List<WebEdge>> list = value.next();
               scoreList = list.getValue();
-              scoreList.add(webEdge);
+              scoreList.add(edge);
             }
           }
         }

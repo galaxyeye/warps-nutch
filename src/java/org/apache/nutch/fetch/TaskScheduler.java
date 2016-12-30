@@ -11,7 +11,6 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.NutchContext;
-import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
@@ -22,20 +21,21 @@ import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
+import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.mapreduce.FetchJob;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.ParserJob;
 import org.apache.nutch.mapreduce.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.Content;
-import org.apache.nutch.protocol.ProtocolOutput;
-import org.apache.nutch.protocol.ProtocolStatusCodes;
-import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ProtocolStatus;
+import org.apache.nutch.protocol.Content;
+import org.apache.nutch.protocol.ProtocolOutput;
+import org.apache.nutch.protocol.ProtocolStatusCodes;
+import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.joining;
+import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.persist.Mark.*;
 
@@ -754,7 +755,7 @@ public class TaskScheduler extends Configured {
     }
 
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
-    page.get().getMetadata().put(FetchJob.REDIRECT_DISCOVERED, YES_VAL);
+    page.putMetadata(REDIRECT_DISCOVERED, YES_STRING);
 
     String reprUrl = setRedirectRepresentativeUrl(page, url, newUrl, temp);
 
@@ -868,7 +869,7 @@ public class TaskScheduler extends Configured {
     if (newDepth != MAX_DISTANCE) {
       newDepth += 1;
     }
-    float initScore = graphGroupKey.getScore().get();
+    double initScore = graphGroupKey.getScore().get();
 //    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new WebEdge(outUrl, "", initScore, newDepth)));
 
     Pair<WebPage, Boolean> outPage;

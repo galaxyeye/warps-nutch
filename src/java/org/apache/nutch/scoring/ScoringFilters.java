@@ -125,7 +125,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public void updateScore(String url, WebPage row, List<WebEdge> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, Collection<WebEdge> inlinkedScoreData) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }

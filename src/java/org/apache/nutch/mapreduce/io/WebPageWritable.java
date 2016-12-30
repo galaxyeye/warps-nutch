@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.mapreduce;
+package org.apache.nutch.mapreduce.io;
 
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;

@@ -18,12 +18,12 @@
 package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.graph.WebEdge;
-import org.apache.nutch.scoring.ScoringFilter;
-import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.scoring.ScoringFilter;
+import org.apache.nutch.scoring.ScoringFilterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -96,15 +95,15 @@ public class OPICScoringFilter implements ScoringFilter {
 
   /** Increase the score by a sum of inlinked scores. */
   @Override
-  public void updateScore(String url, WebPage row, List<WebEdge> inlinkedScoreData) {
+  public void updateScore(String url, WebPage row, Collection<WebEdge> inlinkedScoreData) {
     float addInlinkedScore = 0.0f;
     float factor1 = 1.0f;
     float articleScoreDelta = updateArticleScore(row);
     float factor2 = 2.0f;
 
     // There is no inlinked score data in updateJIT mode
-    for (WebEdge webEdge : inlinkedScoreData) {
-      addInlinkedScore += webEdge.getScore();
+    for (WebEdge edge : inlinkedScoreData) {
+      addInlinkedScore += edge.getScore();
     }
 
     row.setScore(row.getScore() + addInlinkedScore + articleScoreDelta);
@@ -124,21 +123,21 @@ public class OPICScoringFilter implements ScoringFilter {
     // internal and external score factor
     float internalScore = scoreUnit * internalScoreFactor;
     float externalScore = scoreUnit * externalScoreFactor;
-    for (WebEdge webEdge : scoreData) {
-      float score = webEdge.getScore();
+    for (WebEdge edge : scoreData) {
+      double score = edge.getScore();
 
       try {
-        String toHost = new URL(webEdge.getV2().getUrl()).getHost();
+        String toHost = new URL(edge.getTarget().getUrl()).getHost();
         String fromHost = new URL(fromUrl).getHost();
 
         if (toHost.equalsIgnoreCase(fromHost)) {
-          webEdge.setScore(score + internalScore);
+          edge.setScore(score + internalScore);
         } else {
-          webEdge.setScore(score + externalScore);
+          edge.setScore(score + externalScore);
         }
       } catch (MalformedURLException e) {
         LOG.error("Failed with the following MalformedURLException: ", e);
-        webEdge.setScore(score + externalScore);
+        edge.setScore(score + externalScore);
       }
     }
 

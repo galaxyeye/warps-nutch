@@ -14,15 +14,21 @@ import java.io.IOException;
 
 /**
  * Created by vincent on 16-12-30.
+ * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class WebVertexWritable implements Writable {
   private Configuration conf;
   private WebVertex vertex;
 
+  public WebVertexWritable() {
+  }
+
   public WebVertexWritable(WebVertex vertex, Configuration conf) {
     this.conf = conf;
     this.vertex = vertex;
   }
+
+  public WebVertex get() { return vertex; }
 
   @Override
   public void write(DataOutput output) throws IOException {

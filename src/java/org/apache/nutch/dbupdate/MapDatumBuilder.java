@@ -5,7 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.graph.*;
 import org.apache.nutch.mapreduce.NutchCounter;
-import org.apache.nutch.mapreduce.WebPageWritable;
+import org.apache.nutch.mapreduce.io.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -82,7 +82,7 @@ public class MapDatumBuilder {
 //    v1.addMetadata(TMP_CHARS, page.sniffTextLength());
 
     /* A loop in the graph */
-    webGraph.addVertexAndEdge(v1, v1);
+    webGraph.addVerticesAndEdge(v1, v1);
 
     // 1. Create scoreData
 //    List<WebEdge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
@@ -91,7 +91,7 @@ public class MapDatumBuilder {
 //        .collect(Collectors.toList());
     sourcePage.getOutlinks().entrySet().stream()
         .map(l -> new WebVertex(l.getKey().toString(), l.getValue().toString(), null, depth + 1))
-        .forEach(v2 -> webGraph.addVertexAndEdge(v1, v2));
+        .forEach(v2 -> webGraph.addVerticesAndEdge(v1, v2));
 
     counter.increase(NutchCounter.Counter.outlinks, webGraph.edgesOf(v1).size());
 
@@ -113,20 +113,20 @@ public class MapDatumBuilder {
    * Build map phrase datum
    * */
   @NotNull
-  private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, WebEdge webEdge) {
-    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(webEdge.getTarget().getUrl());
+  private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, WebEdge edge) {
+    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getTarget().getUrl());
 
     // TODO : why set to be the source url?
-//    webEdge.setUrl(sourceUrl);
+//    edge.setUrl(sourceUrl);
 
-//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(webEdge.getUrl());
-//    webEdge.setUrl(sourceUrl);
+//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
+//    edge.setUrl(sourceUrl);
 //    GraphGroupKey urlWithScore = new GraphGroupKey();
 //    urlWithScore.setReversedUrl(reversedOutUrl);
-//    urlWithScore.setScore(webEdge.getScore());
+//    urlWithScore.setScore(edge.getScore());
 //
 //    NutchWritable nutchWritable = new NutchWritable();
-//    nutchWritable.set(webEdge);
+//    nutchWritable.set(edge);
 
     return Pair.of(new GraphGroupKey(), new NutchWritable());
   }

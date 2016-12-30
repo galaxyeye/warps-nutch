@@ -22,7 +22,6 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +43,8 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     GENERATE_TIME("GT"),
     NO_FETCH("NF"),
     DISTANCE("DIST"),
+
+    REDIRECT_DISCOVERED("RD"),
 
     IP("IP"),
     FETCH_TIME_HISTORY("FTH"),

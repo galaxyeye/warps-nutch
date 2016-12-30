@@ -20,17 +20,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.persist.StorageUtils;
-import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator;
 import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator.UrlOnlyComparator;
 import org.apache.nutch.graph.GraphGroupKey.UrlOnlyPartitioner;
+import org.apache.nutch.graph.io.WebGraphWritable;
+import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
@@ -118,7 +118,7 @@ public class DbUpdateJob extends NutchJob implements Tool {
     currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
 
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
-    StorageUtils.initMapperJob(currentJob, fields, GraphGroupKey.class, Writable.class, DbUpdateMapper.class, batchIdFilter);
+    StorageUtils.initMapperJob(currentJob, fields, GraphGroupKey.class, WebGraphWritable.class, DbUpdateMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, DbUpdateReducer.class);
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);

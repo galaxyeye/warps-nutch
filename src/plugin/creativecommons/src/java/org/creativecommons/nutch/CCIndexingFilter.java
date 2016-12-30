@@ -38,8 +38,7 @@ import java.util.StringTokenizer;
 
 /** Adds basic searchable fields to a document. */
 public class CCIndexingFilter implements IndexingFilter {
-  public static final Logger LOG = LoggerFactory
-      .getLogger(CCIndexingFilter.class);
+  public static final Logger LOG = LoggerFactory.getLogger(CCIndexingFilter.class);
 
   /** The name of the document field we use. */
   public static String FIELD = "cc";
@@ -103,7 +102,7 @@ public class CCIndexingFilter implements IndexingFilter {
     if (blicense != null) {
       String licenseUrl = Bytes.toString(blicense.array());
       if (LOG.isInfoEnabled()) {
-        LOG.info("CC: indexing " + licenseUrl + " for: " + url.toString());
+        LOG.info("CC: indexing " + licenseUrl + " for: " + url);
       }
 
       // add the entire license as cc:license=xxx

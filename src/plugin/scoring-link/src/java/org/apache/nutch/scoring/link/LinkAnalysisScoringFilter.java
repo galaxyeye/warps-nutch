@@ -17,16 +17,15 @@
 package org.apache.nutch.scoring.link;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.graph.WebEdge;
-import org.apache.nutch.scoring.ScoringFilter;
-import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.scoring.ScoringFilter;
+import org.apache.nutch.scoring.ScoringFilterException;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class LinkAnalysisScoringFilter implements ScoringFilter {
@@ -83,7 +82,7 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
 
   @Override
   public void updateScore(String url, WebPage page,
-      List<WebEdge> inlinkedScoreData) throws ScoringFilterException {
+                          Collection<WebEdge> inlinkedScoreData) throws ScoringFilterException {
   }
 
   @Override

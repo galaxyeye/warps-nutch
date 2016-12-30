@@ -16,14 +16,26 @@
  ******************************************************************************/
 package org.apache.nutch.graph;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DefaultEdge;
 
-public class WebEdge extends DefaultWeightedEdge {
+public class WebEdge extends DefaultEdge {
+
+  private double weight;
+
+  public WebEdge() {}
+
+  public WebEdge(WebVertex vertex, WebVertex vertex2) {}
 
   public double getWeight()
   {
-    return super.getWeight();
+    return weight;
   }
+
+  public void setWeight(double weight) { this.weight = weight; }
+
+  public double getScore() { return weight; }
+
+  public void setScore(double score) { weight = score; }
 
   /**
    * Retrieves the source of this edge.

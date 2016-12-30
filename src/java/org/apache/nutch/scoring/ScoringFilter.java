@@ -17,13 +17,12 @@
 package org.apache.nutch.scoring;
 
 import org.apache.hadoop.conf.Configurable;
-import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.graph.WebEdge;
-import org.apache.nutch.plugin.FieldPluggable;
+import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.plugin.FieldPluggable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * A contract defining behavior of scoring plugins.
@@ -88,7 +87,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param scoreData
    *          A list of {@link WebEdge}s for every outlink. These
    *          {@link WebEdge}s will be passed to
-   *          {@link #updateScore(String, WebPage, List)} for every
+   *          {@link #updateScore(String, WebPage, Collection)} for every
    *          outlinked URL.
    * @param allCount
    *          number of all collected outlinks from the source page
@@ -110,7 +109,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          this URL.
    * @throws ScoringFilterException
    */
-  void updateScore(String url, WebPage page, List<WebEdge> inlinkedScoreData) throws ScoringFilterException;
+  void updateScore(String url, WebPage page, Collection<WebEdge> inlinkedScoreData) throws ScoringFilterException;
 
   /**
    * This method calculates a Lucene document boost.

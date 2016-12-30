@@ -16,7 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.mapreduce;
 
-import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
@@ -31,10 +30,10 @@ import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.protocol.ProtocolFactory;
-import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.protocol.ProtocolFactory;
+import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ import org.slf4j.Logger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Nutch.*;
 
@@ -55,7 +53,6 @@ public class FetchJob extends NutchJob implements Tool {
 
   public static final String PROTOCOL_REDIR = "protocol";
   public static final int PERM_REFRESH_TIME = 5;
-  public static final Utf8 REDIRECT_DISCOVERED = new Utf8("___rdrdsc__");
 
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 

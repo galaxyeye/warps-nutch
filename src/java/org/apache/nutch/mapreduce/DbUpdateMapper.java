@@ -17,14 +17,13 @@
 package org.apache.nutch.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.graph.io.WebVertexWritable;
+import org.apache.nutch.graph.*;
+import org.apache.nutch.graph.io.WebGraphWritable;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.graph.*;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.Params;
@@ -39,7 +38,7 @@ import static org.apache.nutch.mapreduce.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
 import static org.apache.nutch.persist.Mark.FETCH;
 
-public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, Writable> {
+public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(DbUpdateMapper.class);
 
@@ -124,50 +123,57 @@ public class DbUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupK
       return;
     }
 
-    WebGraph webGraph = new WebGraph();
-//    webGraph.reset();
+    WebGraph graph = new WebGraph();
+//    graph.reset();
 
-    WebVertex v1 = new WebVertex(url, "", page, depth);
+    WebVertex v1 = new WebVertex(url, page, depth);
+//    v1.setPublishTime(page.getPublishTime());
 //    v1.addMetadata(PUBLISH_TIME, page.getPublishTime());
 //    v1.addMetadata(TMP_CHARS, page.sniffTextLength());
 
     /* A loop in the graph */
-    webGraph.addVertexAndEdge(v1, v1);
+    graph.addVerticesAndEdge(v1, v1);
 
     page.getOutlinks().entrySet().stream()
         .map(l -> new WebVertex(l.getKey().toString(), l.getValue().toString(), null, depth + 1))
-        .forEach(v2 -> webGraph.addVertexAndEdge(v1, v2));
+        .forEach(v2 -> graph.addVerticesAndEdge(v1, v2));
 
     try {
-      scoringFilters.distributeScoreToOutlinks(url, page, webGraph.edgesOf(v1), webGraph.outDegreeOf(v1));
+      scoringFilters.distributeScoreToOutlinks(url, page, graph.edgesOf(v1), graph.outDegreeOf(v1));
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL: " + reversedUrl + StringUtils.stringifyException(e));
     }
 
+//    GraphGroupKey key = new GraphGroupKey(reversedUrl, GraphMode.IN_LINK_GRAPH, page.getScore());
+//    context.write(key, new WebGraphWritable(graph, conf));
+
 //    GraphGroupKey key = new GraphGroupKey(reversedUrl, GraphMode.IN_LINK_GRAPH, Float.MAX_VALUE);
     // context.write(key, new WebVertexWritable(v1, conf));
-    webGraph.edgesOf(v1).forEach(edge -> writeEdge(edge, GraphMode.IN_LINK_GRAPH));
-//    webGraph.edgesOf(v1).forEach(edge -> writeEdge(edge, GraphMode.OUT_LINK_GRAPH));
+    graph.edgesOf(v1).forEach(e -> writeSubGraph(e.getSource(), e.getTarget(), e.getScore(), GraphMode.IN_LINK_GRAPH));
+//    graph.edgesOf(v1).forEach(edge -> writeEdge(edge, GraphMode.OUT_LINK_GRAPH));
 
 //    key = new GraphGroupKey(reversedUrl, GraphMode.OUT_LINK_GRAPH, Float.MAX_VALUE);
 //    context.write(key, new WebVertexWritable(v1, conf));
-//    webGraph.edgesOf(v1).forEach(edge -> writeEdge(edge, GraphMode.OUT_LINK_GRAPH));
+//    graph.edgesOf(v1).forEach(edge -> writeEdge(edge, GraphMode.OUT_LINK_GRAPH));
 
     counter.increase(Counter.rowsMapped);
-    counter.increase(Counter.newRowsMapped, webGraph.outDegreeOf(v1));
+    counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
   }
 
-  private void writeEdge(WebEdge edge, GraphMode graphMode) {
+  private void writeSubGraph(WebVertex source, WebVertex target, double score, GraphMode graphMode) {
+    WebGraph graph = new WebGraph();
+    graph.addVerticesAndEdge(source, target);
+
     // partition by source url, so the reducer get a group of inlinks
     try {
       String reversedUrl;
       if (graphMode.isInLinkGraph()) {
-        reversedUrl = TableUtil.reverseUrl(edge.getTarget().getUrl());
+        reversedUrl = TableUtil.reverseUrl(target.getUrl());
       }
       else {
-        reversedUrl = TableUtil.reverseUrl(edge.getSource().getUrl());
+        reversedUrl = TableUtil.reverseUrl(source.getUrl());
       }
-      context.write(new GraphGroupKey(reversedUrl, graphMode, edge.getWeight()), edge);
+      context.write(new GraphGroupKey(reversedUrl, graphMode, score), new WebGraphWritable(graph, conf));
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

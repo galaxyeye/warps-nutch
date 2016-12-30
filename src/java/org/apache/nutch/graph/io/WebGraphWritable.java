@@ -2,11 +2,9 @@ package org.apache.nutch.graph.io;
 
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.graph.WebVertex;
-import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.WebGraph;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -17,27 +15,37 @@ import java.io.IOException;
  */
 public class WebGraphWritable implements Writable {
   private Configuration conf;
-  private WebVertex vertex;
+  private WebGraph graph;
 
-  public WebGraphWritable(WebVertex vertex, Configuration conf) {
+  public WebGraphWritable(WebGraph graph, Configuration conf) {
     this.conf = conf;
-    this.vertex = vertex;
+    this.graph = graph;
   }
+
+  public WebGraph get() { return graph; }
 
   @Override
   public void write(DataOutput output) throws IOException {
-    Text.writeString(output, vertex.getUrl());
-    IOUtils.serialize(conf, output, vertex.getWebPage().get(), GoraWebPage.class);
-    output.writeInt(vertex.getDepth());
+    output.writeInt(graph.edgeSet().size());
+    for (WebEdge edge : graph.edgeSet()) {
+      IOUtils.serialize(conf, output, new WebVertexWritable(edge.getSource(), conf), WebVertexWritable.class);
+      IOUtils.serialize(conf, output, new WebVertexWritable(edge.getTarget(), conf), WebVertexWritable.class);
+      output.writeDouble(edge.getWeight());
+    }
   }
 
   @Override
   public void readFields(DataInput input) throws IOException {
-    String url = Text.readString(input);
-    WebPage page = WebPage.wrap(IOUtils.deserialize(conf, input, vertex.getWebPage().get(), GoraWebPage.class));
-    int weight = input.readInt();
+    graph = new WebGraph();
 
-    this.vertex = new WebVertex(url, page, weight);
+    int edgeSize = input.readInt();
+    for (int i = 0; i < edgeSize; ++i) {
+      WebVertexWritable source = IOUtils.deserialize(conf, input, new WebVertexWritable(), WebVertexWritable.class);
+      WebVertexWritable target = IOUtils.deserialize(conf, input, new WebVertexWritable(), WebVertexWritable.class);
+      double weight = input.readDouble();
+
+      WebEdge edge = graph.addEdge(source.get(), target.get());
+      edge.setWeight(weight);
+    }
   }
-
 }
