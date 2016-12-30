@@ -188,7 +188,7 @@
     {
       "name": "score",
       "type": "float",
-      "doc": "A score used to determine a WebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.",
+      "doc": "A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.",
       "default": 0
     },
     {

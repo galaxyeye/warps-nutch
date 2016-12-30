@@ -255,6 +255,15 @@
     <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-pass/urlnormalizer-pass.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/plugins/urlnormalizer-regex/urlnormalizer-regex.jar!/" />
+    <libelement value="file://$MODULE_DIR$/conf" />
+    <libelement value="file://$MODULE_DIR$/src/bin" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/antlr4-runtime-4.5.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jgraph-5.13.0.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jgrapht-core-1.0.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jgrapht-ext-1.0.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jgraphx-2.0.0.1.jar!/" />
+    <libelement value="file://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar" />
+    <libelement value="file://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar" />
     <src_description expected_position="1">
       <src_folder value="file://$MODULE_DIR$/src/java/" expected_position="1" />
       <src_folder value="file://$MODULE_DIR$/src/test/" expected_position="2" />
@@ -282,31 +291,33 @@
       <src_folder value="file://$MODULE_DIR$/src/plugin/parse-metatags/src/test/" expected_position="24" />
       <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/java/" expected_position="25" />
       <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/test/" expected_position="26" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/java/" expected_position="27" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/test/" expected_position="28" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/java/" expected_position="29" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/test/" expected_position="30" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-link/src/java/" expected_position="31" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/java/" expected_position="32" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/test/" expected_position="33" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/java/" expected_position="34" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/test/" expected_position="35" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/java/" expected_position="36" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/test/" expected_position="37" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/java/" expected_position="38" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/test/" expected_position="39" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/java/" expected_position="40" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/test/" expected_position="41" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/java/" expected_position="42" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/test/" expected_position="43" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/java/" expected_position="44" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/test/" expected_position="45" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/java/" expected_position="46" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/test/" expected_position="47" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/java/" expected_position="48" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test/" expected_position="49" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java/" expected_position="50" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test/" expected_position="51" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/java/" expected_position="29" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/test/" expected_position="30" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/java/" expected_position="31" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/test/" expected_position="32" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-link/src/java/" expected_position="33" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/java/" expected_position="34" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/test/" expected_position="35" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/java/" expected_position="36" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/test/" expected_position="37" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/java/" expected_position="38" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/test/" expected_position="39" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/java/" expected_position="40" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/test/" expected_position="41" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/java/" expected_position="42" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/test/" expected_position="43" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/java/" expected_position="44" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/test/" expected_position="45" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/java/" expected_position="46" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/test/" expected_position="47" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/java/" expected_position="48" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/test/" expected_position="49" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/java/" expected_position="50" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test/" expected_position="51" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java/" expected_position="52" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test/" expected_position="53" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/java/" expected_position="27" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/test/" expected_position="28" />
     </src_description>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
@@ -366,6 +377,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/conf" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/bin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/protocol-file/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/protocol-file/src/test" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -409,6 +422,15 @@
       <library name="annotations-java8.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/annotations-java8.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="antlr4-runtime-4.5.3.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/antlr4-runtime-4.5.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1432,6 +1454,44 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="jgraph-5.13.0.0.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/jgraph-5.13.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jgrapht-core-1.0.0.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/jgrapht-core-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/jgrapht-core-1.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jgrapht-ext-1.0.0.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/jgrapht-ext-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jgraphx-2.0.0.1.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/jgraphx-2.0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="joni-2.1.2.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/joni-2.1.2.jar!/" />
@@ -1524,7 +1584,7 @@
     <orderEntry type="module-library">
       <library name="mockito-all-1.9.5.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
+          <root url="file://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1803,7 +1863,7 @@
     <orderEntry type="module-library">
       <library name="spring-test-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
+          <root url="file://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

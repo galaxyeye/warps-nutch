@@ -11,7 +11,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.NutchContext;
-import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.dbupdate.MapDatumBuilder;
 import org.apache.nutch.dbupdate.ReduceDatumBuilder;
@@ -869,7 +869,7 @@ public class TaskScheduler extends Configured {
       newDepth += 1;
     }
     float initScore = graphGroupKey.getScore().get();
-//    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new Edge(outUrl, "", initScore, newDepth)));
+//    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new WebEdge(outUrl, "", initScore, newDepth)));
 
     Pair<WebPage, Boolean> outPage;
     WebPage oldPage;

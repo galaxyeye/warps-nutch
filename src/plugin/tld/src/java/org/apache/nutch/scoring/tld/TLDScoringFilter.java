@@ -19,7 +19,7 @@ package org.apache.nutch.scoring.tld;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
-import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.persist.WebPage;
@@ -80,13 +80,13 @@ public class TLDScoringFilter implements ScoringFilter {
 
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage page,
-                                        Collection<Edge> scoreData, int allCount)
+                                        Collection<WebEdge> scoreData, int allCount)
       throws ScoringFilterException {
   }
 
   @Override
   public void updateScore(String url, WebPage page,
-      List<Edge> inlinkedScoreData) throws ScoringFilterException {
+      List<WebEdge> inlinkedScoreData) throws ScoringFilterException {
   }
 
   @Override

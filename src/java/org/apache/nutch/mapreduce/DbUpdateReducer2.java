@@ -23,8 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.*;
-import org.apache.nutch.persist.graph.Edge;
-import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
@@ -57,7 +57,7 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
   private int maxInterval;
   private FetchSchedule schedule;
   private ScoringFilters scoringFilters;
-  private List<Edge> inlinkedScoreData = new ArrayList<>();
+  private List<WebEdge> inlinkedScoreData = new ArrayList<>();
   private int maxLinks;
   public DataStore<String, GoraWebPage> datastore;
 
@@ -98,7 +98,7 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
       if (val instanceof WebPageWritable) {
         page = ((WebPageWritable) val).getWebPage();
       } else {
-        inlinkedScoreData.add((Edge) val);
+        inlinkedScoreData.add((WebEdge) val);
         if (inlinkedScoreData.size() >= maxLinks) {
           LOG.info("Limit reached, skipping further inlinks for " + keyUrl);
           break;
@@ -198,12 +198,12 @@ public class DbUpdateReducer2 extends GoraReducer<GraphGroupKey, NutchWritable, 
     // yet),
     // write it to the page.
     int smallestDist = Integer.MAX_VALUE;
-    for (Edge inlink : inlinkedScoreData) {
-      int inlinkDist = inlink.getV1().getDepth();
+    for (WebEdge inlink : inlinkedScoreData) {
+      int inlinkDist = inlink.getSource().getDepth();
       if (inlinkDist < smallestDist) {
         smallestDist = inlinkDist;
       }
-      page.getInlinks().put(new Utf8(inlink.getV1().getUrl()), new Utf8(inlink.getV1().getAnchor()));
+      page.getInlinks().put(new Utf8(inlink.getSource().getUrl()), new Utf8(inlink.getSource().getAnchor()));
     }
 
     if (smallestDist != Integer.MAX_VALUE) {

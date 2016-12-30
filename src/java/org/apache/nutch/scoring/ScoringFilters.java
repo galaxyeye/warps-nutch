@@ -22,7 +22,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
@@ -118,14 +118,14 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   @Override
   public void distributeScoreToOutlinks(String fromUrl, WebPage row,
-                                        Collection<Edge> scoreData, int allCount) throws ScoringFilterException {
+                                        Collection<WebEdge> scoreData, int allCount) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
     }
   }
 
   @Override
-  public void updateScore(String url, WebPage row, List<Edge> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, List<WebEdge> inlinkedScoreData) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, inlinkedScoreData);
     }

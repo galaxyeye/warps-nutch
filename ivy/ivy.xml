@@ -18,7 +18,7 @@
         <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org"/>
         <description homepage="http://nutch.apache.org">Nutch is an open source web-search
             software. It builds on Hadoop, Tika and Solr, adding web-specifics, such as a crawler,
-            a link-graph database etc.
+            a link-webGraph database etc.
         </description>
     </info>
 
@@ -89,6 +89,10 @@
 
         <dependency org="org.jdom" name="jdom" rev="1.1.2" conf="test->default"/>
         <dependency org="org.mockito" name="mockito-all" rev="1.9.5" conf="test->default"/>
+
+        <!-- WebGraph computing -->
+        <dependency org="org.jgrapht" name="jgrapht-core" rev="1.0.0" />
+        <dependency org="org.jgrapht" name="jgrapht-ext" rev="1.0.0" />
 
         <!-- Content process -->
         <dependency org="dom4j" name="dom4j" rev="1.6" conf="*->default"/>

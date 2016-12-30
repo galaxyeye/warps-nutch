@@ -21,8 +21,10 @@ package org.apache.nutch.protocol.file;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.net.protocols.Response;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,7 +55,7 @@ public class TestProtocolFile {
 
   @Before
   public void setUp() {
-    conf = NutchConfiguration.create();
+    conf = ConfigUtils.create();
   }
 
   @Test
@@ -74,7 +76,7 @@ public class TestProtocolFile {
   public void setContentType(String testTextFile) throws ProtocolNotFound {
     String urlString = "file:" + sampleDir + fileSeparator + testTextFile;
     assertNotNull(urlString);
-    GoraWebPage datum = GoraWebPage.newBuilder().build();
+    WebPage datum = WebPage.newWebPage();
     Protocol protocol = new ProtocolFactory(conf).getProtocol(urlString);
     ProtocolOutput output = protocol.getProtocolOutput(urlString, datum);
     assertNotNull(output);

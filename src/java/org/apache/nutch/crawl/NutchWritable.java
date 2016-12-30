@@ -18,7 +18,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.mapreduce.WebPageWritable;
-import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.util.GenericWritableConfigurable;
 
 @SuppressWarnings("unchecked")
@@ -28,7 +28,7 @@ public class NutchWritable extends GenericWritableConfigurable {
 
   static {
     CLASSES = (Class<? extends Writable>[]) new Class<?>[] {
-        Edge.class,
+        WebEdge.class,
         WebPageWritable.class };
   }
 
@@ -39,8 +39,8 @@ public class NutchWritable extends GenericWritableConfigurable {
     set(instance);
   }
 
-  public NutchWritable reset(Edge edge) {
-    set(edge);
+  public NutchWritable reset(WebEdge webEdge) {
+    set(webEdge);
     return this;
   }
 

@@ -27,6 +27,8 @@
   <classpathentry kind="src" path="src/plugin/parse-metatags/src/test/" />
   <classpathentry kind="src" path="src/plugin/parse-tika/src/java/" />
   <classpathentry kind="src" path="src/plugin/parse-tika/src/test/" />
+  <classpathentry kind="src" path="src/plugin/protocol-file/src/java/" />
+  <classpathentry kind="src" path="src/plugin/protocol-file/src/test/" />
   <classpathentry kind="src" path="src/plugin/protocol-crowd/src/java/" />
   <classpathentry kind="src" path="src/plugin/protocol-crowd/src/test/" />
   <classpathentry kind="src" path="src/plugin/protocol-http/src/java/" />
@@ -57,6 +59,7 @@
   <classpathentry kind="lib" path="build/lib/activation-1.1.jar" />
   <classpathentry kind="lib" path="build/lib/annotations-api-6.0.16.jar" />
   <classpathentry kind="lib" path="build/lib/annotations-java8.jar" />
+  <classpathentry kind="lib" path="build/lib/antlr4-runtime-4.5.3.jar" />
   <classpathentry kind="lib" path="build/lib/aopalliance-1.0.jar" />
   <classpathentry kind="lib" path="build/lib/apacheds-i18n-2.0.0-M15.jar" />
   <classpathentry kind="lib" path="build/lib/apacheds-kerberos-codec-2.0.0-M15.jar" />
@@ -170,6 +173,10 @@
   <classpathentry kind="lib" path="build/lib/jetty-ssl-7.0.0.pre5.jar" />
   <classpathentry kind="lib" path="build/lib/jetty-util-7.0.0.pre5.jar" />
   <classpathentry kind="lib" path="build/lib/jetty-xml-7.0.0.pre5.jar" />
+  <classpathentry kind="lib" path="build/lib/jgraph-5.13.0.0.jar" />
+  <classpathentry kind="lib" path="build/lib/jgrapht-core-1.0.0.jar" />
+  <classpathentry kind="lib" path="build/lib/jgrapht-ext-1.0.0.jar" />
+  <classpathentry kind="lib" path="build/lib/jgraphx-2.0.0.1.jar" />
   <classpathentry kind="lib" path="build/lib/joni-2.1.2.jar" />
   <classpathentry kind="lib" path="build/lib/jsp-api-6.0.16.jar" />
   <classpathentry kind="lib" path="build/lib/jsr305-3.0.1.jar" />

@@ -18,14 +18,16 @@ package org.apache.nutch.mapreduce;
 
 import org.apache.avro.util.Utf8;
 import org.apache.gora.mapreduce.GoraMapper;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.NutchWritable;
+import org.apache.nutch.graph.io.WebEdgeWritable;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.persist.graph.Edge;
-import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.TableUtil;
@@ -46,11 +48,12 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, GraphGroupK
 
   private ScoringFilters scoringFilters;
 
-  private final List<Edge> scoreData = new ArrayList<>();
+  private final List<WebEdge> scoreData = new ArrayList<>();
 
   @SuppressWarnings("unused")
   private Utf8 batchId;
 
+  private Configuration conf;
   // reuse writables
   private GraphGroupKey subGraphGroupKey = new GraphGroupKey();
   private NutchWritable nutchWritable = new NutchWritable();
@@ -72,7 +75,7 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, GraphGroupK
       for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
 //        int depth = TableUtil.getDepth(page);
 //        int depth = 0; // wrong, temp
-//        scoreData.add(new Edge(url, e.getKey(), e.getValue(), 0.0f, depth));
+//        scoreData.add(new WebEdge(url, e.getKey(), e.getValue(), 0.0f, depth));
       }
     }
 
@@ -89,12 +92,12 @@ public class DbUpdateMapper2 extends GoraMapper<String, GoraWebPage, GraphGroupK
     nutchWritable.set(pageWritable);
     context.write(subGraphGroupKey, nutchWritable);
 
-    for (Edge edgeDatum : scoreData) {
-      String reversedOut = TableUtil.reverseUrl(edgeDatum.getV2().getUrl());
-//      edgeDatum.setSourceUrl(url); // the referrer page's url
+    for (WebEdge webEdgeDatum : scoreData) {
+      String reversedOut = TableUtil.reverseUrl(webEdgeDatum.getTarget().getUrl());
+//      webEdgeDatum.setSourceUrl(url); // the referrer page's url
       subGraphGroupKey.setReversedUrl(reversedOut); // out page's url
-      subGraphGroupKey.setScore(edgeDatum.getScore()); // out page's init score
-      nutchWritable.set(edgeDatum);
+      subGraphGroupKey.setScore(webEdgeDatum.getWeight()); // out page's init score
+      nutchWritable.set(new WebEdgeWritable(webEdgeDatum, conf));
       context.write(subGraphGroupKey, nutchWritable);
     }
   }

@@ -3,13 +3,10 @@ package org.apache.nutch.dbupdate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.NutchWritable;
-import org.apache.nutch.persist.graph.Edge;
-import org.apache.nutch.persist.graph.Graph;
-import org.apache.nutch.persist.graph.GraphGroupKey;
+import org.apache.nutch.graph.*;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.persist.graph.Vertex;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.persist.WebPage;
@@ -79,30 +76,35 @@ public class MapDatumBuilder {
       return Collections.emptyMap();
     }
 
-    Graph graph = new Graph(conf);
-    Vertex v1 = new Vertex(sourceUrl, "", sourcePage, depth, conf);
+    WebGraph webGraph = new WebGraph();
+    WebVertex v1 = new WebVertex(sourceUrl, "", sourcePage, depth);
+//    v1.addMetadata(PUBLISH_TIME, page.getPublishTime());
+//    v1.addMetadata(TMP_CHARS, page.sniffTextLength());
+
+    /* A loop in the graph */
+    webGraph.addVertexAndEdge(v1, v1);
 
     // 1. Create scoreData
-//    List<Edge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
+//    List<WebEdge> outlinkScoreData = sourcePage.getOutlinks().entrySet().stream()
 //        .limit(maxOutlinks)
-//        .map(e -> new Edge(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
+//        .map(e -> new WebEdge(0.0f, e.getKey().toString(), e.getValue().toString(), depth))
 //        .collect(Collectors.toList());
     sourcePage.getOutlinks().entrySet().stream()
-        .map(e -> new Vertex(e.getKey().toString(), e.getValue().toString(), null, depth + 1, conf))
-        .forEach(v2 -> graph.addEdge(new Edge(v1, v2, 0.0f)));
+        .map(l -> new WebVertex(l.getKey().toString(), l.getValue().toString(), null, depth + 1))
+        .forEach(v2 -> webGraph.addVertexAndEdge(v1, v2));
 
-    counter.increase(NutchCounter.Counter.outlinks, graph.getEdges().size());
+    counter.increase(NutchCounter.Counter.outlinks, webGraph.edgesOf(v1).size());
 
     // 2. Distribute score to outlinks
     try {
       // In OPIC, the source page's score is distributed for all inlink/outlink pages
-      scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, graph.getEdges(), graph.getEdges().size());
+      scoringFilters.distributeScoreToOutlinks(sourceUrl, sourcePage, webGraph.edgesOf(v1), webGraph.edgesOf(v1).size());
     } catch (ScoringFilterException e) {
       LOG.warn("Distributing score failed for URL : " + sourceUrl + " Exception:" + StringUtil.stringifyException(e));
     }
 
     // 3. Create all new rows from outlink, ready to write to storage
-    return graph.getEdges().stream()
+    return webGraph.edgesOf(v1).stream()
         .map(d -> createOutlinkDatum(sourceUrl, d))
         .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
   }
@@ -111,21 +113,21 @@ public class MapDatumBuilder {
    * Build map phrase datum
    * */
   @NotNull
-  private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, Edge edge) {
-    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getV2().getUrl());
+  private Pair<GraphGroupKey, NutchWritable> createOutlinkDatum(String sourceUrl, WebEdge webEdge) {
+    String reversedOutUrl = TableUtil.reverseUrlOrEmpty(webEdge.getTarget().getUrl());
 
     // TODO : why set to be the source url?
-//    edge.setUrl(sourceUrl);
+//    webEdge.setUrl(sourceUrl);
 
-//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(edge.getUrl());
-//    edge.setUrl(sourceUrl);
+//    reversedOutUrl = TableUtil.reverseUrlOrEmpty(webEdge.getUrl());
+//    webEdge.setUrl(sourceUrl);
 //    GraphGroupKey urlWithScore = new GraphGroupKey();
 //    urlWithScore.setReversedUrl(reversedOutUrl);
-//    urlWithScore.setScore(edge.getScore());
+//    urlWithScore.setScore(webEdge.getScore());
 //
 //    NutchWritable nutchWritable = new NutchWritable();
-//    nutchWritable.set(edge);
+//    nutchWritable.set(webEdge);
 
-    return Pair.of(new GraphGroupKey(reversedOutUrl, edge.getScore()), new NutchWritable(edge));
+    return Pair.of(new GraphGroupKey(), new NutchWritable());
   }
 }

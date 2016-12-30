@@ -10,7 +10,7 @@ import org.apache.nutch.crawl.NutchWritable;
 import org.apache.nutch.mapreduce.NutchCounter;
 import org.apache.nutch.mapreduce.WebPageWritable;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.graph.Edge;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.Params;
@@ -39,7 +39,7 @@ public class ReduceDatumBuilder {
   private final FetchSchedule fetchSchedule;
   private final ScoringFilters scoringFilters;
   private final Params params;
-  private final List<Edge> inlinkedScoreData = new ArrayList<>(200);
+  private final List<WebEdge> inlinkedScoreData = new ArrayList<>(200);
 
   public ReduceDatumBuilder(NutchCounter counter, Configuration conf) {
     this.counter = counter;
@@ -68,13 +68,13 @@ public class ReduceDatumBuilder {
     inlinkedScoreData.clear();
   }
 
-  public void calculateInlinks(List<Edge> edge) {
+  public void calculateInlinks(List<WebEdge> webEdge) {
     inlinkedScoreData.clear();
-    inlinkedScoreData.addAll(edge);
+    inlinkedScoreData.addAll(webEdge);
   }
 
   /**
-   * In the mapper phrase, NutchWritable is sets to be a WebPage or a Edge,
+   * In the mapper phrase, NutchWritable is sets to be a WebPage or a WebEdge,
    * the WrappedWebPageWritable is the webpage to be updated, and the score datum is calculated from the outlinks
    * */
   public WebPage calculateInlinks(String sourceUrl, Iterable<NutchWritable> values) {
@@ -86,7 +86,7 @@ public class ReduceDatumBuilder {
       if (val instanceof WebPageWritable) {
         page = ((WebPageWritable) val).getWebPage();
       } else {
-        inlinkedScoreData.add((Edge) val);
+        inlinkedScoreData.add((WebEdge) val);
 
         if (inlinkedScoreData.size() >= maxLinks) {
           LOG.info("Limit reached, skipping further inlinks for " + sourceUrl);

@@ -10377,7 +10377,7 @@ Midori
     More Midori user agents strings -->>
 
 MinefieldMinefield
-Minefield is a codename for Mozilla Firefox�s nightly trunk builds. To prevent test releases from being mistaken for a new release it has become commonplace for alpha releases to carry codenames like Deer Park or Bon Echo. Similar thinking has resulted in the nightly trunk builds (bleeding-edge test binaries that will eventually form the basis of the next Firefox version) being rebranded as Minefield
+Minefield is a codename for Mozilla Firefox�s nightly trunk builds. To prevent test releases from being mistaken for a new release it has become commonplace for alpha releases to carry codenames like Deer Park or Bon Echo. Similar thinking has resulted in the nightly trunk builds (bleeding-webEdge test binaries that will eventually form the basis of the next Firefox version) being rebranded as Minefield
 
 Click on any string to get more details
 Minefield 4.0b4pre

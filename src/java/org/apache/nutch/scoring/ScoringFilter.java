@@ -18,8 +18,8 @@ package org.apache.nutch.scoring;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.nutch.indexer.IndexDocument;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.plugin.FieldPluggable;
-import org.apache.nutch.persist.graph.Edge;
 import org.apache.nutch.persist.WebPage;
 
 import java.util.Collection;
@@ -86,8 +86,8 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @param page
    *          page row
    * @param scoreData
-   *          A list of {@link Edge}s for every outlink. These
-   *          {@link Edge}s will be passed to
+   *          A list of {@link WebEdge}s for every outlink. These
+   *          {@link WebEdge}s will be passed to
    *          {@link #updateScore(String, WebPage, List)} for every
    *          outlinked URL.
    * @param allCount
@@ -95,7 +95,7 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    * @throws ScoringFilterException
    */
   void distributeScoreToOutlinks(String fromUrl, WebPage page,
-                                 Collection<Edge> scoreData, int allCount)
+                                 Collection<WebEdge> scoreData, int allCount)
       throws ScoringFilterException;
 
   /**
@@ -106,11 +106,11 @@ public interface ScoringFilter extends Configurable, FieldPluggable {
    *          url of the page
    * @param page
    * @param inlinkedScoreData
-   *          list of {@link Edge}s for all inlinks pointing to
+   *          list of {@link WebEdge}s for all inlinks pointing to
    *          this URL.
    * @throws ScoringFilterException
    */
-  void updateScore(String url, WebPage page, List<Edge> inlinkedScoreData) throws ScoringFilterException;
+  void updateScore(String url, WebPage page, List<WebEdge> inlinkedScoreData) throws ScoringFilterException;
 
   /**
    * This method calculates a Lucene document boost.

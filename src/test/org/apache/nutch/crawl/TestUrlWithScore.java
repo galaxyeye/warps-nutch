@@ -17,10 +17,10 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.RawComparator;
-import org.apache.nutch.persist.graph.GraphGroupKey;
-import org.apache.nutch.persist.graph.GraphGroupKey.UrlOnlyPartitioner;
-import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator;
-import org.apache.nutch.persist.graph.GraphGroupKey.GraphKeyComparator.UrlOnlyComparator;
+import org.apache.nutch.graph.GraphGroupKey;
+import org.apache.nutch.graph.GraphGroupKey.UrlOnlyPartitioner;
+import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator;
+import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator.UrlOnlyComparator;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Test;
 
