@@ -17,10 +17,13 @@
 package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.StringUtils;
+import org.apache.nutch.graph.WebVertex;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.graph.Vertex;
+import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -158,28 +161,28 @@ public class TestOPICScoringFilter {
         Map.Entry<String, Map<WebPage, List<WebEdge>>> entry = iter.next();
         Map<WebPage, List<WebEdge>> webPageMap = entry.getValue();
 
-        WebPage row = null;
+        WebPage page = null;
         List<WebEdge> scoreList = null;
         Iterator<Map.Entry<WebPage, List<WebEdge>>> iters = webPageMap.entrySet().iterator();
         if (iters.hasNext()) {
           Map.Entry<WebPage, List<WebEdge>> values = iters.next();
-          row = values.getKey();
+          page = values.getKey();
           scoreList = values.getValue();
         }
 
         String reverseUrl = entry.getKey();
         String url = TableUtil.unreverseUrl(reverseUrl);
-        float score = row.getScore();
+        float score = page.getScore();
 
         if (dbWebPagesControl.get(TableUtil.reverseUrl(url))) {
-          row.setScore(scoringFilter.generatorSortValue(url, row, score));
+          page.setScore(scoringFilter.generatorSortValue(url, page, score));
           dbWebPagesControl.put(TableUtil.reverseUrl(url), false);
         }
 
         // getting outlinks from testdata
         String[] seedOutlinks = self.linkList.get(url);
         for (String seedOutlink : seedOutlinks) {
-          row.getOutlinks().put(seedOutlink, "");
+          page.getOutlinks().put(seedOutlink, "");
         }
 
         // Existing outlinks are added to outlinkedScoreData
@@ -188,38 +191,34 @@ public class TestOPICScoringFilter {
 //          self.outlinkedScoreData.add(new WebEdge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
 //        }
 
-        WebGraph webGraph = new WebGraph(conf);
+        WebGraph graph = new WebGraph();
+        WebVertex v1 = new WebVertex(url, page);
 
-        int depth = 0;
-        Vertex v1 = new Vertex(url, "", row, depth, conf);
-        v1.addMetadata(PUBLISH_TIME, row.getPublishTime());
-        v1.addMetadata(TMP_CHARS, row.sniffTextLength());
+    /* A loop in the graph */
+        graph.addVertex(v1);
+        graph.addEdge(v1, v1);
 
-        webGraph.addEdge(new WebEdge(v1, v1, 0.0f));
+        page.getOutlinks().entrySet().forEach(l -> graph.addEdge(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
 
-        row.getOutlinks().entrySet().stream()
-            .map(e -> new Vertex(e.getKey().toString(), e.getValue().toString(), null, depth + 1, conf))
-            .forEach(v2 -> webGraph.addEdge(new WebEdge(v1, v2, 0.0f)));
-
-        scoringFilter.distributeScoreToOutlinks(url, row, webGraph.getWebEdges(), webGraph.getWebEdges().size());
+        scoringFilter.distributeScoreToOutlinks(url, page, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
 
         // DbUpdate Reducer simulation
-        for (WebEdge edge : webGraph.getWebEdges()) {
-          if (dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl())) == null) {
+        for (WebEdge edge : graph.outgoingEdgesOf(v1)) {
+          if (dbWebPages.get(TableUtil.reverseUrl(edge.getTargetUrl())) == null) {
             // Check each outlink and creates new webpages if it's not
             // exist in database (dbWebPages)
             WebPage outlinkRow = WebPage.newWebPage();
 
-            scoringFilter.initialScore(edge.getV2().getUrl(), outlinkRow);
+            scoringFilter.initialScore(edge.getTargetUrl(), outlinkRow);
             List<WebEdge> newScoreList = new LinkedList<>();
             newScoreList.add(edge);
             Map<WebPage, List<WebEdge>> values = new HashMap<>();
             values.put(outlinkRow, newScoreList);
-            dbWebPages.put(TableUtil.reverseUrl(edge.getV2().getUrl()), values);
-            dbWebPagesControl.put(TableUtil.reverseUrl(edge.getV2().getUrl()), true);
+            dbWebPages.put(TableUtil.reverseUrl(edge.getTargetUrl()), values);
+            dbWebPagesControl.put(TableUtil.reverseUrl(edge.getTargetUrl()), true);
           } else {
             // Outlinks are added to list for each webpage
-            Map<WebPage, List<WebEdge>> values = dbWebPages.get(TableUtil.reverseUrl(edge.getV2().getUrl()));
+            Map<WebPage, List<WebEdge>> values = dbWebPages.get(TableUtil.reverseUrl(edge.getTargetUrl()));
             Iterator<Map.Entry<WebPage, List<WebEdge>>> value = values.entrySet().iterator();
             if (value.hasNext()) {
               Map.Entry<WebPage, List<WebEdge>> list = value.next();
@@ -232,7 +231,6 @@ public class TestOPICScoringFilter {
 
       // Simulate Reducing
       for (Map.Entry<String, Map<WebPage, List<WebEdge>>> page : dbWebPages.entrySet()) {
-
         String reversedUrl = page.getKey();
         String url = TableUtil.unreverseUrl(reversedUrl);
 

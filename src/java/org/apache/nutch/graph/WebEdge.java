@@ -16,26 +16,21 @@
  ******************************************************************************/
 package org.apache.nutch.graph;
 
+import org.apache.nutch.persist.WebPage;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class WebEdge extends DefaultEdge {
+public class WebEdge extends DefaultWeightedEdge {
 
-  private double weight;
+  private String anchor;
 
   public WebEdge() {}
 
-  public WebEdge(WebVertex vertex, WebVertex vertex2) {}
+  public String getAnchor() { return anchor; }
 
-  public double getWeight()
-  {
-    return weight;
-  }
+  public void setAnchor(CharSequence anchor) { this.anchor = anchor.toString(); }
 
-  public void setWeight(double weight) { this.weight = weight; }
-
-  public double getScore() { return weight; }
-
-  public void setScore(double score) { weight = score; }
+  public boolean isLoop() { return getSource().equals(getTarget()); }
 
   /**
    * Retrieves the source of this edge.
@@ -47,13 +42,18 @@ public class WebEdge extends DefaultEdge {
     return (WebVertex)super.getSource();
   }
 
+  public String getSourceUrl() { return getSource().getUrl(); }
+
+  public WebPage getSourceWebPage() { return getSource().getWebPage(); }
+
   /**
    * Retrieves the target of this edge.
    *
    * @return target of this edge
    */
-  public WebVertex getTarget()
-  {
-    return (WebVertex)super.getTarget();
-  }
+  public WebVertex getTarget() { return (WebVertex)super.getTarget(); }
+
+  public String getTargetUrl() { return getTarget().getUrl(); }
+
+  public WebPage getTargetWebPage() { return getTarget().getWebPage(); }
 }

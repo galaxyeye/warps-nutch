@@ -1,8 +1,13 @@
 package org.apache.nutch.graph;
 
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.StringUtil;
 
 import java.time.Instant;
+
+import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
 
 /**
  * Created by vincent on 16-12-29.
@@ -11,22 +16,14 @@ import java.time.Instant;
 public class WebVertex {
   private String url;
   private WebPage page;
-  private int depth;
-  private String anchor;
-  private Instant publishTime;
-  private Instant referredPublishTime;
-  private int referredArticles;
-  private int referredChars;
 
-  public WebVertex(String url, WebPage page, int depth) {
-    this(url, "", page, depth);
+  public WebVertex(CharSequence url) {
+    this(url.toString(), null);
   }
 
-  public WebVertex(String url, String anchor, WebPage page, int depth) {
-    this.url = url;
-    this.anchor = anchor;
+  public WebVertex(CharSequence url, WebPage page) {
+    this.url = url.toString();
     this.page = page;
-    this.depth = depth;
   }
 
   public String getUrl() {
@@ -46,36 +43,6 @@ public class WebVertex {
   }
 
   public boolean hasWebPage() { return this.page != null; }
-
-  public int getDepth() {
-    return depth;
-  }
-
-  public void setDepth(int depth) { this.depth = depth; }
-
-  public String getAnchor() { return anchor; }
-
-  public void setAnchor(String anchor) { this.anchor = anchor; }
-
-  public WebPage getPage() { return page; }
-
-  public void setPage(WebPage page) { this.page = page; }
-
-  public Instant getPublishTime() { return publishTime; }
-
-  public void setPublishTime(Instant publishTime) { this.publishTime = publishTime; }
-
-  public Instant getReferredPublishTime() { return referredPublishTime; }
-
-  public void setReferredPublishTime(Instant referredPublishTime) { this.referredPublishTime = referredPublishTime; }
-
-  public int getReferredArticles() { return referredArticles; }
-
-  public void setReferredArticles(int referredArticles) { this.referredArticles = referredArticles; }
-
-  public int getReferredChars() { return referredChars; }
-
-  public void setReferredChars(int referredChars) { this.referredChars = referredChars; }
 
   @Override
   public boolean equals(Object vertex) {

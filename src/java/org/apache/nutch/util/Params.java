@@ -141,26 +141,26 @@ public class Params {
     return this;
   }
 
-  public void debug() {
+  public void debug() { debug(false); }
+
+  public void debug(boolean inline) {
     if (logger != null) {
-      logger.debug(toString());
+      logger.debug(inline ? formatAsLine() : format());
     }
   }
 
   public void info() {
+    info(false);
+  }
+
+  public void info(boolean inline) {
     if (logger != null) {
-      logger.info(toString());
+      logger.info(inline ? formatAsLine() : format());
     }
   }
 
-  public void debug(Logger logger) { withLogger(logger).debug(); }
-
-  public void info(Logger logger) { withLogger(logger).info(); }
-
   @Override
-  public String toString() {
-    return format();
-  }
+  public String toString() { return format(); }
 
   public static Params of(String key, Object value, Object... others) {
     return new Params(key, value, others);

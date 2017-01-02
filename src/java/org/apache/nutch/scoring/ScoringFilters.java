@@ -19,6 +19,7 @@ package org.apache.nutch.scoring;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -117,17 +118,18 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage row,
-                                        Collection<WebEdge> scoreData, int allCount) throws ScoringFilterException {
+  public void distributeScoreToOutlinks(
+      String fromUrl, WebPage row, WebGraph graph, Collection<WebEdge> outLinkEdges, int allCount) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
-      filter.distributeScoreToOutlinks(fromUrl, row, scoreData, allCount);
+      filter.distributeScoreToOutlinks(fromUrl, row, graph, outLinkEdges, allCount);
     }
   }
 
   @Override
-  public void updateScore(String url, WebPage row, Collection<WebEdge> inlinkedScoreData) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges)
+      throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
-      filter.updateScore(url, row, inlinkedScoreData);
+      filter.updateScore(url, row, graph, inLinkEdges);
     }
   }
 

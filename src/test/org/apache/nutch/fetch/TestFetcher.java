@@ -18,9 +18,9 @@ package org.apache.nutch.fetch;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.mapreduce.FetchJob;
-import org.apache.nutch.mapreduce.GenerateJob;
-import org.apache.nutch.mapreduce.InjectJob;
+import org.apache.nutch.jobs.FetchJob;
+import org.apache.nutch.jobs.GenerateJob;
+import org.apache.nutch.jobs.InjectJob;
 import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.persist.Mark;

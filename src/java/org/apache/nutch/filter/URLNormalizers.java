@@ -18,7 +18,7 @@
 package org.apache.nutch.filter;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.mapreduce.GenerateJob;
+import org.apache.nutch.jobs.GenerateJob;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;

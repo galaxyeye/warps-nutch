@@ -94,8 +94,8 @@ public class SeedBuilder {
     }
 
     // TODO : Check the difference between hbase.url and page.baseUrl
-    page.setTmporaryVariable("url", url);
-    page.setTmporaryVariable("reversedUrl", reversedUrl);
+    page.setTempVar("url", url);
+    page.setTempVar("reversedUrl", reversedUrl);
 
     if (customPageScore != -1f) {
       page.setScore(customPageScore);

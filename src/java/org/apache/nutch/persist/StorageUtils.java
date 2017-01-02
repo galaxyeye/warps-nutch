@@ -66,14 +66,14 @@ public class StorageUtils {
 
     String schema;
     if (GoraWebPage.class.equals(persistentClass)) {
-      schema = conf.get("persist.schema.webpage", "webpage");
+      schema = conf.get("storage.schema.webpage", "webpage");
       conf.set("preferred.schema.name", schemaPrefix + "webpage");
     } else if (Host.class.equals(persistentClass)) {
-      schema = conf.get("persist.schema.host", "host");
+      schema = conf.get("storage.schema.host", "host");
       conf.set("preferred.schema.name", schemaPrefix + "host");
     } else {
       throw new UnsupportedOperationException(
-          "Unable to create store for class " + persistentClass);
+          "Unable to create storage for class " + persistentClass);
     }
 
     Class<? extends DataStore<K, V>> dataStoreClass = getDataStoreClass(conf);
@@ -89,10 +89,9 @@ public class StorageUtils {
    * @throws ClassNotFoundException
    */
   @SuppressWarnings("unchecked")
-  public static <K, V extends Persistent> Class<? extends DataStore<K, V>> getDataStoreClass(
-      Configuration conf) throws ClassNotFoundException {
-    return (Class<? extends DataStore<K, V>>) Class.forName(conf.get(
-        "persist.data.store.class", "org.apache.gora.sql.store.SqlStore"));
+  public static <K, V extends Persistent> Class<? extends DataStore<K, V>>
+  getDataStoreClass(Configuration conf) throws ClassNotFoundException {
+    return (Class<? extends DataStore<K, V>>) Class.forName(conf.get("storage.data.store.class", "org.apache.gora.sql.store.SqlStore"));
   }
 
   public static <K, V> void initMapperJob(Job job,

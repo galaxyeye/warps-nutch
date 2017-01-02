@@ -23,7 +23,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexField;
 import org.apache.nutch.indexer.IndexWriter;
-import org.apache.nutch.mapreduce.IndexJob;
+import org.apache.nutch.jobs.IndexJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.metadata.SolrConstants;
 import org.apache.nutch.tools.NutchMetrics;

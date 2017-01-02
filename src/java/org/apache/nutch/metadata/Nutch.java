@@ -214,7 +214,7 @@ public interface Nutch {
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
   String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
   String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
-  String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
+  String PARAM_MAPREDUCE_JOB_REDUCES = "jobs.job.reduces";
   String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
 
   String PARAM_CRAWL_ROUND = "crawl.round";
@@ -271,6 +271,8 @@ public interface Nutch {
 
   String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
 
+  String PARAM_CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
+
   /**
    * Document fields
    * */
@@ -287,6 +289,7 @@ public interface Nutch {
    * Temporary variable holders
    * */
   String VAR_OUTLINKS_COUNT = "outlinks_count";
+  String VAR_PAGE_EXISTENCE = "page_existence";
 
   /**
    * Variable values

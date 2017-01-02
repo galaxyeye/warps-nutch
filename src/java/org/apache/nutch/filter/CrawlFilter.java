@@ -78,7 +78,7 @@ public class CrawlFilter extends Configured {
       return pageCategory;
     }
 
-    String textContent = (String) page.getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
+    String textContent = (String) page.getTempVar(DOC_FIELD_TEXT_CONTENT);
     if (textContent == null) {
       return pageCategory;
     }

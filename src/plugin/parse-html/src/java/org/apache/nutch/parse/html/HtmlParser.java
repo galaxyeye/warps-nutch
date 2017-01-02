@@ -135,8 +135,8 @@ public class HtmlParser implements Parser {
       extract(page, input2);
     }
 
-    String pageTitle = page.getTemporaryVariableAsString(DOC_FIELD_PAGE_TITLE, "");
-    String textContent = page.getTemporaryVariableAsString(DOC_FIELD_TEXT_CONTENT, "");
+    String pageTitle = page.getTempVarAsString(DOC_FIELD_PAGE_TITLE, "");
+    String textContent = page.getTempVarAsString(DOC_FIELD_TEXT_CONTENT, "");
 
     tryGetValidOutlinks(page, url, baseURL);
 
@@ -215,7 +215,7 @@ public class HtmlParser implements Parser {
       domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
-    page.setTmporaryVariable(VAR_OUTLINKS_COUNT, outlinks.size());
+    page.setTempVar(VAR_OUTLINKS_COUNT, outlinks.size());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("found " + outlinks.size() + " outlinks in " + url);
@@ -223,7 +223,7 @@ public class HtmlParser implements Parser {
   }
 
   private void setEncoding(WebPage page, String encoding) {
-    page.setTmporaryVariable("encoding", encoding);
+    page.setTempVar("encoding", encoding);
     page.putMetadata(Nutch.ORIGINAL_CHAR_ENCODING, encoding);
     page.putMetadata(Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
@@ -260,9 +260,9 @@ public class HtmlParser implements Parser {
       extractor.process(doc);
 
       page.setTitle(doc.getPageTitle());
-      page.setTmporaryVariable(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
-      page.setTmporaryVariable(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
-      doc.getFields().entrySet().forEach(entry -> page.setTmporaryVariable(entry.getKey(), entry.getValue()));
+      page.setTempVar(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
+      page.setTempVar(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
+      doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
 
 //      LOG.info("Text content length : " + doc.getTextContent().length()
 //          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());

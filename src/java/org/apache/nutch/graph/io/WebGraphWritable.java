@@ -17,6 +17,8 @@ public class WebGraphWritable implements Writable {
   private Configuration conf;
   private WebGraph graph;
 
+  public WebGraphWritable() {}
+
   public WebGraphWritable(WebGraph graph, Configuration conf) {
     this.conf = conf;
     this.graph = graph;
@@ -30,7 +32,7 @@ public class WebGraphWritable implements Writable {
     for (WebEdge edge : graph.edgeSet()) {
       IOUtils.serialize(conf, output, new WebVertexWritable(edge.getSource(), conf), WebVertexWritable.class);
       IOUtils.serialize(conf, output, new WebVertexWritable(edge.getTarget(), conf), WebVertexWritable.class);
-      output.writeDouble(edge.getWeight());
+      output.writeDouble(graph.getEdgeWeight(edge));
     }
   }
 
@@ -40,12 +42,11 @@ public class WebGraphWritable implements Writable {
 
     int edgeSize = input.readInt();
     for (int i = 0; i < edgeSize; ++i) {
-      WebVertexWritable source = IOUtils.deserialize(conf, input, new WebVertexWritable(), WebVertexWritable.class);
-      WebVertexWritable target = IOUtils.deserialize(conf, input, new WebVertexWritable(), WebVertexWritable.class);
+      WebVertexWritable source = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
+      WebVertexWritable target = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
       double weight = input.readDouble();
 
-      WebEdge edge = graph.addEdge(source.get(), target.get());
-      edge.setWeight(weight);
+      graph.addEdgeLenient(source.get(), target.get(), weight);
     }
   }
 }

@@ -939,7 +939,9 @@
           <root url="jar://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/hadoop-common-2.5.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

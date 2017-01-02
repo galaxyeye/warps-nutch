@@ -2,6 +2,7 @@ package org.apache.nutch.graph.io;
 
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.graph.WebVertex;
@@ -33,16 +34,26 @@ public class WebVertexWritable implements Writable {
   @Override
   public void write(DataOutput output) throws IOException {
     Text.writeString(output, vertex.getUrl());
-    IOUtils.serialize(conf, output, vertex.getWebPage().get(), GoraWebPage.class);
-    output.writeInt(vertex.getDepth());
+    BooleanWritable hasWebPage = new BooleanWritable(vertex.hasWebPage());
+    hasWebPage.write(output);
+    if (hasWebPage.get()) {
+      IOUtils.serialize(conf, output, vertex.getWebPage().get(), GoraWebPage.class);
+    }
   }
 
   @Override
   public void readFields(DataInput input) throws IOException {
     String url = Text.readString(input);
-    WebPage page = WebPage.wrap(IOUtils.deserialize(conf, input, vertex.getWebPage().get(), GoraWebPage.class));
-    int weight = input.readInt();
+    BooleanWritable hasWebPage = new BooleanWritable();
+    hasWebPage.readFields(input);
 
-    this.vertex = new WebVertex(url, page, weight);
+    WebPage page;
+    if (hasWebPage.get()) {
+      page = WebPage.wrap(IOUtils.deserialize(conf, input, null, GoraWebPage.class));
+    }
+    else {
+      page = WebPage.newWebPage();
+    }
+    this.vertex = new WebVertex(url, page);
   }
 }

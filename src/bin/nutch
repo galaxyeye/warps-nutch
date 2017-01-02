@@ -24,13 +24,13 @@ function printUsage() {
   echo "Usage: nutch [--config dir] COMMAND"
   echo "where COMMAND is one of:"
   echo " master    	run nutch master service"
-  echo " samplejob  run sample mapreduce program"
+  echo " samplejob  run sample jobs program"
   echo " inject		inject new urls into the database"
   echo " hostinject creates or updates an existing host table from a text file"
   echo " generate 	generate new batches to fetch from crawl db"
   echo " fetch 		fetch URLs marked during generate"
   echo " parse 		parse URLs marked during fetch"
-  echo " updatedb 	update web table after parsing"
+  echo " updatedb 	update web graph after parsing"
   echo " updatehostdb   update host table after parsing"
   echo " readdb 	read/dump records from page database"
   echo " readhostdb     display entries from the hostDB"
@@ -92,8 +92,8 @@ if [ "$NUTCH_CONF_DIR" = "" ]; then
   exit 0
 fi
 
-# echo "Use configuration directory : $NUTCH_CONF_DIR"
-# ls $NUTCH_CONF_DIR
+echo "Use configuration directory : $NUTCH_CONF_DIR"
+ls $NUTCH_CONF_DIR
 
 #echo $@
 #exit 0
@@ -133,42 +133,42 @@ if [ "$COMMAND" = "crawl" ] ; then
 elif [ "$COMMAND" = "master" ] ; then
   CLASS=org.apache.nutch.service.NutchServer
 elif [ "$COMMAND" = "samplejob" ] ; then
-  CLASS=org.apache.nutch.mapreduce.SampleJob
+  CLASS=org.apache.nutch.jobs.SampleJob
 elif [ "$COMMAND" = "inject" ] ; then
-  CLASS=org.apache.nutch.mapreduce.InjectJob
+  CLASS=org.apache.nutch.jobs.InjectJob
 elif [ "$COMMAND" = "hostinject" ] ; then
-  CLASS=org.apache.nutch.mapreduce.HostInjectorJob
+  CLASS=org.apache.nutch.jobs.HostInjectorJob
 elif [ "$COMMAND" = "generate" ] ; then
-  CLASS=org.apache.nutch.mapreduce.GenerateJob
+  CLASS=org.apache.nutch.jobs.GenerateJob
 elif [ "$COMMAND" = "fetch" ] ; then
-  CLASS=org.apache.nutch.mapreduce.FetchJob
+  CLASS=org.apache.nutch.jobs.FetchJob
 elif [ "$COMMAND" = "parse" ] ; then
-  CLASS=org.apache.nutch.mapreduce.ParserJob
+  CLASS=org.apache.nutch.jobs.ParserJob
 elif [ "$COMMAND" = "updatedb" ] ; then
-  CLASS=org.apache.nutch.mapreduce.DbUpdateJob
+  CLASS=org.apache.nutch.jobs.WebGraphUpdateJob
 elif [ "$COMMAND" = "updatehostdb" ] ; then
-  CLASS=org.apache.nutch.mapreduce.HostDbUpdateJob
+  CLASS=org.apache.nutch.jobs.HostDbUpdateJob
 elif [ "$COMMAND" = "readdb" ] ; then
-  CLASS=org.apache.nutch.mapreduce.WebTableReader
+  CLASS=org.apache.nutch.jobs.WebTableReader
 elif [ "$COMMAND" = "readhostdb" ] ; then
   CLASS=org.apache.nutch.host.HostDbReader
 elif [ "$COMMAND" = "elasticindex" ] ; then
   CLASS=org.apache.nutch.indexer.elastic.ElasticIndexerJob
 elif [ "$COMMAND" = "solrindex" ] ; then
-  CLASS="org.apache.nutch.mapreduce.IndexJob"
+  CLASS="org.apache.nutch.jobs.IndexJob"
 elif [ "$COMMAND" = "index" ] ; then
-  CLASS=org.apache.nutch.mapreduce.IndexingJob
+  CLASS=org.apache.nutch.jobs.IndexingJob
 elif [ "$COMMAND" = "solrdedup" ] ; then
-  CLASS=org.apache.nutch.mapreduce.solr.SolrDeleteDuplicates
+  CLASS=org.apache.nutch.jobs.solr.SolrDeleteDuplicates
 elif [ "$COMMAND" = "solrclean" ] ; then
-  CLASS="org.apache.nutch.mapreduce.CleaningJob -Dsolr.server.url=$2 $1"
+  CLASS="org.apache.nutch.jobs.CleaningJob -Dsolr.server.url=$2 $1"
   shift; shift
 elif [ "$COMMAND" = "clean" ] ; then
-  CLASS=org.apache.nutch.mapreduce.CleaningJob
+  CLASS=org.apache.nutch.jobs.CleaningJob
 elif [ "$COMMAND" = "parsechecker" ] ; then
-  CLASS=org.apache.nutch.mapreduce.ParserCheckJob
+  CLASS=org.apache.nutch.jobs.ParserCheckJob
 elif [ "$COMMAND" = "indexchecker" ] ; then
-  CLASS=org.apache.nutch.mapreduce.IndexingFiltersCheckJob
+  CLASS=org.apache.nutch.jobs.IndexingFiltersCheckJob
 elif [ "$COMMAND" = "plugin" ] ; then
   CLASS=org.apache.nutch.plugin.PluginRepository
 elif [ "$COMMAND" = "junit" ] ; then
@@ -256,4 +256,4 @@ echo "Log file : $loglog"
 echo "${EXEC_CALL[@]}" $CLASS "$@"
 exec "${EXEC_CALL[@]}" $CLASS "$@"
 
-# echo $! > $PID
+echo $! > "${NUTCH_TMP_DIR}/$COMMAND.pid"

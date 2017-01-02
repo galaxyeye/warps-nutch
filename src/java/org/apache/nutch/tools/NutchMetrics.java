@@ -2,7 +2,7 @@ package org.apache.nutch.tools;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.PageCategory;
-import org.apache.nutch.mapreduce.NutchReporter;
+import org.apache.nutch.jobs.NutchReporter;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.DateTimeUtil;

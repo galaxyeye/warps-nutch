@@ -93,7 +93,7 @@ do
   batchId=`date +%s`-$RANDOM
 
   echo "Generating a new fetchlist"
-  generate_args=(-c="$CONFIG_DIR" "-D crawl.round=$a" -topN 1000 -crawlId "$CRAWL_ID")
+  generate_args=(-c="$CONFIG_DIR" "-D crawl.round=$a" -topN 1000 -crawlId "$CRAWL_ID" -batchId $batchId)
   echo "$bin/nutch generate ${generate_args[@]}"
   $bin/nutch generate "${generate_args[@]}"
   RETCODE=$?
@@ -111,9 +111,10 @@ do
   fi
 
   echo "Fetching : "
-
-  batchId=`cat /tmp/nutch-$USER/last-batch-id`
   __bin_nutch fetch -c="$CONFIG_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID" -threads 10 -crawlId $CRAWL_ID -fetchMode native -update -index -solrUrl $SOLR_URL
+
+  echo "Updating : "
+  __bin_nutch updatedb -c="$CONFIG_DIR" $batchId -crawlId "$CRAWL_ID"
 
 done
 

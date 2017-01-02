@@ -39,9 +39,7 @@ public class WritableTestUtils {
   }
 
   /** Utility method for testing writables. */
-  public static Writable writeRead(Writable before, Configuration conf)
-      throws Exception {
-
+  public static Writable writeRead(Writable before, Configuration conf) throws Exception {
     DataOutputBuffer dob = new DataOutputBuffer();
     before.write(dob);
 
@@ -55,5 +53,4 @@ public class WritableTestUtils {
     after.readFields(dib);
     return after;
   }
-
 }

@@ -19,6 +19,7 @@ package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -95,15 +96,15 @@ public class OPICScoringFilter implements ScoringFilter {
 
   /** Increase the score by a sum of inlinked scores. */
   @Override
-  public void updateScore(String url, WebPage row, Collection<WebEdge> inlinkedScoreData) {
+  public void updateScore(String url, WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges) {
     float addInlinkedScore = 0.0f;
     float factor1 = 1.0f;
     float articleScoreDelta = updateArticleScore(row);
     float factor2 = 2.0f;
 
     // There is no inlinked score data in updateJIT mode
-    for (WebEdge edge : inlinkedScoreData) {
-      addInlinkedScore += edge.getScore();
+    for (WebEdge edge : inLinkEdges) {
+      addInlinkedScore += graph.getEdgeWeight(edge);
     }
 
     row.setScore(row.getScore() + addInlinkedScore + articleScoreDelta);
@@ -112,7 +113,7 @@ public class OPICScoringFilter implements ScoringFilter {
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage row, Collection<WebEdge> scoreData, int allCount) {
+  public void distributeScoreToOutlinks(String fromUrl, WebPage row, WebGraph graph, Collection<WebEdge> scoreData, int allCount) {
     float cash = row.getCash();
     if (cash == 0) {
       return;
@@ -124,20 +125,20 @@ public class OPICScoringFilter implements ScoringFilter {
     float internalScore = scoreUnit * internalScoreFactor;
     float externalScore = scoreUnit * externalScoreFactor;
     for (WebEdge edge : scoreData) {
-      double score = edge.getScore();
+      double score = graph.getEdgeWeight(edge);
 
       try {
         String toHost = new URL(edge.getTarget().getUrl()).getHost();
         String fromHost = new URL(fromUrl).getHost();
 
         if (toHost.equalsIgnoreCase(fromHost)) {
-          edge.setScore(score + internalScore);
+          graph.setEdgeWeight(edge, score + internalScore);
         } else {
-          edge.setScore(score + externalScore);
+          graph.setEdgeWeight(edge, score + externalScore);
         }
       } catch (MalformedURLException e) {
         LOG.error("Failed with the following MalformedURLException: ", e);
-        edge.setScore(score + externalScore);
+        graph.setEdgeWeight(edge, score + externalScore);
       }
     }
 
