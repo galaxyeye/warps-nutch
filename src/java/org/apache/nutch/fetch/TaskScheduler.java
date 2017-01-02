@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -12,20 +11,16 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.crawl.SeedBuilder;
-import org.apache.nutch.dbupdate.MapDatumBuilder;
-import org.apache.nutch.dbupdate.ReduceDatumBuilder;
 import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchResult;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.graph.GraphGroupKey;
-import org.apache.nutch.mapreduce.FetchJob;
-import org.apache.nutch.mapreduce.NutchCounter;
-import org.apache.nutch.mapreduce.ParserJob;
-import org.apache.nutch.mapreduce.ParserMapper;
+import org.apache.nutch.jobs.FetchJob;
+import org.apache.nutch.jobs.NutchCounter;
+import org.apache.nutch.jobs.ParserJob;
+import org.apache.nutch.jobs.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.StorageUtils;
@@ -38,7 +33,6 @@ import org.apache.nutch.protocol.ProtocolStatusCodes;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.*;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -86,7 +80,7 @@ public class TaskScheduler extends Configured {
     rowsRedirect,
     seeds,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUp,
-    pagesPeresist, existOutPages, newPages, newDetailPages
+    pagesPeresist
   }
 
   private static final AtomicInteger objectSequence = new AtomicInteger(0);
@@ -142,12 +136,6 @@ public class TaskScheduler extends Configured {
   private final AtomicInteger idleFetchThreadCount = new AtomicInteger(0);
 
   /**
-   * Max new rows created from outlinks, we set the limitation to prevent sites who generate a trap page with very very
-   * large outlinks
-   */
-  private final int maxDbUpdateNewRows;
-
-  /**
    * Indexer
    */
   private final JITIndexer jitIndexer;
@@ -156,8 +144,6 @@ public class TaskScheduler extends Configured {
    * Update
    */
   private final DataStore<String, GoraWebPage> datastore;
-  private final MapDatumBuilder mapDatumBuilder;
-  private final ReduceDatumBuilder reduceDatumBuilder;
 
   // Timer
   private final long startTime = System.currentTimeMillis(); // Start time of fetcher run
@@ -211,8 +197,6 @@ public class TaskScheduler extends Configured {
     this.tasksMonitor = new TasksMonitor(conf);
     this.seedBuiler = new SeedBuilder(conf);
 
-    this.maxDbUpdateNewRows = conf.getInt("db.update.max.outlinks", 1000);
-
     // Index manager
     boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
@@ -223,8 +207,6 @@ public class TaskScheduler extends Configured {
     } catch (ClassNotFoundException e) {
       throw new IOException(e);
     }
-    this.mapDatumBuilder = updateJIT ? new MapDatumBuilder(counter, conf) : null;
-    this.reduceDatumBuilder = updateJIT ? new ReduceDatumBuilder(counter, conf) : null;
 
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
@@ -252,10 +234,8 @@ public class TaskScheduler extends Configured {
         "parse", parse,
         "storingContent", storingContent,
         "ignoreExternalLinks", ignoreExternalLinks,
-        "maxDbUpdateNewRows", maxDbUpdateNewRows,
 
         "indexJIT", indexJIT(),
-        "updateJIT", updateJIT(),
         "outputDir", outputDir
     ));
   }
@@ -285,8 +265,6 @@ public class TaskScheduler extends Configured {
   public Set<CharSequence> getUnparsableTypes() { return parseUtil == null ? Collections.EMPTY_SET : parseUtil.getUnparsableTypes(); }
 
   public boolean indexJIT() { return jitIndexer != null; }
-
-  public boolean updateJIT() { return mapDatumBuilder != null && reduceDatumBuilder != null; }
 
   public void registerFeederThread(FeederThread feederThread) { feederThreads.add(feederThread); }
 
@@ -339,7 +317,7 @@ public class TaskScheduler extends Configured {
     }
 
     WebPage page = seedBuiler.buildWebPage(urlLine);
-    String url = page.getTemporaryVariableAsString("url");
+    String url = page.getTempVarAsString("url");
     // set score?
 
 //    INJECT.removeMarkIfExist(page);
@@ -819,130 +797,10 @@ public class TaskScheduler extends Configured {
       mainPage.setContent(new byte[0]);
     }
 
-//    if (updateJIT()) {
-//      persistWithDbUpdate(url, reversedUrl, mainPage);
-//    }
-//    else {
-//      output(reversedUrl, mainPage);
-//      counter.increase(Counter.pagesPeresist);
-//    }
-
     output(reversedUrl, mainPage);
     counter.increase(Counter.pagesPeresist);
 
     updateStatus(fetchTask.getUrl(), mainPage);
-  }
-
-  /**
-   * Write the reduce result back to the backend persist
-   * threadsafe
-   * */
-//  private void persistWithDbUpdate(String url, String reversedUrl, WebPage mainPage) throws IOException, InterruptedException {
-//    mapDatumBuilder.reset();
-//    reduceDatumBuilder.reset();
-//
-//    // Do not follow detail pages for public opinion tracking
-//    if (!mainPage.veryLikeDetailPage()) {
-//      Map<GraphGroupKey, NutchWritable> outlinkRows = mapDatumBuilder.createRowsFromOutlink(url, mainPage);
-//      outlinkRows.entrySet().stream().limit(maxDbUpdateNewRows).forEach(e -> persistOutPage(mainPage, e.getKey()));
-//    }
-//
-//    persistMainPage(url, reversedUrl, mainPage);
-//  }
-
-  @SuppressWarnings("unchecked")
-//  private void persistMainPage(String url, String reversedUrl, WebPage mainPage) {
-//    counter.increase(Counter.pagesPeresist);
-//
-//    // Process the main page, update fetch schedule
-//    reduceDatumBuilder.updateFetchSchedule(url, mainPage);
-//    reduceDatumBuilder.updateRow(url, mainPage);
-//
-//    output(reversedUrl, mainPage);
-//  }
-
-  private void persistOutPage(WebPage mainPage, GraphGroupKey graphGroupKey) {
-    String outReversedUrl = graphGroupKey.getReversedUrl();
-    String outUrl = TableUtil.unreverseUrl(outReversedUrl);
-
-    int newDepth = mainPage.getDepth();
-    if (newDepth != MAX_DISTANCE) {
-      newDepth += 1;
-    }
-    double initScore = graphGroupKey.getScore().get();
-//    reduceDatumBuilder.calculateInlinks(Lists.newArrayList(new WebEdge(outUrl, "", initScore, newDepth)));
-
-    Pair<WebPage, Boolean> outPage;
-    WebPage oldPage;
-//    synchronized(context) {
-//    }
-    oldPage = WebPage.wrap(datastore.get(outReversedUrl));
-//    if (!oldPage.isEmpty() && outReversedUrl.contains("wsjk")) {
-//      LOG.info("1. " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
-//    }
-
-    if (oldPage.isEmpty()) {
-      outPage = Pair.of(createNewPage(outUrl, outReversedUrl, mainPage, newDepth), true);
-    }
-    else {
-      outPage = tryUpdateOldPage(outUrl, outReversedUrl, mainPage, oldPage, newDepth);
-    }
-
-    if (outPage.getValue()) {
-      output(outReversedUrl, outPage.getKey());
-    }
-
-//    if (!oldPage.isEmpty() && outReversedUrl.contains("wsjk")) {
-//      LOG.info("2. " + outPage.getValue() + ", " + outPage.getKey().getBatchId() + ", " + outPage.getKey().isSeed() + ", " + outPage.getKey().getMetadataAsString().toString() + " -> " + outUrl);
-//
-//      // TODO : Why we can not find metadata? Dirty is set?
-//      oldPage = WebPage.wrap(datastore.get(outReversedUrl));
-//      LOG.info("3. " + outPage.getValue() + ", " + oldPage.getBatchId() + ", " + oldPage.isSeed() + ", " + oldPage.getMetadataAsString().toString() + " -> " + outUrl);
-//    }
-  }
-
-  /**
-   * Updated the old row if necessary
-   * */
-  @NotNull
-  private Pair<WebPage, Boolean> tryUpdateOldPage(String outUrl, String outReversedUrl, WebPage mainPage, WebPage oldPage, int newDepth) {
-    if (oldPage.getMetadata().isEmpty()) {
-      LOG.warn("Unexpected empty metadata collection. Url : " + outUrl + ", key : " + outReversedUrl);
-      return Pair.of(oldPage, false);
-    }
-
-    int oldDepth = oldPage.getDepth();
-    boolean changed = reduceDatumBuilder.updateExistOutPage(mainPage, oldPage, newDepth, oldDepth);
-
-    if (changed) {
-      if (newDepth < oldDepth) {
-        String report = oldDepth + " -> " + newDepth + ", " + outUrl;
-        nutchMetrics.debugDepthUpdated(report, reportSuffix);
-        counter.increase(Counter.pagesDepthUp);
-      }
-    }
-
-    counter.increase(Counter.existOutPages);
-
-    return Pair.of(oldPage, changed);
-  }
-
-  private WebPage createNewPage(String url, String reversedUrl, WebPage mainPage, int depth) {
-    WebPage newPage = reduceDatumBuilder.createNewRow(url, depth);
-    // Update distance/score
-    reduceDatumBuilder.updateNewRow(url, mainPage, newPage);
-
-    mainPage.increaseTotalOutLinkCount(1);
-    counter.increase(Counter.newPages);
-    if (CrawlFilter.sniffPageCategory(url).isDetail()) {
-      counter.increase(Counter.newDetailPages);
-    }
-
-//    if(newPage.getDepth() > 20) {
-//      LOG.warn("bad depth : " + url + ", " + reversedUrl);
-//    }
-
-    return newPage;
   }
 
   @SuppressWarnings("unchecked")

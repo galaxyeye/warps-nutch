@@ -273,11 +273,11 @@ public class WebPage {
   }
 
   public float getArticleScore() {
-    return getFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f);
+    return getFloatMetadata(Name.ARTICLE_SCORE, 1.0f);
   }
 
   public void setArticleScore(float value) {
-    setFloatMetadata(Name.ARTICLE_SCORE_KEY, 1.0f);
+    setFloatMetadata(Name.ARTICLE_SCORE, 1.0f);
   }
 
   public CharSequence getReprUrl() {
@@ -374,25 +374,25 @@ public class WebPage {
     return programVariables;
   }
 
-  public Object getTemporaryVariable(String name) {
+  public Object getTempVar(String name) {
     return programVariables.get(name);
   }
 
-  public <T> T getTemporaryVariable(String name, T defaultValue) {
+  public <T> T getTempVar(String name, T defaultValue) {
     Object o = programVariables.get(name);
     return o == null ? defaultValue : (T) o;
   }
 
-  public String getTemporaryVariableAsString(String name) {
-    return getTemporaryVariableAsString(name, "");
+  public String getTempVarAsString(String name) {
+    return getTempVarAsString(name, "");
   }
 
-  public String getTemporaryVariableAsString(String name, String defaultValue) {
+  public String getTempVarAsString(String name, String defaultValue) {
     Object value = programVariables.get(name);
     return value == null ? defaultValue : value.toString();
   }
 
-  public void setTmporaryVariable(String name, Object value) {
+  public void setTempVar(String name, Object value) {
     programVariables.put(name, value);
   }
 
@@ -422,12 +422,12 @@ public class WebPage {
       return length;
     }
 
-    Object obj = getTemporaryVariable(DOC_FIELD_TEXT_CONTENT_LENGTH);
+    Object obj = getTempVar(DOC_FIELD_TEXT_CONTENT_LENGTH);
     if (obj != null && obj instanceof Integer) {
       return ((Integer) obj);
     }
 
-    obj = getTemporaryVariable(DOC_FIELD_TEXT_CONTENT);
+    obj = getTempVar(DOC_FIELD_TEXT_CONTENT);
     if (obj != null && obj instanceof String) {
       return ((String) obj).length();
     }
@@ -480,6 +480,10 @@ public class WebPage {
     return getDistance();
   }
 
+  public void setDepth(int newDepth) {
+    setDistance(newDepth);
+  }
+
   public int getDistance() {
     String ds = getMetadata(Name.DISTANCE);
     return StringUtil.tryParseInt(ds, MAX_DISTANCE);
@@ -489,10 +493,10 @@ public class WebPage {
     putMetadata(Name.DISTANCE, String.valueOf(newDistance));
   }
 
-  public void increaseDistance(int distance) {
+  public void updateDistance(int newDistance) {
     int oldDistance = getDistance();
-    if (oldDistance < MAX_DISTANCE - distance) {
-      putMetadata(Name.DISTANCE, String.valueOf(oldDistance + distance));
+    if (newDistance < oldDistance) {
+      setDistance(newDistance);
     }
   }
 
@@ -658,7 +662,7 @@ public class WebPage {
   public int sniffOutLinkCount() {
     int _a = page.getOutlinks().size();
     if (_a == 0) {
-      Object count = getTemporaryVariable(VAR_OUTLINKS_COUNT);
+      Object count = getTempVar(VAR_OUTLINKS_COUNT);
       if (count != null && count instanceof Integer) {
         _a = (int) count;
       }

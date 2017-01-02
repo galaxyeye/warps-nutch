@@ -5,7 +5,7 @@ import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.indexer.IndexThread;
 import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchServer;
-import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.tools.NutchMetrics;

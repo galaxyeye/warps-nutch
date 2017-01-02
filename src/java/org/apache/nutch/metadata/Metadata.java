@@ -18,10 +18,13 @@ package org.apache.nutch.metadata;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.StringUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +69,7 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     PAGE_CATEGORY_LIKELIHOOD("PCL"),
     PAGE_CATEGORY("PC"),
 
-    ARTICLE_SCORE_KEY("ASK"),
+    ARTICLE_SCORE("AS"),
     CASH_KEY("CASH"),
 
     TMP_PAGE_FROM_SEED("TMP_PAGE_FROM_SEED"),
@@ -173,8 +176,35 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
     }
   }
 
-  public void add(final Name name, final String value) {
-    add(name.value(), value);
+  public void add(final Name name, final String value) { add(name.value(), value); }
+
+  public void add(Name name, int value) { add(name, String.valueOf(value)); }
+
+  public void add(Name name, long value) { add(name, String.valueOf(value)); }
+
+  public void add(Name name, Instant value) { add(name, DateTimeUtil.solrCompatibleFormat(value)); }
+
+  public int getInteger(Name name, int defaultValue) {
+    String s = get(name.value());
+    return StringUtil.tryParseInt(s, defaultValue);
+  }
+
+  public long getLong(Name name, long defaultValue) {
+    String s = get(name.value());
+    return StringUtil.tryParseLong(s, defaultValue);
+  }
+
+  public boolean getBoolean(Metadata.Name name, Boolean defaultValue) {
+    String s = get(name);
+    if (s == null) {
+      return defaultValue;
+    }
+    return Boolean.valueOf(s);
+  }
+
+  public Instant getInstant(Metadata.Name name, Instant defaultValue) {
+    String s = get(name);
+    return DateTimeUtil.parseTime(s, defaultValue);
   }
 
   /**
@@ -205,6 +235,12 @@ public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHead
   public void set(Name name, String value) {
     set(name.value(), value);
   }
+
+  public void set(Name name, int value) { set(name, String.valueOf(value)); }
+
+  public void set(Name name, long value) { set(name, String.valueOf(value)); }
+
+  public void set(Name name, Instant value) { set(name, DateTimeUtil.solrCompatibleFormat(value)); }
 
   /**
    * Remove a metadata and all its associated values.

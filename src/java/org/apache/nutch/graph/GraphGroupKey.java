@@ -18,6 +18,7 @@ package org.apache.nutch.graph;
 
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Partitioner;
+import org.jetbrains.annotations.Contract;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,7 +35,6 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
 
   private static final Comparator<GraphGroupKey> comp = new GraphKeyComparator();
   private Text reversedUrl;
-  private Text graphMode;
   private DoubleWritable score;
 
   /**
@@ -45,19 +45,16 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
     score = new DoubleWritable();
   }
 
-  public GraphGroupKey(String reversedUrl, float score) {
-    this(reversedUrl, GraphMode.IN_LINK_GRAPH, score);
-  }
-
   /**
    * Creates instance with provided non-writable types.
    * 
    * @param reversedUrl
+   *          reversedUrl
    * @param score
+   *          score
    */
-  public GraphGroupKey(String reversedUrl, GraphMode graphMode, double score) {
+  public GraphGroupKey(String reversedUrl, double score) {
     this.reversedUrl = new Text(reversedUrl);
-    this.graphMode = new Text(graphMode.name());
     this.score = new DoubleWritable(score);
   }
 
@@ -75,10 +72,6 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
   public void setReversedUrl(String reversedUrl) {
     this.reversedUrl.set(reversedUrl);
   }
-
-  public GraphMode getGraphMode() { return GraphMode.valueOf(graphMode.toString()); }
-
-  public void setGraphMode(GraphMode graphMode) { this.graphMode = new Text(graphMode.name()); }
 
   public DoubleWritable getScore() {
     return score;
@@ -111,7 +104,7 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
 
   @Override
   public String toString() {
-    return "GraphGroupKey <" + reversedUrl + ", " + score + ">";
+    return "<" + reversedUrl + ", " + score + ">";
   }
 
   /**
@@ -125,65 +118,64 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
   }
 
   /**
-   * Compares by {url,score}. Scores are sorted in descending order, that is
-   * from high scores to low.
+   * Compares by {url}.
    */
-  public static final class GraphKeyComparator implements RawComparator<GraphGroupKey> {
+  public static final class UrlOnlyComparator implements RawComparator<GraphGroupKey> {
     private final WritableComparator textComp = new Text.Comparator();
-    private final WritableComparator floatComp = new FloatWritable.Comparator();
 
     @Override
     public int compare(GraphGroupKey o1, GraphGroupKey o2) {
-      int cmp = o1.getReversedUrl().compareTo(o2.getReversedUrl());
-      if (cmp != 0) {
-        return cmp;
-      }
-      // reverse order
-      return -o1.getScore().compareTo(o2.getScore());
+      return o1.getReversedUrl().compareTo(o2.getReversedUrl());
     }
 
     @Override
     public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
       try {
-        int deptLen1 = WritableUtils.decodeVIntSize(b1[s1])
-            + WritableComparator.readVInt(b1, s1);
-        int deptLen2 = WritableUtils.decodeVIntSize(b2[s2])
-            + WritableComparator.readVInt(b2, s2);
-        int cmp = textComp.compare(b1, s1, deptLen1, b2, s2, deptLen2);
-        if (cmp != 0) {
-          return cmp;
-        }
-        // reverse order
-        return -floatComp.compare(b1, s1 + deptLen1, l1 - deptLen1, b2, s2
-            + deptLen2, l2 - deptLen2);
+        int deptLen1 = WritableUtils.decodeVIntSize(b1[s1]) + WritableComparator.readVInt(b1, s1);
+        int deptLen2 = WritableUtils.decodeVIntSize(b2[s2]) + WritableComparator.readVInt(b2, s2);
+        return textComp.compare(b1, s1, deptLen1, b2, s2, deptLen2);
       } catch (IOException e) {
         throw new IllegalArgumentException(e);
       }
     }
+  }
 
-    /**
-     * Compares by {url}.
-     */
-    public static final class UrlOnlyComparator implements RawComparator<GraphGroupKey> {
-      private final WritableComparator textComp = new Text.Comparator();
+  /**
+   * Compares by {url,score}. Scores are sorted in descending order, that is
+   * from high scores to low.
+   */
+  public static final class GraphKeyComparator implements RawComparator<GraphGroupKey> {
+    private final WritableComparator urlComp = new Text.Comparator();
+    private final WritableComparator scoreComp = new FloatWritable.Comparator();
 
-      @Override
-      public int compare(GraphGroupKey o1, GraphGroupKey o2) {
-        return o1.getReversedUrl().compareTo(o2.getReversedUrl());
+    @Override
+    public int compare(GraphGroupKey key, GraphGroupKey key2) {
+      int cmp = key.getReversedUrl().compareTo(key2.getReversedUrl());
+      if (cmp != 0) {
+        return cmp;
       }
 
-      @Override
-      public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
-        try {
-          int deptLen1 = WritableUtils.decodeVIntSize(b1[s1])
-              + WritableComparator.readVInt(b1, s1);
-          int deptLen2 = WritableUtils.decodeVIntSize(b2[s2])
-              + WritableComparator.readVInt(b2, s2);
-          return textComp.compare(b1, s1, deptLen1, b2, s2, deptLen2);
-        } catch (IOException e) {
-          throw new IllegalArgumentException(e);
+      // reverse order
+      return -key.getScore().compareTo(key2.getScore());
+    }
+
+    @Override
+    public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
+      try {
+        int deptLen1 = WritableUtils.decodeVIntSize(b1[s1]) + WritableComparator.readVInt(b1, s1);
+        int deptLen2 = WritableUtils.decodeVIntSize(b2[s2]) + WritableComparator.readVInt(b2, s2);
+
+        int cmp = urlComp.compare(b1, s1, deptLen1, b2, s2, deptLen2);
+        if (cmp != 0) {
+          return cmp;
         }
+
+        // reverse order
+        return -scoreComp.compare(b1, s1 + deptLen1, l1 - deptLen1, b2, s2 + deptLen2, l2 - deptLen2);
+      } catch (IOException e) {
+        throw new IllegalArgumentException(e);
       }
     }
   }
+
 }

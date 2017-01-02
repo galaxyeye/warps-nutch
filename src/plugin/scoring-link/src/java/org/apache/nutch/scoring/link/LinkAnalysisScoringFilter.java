@@ -18,6 +18,7 @@ package org.apache.nutch.scoring.link;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -75,15 +76,11 @@ public class LinkAnalysisScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage page,
-                                        Collection<WebEdge> scoreData, int allCount)
-      throws ScoringFilterException {
-  }
+  public void distributeScoreToOutlinks(String fromUrl, WebPage page, WebGraph graph, Collection<WebEdge> outLinkEdges, int allCount)
+      throws ScoringFilterException {}
 
   @Override
-  public void updateScore(String url, WebPage page,
-                          Collection<WebEdge> inlinkedScoreData) throws ScoringFilterException {
-  }
+  public void updateScore(String url, WebPage page, WebGraph graph, Collection<WebEdge> inLinkEdges) throws ScoringFilterException {}
 
   @Override
   public float indexerScore(String url, IndexDocument doc, WebPage page,

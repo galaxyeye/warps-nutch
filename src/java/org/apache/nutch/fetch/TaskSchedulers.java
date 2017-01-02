@@ -5,7 +5,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchTask;
-import org.apache.nutch.mapreduce.NutchCounter;
+import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

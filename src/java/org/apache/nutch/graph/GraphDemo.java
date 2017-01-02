@@ -49,8 +49,8 @@ public class GraphDemo {
         String url = "http://t.tt/" + sequence;
         WebPage page = WebPage.newWebPage();
         page.setBaseUrl(url);
-        int depth = sequence % 10;
-        return new WebVertex(url, page, depth);
+        page.setDepth(sequence % 7);
+        return new WebVertex(url, page);
       }
     };
     System.out.println("-- Generating complete graph");

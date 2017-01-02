@@ -75,7 +75,7 @@ if [ -n "$NUMBER_SLAVES" ]; then
 fi
 
 # and the total number of available tasks
-# sets Hadoop parameter "mapreduce.job.reduces"
+# sets Hadoop parameter "jobs.job.reduces"
 numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
@@ -94,11 +94,11 @@ addDays=0
 # note that some of the options listed here could be set in the
 # corresponding hadoop site xml param file
 commonOptions=(
-    "-D mapreduce.job.reduces=$numTasks"
+    "-D jobs.job.reduces=$numTasks"
     "-D mapred.child.java.opts=-Xmx1000m"
-    "-D mapreduce.reduce.speculative=false"
-    "-D mapreduce.map.speculative=false"
-    "-D mapreduce.map.output.compress=true"
+    "-D jobs.reduce.speculative=false"
+    "-D jobs.map.speculative=false"
+    "-D jobs.map.output.compress=true"
 )
 
 # determines whether mode based on presence of job file
@@ -217,6 +217,9 @@ do
 
   echo "Fetching : "
   __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -update -index -collection $SOLR_COLLECTION
+
+  echo "Updating : "
+  __bin_nutch updatedb "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
 
 done
 

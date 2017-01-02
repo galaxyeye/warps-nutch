@@ -2,8 +2,8 @@ package org.apache.nutch.graph;
 
 import org.apache.nutch.persist.WebPage;
 import org.jgrapht.ext.*;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedWeightedPseudograph;
 
 import java.io.StringWriter;
 import java.io.Writer;
@@ -14,7 +14,7 @@ import java.util.Map;
  * Created by vincent on 16-12-21.
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
-public class WebGraph extends DefaultDirectedWeightedGraph<WebVertex, WebEdge> {
+public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
 
   private WebVertex focus;
 
@@ -22,31 +22,22 @@ public class WebGraph extends DefaultDirectedWeightedGraph<WebVertex, WebEdge> {
     super(WebEdge.class);
   }
 
-  public WebGraph(WebVertex sourceVertex, WebVertex target) {
-    this(sourceVertex, target, 0.0);
-  }
-
-  public WebGraph(WebVertex sourceVertex, WebVertex targetVertex, double weight) {
-    super(WebEdge.class);
-    addVerticesAndEdge(sourceVertex, targetVertex, weight);
-  }
-
-  public WebEdge addVerticesAndEdge(WebVertex sourceVertex, WebVertex targetVertex, double weight) {
+  public WebEdge addEdgeLenient(WebVertex sourceVertex, WebVertex targetVertex, double weight) {
     addVertex(sourceVertex);
     addVertex(targetVertex);
     WebEdge edge = addEdge(sourceVertex, targetVertex);
-    edge.setWeight(weight);
+    setEdgeWeight(edge, weight);
     return edge;
   }
 
-  public WebEdge addVerticesAndEdge(WebVertex sourceVertex, WebVertex targetVertex) {
-    return addVerticesAndEdge(sourceVertex, targetVertex, 0.0);
+  public WebEdge addEdgeLenient(WebVertex sourceVertex, WebVertex targetVertex) {
+    return addEdgeLenient(sourceVertex, targetVertex, 0.0);
   }
 
-  public static WebGraph of(WebEdge edge) {
-    WebGraph graph = new WebGraph();
-    graph.addVerticesAndEdge(edge.getSource(), edge.getTarget(), edge.getWeight());
-    return graph;
+  public static WebGraph of(WebEdge edge, WebGraph graph) {
+    WebGraph subgraph = new WebGraph();
+    subgraph.addEdgeLenient(graph.getEdgeSource(edge), graph.getEdgeTarget(edge), graph.getEdgeWeight(edge));
+    return subgraph;
   }
 
   public WebVertex getFocus() {
@@ -54,7 +45,15 @@ public class WebGraph extends DefaultDirectedWeightedGraph<WebVertex, WebEdge> {
   }
 
   public void setFocus(WebVertex focus) {
+    if (!containsVertex(focus)) {
+      addVertex(focus);
+    }
+
     this.focus = focus;
+  }
+
+  public WebEdge firstEdge() {
+    return edgeSet().iterator().next();
   }
 
   /**
@@ -77,7 +76,7 @@ public class WebGraph extends DefaultDirectedWeightedGraph<WebVertex, WebEdge> {
     ComponentAttributeProvider<WebVertex> vertexAttributeProvider = v -> {
       Map<String, String> m = new HashMap<>();
       m.put("baseUrl", v.getWebPage().getBaseUrl());
-      m.put("depth", String.valueOf(v.getDepth()));
+      m.put("depth", String.valueOf(v.getWebPage().getDepth()));
       return m;
     };
     exporter.setVertexAttributeProvider(vertexAttributeProvider);
@@ -105,8 +104,9 @@ public class WebGraph extends DefaultDirectedWeightedGraph<WebVertex, WebEdge> {
 
       WebPage page = WebPage.newWebPage();
       page.setBaseUrl(baseUrl);
+      page.setDepth(depth);
 
-      return new WebVertex(url, "", WebPage.newWebPage(), depth);
+      return new WebVertex(url, WebPage.newWebPage());
     };
 
     // create edge provider

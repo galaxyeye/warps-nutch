@@ -30,7 +30,7 @@ import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.mapreduce.FetchJob;
+import org.apache.nutch.jobs.FetchJob;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
