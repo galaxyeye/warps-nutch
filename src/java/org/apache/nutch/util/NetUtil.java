@@ -3,7 +3,7 @@ package org.apache.nutch.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.jobs.ParserMapper;
+import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;

@@ -19,7 +19,7 @@ package org.apache.nutch.crawl;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.jobs.InjectJob;
+import org.apache.nutch.jobs.inject.InjectJob;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;

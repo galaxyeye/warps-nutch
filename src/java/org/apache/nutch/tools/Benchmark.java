@@ -23,8 +23,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.jobs.*;
-import org.apache.nutch.jobs.WebGraphUpdateJob;
+import org.apache.nutch.jobs.read.WebTableReader;
+import org.apache.nutch.jobs.fetch.FetchJob;
+import org.apache.nutch.jobs.generate.GenerateJob;
+import org.apache.nutch.jobs.inject.InjectJob;
+import org.apache.nutch.jobs.parse.ParserJob;
+import org.apache.nutch.jobs.update.OutGraphUpdateJob;
 import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.metadata.Nutch;
@@ -225,7 +229,7 @@ public class Benchmark extends Configured implements Tool {
     GenerateJob generator = new GenerateJob(conf);
     FetchJob fetcher = new FetchJob(conf);
     ParserJob parseBatch = new ParserJob(conf);
-    WebGraphUpdateJob crawlDbTool = new WebGraphUpdateJob(conf);
+    OutGraphUpdateJob crawlDbTool = new OutGraphUpdateJob(conf);
     // not needed in the new API
     // LinkDb linkDbTool = new LinkDb(getConf());
 

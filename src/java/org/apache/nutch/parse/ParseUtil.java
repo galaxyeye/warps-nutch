@@ -30,7 +30,7 @@ import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.jobs.FetchJob;
+import org.apache.nutch.jobs.fetch.FetchJob;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
@@ -101,9 +101,9 @@ public class ParseUtil {
     urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     crawlFilters = CrawlFilters.create(conf);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
+    int maxOutlinksPerPage = conf.getInt("read.max.outlinks.per.page", 100);
     maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
-    ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
+    ignoreExternalLinks = conf.getBoolean("read.ignore.external.links", false);
     executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("parse-%d").setDaemon(true).build());
   }
 

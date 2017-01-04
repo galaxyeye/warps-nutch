@@ -17,13 +17,10 @@
 package org.apache.nutch.scoring.opic;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.graph.WebVertex;
-import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
-import org.apache.nutch.graph.Vertex;
-import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.graph.WebVertex;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.TableUtil;
 import org.junit.Before;
@@ -32,8 +29,6 @@ import org.junit.Test;
 import java.text.DecimalFormat;
 import java.util.*;
 
-import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
-import static org.apache.nutch.metadata.Metadata.Name.TMP_CHARS;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -121,6 +116,7 @@ public class TestOPICScoringFilter {
 
   @Before
   public void setUp() throws Exception {
+    WebGraph graph = new WebGraph();
 
     Configuration conf = ConfigUtils.create();
     // LinkedHashMap dbWebPages is used instead of a persistent
@@ -134,7 +130,7 @@ public class TestOPICScoringFilter {
     TestOPICScoringFilter self = new TestOPICScoringFilter();
     self.fillLinks();
 
-    float scoreInjected = conf.getFloat("db.score.injected", 1.0f);
+    float scoreInjected = conf.getFloat("read.score.injected", 1.0f);
 
     scoringFilter = new OPICScoringFilter();
     scoringFilter.setConf(conf);
@@ -191,7 +187,6 @@ public class TestOPICScoringFilter {
 //          self.outlinkedScoreData.add(new WebEdge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
 //        }
 
-        WebGraph graph = new WebGraph();
         WebVertex v1 = new WebVertex(url, page);
 
     /* A loop in the graph */
@@ -200,7 +195,7 @@ public class TestOPICScoringFilter {
 
         page.getOutlinks().entrySet().forEach(l -> graph.addEdge(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
 
-        scoringFilter.distributeScoreToOutlinks(url, page, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
+        scoringFilter.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
 
         // DbUpdate Reducer simulation
         for (WebEdge edge : graph.outgoingEdgesOf(v1)) {
@@ -244,7 +239,7 @@ public class TestOPICScoringFilter {
           row = aa.getKey();
         }
         // Scores are updated here
-        scoringFilter.updateScore(url, row, inlinkedScoreDataList);
+        scoringFilter.updateScore(url, row, graph, inlinkedScoreDataList);
         inlinkedScoreDataList.clear();
         HashMap<String, Float> result = new HashMap<String, Float>();
         result.put(url, row.getScore());

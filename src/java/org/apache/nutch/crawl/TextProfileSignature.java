@@ -65,8 +65,8 @@ public class TextProfileSignature extends Signature {
 
   @Override
   public byte[] calculate(WebPage page) {
-    int MIN_TOKEN_LEN = getConf().getInt("db.signature.text_profile.min_token_len", 2);
-    float QUANT_RATE = getConf().getFloat("db.signature.text_profile.quant_rate", 0.01f);
+    int MIN_TOKEN_LEN = getConf().getInt("read.signature.text_profile.min_token_len", 2);
+    float QUANT_RATE = getConf().getFloat("read.signature.text_profile.quant_rate", 0.01f);
 
     HashMap<String, Token> tokens = new HashMap<>();
     String text = page.getText();

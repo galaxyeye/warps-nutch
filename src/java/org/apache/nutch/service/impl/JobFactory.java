@@ -19,8 +19,16 @@ package org.apache.nutch.service.impl;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.nutch.jobs.*;
-import org.apache.nutch.jobs.WebGraphUpdateJob;
+import org.apache.nutch.jobs.NutchJob;
+import org.apache.nutch.jobs.fetch.FetchJob;
+import org.apache.nutch.jobs.generate.GenerateJob;
+import org.apache.nutch.jobs.index.IndexJob;
+import org.apache.nutch.jobs.inject.InjectJob;
+import org.apache.nutch.jobs.parse.ParserCheckJob;
+import org.apache.nutch.jobs.parse.ParserJob;
+import org.apache.nutch.jobs.read.WebTableReader;
+import org.apache.nutch.jobs.update.InGraphUpdateJob;
+import org.apache.nutch.jobs.update.OutGraphUpdateJob;
 import org.apache.nutch.service.JobManager.JobType;
 
 import java.util.Map;
@@ -35,7 +43,8 @@ public class JobFactory {
     typeToClass.put(JobType.INDEX, IndexJob.class);
     typeToClass.put(JobType.INJECT, InjectJob.class);
     typeToClass.put(JobType.PARSE, ParserJob.class);
-    typeToClass.put(JobType.UPDATEDB, WebGraphUpdateJob.class);
+    typeToClass.put(JobType.UPDATEDBOUT, OutGraphUpdateJob.class);
+    typeToClass.put(JobType.UPDATEDBIN, InGraphUpdateJob.class);
     typeToClass.put(JobType.READDB, WebTableReader.class);
     typeToClass.put(JobType.PARSECHECKER, ParserCheckJob.class);
   }

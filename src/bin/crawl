@@ -83,7 +83,7 @@ fetchJobTimeout=3h
 
 # Adds <days> to the current time to facilitate 
 # crawling urls already fetched sooner then 
-# db.default.fetch.interval.
+# read.default.fetch.interval.
 addDays=0
 #############################################
 

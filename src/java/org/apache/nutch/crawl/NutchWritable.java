@@ -17,7 +17,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.io.Writable;
-import org.apache.nutch.jobs.io.WebPageWritable;
+import org.apache.nutch.persist.io.WebPageWritable;
 import org.apache.nutch.util.GenericWritableConfigurable;
 
 @SuppressWarnings("unchecked")
