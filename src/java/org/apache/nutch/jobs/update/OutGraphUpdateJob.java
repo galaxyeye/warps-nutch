@@ -49,7 +49,6 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
 
   static {
     FIELDS.add(GoraWebPage.Field.OUTLINKS);
-    FIELDS.add(GoraWebPage.Field.INLINKS);
     FIELDS.add(GoraWebPage.Field.STATUS);
     FIELDS.add(GoraWebPage.Field.PREV_SIGNATURE);
     FIELDS.add(GoraWebPage.Field.SIGNATURE);

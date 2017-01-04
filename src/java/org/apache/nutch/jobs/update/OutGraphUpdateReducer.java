@@ -47,6 +47,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
@@ -68,7 +70,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private ScoringFilters scoringFilters;
   private boolean additionsAllowed;
   private int maxLinks;
-  public DataStore<String, GoraWebPage> datastore;
+  private DataStore<String, GoraWebPage> datastore;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -76,6 +78,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
     getCounter().register(Counter.class);
 
+    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     retryMax = conf.getInt("db.fetch.retry.max", 3);
     additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
     maxFetchInterval = Duration.ofSeconds(conf.getLong("db.fetch.interval.max", Duration.ofDays(90).getSeconds()));
@@ -83,9 +86,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     scoringFilters = new ScoringFilters(conf);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
 
-    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
-    additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
-    maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (ClassNotFoundException e) {
@@ -160,11 +160,13 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     if (pageExistence == PageExistence.IN_BATCH) {
       updateFetchSchedule(url, page);
       updateMetadata(page);
-      updateStatusCounter(url, page);
+      updateStatusCounter(page);
     }
 
     context.write(reversedUrl, page.get());
     getCounter().increase(Counter.pagesPeresist);
+    getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
+    getCounter().increase(NutchCounter.Counter.inlinks, page.getInlinks().size());
   }
 
   /**
@@ -182,13 +184,23 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
     WebGraph graph = new WebGraph();
 
+    WebPage page = null;
     for (WebGraphWritable graphWritable : subGraphs) {
       WebGraph subGraph = graphWritable.get();
       WebEdge edge = subGraph.firstEdge();
+      if (edge.isLoop()) {
+        page = edge.getSourceWebPage();
+        page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.IN_BATCH);
+      }
       graph.addEdgeLenient(edge.getSource(), edge.getTarget(), subGraph.getEdgeWeight(edge));
     }
 
-    WebVertex focus = getFocusedVertex(url, reversedUrl, graph);
+    if (page == null) {
+      page = loadOrCreateWebPage(url, reversedUrl);
+    }
+
+    WebVertex focus = graph.firstEdge().getTarget();
+    focus.setWebPage(page);
     graph.setFocus(focus);
 
     return graph;
@@ -200,13 +212,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
    * 2. the page have been fetched in other batch, so it's in the data store
    * 3. the page have not be fetched yet
    * */
-  private WebVertex getFocusedVertex(String url, String reversedUrl, WebGraph graph) {
-    WebVertex focus = graph.firstEdge().getTarget();
-    if (focus.hasWebPage()) {
-      focus.getWebPage().setTempVar(VAR_PAGE_EXISTENCE, PageExistence.IN_BATCH);
-      return focus;
-    }
-
+  private WebPage loadOrCreateWebPage(String url, String reversedUrl) {
     WebPage page = null;
     WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
 
@@ -226,7 +232,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       }
     }
 
-    return new WebVertex(url, page);
+    return page;
   }
 
   private WebPage createNewRow(String url) {
@@ -268,20 +274,19 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       }
 
       page.getInlinks().put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
-
       /* Find out the smallest depth of this page */
       WebPage incomingWebPage = graph.getEdgeSource(incomingEdge).getWebPage();
 
-      Params.of(
-          "reversedUrl", TableUtil.reverseUrlOrEmpty(incomingEdge.getSourceUrl()),
-          "edge", incomingEdge.getSourceUrl() + " -> " + incomingEdge.getTargetUrl(),
-          "baseUrl", incomingWebPage.getBaseUrl() + " -> " + page.getBaseUrl(),
-          "score", graph.getEdgeWeight(incomingEdge),
-          "depth", newDepth + " -> " + incomingWebPage.getDepth(), // should be 0
-          "publishTime", incomingWebPage.getRefPublishTime() + " -> " + page.getPublishTime(),
-          "pageCategory", incomingWebPage.getPageCategory(),
-          "likelihood", incomingWebPage.getPageCategoryLikelihood()
-      ).withLogger(LOG).info(true);
+//      Params.of(
+//          "reversedUrl", TableUtil.reverseUrlOrEmpty(incomingEdge.getSourceUrl()),
+//          "edge", incomingEdge.getSourceUrl() + " -> " + incomingEdge.getTargetUrl(),
+//          "baseUrl", incomingWebPage.getBaseUrl() + " -> " + page.getBaseUrl(),
+//          "score", graph.getEdgeWeight(incomingEdge),
+//          "depth", newDepth + " -> " + incomingWebPage.getDepth(), // should be 0
+//          "publishTime", incomingWebPage.getRefPublishTime() + " -> " + page.getPublishTime(),
+//          "pageCategory", incomingWebPage.getPageCategory(),
+//          "likelihood", incomingWebPage.getPageCategoryLikelihood()
+//      ).withLogger(LOG).info(true);
 
       if (incomingWebPage.getDepth() + 1 < newDepth) {
         newDepth = incomingWebPage.getDepth() + 1;
@@ -367,9 +372,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
   }
 
-  private void updateStatusCounter(String url, WebPage page) {
-    getCounter().updateAffectedRows(url);
-
+  private void updateStatusCounter(WebPage page) {
     byte status = page.getStatus().byteValue();
 
     switch (status) {
