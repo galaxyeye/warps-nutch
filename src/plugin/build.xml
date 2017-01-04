@@ -26,7 +26,6 @@
   <!-- Build & deploy all the plugin jars.                    -->
   <!-- ====================================================== -->
   <target name="deploy">
-      <!--<ant dir="creativecommons" target="deploy"/>-->
       <!--<ant dir="feed" target="deploy"/>-->
       <ant dir="index-anchor" target="deploy"/>
       <ant dir="index-basic" target="deploy"/>
@@ -71,7 +70,6 @@
   <!-- Test all of the plugins.                               -->
   <!-- ====================================================== -->
   <target name="test">
-      <!--<ant dir="creativecommons" target="test"/>-->
       <!--<ant dir="feed" target="test"/>-->
       <ant dir="index-anchor" target="test"/>
       <ant dir="index-basic" target="test"/>
@@ -116,7 +114,6 @@
   <!-- Clean all of the plugins.                              -->
   <!-- ====================================================== -->
   <target name="clean">
-    <!--<ant dir="creativecommons" target="clean"/>-->
     <!--<ant dir="feed" target="clean"/>-->
     <ant dir="index-anchor" target="clean"/>
     <ant dir="index-basic" target="clean"/>

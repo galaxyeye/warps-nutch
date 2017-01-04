@@ -37,7 +37,7 @@ import java.util.Properties;
  * @author J&eacute;r&ocirc;me Charron
  *
  */
-public class Metadata implements Writable, DublinCore, CreativeCommons, HttpHeaders, Nutch {
+public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
   public enum Name {
     IS_NAVIGATOR("IN"),

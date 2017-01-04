@@ -55,4 +55,7 @@ public class WebEdge extends DefaultWeightedEdge {
   public String getTargetUrl() { return getTarget().getUrl(); }
 
   public WebPage getTargetWebPage() { return getTarget().getWebPage(); }
+
+  @Override
+  public String toString() { return getSourceUrl() + " -> " + getTargetUrl(); }
 }
