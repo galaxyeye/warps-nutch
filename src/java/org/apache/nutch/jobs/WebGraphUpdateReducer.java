@@ -159,7 +159,7 @@ class WebGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     PageExistence pageExistence = page.getTempVar(VAR_PAGE_EXISTENCE, PageExistence.NOT_FETCHED);
     if (pageExistence == PageExistence.IN_BATCH) {
       updateFetchSchedule(url, page);
-//      updateMetadata(page);
+      updateMetadata(page);
       updateStatusCounter(url, page);
 
       // All incoming web pages are updated
