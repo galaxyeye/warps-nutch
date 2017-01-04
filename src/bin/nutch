@@ -27,7 +27,7 @@ function printUsage() {
   echo " samplejob  run sample jobs program"
   echo " inject		inject new urls into the database"
   echo " hostinject creates or updates an existing host table from a text file"
-  echo " generate 	generate new batches to fetch from crawl read"
+  echo " generate 	generate new batches to fetch from crawl db"
   echo " fetch 		fetch URLs marked during generate"
   echo " parse 		parse URLs marked during fetch"
   echo " updateoutpage 	update web graph outgoing vertices after parsing"

@@ -73,7 +73,7 @@ public class TestAPI {
   // public void testInfoAPI() throws Exception {
   // ClientResource cli = new ClientResource(baseUrl);
   // String expected =
-  // "[[\"admin\",\"Service admin actions\"],[\"confs\",\"Configuration manager\"],[\"read\",\"DB data streaming\"],[\"jobs\",\"Job manager\"]]";
+  // "[[\"admin\",\"Service admin actions\"],[\"confs\",\"Configuration manager\"],[\"db\",\"DB data streaming\"],[\"jobs\",\"Job manager\"]]";
   // String got = cli.get().getText();
   // assertEquals(expected, got);
   // }

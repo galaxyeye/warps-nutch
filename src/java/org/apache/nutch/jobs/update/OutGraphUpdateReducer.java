@@ -76,16 +76,16 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
     getCounter().register(Counter.class);
 
-    retryMax = conf.getInt("read.fetch.retry.max", 3);
+    retryMax = conf.getInt("db.fetch.retry.max", 3);
     additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
-    maxFetchInterval = Duration.ofSeconds(conf.getLong("read.fetch.interval.max", Duration.ofDays(90).getSeconds()));
+    maxFetchInterval = Duration.ofSeconds(conf.getLong("db.fetch.interval.max", Duration.ofDays(90).getSeconds()));
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
-    maxLinks = conf.getInt("read.update.max.inlinks", 10000);
+    maxLinks = conf.getInt("db.update.max.inlinks", 10000);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
-    maxLinks = conf.getInt("read.update.max.inlinks", 10000);
+    maxLinks = conf.getInt("db.update.max.inlinks", 10000);
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
     } catch (ClassNotFoundException e) {
@@ -210,7 +210,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     WebPage page = null;
     WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
 
-    // Page is already in the read
+    // Page is already in the db
     if (!loadedPage.isEmpty()) {
       page = loadedPage;
       page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.OUT_OF_BATCH);

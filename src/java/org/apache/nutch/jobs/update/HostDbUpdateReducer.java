@@ -55,7 +55,7 @@ public class HostDbUpdateReducer extends
         numFetched++;
       }
 
-      // build host link read
+      // build host link db
       // TODO: limit number of links
       if (buildLinkDb) {
         Set<CharSequence> inlinks = page.getInlinks().keySet();

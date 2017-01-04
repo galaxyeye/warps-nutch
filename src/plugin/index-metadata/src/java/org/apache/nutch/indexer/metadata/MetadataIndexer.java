@@ -37,7 +37,7 @@ import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
 
 /**
  * Indexer which can be configured to extract metadata from the crawldb, parse
- * metadata or content metadata. You can specify the properties "index.read",
+ * metadata or content metadata. You can specify the properties "index.db",
  * "index.parse" or "index.content" who's values are comma-delimited
  * <value>key1,key2,key3</value>.
  */

@@ -72,7 +72,7 @@ public class WebTableReader extends NutchJob implements Tool {
 
     @Override
     public void setup(Context context) {
-      sort = context.getConfiguration().getBoolean("read.reader.stats.sort", false);
+      sort = context.getConfiguration().getBoolean("db.reader.stats.sort", false);
     }
 
     public void close() {
@@ -526,7 +526,7 @@ public class WebTableReader extends NutchJob implements Tool {
     Boolean sort = (Boolean) args.get(Nutch.ARG_SORT);
     if (sort == null)
       sort = Boolean.FALSE;
-    currentJob.getConfiguration().setBoolean("read.reader.stats.sort", sort);
+    currentJob.getConfiguration().setBoolean("db.reader.stats.sort", sort);
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
         currentJob.getConfiguration(), String.class, GoraWebPage.class);
