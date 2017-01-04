@@ -121,7 +121,7 @@ public class FetchJob extends NutchJob implements Tool {
     String solrCollection = params.get(ARG_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
 
     /* Schedule & Scoring */
-    String fetchScheduler = conf.get("read.fetch.schedule.class", DefaultFetchSchedule.class.getName());
+    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
 
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);

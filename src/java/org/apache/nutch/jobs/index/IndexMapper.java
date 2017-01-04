@@ -112,13 +112,13 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
 
         if (!page.hasMark(Mark.UPDATEING)) {
           getCounter().increase(Counter.notUpdated);
-          // LOG.debug("Not read updated : " + TableUtil.unreverseUrl(key));
+          // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
           return;
         }
 
         if (page.hasMark(Mark.INDEX)) {
           getCounter().increase(Counter.alreadyIndexed);
-          // LOG.debug("Not read updated : " + TableUtil.unreverseUrl(key));
+          // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
           return;
         }
       }

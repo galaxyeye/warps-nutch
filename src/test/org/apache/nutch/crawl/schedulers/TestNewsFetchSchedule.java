@@ -67,8 +67,8 @@ public class TestNewsFetchSchedule {
   @Before
   public void setUp() throws Exception {
     conf = ConfigUtils.create();
-    inc_rate = conf.getFloat("read.fetch.schedule.adaptive.inc_rate", 0.2f);
-    dec_rate = conf.getFloat("read.fetch.schedule.adaptive.dec_rate", 0.2f);
+    inc_rate = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
+    dec_rate = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
 
     lastModified = startTime;
 

@@ -130,7 +130,7 @@ public class TestOPICScoringFilter {
     TestOPICScoringFilter self = new TestOPICScoringFilter();
     self.fillLinks();
 
-    float scoreInjected = conf.getFloat("read.score.injected", 1.0f);
+    float scoreInjected = conf.getFloat("db.score.injected", 1.0f);
 
     scoringFilter = new OPICScoringFilter();
     scoringFilter.setConf(conf);

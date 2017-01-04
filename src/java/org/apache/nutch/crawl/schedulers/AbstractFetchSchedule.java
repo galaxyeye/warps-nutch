@@ -68,8 +68,8 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
       return;
     }
 
-    defaultInterval = Duration.ofSeconds(conf.getInt("read.fetch.interval.default", 0));
-    maxInterval = Duration.ofSeconds(conf.getInt("read.fetch.interval.max", 0));
+    defaultInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.default", 0));
+    maxInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.max", 0));
 
     LOG.info("defaultInterval : " + defaultInterval + ", maxInterval : " + maxInterval);
   }

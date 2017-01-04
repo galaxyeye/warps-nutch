@@ -196,7 +196,7 @@ public class TaskScheduler extends Configured {
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
     this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
-    this.ignoreExternalLinks = conf.getBoolean("read.ignore.external.links", false);
+    this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
     this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));

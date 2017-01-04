@@ -348,7 +348,7 @@
         </description>
     </property>
 
-    <!-- web read properties -->
+    <!-- web db properties -->
 
     <property>
         <name>db.fetch.interval.default</name>

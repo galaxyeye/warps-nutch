@@ -99,7 +99,7 @@ public class GenerateJob extends NutchJob implements Tool {
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
-    String fetchScheduler = conf.get("read.fetch.schedule.class", DefaultFetchSchedule.class.getName());
+    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
@@ -293,7 +293,7 @@ public class GenerateJob extends NutchJob implements Tool {
     System.out.println("    -noFilter         - do not activate the filter plugin to filter the url, default is true ");
     System.out.println("    -noNorm           - do not activate the normalizer plugin to normalize the url, default is true ");
     System.out.println("    -adddays          - Adds numDays to the current time to facilitate crawling urls already");
-    System.out.println("                        fetched sooner then read.fetch.interval.default. Default value is 0.");
+    System.out.println("                        fetched sooner then db.fetch.interval.default. Default value is 0.");
     System.out.println("----------------------------------------------------------------------------------------------------");
     System.out.println("Please set the params.");
   }

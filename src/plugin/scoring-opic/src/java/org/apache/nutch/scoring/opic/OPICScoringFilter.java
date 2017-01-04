@@ -68,8 +68,8 @@ public class OPICScoringFilter implements ScoringFilter {
   public void setConf(Configuration conf) {
     this.conf = conf;
     scorePower = conf.getFloat("indexer.score.power", 0.5f);
-    internalScoreFactor = conf.getFloat("read.score.link.internal", 1.0f);
-    externalScoreFactor = conf.getFloat("read.score.link.external", 1.0f);
+    internalScoreFactor = conf.getFloat("db.score.link.internal", 1.0f);
+    externalScoreFactor = conf.getFloat("db.score.link.external", 1.0f);
   }
 
   @Override
