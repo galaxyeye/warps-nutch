@@ -18,9 +18,7 @@ public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
 
   private WebVertex focus;
 
-  public WebGraph() {
-    super(WebEdge.class);
-  }
+  public WebGraph() { super(WebEdge.class); }
 
   public WebEdge addEdgeLenient(WebVertex sourceVertex, WebVertex targetVertex, double weight) {
     addVertex(sourceVertex);
@@ -40,9 +38,7 @@ public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
     return subgraph;
   }
 
-  public WebVertex getFocus() {
-    return focus;
-  }
+  public WebVertex getFocus() { return focus; }
 
   public void setFocus(WebVertex focus) {
     if (!containsVertex(focus)) {

@@ -37,12 +37,13 @@ import java.io.IOException;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.persist.Mark.FETCH;
+import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
 class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateMapper.class);
 
-  public enum Counter { rowsMapped, newRowsMapped, notFetched, urlFiltered, tooDeep }
+  public enum Counter { rowsMapped, newRowsMapped, notUpdated, urlFiltered, tooDeep }
 
   private Configuration conf;
   private Context context;
@@ -72,8 +73,8 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
 
     WebPage page = WebPage.wrap(row);
 
-    if (!page.hasMark(FETCH)) {
-      counter.increase(Counter.notFetched);
+    if (!page.hasMark(UPDATEOUTG)) {
+      counter.increase(Counter.notUpdated);
       return;
     }
 
@@ -90,7 +91,7 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
     graph.incomingEdgesOf(v1).forEach(edge -> writeAsSubGraph(edge, graph));
 
     counter.increase(Counter.rowsMapped);
-    counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
+    counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v1));
   }
 
   /**

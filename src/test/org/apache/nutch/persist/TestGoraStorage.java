@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static org.apache.nutch.metadata.Metadata.Name.CASH_KEY;
 import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -123,7 +124,9 @@ public class TestGoraStorage extends AbstractNutchTest {
       page.setDistance(0);
       page.putHeader("header1", "header1");
       page.putMark(Mark.FETCH, "mark1");
-      page.putMetadata(Metadata.Name.CASH_KEY, "metadata1");
+      page.putMetadata(CASH_KEY, "metadata1");
+      page.getInlinks().put("http://www.a.com/1", "");
+      page.getInlinks().put("http://www.a.com/2", "");
 
       store.put(url, page.get());
       store.flush();
@@ -131,12 +134,13 @@ public class TestGoraStorage extends AbstractNutchTest {
       // retrieve page and check title
       page = WebPage.wrap(store.get(url));
       assertNotNull(page.get());
-      assertEquals(page.getText(), "text");
-      assertEquals(page.getDistance(), 0);
-      assertEquals(page.getHeader("header1", ""), "header1");
-      assertNotEquals(page.getMark(Mark.FETCH), "mark1");
-      assertEquals(page.getMark(Mark.FETCH), new Utf8("mark1"));
-      assertEquals(page.getMetadata(Metadata.Name.CASH_KEY, ""), "metadata1");
+      assertEquals("text", page.getText());
+      assertEquals(0, page.getDistance());
+      assertEquals("header1", page.getHeader("header1", ""));
+      assertNotEquals("mark1", page.getMark(Mark.FETCH));
+      assertEquals(new Utf8("mark1"), page.getMark(Mark.FETCH));
+      assertEquals("metadata1", page.getMetadata(CASH_KEY, ""));
+      assertEquals(2, page.getInlinks().size());
     }
 
     // scan over the rows
@@ -279,7 +283,7 @@ public class TestGoraStorage extends AbstractNutchTest {
     System.out.println("Starting!");
 
     Configuration localConf = CrawlTestUtil.createConfiguration();
-    localConf.set("persist.data.store.class", "org.apache.gora.memory.store.MemStore");
+    localConf.set("storage.data.store.class", "org.apache.gora.memory.store.MemStore");
 
     DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(localConf, String.class, GoraWebPage.class);
     readWriteGoraWebPage("single_id", store);

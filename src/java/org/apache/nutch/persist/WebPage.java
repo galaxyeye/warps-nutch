@@ -343,13 +343,9 @@ public class WebPage {
     page.setOutlinks(value);
   }
 
-  public Map<CharSequence, CharSequence> getInlinks() {
-    return page.getInlinks();
-  }
+  public Map<CharSequence, CharSequence> getInlinks() { return page.getInlinks(); }
 
-  public void setInlinks(Map<CharSequence, CharSequence> value) {
-    page.setInlinks(value);
-  }
+  public void setInlinks(Map<CharSequence, CharSequence> value) { page.setInlinks(value); }
 
   public Map<CharSequence, CharSequence> getMarkers() {
     return page.getMarkers();

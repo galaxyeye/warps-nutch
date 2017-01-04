@@ -55,7 +55,7 @@ public class TestInjector extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testInject() throws Exception {
-    ArrayList<String> urls = new ArrayList<String>();
+    ArrayList<String> urls = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
           + "\tcustom.attribute=" + i);
