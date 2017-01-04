@@ -51,7 +51,7 @@ public class SeedBuilder {
   public SeedBuilder(Configuration conf) {
     scoreFilters = new ScoringFilters(conf);
     fetchIntervalSec = getFetchIntervalSec();
-    scoreInjected = conf.getFloat("db.score.injected", Float.MAX_VALUE);
+    scoreInjected = conf.getFloat("read.score.injected", Float.MAX_VALUE);
     currentTime = Instant.now();
   }
 

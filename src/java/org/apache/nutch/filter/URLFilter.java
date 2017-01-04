@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Interface used to limit which URLs enter Nutch. Used by the injector and the
- * db updater.
+ * read updater.
  */
 public interface URLFilter extends Pluggable, Configurable {
 

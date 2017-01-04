@@ -311,7 +311,7 @@ public class DmozParser {
 
   /**
    * Iterate through all the items in this structured DMOZ file. Add each URL to
-   * the web db.
+   * the web read.
    */
   public void parseDmozFile(File dmozFile, int subsetDenom,
       boolean includeAdult, int skew, Pattern topicPattern, boolean snippet)

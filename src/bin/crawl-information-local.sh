@@ -111,10 +111,13 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch -c="$CONFIG_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID" -threads 10 -crawlId $CRAWL_ID -fetchMode native -update -index -solrUrl $SOLR_URL
+  __bin_nutch fetch -c="$CONFIG_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID" -threads 10 -crawlId "$CRAWL_ID" -fetchMode native -index -solrUrl $SOLR_URL
 
-  echo "Updating : "
-  __bin_nutch updatedb -c="$CONFIG_DIR" $batchId -crawlId "$CRAWL_ID"
+  echo "Updating outgoing pages : "
+  __bin_nutch updateoutgraph -c="$CONFIG_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID"
+
+  echo "Updating incoming pages : "
+  __bin_nutch updateingraph -c="$CONFIG_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID"
 
 done
 

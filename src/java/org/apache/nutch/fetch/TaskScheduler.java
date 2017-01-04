@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -17,15 +16,13 @@ import org.apache.nutch.fetch.service.FetchResult;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.jobs.FetchJob;
 import org.apache.nutch.jobs.NutchCounter;
-import org.apache.nutch.jobs.ParserJob;
-import org.apache.nutch.jobs.ParserMapper;
+import org.apache.nutch.jobs.fetch.FetchJob;
+import org.apache.nutch.jobs.parse.ParserJob;
+import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolOutput;
@@ -140,11 +137,6 @@ public class TaskScheduler extends Configured {
    */
   private final JITIndexer jitIndexer;
 
-  /**
-   * Update
-   */
-  private final DataStore<String, GoraWebPage> datastore;
-
   // Timer
   private final long startTime = System.currentTimeMillis(); // Start time of fetcher run
   private final AtomicLong lastTaskStartTime = new AtomicLong(startTime);
@@ -201,17 +193,10 @@ public class TaskScheduler extends Configured {
     boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
-    boolean updateJIT = getConf().getBoolean(PARAM_DBUPDATE_JUST_IN_TIME, false);
-    try {
-      datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
-    } catch (ClassNotFoundException e) {
-      throw new IOException(e);
-    }
-
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
     this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
-    this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
+    this.ignoreExternalLinks = conf.getBoolean("read.ignore.external.links", false);
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
     this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));

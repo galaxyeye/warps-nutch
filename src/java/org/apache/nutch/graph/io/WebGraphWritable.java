@@ -12,6 +12,7 @@ import java.io.IOException;
 
 /**
  * Created by vincent on 16-12-30.
+ * Copyright @ 2013-2017 Warpspeed Information. All rights reserved
  */
 public class WebGraphWritable implements Writable {
   private Configuration conf;

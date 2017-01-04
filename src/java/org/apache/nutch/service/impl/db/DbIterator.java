@@ -75,7 +75,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     try {
       skipNonRelevant();
     } catch (Exception e) {
-      LOG.error("Cannot create db iterator!", e);
+      LOG.error("Cannot create read iterator!", e);
     }
   }
 
@@ -102,7 +102,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     }
 
     WebPage page = WebPage.wrap(result.get());
-    Utf8 mark = page.getMark(Mark.UPDATEDB);
+    Utf8 mark = page.getMark(Mark.UPDATEING);
     return batchId == null || shouldProcess(mark, batchId);
   }
 

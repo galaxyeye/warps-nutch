@@ -29,7 +29,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-@Path("/db")
+@Path("/read")
 public class DbResource extends AbstractResource {
 
   private Map<String, DbReader> readers = new WeakHashMap<String, DbReader>();

@@ -85,13 +85,13 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       return;
     }
 
-    INC_RATE = conf.getFloat("db.fetch.schedule.adaptive.inc_rate", 0.2f);
-    DEC_RATE = conf.getFloat("db.fetch.schedule.adaptive.dec_rate", 0.2f);
-    MIN_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.min_interval", Duration.ofMinutes(1));
-    MAX_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.max_interval", Duration.ofDays(365));
-    SEED_MAX_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
-    SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
-    SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
+    INC_RATE = conf.getFloat("read.fetch.schedule.adaptive.inc_rate", 0.2f);
+    DEC_RATE = conf.getFloat("read.fetch.schedule.adaptive.dec_rate", 0.2f);
+    MIN_INTERVAL = ConfigUtils.getDuration(conf, "read.fetch.schedule.adaptive.min_interval", Duration.ofMinutes(1));
+    MAX_INTERVAL = ConfigUtils.getDuration(conf, "read.fetch.schedule.adaptive.max_interval", Duration.ofDays(365));
+    SEED_MAX_INTERVAL = ConfigUtils.getDuration(conf, "read.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
+    SYNC_DELTA = conf.getBoolean("read.fetch.schedule.adaptive.sync_delta", true);
+    SYNC_DELTA_RATE = conf.getFloat("read.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
   }
 
   @Override

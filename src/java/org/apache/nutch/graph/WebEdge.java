@@ -17,7 +17,6 @@
 package org.apache.nutch.graph;
 
 import org.apache.nutch.persist.WebPage;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class WebEdge extends DefaultWeightedEdge {

@@ -17,7 +17,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.jobs.GenerateJob;
+import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;

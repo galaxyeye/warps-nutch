@@ -17,7 +17,7 @@
 package org.apache.nutch.persist;
 
 public enum Mark {
-  INJECT("inj"), GENERATE("gn"), FETCH("fth"), PARSE("prs"), UPDATEDB("upd"), INDEX("idx");
+  INJECT("inj"), GENERATE("gn"), FETCH("fth"), PARSE("prs"), UPDATEOUTG("updo"), UPDATEING("updi"), INDEX("idx");
 
   private String value;
   Mark(String value) {this.value = value; }

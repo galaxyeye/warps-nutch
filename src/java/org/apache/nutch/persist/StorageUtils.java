@@ -28,13 +28,14 @@ import org.apache.gora.util.GoraException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.Host;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+
+import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 
 /**
  * Entry point to Gora store/mapreduce functionality. Translates the concept of
@@ -58,7 +59,7 @@ public class StorageUtils {
       Configuration conf, Class<K> keyClass, Class<V> persistentClass)
       throws ClassNotFoundException, GoraException {
 
-    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID, "");
+    String crawlId = conf.get(PARAM_CRAWL_ID, "");
     String schemaPrefix = "";
     if (!crawlId.isEmpty()) {
       schemaPrefix = crawlId + "_";

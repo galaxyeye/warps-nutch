@@ -87,7 +87,7 @@ fetchJobTimeout=3h
 
 # Adds <days> to the current time to facilitate
 # crawling urls already fetched sooner then
-# db.default.fetch.interval.
+# read.default.fetch.interval.
 addDays=0
 #############################################
 
@@ -216,10 +216,13 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -update -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch "${commonOptions[@]}" -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
-  echo "Updating : "
-  __bin_nutch updatedb "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
+  echo "Updating outgoing pages : "
+  __bin_nutch updateoutgraph "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
+
+  echo "Updating incoming pages : "
+  __bin_nutch updateingraph "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
 
 done
 

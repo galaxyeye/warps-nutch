@@ -320,6 +320,15 @@
       <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/test/" expected_position="28" />
     </src_description>
   </component>
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <fileset id="fileset" name="Spring Application Context" removed="false">
+          <file>file://$MODULE_DIR$/src/java/org/apache/nutch/persist/local/SpringConfiguration.java</file>
+        </fileset>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes" />
     <exclude-output />
@@ -977,7 +986,9 @@
           <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/hadoop-mapreduce-client-core-2.5.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
