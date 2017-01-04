@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -38,8 +37,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 
-import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
-import static org.apache.nutch.metadata.Nutch.STAT_RUNTIME_STATUS;
+import static org.apache.nutch.metadata.Nutch.*;
 
 public abstract class NutchJob extends Configured {
 
@@ -59,7 +57,7 @@ public abstract class NutchJob extends Configured {
   protected void setup(Map<String, Object> args) throws Exception {
     LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");
     LOG.info("Job started at " + DateTimeUtil.format(startTime));
-    getConf().set(Nutch.PARAM_NUTCH_JOB_NAME, getJobName());
+    getConf().set(PARAM_NUTCH_JOB_NAME, getJobName());
 
     synchronized (status) {
       status.put("startTime", DateTimeUtil.format(startTime));
@@ -212,7 +210,7 @@ public abstract class NutchJob extends Configured {
   /**
    * Stop the job with the possibility to resume. Subclasses should override
    * this, since by default it calls {@link #killJob()}.
-   * 
+   *
    * @return true if succeeded, false otherwise
    */
   public boolean stopJob() throws Exception {
@@ -222,7 +220,7 @@ public abstract class NutchJob extends Configured {
   /**
    * Kill the job immediately. Clients should assume that any results that the
    * job produced so far are in inconsistent state or missing.
-   * 
+   *
    * @return true if succeeded, false otherwise.
    * @throws Exception
    */

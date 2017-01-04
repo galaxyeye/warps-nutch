@@ -32,7 +32,7 @@ import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
-import org.apache.nutch.jobs.ParserMapper;
+import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseUtil;

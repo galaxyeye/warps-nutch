@@ -207,7 +207,7 @@ public class TestGoraStorage extends AbstractNutchTest {
   @Test
   @Ignore("GORA-326 Removal of _g_dirty field from _ALL_FIELDS array and Field Enum in Persistent classes")
   public void testMultiProcess() throws Exception {
-    // create and start a hsql server, a stand-alone (memory backed) db
+    // create and start a hsql server, a stand-alone (memory backed) read
     // (important: a stand-alone server should be used because simple
     // file based access i.e. jdbc:hsqldb:file is NOT process-safe.)
     Server server = new Server();
@@ -270,7 +270,7 @@ public class TestGoraStorage extends AbstractNutchTest {
       assertEquals(0, (int) result.get());
     }
 
-    // stop db
+    // stop read
     server.stop();
   }
 

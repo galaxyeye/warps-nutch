@@ -18,7 +18,6 @@ package org.apache.nutch.graph;
 
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.jetbrains.annotations.Contract;
 
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -16,37 +16,36 @@
  ******************************************************************************/
 package org.apache.nutch.service;
 
-import java.util.Collection;
-
 import org.apache.nutch.service.impl.JobWorker;
 import org.apache.nutch.service.model.request.JobConfig;
 import org.apache.nutch.service.model.response.JobInfo;
 import org.apache.nutch.service.model.response.JobInfo.State;
 
-public interface JobManager {
-  public static final String NUTCH_RAM_JOB_SEQUENCE = "nutch.ram.job.sequence";
+import java.util.Collection;
 
-  public static enum JobType {
+public interface JobManager {
+  enum JobType {
     INJECT,
     GENERATE,
     FETCH,
     PARSE,
-    UPDATEDB,
+    UPDATEDBOUT,
+    UPDATEDBIN,
     INDEX,
     READDB,
     PARSECHECKER,
     CLASS
   };
 
-  public Collection<JobInfo> list(String crawlId, State state);
+  Collection<JobInfo> list(String crawlId, State state);
 
-  public JobInfo get(String crawlId, String id);
+  JobInfo get(String crawlId, String id);
 
-  public JobWorker getJobWorker(String crawlId, String jobId);
+  JobWorker getJobWorker(String crawlId, String jobId);
   
-  public String create(JobConfig jobConfig);
+  String create(JobConfig jobConfig);
 
-  public boolean abort(String crawlId, String id);
+  boolean abort(String crawlId, String id);
 
-  public boolean stop(String crawlId, String id);
+  boolean stop(String crawlId, String id);
 }

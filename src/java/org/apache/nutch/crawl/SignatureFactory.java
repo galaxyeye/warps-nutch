@@ -42,7 +42,7 @@ public class SignatureFactory {
 
   /** Return the default Signature implementation. */
   public static Signature getSignature(Configuration conf) {
-    String clazz = conf.get("db.signature.class", MD5Signature.class.getName());
+    String clazz = conf.get("read.signature.class", MD5Signature.class.getName());
     ObjectCache objectCache = ObjectCache.get(conf);
     Signature impl = (Signature) objectCache.getObject(clazz);
     if (impl == null) {
