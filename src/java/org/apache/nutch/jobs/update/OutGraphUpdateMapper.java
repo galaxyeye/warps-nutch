@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
@@ -61,6 +62,10 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
 
   private ScoringFilters scoringFilters;
 
+  // Resue local variables for optimization
+  private GraphGroupKey graphGroupKey;
+  private WebGraphWritable webGraphWritable;
+
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
@@ -76,6 +81,9 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, Integer.MAX_VALUE);
     scoringFilters = new ScoringFilters(conf);
+
+    graphGroupKey = new GraphGroupKey();
+    webGraphWritable = new WebGraphWritable(null, IGNORE_TARGET, conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -147,11 +155,12 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
    * */
   private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
     try {
-      WebGraph subgraph = WebGraph.of(edge, graph);
+      WebGraph subGraph = WebGraph.of(edge, graph);
 
-      String reverseUrl = TableUtil.reverseUrl(edge.getTargetUrl());
+      graphGroupKey.reset(TableUtil.reverseUrl(edge.getTargetUrl()), graph.getEdgeWeight(edge));
+      webGraphWritable.reset(subGraph);
       // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subgraph, conf));
+      context.write(graphGroupKey, webGraphWritable);
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

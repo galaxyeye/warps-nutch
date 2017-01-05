@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
@@ -47,6 +49,9 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
   private Configuration conf;
   private Context context;
   private NutchCounter counter;
+  // Resue local variables for optimization
+  private GraphGroupKey graphGroupKey;
+  private WebGraphWritable webGraphWritable;
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -59,6 +64,9 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
     counter.register(Counter.class);
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
+
+    graphGroupKey = new GraphGroupKey();
+    webGraphWritable = new WebGraphWritable(null, IGNORE_SOURCE, conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -113,9 +121,12 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
   private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
     try {
       WebGraph subGraph = WebGraph.of(edge, graph);
-      String reverseUrl = TableUtil.reverseUrl(edge.getSourceUrl());
+
+      graphGroupKey.reset(TableUtil.reverseUrl(edge.getSourceUrl()), graph.getEdgeWeight(edge));
+      webGraphWritable.reset(subGraph);
+
       // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subGraph, conf));
+      context.write(graphGroupKey, webGraphWritable);
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

@@ -34,8 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Objects;
 
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
+import static org.apache.nutch.jobs.update.InGraphUpdateReducer.Counter.pagesNotExist;
 import static org.apache.nutch.persist.Mark.UPDATEING;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
@@ -43,7 +46,8 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
 
-  public enum Counter { existInPages }
+  public enum Counter { pagesOutBatch, pagesNotExist }
+
   private DataStore<String, GoraWebPage> datastore;
 
   @Override
@@ -80,11 +84,13 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     getCounter().increase(rows);
 
     String reversedUrl = key.getReversedUrl();
+    String url = TableUtil.unreverseUrl(reversedUrl);
 
-    WebGraph graph = buildGraph(reversedUrl, subGraphs);
+    WebGraph graph = buildGraph(url, reversedUrl, subGraphs);
     WebPage page = graph.getFocus().getWebPage();
 
     if (page == null) {
+      getCounter().increase(pagesNotExist);
       return;
     }
 
@@ -108,17 +114,20 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
    *    v4  v5
    *</pre>
    * */
-  private WebGraph buildGraph(String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
+  private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
     WebGraph graph = new WebGraph();
 
+    WebVertex focus = new WebVertex(url);
     WebPage page = null;
     for (WebGraphWritable graphWritable : subGraphs) {
+      assert(graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
+
       WebGraph subGraph = graphWritable.get();
       WebEdge edge = subGraph.firstEdge();
       if (edge.isLoop()) {
         page = edge.getTargetWebPage();
       }
-      graph.addEdgeLenient(edge.getSource(), edge.getTarget(), subGraph.getEdgeWeight(edge));
+      graph.addEdgeLenient(focus, edge.getTarget(), subGraph.getEdgeWeight(edge));
     }
 
     if (page == null) {
@@ -127,11 +136,10 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
       // Page is already in the db
       if (!loadedPage.isEmpty()) {
         page = loadedPage;
-        getCounter().increase(Counter.existInPages);
+        getCounter().increase(Counter.pagesOutBatch);
       }
     }
 
-    WebVertex focus = graph.firstEdge().getSource();
     focus.setWebPage(page);
     graph.setFocus(focus);
 

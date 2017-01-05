@@ -42,6 +42,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Metadata.*;
+import static org.apache.nutch.metadata.Metadata.Name.DISTANCE;
+import static org.apache.nutch.metadata.Metadata.Name.FETCH_NO_MORE;
+import static org.apache.nutch.metadata.Metadata.Name.PAGE_CATEGORY;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 
@@ -449,40 +452,38 @@ public class WebPage {
   }
 
   public void setPageCategory(PageCategory pageCategory) {
-    putMetadata(Name.PAGE_CATEGORY, pageCategory.name());
+    putMetadata(PAGE_CATEGORY, pageCategory.name());
   }
 
   public PageCategory getPageCategory() {
     try {
-      return PageCategory.valueOf(getMetadata(Name.PAGE_CATEGORY));
+      return PageCategory.valueOf(getMetadata(PAGE_CATEGORY));
     } catch (Throwable e) {
       return PageCategory.UNKNOWN;
     }
   }
 
   public void setNoFetch() {
-    putMetadata(Name.NO_FETCH, YES_STRING);
+    putMetadata(FETCH_NO_MORE, YES_STRING);
   }
 
   public boolean isNoFetch() {
-    return getMetadata(Name.NO_FETCH) != null;
+    return getMetadata(FETCH_NO_MORE) != null;
   }
 
-  public int getDepth() {
-    return getDistance();
-  }
+  public int getDepth() { return getDistance(); }
 
   public void setDepth(int newDepth) {
     setDistance(newDepth);
   }
 
   public int getDistance() {
-    String ds = getMetadata(Name.DISTANCE);
+    String ds = getMetadata(DISTANCE);
     return StringUtil.tryParseInt(ds, MAX_DISTANCE);
   }
 
   public void setDistance(int newDistance) {
-    putMetadata(Name.DISTANCE, String.valueOf(newDistance));
+    putMetadata(DISTANCE, String.valueOf(newDistance));
   }
 
   public void updateDistance(int newDistance) {
@@ -527,54 +528,6 @@ public class WebPage {
 
   public void setCash(float cash) {
     setFloatMetadata(Name.CASH_KEY, cash);
-  }
-
-  /**
-   * TODO : We need a better solution to track all voted pages
-   * TODO : optimization, consider byte array to track vote history
-   */
-  public boolean voteIfAbsent(WebPage candidate) {
-    String baseUrl = candidate.getBaseUrl();
-    String hash;
-    try {
-      hash = String.valueOf(new URL(baseUrl).hashCode());
-    } catch (MalformedURLException e) {
-      return false;
-    }
-
-    String voteHistory = getVoteHistory();
-    if (!voteHistory.contains(hash)) {
-      if (voteHistory.length() > 0) {
-        voteHistory += ",";
-      }
-
-      voteHistory += hash;
-      if (voteHistory.length() > 2000) {
-        voteHistory = StringUtils.substringAfter(voteHistory, ",");
-      }
-      putMetadata(Name.VOTE_HISTORY, voteHistory);
-
-      return true;
-    }
-
-    return false;
-  }
-
-  public boolean isVoted(WebPage candidate) {
-    String baseUrl = candidate.getBaseUrl();
-    String hash;
-    try {
-      hash = String.valueOf(new URL(baseUrl).hashCode());
-    } catch (MalformedURLException e) {
-      return false;
-    }
-
-    String voteHistory = getVoteHistory();
-    return voteHistory.contains(hash);
-  }
-
-  public String getVoteHistory() {
-    return getMetadata(Name.VOTE_HISTORY, "");
   }
 
   public Instant getPublishTime() {
@@ -809,7 +762,7 @@ public class WebPage {
   }
 
   /**
-   * TODO : Why the nutch team u8 the key using Utf8?
+   * TODO : Why the nutch team use key as Utf8?
    */
   public void putAllMetadata(Map<String, String> metadata) {
     for (Map.Entry<String, String> entry : metadata.entrySet()) {

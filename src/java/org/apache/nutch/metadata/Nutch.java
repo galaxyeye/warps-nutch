@@ -27,23 +27,11 @@ import java.time.Instant;
  */
 public interface Nutch {
 
-  ByteBuffer YES_VAL = ByteBuffer.wrap(new byte[] { 'y' });
-
   String YES_STRING = "y";
-
-  Utf8 YES_UTF8 = new Utf8(YES_STRING);
-
-  String ORIGINAL_CHAR_ENCODING = "OriginalCharEncoding";
-
-  String CHAR_ENCODING_FOR_CONVERSION = "CharEncodingForConversion";
 
   String SIGNATURE_KEY = "nutch.content.digest";
 
-  String SCORE_KEY = "nutch.crawl.score";
-
   String PROTO_STATUS_KEY = "_pst_";
-
-  Text WRITABLE_PROTO_STATUS_KEY = new Text(PROTO_STATUS_KEY);
 
   String FETCH_TIME_KEY = "_ftk_";
 
@@ -54,8 +42,6 @@ public interface Nutch {
    * documents.
    */
   String CACHING_FORBIDDEN_KEY = "caching.forbidden";
-
-  Utf8 CACHING_FORBIDDEN_KEY_UTF8 = new Utf8(CACHING_FORBIDDEN_KEY);
 
   /** Show both original forbidden content and summaries (default). */
   String CACHING_FORBIDDEN_NONE = "none";
@@ -68,15 +54,12 @@ public interface Nutch {
 
   String REPR_URL_KEY = "_repr_";
 
-  Text WRITABLE_REPR_URL_KEY = new Text(REPR_URL_KEY);
-
   String ALL_BATCH_ID_STR = "-all";
 
   Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
 
   int MAX_DISTANCE = 1000000;
 
-  int MAX_FETCH_INTERVAL_DAYS = 3 * 365;
   int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and 5 years
 
   int FETCH_TASK_REMAINDER_NUMBER = 5;

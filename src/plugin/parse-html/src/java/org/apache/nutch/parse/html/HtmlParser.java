@@ -58,6 +58,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import static org.apache.nutch.metadata.Metadata.Name.CHAR_ENCODING_FOR_CONVERSION;
+import static org.apache.nutch.metadata.Metadata.Name.ORIGINAL_CHAR_ENCODING;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class HtmlParser implements Parser {
@@ -224,8 +226,8 @@ public class HtmlParser implements Parser {
 
   private void setEncoding(WebPage page, String encoding) {
     page.setTempVar("encoding", encoding);
-    page.putMetadata(Nutch.ORIGINAL_CHAR_ENCODING, encoding);
-    page.putMetadata(Nutch.CHAR_ENCODING_FOR_CONVERSION, encoding);
+    page.putMetadata(ORIGINAL_CHAR_ENCODING, encoding);
+    page.putMetadata(CHAR_ENCODING_FOR_CONVERSION, encoding);
   }
 
   private void setMetadata(WebPage page, HTMLMetaTags metaTags) {

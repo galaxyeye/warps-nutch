@@ -16,6 +16,8 @@ import java.util.Map;
  */
 public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
 
+  public final static WebGraph EMPTY_WEB_GRAPH = new WebGraph();
+
   private WebVertex focus;
 
   public WebGraph() { super(WebEdge.class); }
