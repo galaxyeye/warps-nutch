@@ -93,8 +93,6 @@ public class InGraphUpdateJob extends WebGraphUpdateJob {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     int res = ToolRunner.run(ConfigUtils.create(), new InGraphUpdateJob(), args);
     System.exit(res);
   }

@@ -1,13 +1,6 @@
 package org.apache.nutch.graph;
 
-import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.StringUtil;
-
-import java.time.Instant;
-
-import static org.apache.nutch.metadata.Metadata.Name.PUBLISH_TIME;
 
 /**
  * Created by vincent on 16-12-29.

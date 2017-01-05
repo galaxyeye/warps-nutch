@@ -132,8 +132,7 @@ public class HostDbUpdateJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    final int res = ToolRunner.run(ConfigUtils.create(),
-        new HostDbUpdateJob(), args);
+    final int res = ToolRunner.run(ConfigUtils.create(), new HostDbUpdateJob(), args);
     System.exit(res);
   }
 }

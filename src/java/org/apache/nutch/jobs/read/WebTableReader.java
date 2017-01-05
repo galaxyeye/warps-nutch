@@ -441,7 +441,7 @@ public class WebTableReader extends NutchJob implements Tool {
       System.err
           .println("Usage: WebTableReader (-stats | -url [url] | -dump <out_dir> [-regex regex]) \n \t \t      [-crawlId <id>] [-content] [-headers] [-links] [-text]");
       System.err
-          .println("    -crawlId <id>  - the id to prefix the schemas to operate on, \n \t \t     (default: persist.crawl.id)");
+          .println("    -crawlId <id>  - the id to prefix the schemas to operate on, \n \t \t     (default: storage.crawl.id)");
       System.err
           .println("    -stats [-sort] - print overall statistics to System.out");
       System.err.println("    [-sort]        - list status sorted by host");

@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.update;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
@@ -29,13 +30,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-class WebGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, GraphGroupKey, WebGraphWritable> {
+class OutGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, GraphGroupKey, WebGraphWritable> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(WebGraphUpdateCombiner.class);
+  public static final Logger LOG = LoggerFactory.getLogger(OutGraphUpdateCombiner.class);
+
+  private Configuration conf;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
+
+    conf = context.getConfiguration();
 
     Params.of(
         "className", this.getClass().getSimpleName()
@@ -43,14 +48,14 @@ class WebGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, Gr
   }
 
   @Override
-  protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> subgraphs, Context context) {
+  protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> subGraphs, Context context) {
     try {
       WebGraph graph = new WebGraph();
 
-      for (WebGraphWritable graphWritable : subgraphs) {
-        WebGraph subgraph = graphWritable.get();
-        WebEdge edge = subgraph.firstEdge();
-        graph.addEdgeLenient(subgraph.getEdgeSource(edge), subgraph.getEdgeTarget(edge), subgraph.getEdgeWeight(edge));
+      for (WebGraphWritable graphWritable : subGraphs) {
+        WebGraph subGraph = graphWritable.get();
+        WebEdge edge = subGraph.firstEdge();
+        graph.addEdgeLenient(subGraph.getEdgeSource(edge), subGraph.getEdgeTarget(edge), subGraph.getEdgeWeight(edge));
       }
 
       graph.edgeSet().forEach(edge -> writeAsSubGraph(edge, graph, context));
@@ -74,11 +79,10 @@ class WebGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, Gr
   private void writeAsSubGraph(WebEdge edge, WebGraph graph, Context context) {
     try {
       WebGraph subgraph = WebGraph.of(edge, graph);
-      WebGraphWritable graphWritable = new WebGraphWritable(subgraph, context.getConfiguration());
 
       String reverseUrl = TableUtil.reverseUrl(edge.getTargetUrl());
       // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), graphWritable);
+      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subgraph, conf));
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

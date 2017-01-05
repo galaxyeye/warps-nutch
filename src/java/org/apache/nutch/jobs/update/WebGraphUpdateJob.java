@@ -34,8 +34,6 @@ abstract class WebGraphUpdateJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(WebGraphUpdateJob.class);
 
-  private String batchId = ALL_BATCH_ID_STR;
-
   public abstract Collection<GoraWebPage.Field> getFields(Job job);
 
   @Override
@@ -46,31 +44,33 @@ abstract class WebGraphUpdateJob extends NutchJob implements Tool {
     Configuration conf = getConf();
 
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
-
-    batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
+    String batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
+    int limit = params.getInt(ARG_LIMIT, -1);
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
-    conf.set(PARAM_BATCH_ID, batchId);
     conf.set(PARAM_CRAWL_ID, crawlId);
+    conf.set(PARAM_BATCH_ID, batchId);
+    conf.setInt(PARAM_LIMIT, limit);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "round", round,
         "crawlId", crawlId,
-        "batchId", batchId
+        "batchId", batchId,
+        "limit", limit
     ));
   }
 
-  private int updateTable(String crawlId, String batchId) throws Exception {
-    run(Params.toArgMap(ARG_CRAWL, crawlId, ARG_BATCH, batchId));
+  protected int updateTable(String crawlId, String batchId, int limit) throws Exception {
+    run(Params.toArgMap(ARG_CRAWL, crawlId, ARG_BATCH, batchId, ARG_LIMIT, limit));
     return 0;
   }
 
-  private void printUsage() {
-    String usage = "Usage: OutGraphUpdateJob (<batchId> | -all) [-crawlId <id>] "
+  protected void printUsage() {
+    String usage = "Usage: WebGraphUpdateJob (<batchId> | -all) [-crawlId <id>] "
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n";
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n";
 
     System.err.println(usage);
   }
@@ -90,17 +90,20 @@ abstract class WebGraphUpdateJob extends NutchJob implements Tool {
     }
 
     String crawlId = conf.get(PARAM_CRAWL_ID, "");
+    int limit = -1;
 
     for (int i = 1; i < args.length; i++) {
       if ("-crawlId".equals(args[i])) {
         crawlId = args[++i];
       } else if ("-batchId".equals(args[i])) {
         batchId = args[++i];
+      } else if ("-limit".equals(args[i])) {
+        limit = Integer.parseInt(args[++i]);
       } else {
         throw new IllegalArgumentException("arg " + args[i] + " not recognized");
       }
     }
 
-    return updateTable(crawlId, batchId);
+    return updateTable(crawlId, batchId, limit);
   }
 }

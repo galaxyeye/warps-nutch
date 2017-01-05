@@ -33,13 +33,12 @@ public class FetchScheduleFactory {
 
   /** Return the FetchSchedule implementation. */
   public static FetchSchedule getFetchSchedule(Configuration conf) {
-    String clazz = conf.get("read.fetch.schedule.class", DefaultFetchSchedule.class.getName());
+    String clazz = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
     ObjectCache objectCache = ObjectCache.get(conf);
     FetchSchedule impl = (FetchSchedule) objectCache.getObject(clazz);
 
     if (impl == null) {
       try {
-        LOG.info("Using FetchSchedule impl: " + clazz);
         Class<?> implClass = Class.forName(clazz);
         impl = (FetchSchedule) implClass.newInstance();
         impl.setConf(conf);

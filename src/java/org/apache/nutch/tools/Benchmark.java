@@ -136,7 +136,7 @@ public class Benchmark extends Configured implements Tool {
       System.err
           .println("Usage: Benchmark [-crawlId <id>] [-seeds NN] [-depth NN] [-threads NN] [-maxPerHost NN] [-plugins <regex>]");
       System.err
-          .println("\t-crawlId id\t the id to prefix the schemas to operate on, (default: persist.crawl.id)");
+          .println("\t-crawlId id\t the id to prefix the schemas to operate on, (default: storage.crawl.id)");
       System.err
           .println("\t-seeds NN\tcreate NN unique hosts in a seed list (default: 1)");
       System.err.println("\t-depth NN\tperform NN crawl cycles (default: 10)");

@@ -42,7 +42,7 @@ public class DomainSuffix {
    */
   public enum Status {
     INFRASTRUCTURE, SPONSORED, UNSPONSORED, STARTUP, PROPOSED, DELETED, PSEUDO_DOMAIN, DEPRECATED, IN_USE, NOT_IN_USE, REJECTED
-  };
+  }
 
   private String domain;
   private Status status;

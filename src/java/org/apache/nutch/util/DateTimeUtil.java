@@ -182,7 +182,7 @@ public class DateTimeUtil {
   public static Instant parseTime(String dateTime, Instant defaultValue) {
     Instant time = defaultValue;
 
-    if (dateTime == null) {
+    if (dateTime == null || dateTime.isEmpty()) {
       return time;
     }
 

@@ -74,7 +74,7 @@ public interface Nutch {
 
   Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
 
-  int MAX_DISTANCE = Integer.MAX_VALUE;
+  int MAX_DISTANCE = 1000000;
 
   int MAX_FETCH_INTERVAL_DAYS = 3 * 365;
   int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and 5 years

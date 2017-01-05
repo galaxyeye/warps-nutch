@@ -90,7 +90,7 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     currentJob.setSortComparatorClass(GraphKeyComparator.class);
 
     // TODO : check if we need a combiner
-//    currentJob.setCombinerClass(WebGraphUpdateCombiner.class);
+//    currentJob.setCombinerClass(OutGraphUpdateCombiner.class);
 //    currentJob.setCombinerKeyGroupingComparatorClass(UrlOnlyComparator.class);
 
     Collection<GoraWebPage.Field> fields = getFields(currentJob);
@@ -111,51 +111,7 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     currentJob.waitForCompletion(true);
   }
 
-  private int updateTable(String crawlId, String batchId) throws Exception {
-    run(Params.toArgMap(ARG_CRAWL, crawlId, ARG_BATCH, batchId));
-    return 0;
-  }
-
-  private void printUsage() {
-    String usage = "Usage: OutGraphUpdateJob (<batchId> | -all) [-crawlId <id>] "
-        + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n";
-
-    System.err.println(usage);
-  }
-
-  public int run(String[] args) throws Exception {
-    if (args.length == 0) {
-      printUsage();
-      return -1;
-    }
-
-    Configuration conf = getConf();
-
-    String batchId = args[0];
-    if (!batchId.equals("-all") && batchId.startsWith("-")) {
-      printUsage();
-      return -1;
-    }
-
-    String crawlId = conf.get(PARAM_CRAWL_ID, "");
-
-    for (int i = 1; i < args.length; i++) {
-      if ("-crawlId".equals(args[i])) {
-        crawlId = args[++i];
-      } else if ("-batchId".equals(args[i])) {
-        batchId = args[++i];
-      } else {
-        throw new IllegalArgumentException("arg " + args[i] + " not recognized");
-      }
-    }
-
-    return updateTable(crawlId, batchId);
-  }
-
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     int res = ToolRunner.run(ConfigUtils.create(), new OutGraphUpdateJob(), args);
     System.exit(res);
   }

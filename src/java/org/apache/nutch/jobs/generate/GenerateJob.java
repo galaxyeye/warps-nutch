@@ -286,7 +286,7 @@ public class GenerateJob extends NutchJob implements Tool {
   private void printUsage() {
     System.out.println("Usage: GenerateJob [-crawlId <id>] [-batchId <id>] [-fetchMod <native|proxy|crowdsourcing>] " +
         "[-reGen] [-topN N] [-noFilter] [-noNorm] [-adddays numDays]");
-    System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\");");
+    System.out.println("    -crawlId <id>     - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\");");
     System.out.println("    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");");
     System.out.println("    -batchId <id>     - the batch id ");
     System.out.println("    -topN <N>         - number of top URLs to be selected, default is Long.MAX_VALUE ");
@@ -365,10 +365,7 @@ public class GenerateJob extends NutchJob implements Tool {
   }
 
   public static void main(String args[]) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     int res = ToolRunner.run(ConfigUtils.create(), new GenerateJob(), args);
-
     System.exit(res);
   }
 }

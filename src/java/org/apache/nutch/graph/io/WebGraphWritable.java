@@ -2,6 +2,7 @@ package org.apache.nutch.graph.io;
 
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
@@ -33,6 +34,7 @@ public class WebGraphWritable implements Writable {
     for (WebEdge edge : graph.edgeSet()) {
       IOUtils.serialize(conf, output, new WebVertexWritable(edge.getSource(), conf), WebVertexWritable.class);
       IOUtils.serialize(conf, output, new WebVertexWritable(edge.getTarget(), conf), WebVertexWritable.class);
+      Text.writeString(output, edge.getAnchor());
       output.writeDouble(graph.getEdgeWeight(edge));
     }
   }
@@ -45,9 +47,10 @@ public class WebGraphWritable implements Writable {
     for (int i = 0; i < edgeSize; ++i) {
       WebVertexWritable source = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
       WebVertexWritable target = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
+      String anchor = Text.readString(input);
       double weight = input.readDouble();
 
-      graph.addEdgeLenient(source.get(), target.get(), weight);
+      graph.addEdgeLenient(source.get(), target.get(), weight).setAnchor(anchor);
     }
   }
 }

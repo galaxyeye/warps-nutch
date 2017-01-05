@@ -17,12 +17,12 @@
 
 package org.apache.nutch.util.domain;
 
-import java.io.InputStream;
-import java.util.HashMap;
-
 import org.apache.hadoop.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.util.HashMap;
 
 /**
  * Storage class for <code>DomainSuffix</code> objects Note: this class is
@@ -31,10 +31,9 @@ import org.slf4j.LoggerFactory;
  * @author Enis Soztutar &lt;enis.soz.nutch@gmail.com&gt;
  */
 public class DomainSuffixes {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(DomainSuffixes.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DomainSuffixes.class);
 
-  private HashMap<String, DomainSuffix> domains = new HashMap<String, DomainSuffix>();
+  private HashMap<String, DomainSuffix> domains = new HashMap<>();
 
   private static DomainSuffixes instance;
 
