@@ -22,6 +22,7 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SignatureComparator;
+import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
@@ -53,6 +54,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Metadata.Name.GENERATE_TIME;
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
@@ -63,9 +65,12 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
   public static final Logger LOG = LoggerFactory.getLogger(OutGraphUpdateReducer.class);
 
-  private enum PageExistence { IN_BATCH, OUT_OF_BATCH, NOT_FETCHED }
+  private enum PageExistence { PASSED, LOADED, CREATED }
 
-  public enum Counter { pagesDepthUp, pagesInBatch, pagesOutBatch, newPages, newDetailPages }
+  public enum Counter {
+    pagesDepthUp, pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN,
+    pagesPassed, pagesLoaded, pagesCreated, newDetailPages
+  }
 
   private int retryMax;
   private Duration maxFetchInterval;
@@ -161,19 +166,19 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       return;
     }
 
-    updateGraph(graph);
-
-    PageExistence pageExistence = page.getTempVar(VAR_PAGE_EXISTENCE, PageExistence.NOT_FETCHED);
-    if (pageExistence == PageExistence.IN_BATCH) {
+    PageExistence pageExistence = page.getTempVar(VAR_PAGE_EXISTENCE, PageExistence.CREATED);
+    if (pageExistence == PageExistence.PASSED) {
       updateFetchSchedule(url, page);
-      updateMetadata(page);
       updateStatusCounter(page);
-      getCounter().increase(Counter.pagesInBatch);
+      getCounter().increase(Counter.pagesPassed);
     }
+
+    // 1. update depth, 2. update in-links
+    updateGraph(graph);
+    updateMetadata(page);
 
     context.write(reversedUrl, page.get());
     getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
-    getCounter().increase(NutchCounter.Counter.inlinks, page.getInlinks().size());
   }
 
   /**
@@ -192,21 +197,23 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     WebGraph graph = new WebGraph();
 
     WebPage page = null;
+    WebVertex focus = new WebVertex(url);
     for (WebGraphWritable graphWritable : subGraphs) {
+      assert(graphWritable.getOptimizeMode().equals(IGNORE_TARGET));
+
       WebGraph subGraph = graphWritable.get();
       WebEdge edge = subGraph.firstEdge();
       if (edge.isLoop()) {
         page = edge.getSourceWebPage();
-        page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.IN_BATCH);
+        page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.PASSED);
       }
-      graph.addEdgeLenient(edge.getSource(), edge.getTarget(), subGraph.getEdgeWeight(edge));
+      graph.addEdgeLenient(edge.getSource(), focus, subGraph.getEdgeWeight(edge));
     }
 
     if (page == null) {
       page = loadOrCreateWebPage(url, reversedUrl);
     }
 
-    WebVertex focus = graph.firstEdge().getTarget();
     focus.setWebPage(page);
     graph.setFocus(focus);
 
@@ -226,14 +233,14 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     // Page is already in the db
     if (!loadedPage.isEmpty()) {
       page = loadedPage;
-      page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.OUT_OF_BATCH);
-      getCounter().increase(Counter.pagesOutBatch);
+      page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.LOADED);
+      getCounter().increase(Counter.pagesLoaded);
     } else if (additionsAllowed) {
       // Here we got a new webpage from outlink
       page = createNewRow(url);
-      page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.NOT_FETCHED);
+      page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.CREATED);
 
-      getCounter().increase(Counter.newPages);
+      getCounter().increase(Counter.pagesCreated);
       if (CrawlFilter.sniffPageCategory(url).isDetail()) {
         getCounter().increase(Counter.newDetailPages);
       }
@@ -283,7 +290,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
       inLinks.put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
       /* Find out the smallest depth of this page */
-      WebPage incomingWebPage = graph.getEdgeSource(incomingEdge).getWebPage();
+      WebPage incomingWebPage = incomingEdge.getSourceWebPage();
 
 //      Params.of(
 //          "reversedUrl", TableUtil.reverseUrlOrEmpty(incomingEdge.getSourceUrl()),
@@ -303,9 +310,9 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
 
     if (newDepth < page.getDepth()) {
-      getCounter().increase(Counter.pagesDepthUp);
-      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + page.getBaseUrl(), reportSuffix);
       page.setDepth(newDepth);
+      updateDepthCounter(newDepth);
+      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + page.getBaseUrl(), reportSuffix);
     }
 
     /* Update score */
@@ -424,6 +431,26 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         break;
       default:
         break;
+    }
+  }
+
+  private void updateDepthCounter(int depth) {
+    NutchCounter counter = getCounter();
+    counter.increase(Counter.pagesDepthUp);
+    if (depth == 0) {
+      counter.increase(Counter.pagesDepth0);
+    }
+    else if (depth == 1) {
+      counter.increase(Counter.pagesDepth1);
+    }
+    else if (depth == 2) {
+      counter.increase(Counter.pagesDepth2);
+    }
+    else if (depth == 3) {
+      counter.increase(Counter.pagesDepth3);
+    }
+    else {
+      counter.increase(Counter.pagesDepthN);
     }
   }
 }

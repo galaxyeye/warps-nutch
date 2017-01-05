@@ -7,8 +7,12 @@ import org.apache.nutch.persist.WebPage;
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class WebVertex {
-  private String url;
+  public final static WebVertex EMPTY_WEB_VERTEX = new WebVertex();
+
+  private String url = "";
   private WebPage page;
+
+  public WebVertex() {}
 
   public WebVertex(CharSequence url) {
     this(url.toString(), null);
@@ -19,12 +23,13 @@ public class WebVertex {
     this.page = page;
   }
 
-  public String getUrl() {
-    return url;
-  }
+  public String getUrl() { return url; }
 
-  public void setUrl(String url) {
+  public void setUrl(String url) { this.url = url; }
+
+  public void reset(String url, WebPage page) {
     this.url = url;
+    this.page = page;
   }
 
   public WebPage getWebPage() {

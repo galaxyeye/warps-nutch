@@ -57,7 +57,7 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
     this.score = new DoubleWritable(score);
   }
 
-  public void reset(String reversedUrl, float score) {
+  public void reset(String reversedUrl, double score) {
     this.reversedUrl = new Text(reversedUrl);
     this.score = new DoubleWritable(score);
   }

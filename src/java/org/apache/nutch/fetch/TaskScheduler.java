@@ -750,27 +750,26 @@ public class TaskScheduler extends Configured {
   private void handleResult(FetchTask fetchTask, Content content, ProtocolStatus pstatus, byte status)
       throws IOException, InterruptedException {
     String url = fetchTask.getUrl();
-    WebPage mainPage = fetchTask.getPage();
+    WebPage page = fetchTask.getPage();
 
-    FetchUtil.updateContent(mainPage, content);
-    FetchUtil.updateStatus(mainPage, status, pstatus);
-    FetchUtil.updateFetchTime(mainPage);
-    FetchUtil.updateMarks(mainPage);
+    FetchUtil.updateContent(page, content);
+    FetchUtil.updateStatus(page, status, pstatus);
+    FetchUtil.updateFetchTime(page);
+    FetchUtil.updateMarks(page);
 
-    debugFetchHistory(fetchTask, mainPage, status);
+    debugFetchHistory(fetchTask, page, status);
 
     String reversedUrl = TableUtil.reverseUrl(url);
 
     // Only STATUS_FETCHED can be parsed
     if (parse && status == CrawlStatus.STATUS_FETCHED) {
-      if (!skipTruncated || !ParserMapper.isTruncated(url, mainPage)) {
+      if (!skipTruncated || !ParserMapper.isTruncated(url, page)) {
         synchronized (parseUtil) {
-          parseUtil.process(url, mainPage);
+          parseUtil.process(url, page);
         }
 
-        // Utf8 parseMark = Mark.PARSE.getMark(mainPage);
         // JIT Index
-        if (jitIndexer != null && mainPage.hasMark(PARSE)) {
+        if (jitIndexer != null && page.hasMark(PARSE)) {
           jitIndexer.produce(fetchTask);
         }
       }
@@ -779,13 +778,13 @@ public class TaskScheduler extends Configured {
     // Remove content if storingContent is false. Content is added to page above
     // for ParseUtil be able to parse it
     if (content != null && !storingContent) {
-      mainPage.setContent(new byte[0]);
+      page.setContent(new byte[0]);
     }
 
-    output(reversedUrl, mainPage);
+    output(reversedUrl, page);
     counter.increase(Counter.pagesPeresist);
 
-    updateStatus(fetchTask.getUrl(), mainPage);
+    updateStatus(fetchTask.getUrl(), page);
   }
 
   @SuppressWarnings("unchecked")
@@ -837,9 +836,9 @@ public class TaskScheduler extends Configured {
     counter.updateAffectedRows(url);
   }
 
-  private void debugFetchHistory(FetchTask fetchTask, WebPage mainPage, byte status) {
+  private void debugFetchHistory(FetchTask fetchTask, WebPage page, byte status) {
     // Debug fetch time history
-    String fetchTimeHistory = mainPage.getFetchTimeHistory("");
+    String fetchTimeHistory = page.getFetchTimeHistory("");
     if (fetchTimeHistory.contains(",")) {
       String report = String.format("%60s", fetchTask.getUrl())
 //          + "\turlCategory : " +

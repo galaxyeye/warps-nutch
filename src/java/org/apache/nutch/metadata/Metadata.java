@@ -40,41 +40,50 @@ import java.util.Properties;
 public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
   public enum Name {
-    IS_NAVIGATOR("IN"),
-    IS_SEED("IS"),
+    IS_NAVIGATOR("I_N"),
+    IS_SEED("I_S"),
+    IS_DETAIL("I_D"),
 
-    GENERATE_TIME("GT"),
-    NO_FETCH("NF"),
-    DISTANCE("DIST"),
+    /** generate */
+    GENERATE_TIME("G_GT"),
+    DISTANCE("G_D"),
+
+    /** fetch */
+    FETCH_TIME_HISTORY("F_FTH"),
+    FETCH_COUNT("F_FC"),
+    FETCH_PRIORITY("F_FP"),
+    FETCH_NO_MORE("F_FNM"),
 
     REDIRECT_DISCOVERED("RD"),
 
-    IP("IP"),
-    FETCH_TIME_HISTORY("FTH"),
-    INDEX_TIME_HISTORY("ITH"),
-
-    VOTE_HISTORY("VH"),
-    PUBLISH_TIME("PT"),
-    PREV_PUBLISH_TIME("PPT"),
-    TEXT_CONTENT_LENGTH("TCL"),
-    FETCH_COUNT("FC"),
-    FETCH_PRIORITY("FP"),
-    REFERRER("R"),
-    PREV_REFERRED_PUBLISH_TIME("PRPT"),
-    REFERRED_PUBLISH_TIME("RPT"),
-    REFERRED_ARTICLES("RA"),
-    REFERRED_CHARS("RC"),
+    /** parse */
     OUT_LINK_COUNT("OLC"),
 
-    PAGE_CATEGORY_LIKELIHOOD("PCL"),
-    PAGE_CATEGORY("PC"),
+    /** index */
+    INDEX_TIME_HISTORY("ITH"),
 
-    ARTICLE_SCORE("AS"),
-    CASH_KEY("CASH"),
+    /** score */
+    ARTICLE_SCORE("S_AS"),
+    CASH_KEY("S_CASH"),
 
-    TMP_PAGE_FROM_SEED("TMP_PAGE_FROM_SEED"),
-    TMP_IS_DETAIL("TMP_IS_DETAIL"),
-    TMP_CHARS("TMP_CHARS");
+    /** content */
+    ORIGINAL_CHAR_ENCODING("C_OCE"),
+    CHAR_ENCODING_FOR_CONVERSION("C_CEFC"),
+    PAGE_CATEGORY("C_PC"),
+    PAGE_CATEGORY_LIKELIHOOD("C_PCL"),
+    TEXT_CONTENT_LENGTH("C_TCL"),
+    REFERRER("C_R"),
+    REFERRED_ARTICLES("C_RA"),
+    REFERRED_CHARS("C_RC"),
+    REFERRED_PUBLISH_TIME("C_RPT"),
+    PREV_REFERRED_PUBLISH_TIME("C_PRPT"),
+    PUBLISH_TIME("C_PT"),
+    PREV_PUBLISH_TIME("C_PPT"),
+
+    /** tmp */
+    TMP_PAGE_FROM_SEED("T_PFS"),
+    TMP_IS_DETAIL("T_ID"),
+    TMP_CHARS("T_C");
 
     private String value;
 
@@ -85,6 +94,8 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     public String value() {
       return this.value;
     }
+
+    public static boolean validate() { return values().length == 10; }
   }
 
   public static final String META_TMP = "TMP_";

@@ -19,7 +19,7 @@ import java.io.IOException;
  */
 public class WebVertexWritable implements Writable {
   private Configuration conf;
-  private WebVertex vertex;
+  private WebVertex vertex = new WebVertex();
 
   public WebVertexWritable() {
   }
