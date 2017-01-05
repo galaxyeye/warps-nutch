@@ -32,10 +32,10 @@ import java.util.TimeZone;
  * @author John Xing
  *
  */
+@Deprecated
 public class HttpDateFormat {
 
-  protected static SimpleDateFormat format = new SimpleDateFormat(
-      "EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+  protected static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
 
   /**
    * HTTP date uses TimeZone GMT
@@ -43,30 +43,6 @@ public class HttpDateFormat {
   static {
     format.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
-
-  // HttpDate (long t) {
-  // }
-
-  // HttpDate (String s) {
-  // }
-
-  // /**
-  // * Get the current date in HTTP format.
-  // */
-  // public static String getCurrentDate() {
-  //
-  // long now = System.currentTimeMillis();
-  // if ((now - currentDateGenerated) > 1000) {
-  // synchronized (format) {
-  // if ((now - currentDateGenerated) > 1000) {
-  // currentDateGenerated = now;
-  // currentDate = format.format(new Date(now));
-  // }
-  // }
-  // }
-  // return currentDate;
-  //
-  // }
 
   /**
    * Get the HTTP format of the specified date.
@@ -109,17 +85,6 @@ public class HttpDateFormat {
       time = format.parse(dateString).getTime();
     }
     return time;
-  }
-
-  public static void main(String[] args) throws Exception {
-    Date now = new Date(System.currentTimeMillis());
-
-    String string = HttpDateFormat.toString(now);
-
-    long time = HttpDateFormat.toLong(string);
-
-    System.out.println(string);
-    System.out.println(HttpDateFormat.toString(time));
   }
 
 }

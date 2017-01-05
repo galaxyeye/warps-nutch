@@ -36,14 +36,13 @@ import java.io.IOException;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
-import static org.apache.nutch.persist.Mark.FETCH;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
 class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateMapper.class);
 
-  public enum Counter { rowsMapped, newRowsMapped, notUpdated, urlFiltered, tooDeep }
+  public enum Counter { rowsMapped, newRowsMapped, noInLinks, notUpdated, urlFiltered, tooDeep }
 
   private Configuration conf;
   private Context context;
@@ -78,20 +77,23 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
       return;
     }
 
+    if (page.getInlinks().isEmpty()) {
+      counter.increase(Counter.noInLinks);
+      return;
+    }
+
     String url = TableUtil.unreverseUrl(reversedUrl);
     WebGraph graph = new WebGraph();
-    WebVertex v1 = new WebVertex(url, page);
+    WebVertex v2 = new WebVertex(url, page);
 
     /* A loop in the graph */
-    graph.addVertex(v1);
-    graph.addEdge(v1, v1);
+    graph.addEdgeLenient(v2, v2, Float.MAX_VALUE / 2);
 
-    page.getInlinks().entrySet().forEach(l -> graph.addEdgeLenient(new WebVertex(l.getKey()), v1));
-
-    graph.incomingEdgesOf(v1).forEach(edge -> writeAsSubGraph(edge, graph));
+    page.getInlinks().entrySet().forEach(l -> graph.addEdgeLenient(new WebVertex(l.getKey()), v2));
+    graph.incomingEdgesOf(v2).forEach(edge -> writeAsSubGraph(edge, graph));
 
     counter.increase(Counter.rowsMapped);
-    counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v1));
+    counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v2));
   }
 
   /**
@@ -110,12 +112,10 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
    * */
   private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
     try {
-      WebGraph subgraph = WebGraph.of(edge, graph);
-      WebGraphWritable graphWritable = new WebGraphWritable(subgraph, conf);
-
+      WebGraph subGraph = WebGraph.of(edge, graph);
       String reverseUrl = TableUtil.reverseUrl(edge.getSourceUrl());
       // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), graphWritable);
+      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subGraph, conf));
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

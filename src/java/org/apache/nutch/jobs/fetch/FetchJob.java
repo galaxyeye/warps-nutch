@@ -24,8 +24,8 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
-import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
 import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.fetch.data.FetchEntry;
@@ -121,8 +121,7 @@ public class FetchJob extends NutchJob implements Tool {
     String solrCollection = params.get(ARG_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
 
     /* Schedule & Scoring */
-    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
-
+    String fetchScheduler = FetchScheduleFactory.getFetchSchedule(conf).getClass().getSimpleName();
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
@@ -245,7 +244,7 @@ public class FetchJob extends NutchJob implements Tool {
         + "\n \t \t  [-resume] [-numTasks N]\n"
         + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n"
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
         + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode));"
         + "    -threads N    - number of fetching threads per task\n"
         + "    -resume       - resume interrupted job\n"
@@ -313,8 +312,6 @@ public class FetchJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     Configuration conf = ConfigUtils.create();
     // NutchMaster should run on master instance
     NutchMaster.startAsDaemon(conf);

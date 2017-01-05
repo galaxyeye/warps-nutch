@@ -37,6 +37,8 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
+import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
@@ -52,9 +54,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
+import static org.apache.nutch.metadata.Metadata.Name.GENERATE_TIME;
+import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.persist.Mark.PARSE;
-import static org.apache.nutch.persist.Mark.UPDATEOUTG;
+import static org.apache.nutch.persist.Mark.*;
 
 class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 
@@ -62,7 +65,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
   private enum PageExistence { IN_BATCH, OUT_OF_BATCH, NOT_FETCHED }
 
-  public enum Counter { pagesDepthUp, pagesPeresist, existOutPages, newPages, newDetailPages }
+  public enum Counter { pagesDepthUp, pagesInBatch, pagesOutBatch, newPages, newDetailPages }
 
   private int retryMax;
   private Duration maxFetchInterval;
@@ -71,6 +74,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private boolean additionsAllowed;
   private int maxLinks;
   private DataStore<String, GoraWebPage> datastore;
+  private String reportSuffix;
+  private NutchMetrics nutchMetrics;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -85,6 +90,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
     maxLinks = conf.getInt("db.update.max.inlinks", 10000);
+    nutchMetrics = NutchMetrics.getInstance(conf);
+    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
@@ -161,10 +168,10 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       updateFetchSchedule(url, page);
       updateMetadata(page);
       updateStatusCounter(page);
+      getCounter().increase(Counter.pagesInBatch);
     }
 
     context.write(reversedUrl, page.get());
-    getCounter().increase(Counter.pagesPeresist);
     getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
     getCounter().increase(NutchCounter.Counter.inlinks, page.getInlinks().size());
   }
@@ -220,7 +227,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     if (!loadedPage.isEmpty()) {
       page = loadedPage;
       page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.OUT_OF_BATCH);
-      getCounter().increase(Counter.existOutPages);
+      getCounter().increase(Counter.pagesOutBatch);
     } else if (additionsAllowed) {
       // Here we got a new webpage from outlink
       page = createNewRow(url);
@@ -267,25 +274,23 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     Set<WebEdge> incomingEdges = graph.incomingEdgesOf(focus);
     WebPage page = focus.getWebPage();
 
+    Map<CharSequence, CharSequence> inLinks = new HashMap<>();
     int newDepth = page.getDepth();
     for (WebEdge incomingEdge : incomingEdges) {
       if (incomingEdge.isLoop()) {
         continue;
       }
 
-      page.getInlinks().put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
+      inLinks.put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
       /* Find out the smallest depth of this page */
       WebPage incomingWebPage = graph.getEdgeSource(incomingEdge).getWebPage();
 
 //      Params.of(
 //          "reversedUrl", TableUtil.reverseUrlOrEmpty(incomingEdge.getSourceUrl()),
 //          "edge", incomingEdge.getSourceUrl() + " -> " + incomingEdge.getTargetUrl(),
-//          "baseUrl", incomingWebPage.getBaseUrl() + " -> " + page.getBaseUrl(),
+////          "baseUrl", incomingWebPage.getBaseUrl() + " -> " + page.getBaseUrl(),
 //          "score", graph.getEdgeWeight(incomingEdge),
-//          "depth", newDepth + " -> " + incomingWebPage.getDepth(), // should be 0
-//          "publishTime", incomingWebPage.getRefPublishTime() + " -> " + page.getPublishTime(),
-//          "pageCategory", incomingWebPage.getPageCategory(),
-//          "likelihood", incomingWebPage.getPageCategoryLikelihood()
+//          "depth", newDepth + " -> " + (incomingWebPage.getDepth() + 1) // should be 0
 //      ).withLogger(LOG).info(true);
 
       if (incomingWebPage.getDepth() + 1 < newDepth) {
@@ -293,8 +298,13 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       }
     }
 
+    if (!inLinks.isEmpty()) {
+      page.setInlinks(inLinks);
+    }
+
     if (newDepth < page.getDepth()) {
       getCounter().increase(Counter.pagesDepthUp);
+      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + page.getBaseUrl(), reportSuffix);
       page.setDepth(newDepth);
     }
 
@@ -305,10 +315,25 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       page.setScore(0.0f);
       getCounter().increase(NutchCounter.Counter.errors);
     }
+
+//    Params.of(
+//        "reversedUrl", TableUtil.reverseUrlOrEmpty(focus.getUrl()),
+//        "inlinks", page.getInlinks().size(),
+//        "score", page.getScore(),
+//        "depth", page.getDepth()
+//    ).withLogger(LOG).info(true);
   }
 
   private void updateMetadata(WebPage page) {
+    // Clear temporary metadata
+    page.clearMetadata(REDIRECT_DISCOVERED);
+    page.clearMetadata(GENERATE_TIME);
     page.putMarkIfNonNull(UPDATEOUTG, page.getMark(PARSE));
+    page.removeMark(INJECT);
+    page.removeMark(GENERATE);
+    page.removeMark(FETCH);
+    page.removeMark(PARSE);
+    page.removeMark(INDEX);
   }
 
   private void updateFetchSchedule(String url, WebPage page) {

@@ -19,7 +19,6 @@ package org.apache.nutch.jobs.samples;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.nutch.jobs.NutchMapper;
-import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.TableUtil;
@@ -29,11 +28,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Nutch.PARAM_MAPPER_LIMIT;
+import static org.apache.nutch.metadata.Nutch.PARAM_LIMIT;
 
 public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(SampleMapper.class);
+  public static final Logger LOG = LoggerFactory.getLogger(SampleJob.class);
 
   public enum Counter { rowsMapped, newRowsMapped, notFetched, urlFiltered }
 
@@ -49,7 +48,7 @@ public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWeb
 
     getCounter().register(Counter.class);
 
-    limit = conf.getInt(PARAM_MAPPER_LIMIT, -1);
+    limit = conf.getInt(PARAM_LIMIT, -1);
   }
 
   /**
@@ -57,6 +56,11 @@ public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWeb
    * */
   @Override
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
+    if (limit > 0 && count++ > limit) {
+      stop("Hit limit, stop");
+      return;
+    }
+
     getCounter().increase(rows);
 
     WebPage page = WebPage.wrap(row);
@@ -64,13 +68,13 @@ public class SampleMapper extends NutchMapper<String, GoraWebPage, Text, GoraWeb
     String url = TableUtil.unreverseUrl(reversedUrl);
     LOG.debug("Map : " + url);
 
-    if (!page.hasMark(Mark.FETCH)) {
-      getCounter().increase(Counter.notFetched);
-      return;
-    }
+//    if (!page.hasMark(Mark.FETCH)) {
+//      getCounter().increase(Counter.notFetched);
+//      return;
+//    }
 
-    if (limit > 0 && ++count > limit) {
-      stop("Hit limit, stop");
+    for (int i = 0; i < 5; ++i) {
+      page.getInlinks().put("http://www.example.com/mapper" + i, String.valueOf(i));
     }
 
     context.write(new Text(reversedUrl), page.get());

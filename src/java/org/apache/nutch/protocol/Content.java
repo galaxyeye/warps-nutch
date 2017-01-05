@@ -223,23 +223,15 @@ public final class Content implements Writable {
    * @see <a href="http://www.iana.org/assignments/media-types/">
    *      http://www.iana.org/assignments/media-types/</a>
    */
-  public String getContentType() {
-    return contentType;
-  }
+  public String getContentType() { return contentType; }
 
-  public void setContentType(String contentType) {
-    this.contentType = contentType;
-  }
+  public void setContentType(String contentType) { this.contentType = contentType; }
 
   /** Other protocol-specific data. */
-  public Metadata getMetadata() {
-    return metadata;
-  }
+  public Metadata getMetadata() { return metadata; }
 
   /** Other protocol-specific data. */
-  public void setMetadata(Metadata metadata) {
-    this.metadata = metadata;
-  }
+  public void setMetadata(Metadata metadata) { this.metadata = metadata; }
 
   public boolean equals(Object o) {
     if (!(o instanceof Content)) {

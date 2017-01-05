@@ -75,7 +75,7 @@ public class SampleJob extends NutchJob implements Tool {
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
-    conf.setInt(PARAM_MAPPER_LIMIT, limit);
+    conf.setInt(PARAM_LIMIT, limit);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -111,7 +111,7 @@ public class SampleJob extends NutchJob implements Tool {
 
   private void printUsage() {
     String usage = "Usage: SampleChainedJob [-crawlId <id>] [-batchId <batchId>] [-limit <limit>] \n"
-        + "    -crawlId <id>      - the id to prefix the schemas to operate on (default: persist.crawl.id)\n"
+        + "    -crawlId <id>      - the id to prefix the schemas to operate on (default: storage.crawl.id)\n"
         + "    -batchId <batchId> - the batch id (default: -all)\n"
         + "    -limit   <limit>   - the limit \n ";
 
@@ -141,8 +141,6 @@ public class SampleJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     int res = ToolRunner.run(ConfigUtils.create(), new SampleJob(), args);
     System.exit(res);
   }

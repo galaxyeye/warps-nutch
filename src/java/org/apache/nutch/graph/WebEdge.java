@@ -21,13 +21,18 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class WebEdge extends DefaultWeightedEdge {
 
-  private String anchor;
+  private String anchor = "";
 
   public WebEdge() {}
 
   public String getAnchor() { return anchor; }
 
-  public void setAnchor(CharSequence anchor) { this.anchor = anchor.toString(); }
+  public void setAnchor(CharSequence anchor) {
+    if (anchor == null) {
+      anchor = "";
+    }
+    this.anchor = anchor.toString();
+  }
 
   public boolean isLoop() { return getSource().equals(getTarget()); }
 

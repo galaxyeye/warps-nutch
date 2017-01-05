@@ -97,12 +97,12 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
     ignoreGenerated = !reGenerate || conf.getBoolean(PARAM_IGNORE_GENERATED, false);
 
-    this.nutchMetrics = NutchMetrics.getInstance(conf);
+    nutchMetrics = NutchMetrics.getInstance(conf);
     boolean ignoreUnreachableHosts = conf.getBoolean("generator.ignore.unreachable.hosts", true);
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
+    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
     urlFilters = filter ? new URLFilters(conf) : null;

@@ -121,9 +121,7 @@ public class CommandRunner {
       }
     } catch (TimeoutException ex) {
       _timedout = true;
-    } catch (BrokenBarrierException bbe) {
-      /* IGNORE */
-    } catch (InterruptedException e) {
+    } catch (BrokenBarrierException | InterruptedException bbe) {
       /* IGNORE */
     }
 

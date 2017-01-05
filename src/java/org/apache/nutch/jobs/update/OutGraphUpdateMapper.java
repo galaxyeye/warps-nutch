@@ -19,7 +19,10 @@ package org.apache.nutch.jobs.update;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.nutch.graph.*;
+import org.apache.nutch.graph.GraphGroupKey;
+import org.apache.nutch.graph.WebEdge;
+import org.apache.nutch.graph.WebGraph;
+import org.apache.nutch.graph.WebVertex;
 import org.apache.nutch.graph.io.WebGraphWritable;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchMapper;
@@ -38,6 +41,7 @@ import java.io.IOException;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
+import static org.apache.nutch.metadata.Nutch.PARAM_LIMIT;
 import static org.apache.nutch.persist.Mark.FETCH;
 
 class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
@@ -52,6 +56,8 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
 
   private int maxDistance = Integer.MAX_VALUE;
   private int maxOutlinks = 1000;
+  private int limit = -1;
+  private int count = 0;
 
   private ScoringFilters scoringFilters;
 
@@ -66,6 +72,7 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
     counter.register(Counter.class);
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
+    limit = conf.getInt(PARAM_LIMIT, -1);
 
     maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, Integer.MAX_VALUE);
     scoringFilters = new ScoringFilters(conf);
@@ -74,7 +81,8 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
         "maxDistance", maxDistance,
-        "maxOutlinks", maxOutlinks
+        "maxOutlinks", maxOutlinks,
+        "limit", limit
     ));
   }
 
@@ -89,6 +97,10 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
       return;
     }
 
+    if (page.getOutlinks().isEmpty()) {
+      return;
+    }
+
     final int depth = page.getDepth();
     if (depth >= maxDistance) {
       counter.increase(Counter.tooDeep);
@@ -100,10 +112,10 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
     WebVertex v1 = new WebVertex(url, page);
 
     /* A loop in the graph */
-    graph.addVertex(v1);
-    graph.addEdge(v1, v1);
-
-    page.getOutlinks().entrySet().forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
+    graph.addEdgeLenient(v1, v1, Float.MAX_VALUE / 2);
+    page.getOutlinks().entrySet().stream()
+        .limit(maxOutlinks)
+        .forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
 
     try {
       scoringFilters.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
@@ -115,6 +127,10 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
 
     counter.increase(Counter.rowsMapped);
     counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
+
+    if (limit > 0 && ++count > limit) {
+      stop("Hit limit, stop");
+    }
   }
 
   /**
@@ -132,11 +148,10 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
   private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
     try {
       WebGraph subgraph = WebGraph.of(edge, graph);
-      WebGraphWritable graphWritable = new WebGraphWritable(subgraph, conf);
 
       String reverseUrl = TableUtil.reverseUrl(edge.getTargetUrl());
       // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), graphWritable);
+      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subgraph, conf));
     } catch (IOException|InterruptedException e) {
       LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
     }

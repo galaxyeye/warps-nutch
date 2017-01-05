@@ -101,9 +101,7 @@ public class WebPage {
     page.setBaseUrl(value);
   }
 
-  public void setBaseUrl(String value) {
-    page.setBaseUrl(u8(value));
-  }
+  public void setBaseUrl(String value) { page.setBaseUrl(u8(value)); }
 
   public Integer getStatus() {
     return page.getStatus();
@@ -200,9 +198,7 @@ public class WebPage {
     page.setContent(value);
   }
 
-  public void setContent(byte[] value) {
-    page.setContent(ByteBuffer.wrap(value));
-  }
+  public void setContent(byte[] value) { page.setContent(ByteBuffer.wrap(value)); }
 
   public void setContent(String value) {
     setContent(value.getBytes());

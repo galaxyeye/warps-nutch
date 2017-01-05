@@ -219,7 +219,6 @@ public class InjectJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
     int res = ToolRunner.run(ConfigUtils.create(), new InjectJob(), args);
     System.exit(res);
   }

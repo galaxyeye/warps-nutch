@@ -17,13 +17,6 @@
 
 package org.apache.nutch.util.domain;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.util.domain.DomainSuffix.Status;
 import org.apache.nutch.util.domain.TopLevelDomain.Type;
@@ -35,6 +28,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
  * For parsing xml files containing domain suffix definitions. Parsed xml files
  * should validate against <code>domain-suffixes.xsd</code>
@@ -43,12 +42,10 @@ import org.xml.sax.SAXException;
  */
 class DomainSuffixesReader {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(DomainSuffixesReader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DomainSuffixesReader.class);
 
   void read(DomainSuffixes tldEntries, InputStream input) throws IOException {
     try {
-
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setIgnoringComments(true);
       DocumentBuilder builder = factory.newDocumentBuilder();
@@ -59,25 +56,18 @@ class DomainSuffixesReader {
       if (root != null && root.getTagName().equals("domains")) {
 
         Element tlds = (Element) root.getElementsByTagName("tlds").item(0);
-        Element suffixes = (Element) root.getElementsByTagName("suffixes")
-            .item(0);
+        Element suffixes = (Element) root.getElementsByTagName("suffixes").item(0);
 
         // read tlds
-        readITLDs(tldEntries, (Element) tlds.getElementsByTagName("itlds")
-            .item(0));
-        readGTLDs(tldEntries, (Element) tlds.getElementsByTagName("gtlds")
-            .item(0));
-        readCCTLDs(tldEntries, (Element) tlds.getElementsByTagName("cctlds")
-            .item(0));
+        readITLDs(tldEntries, (Element) tlds.getElementsByTagName("itlds").item(0));
+        readGTLDs(tldEntries, (Element) tlds.getElementsByTagName("gtlds").item(0));
+        readCCTLDs(tldEntries, (Element) tlds.getElementsByTagName("cctlds").item(0));
 
         readSuffixes(tldEntries, suffixes);
       } else {
         throw new IOException("xml file is not valid");
       }
-    } catch (ParserConfigurationException ex) {
-      LOG.warn(StringUtils.stringifyException(ex));
-      throw new IOException(ex.getMessage());
-    } catch (SAXException ex) {
+    } catch (ParserConfigurationException | SAXException ex) {
       LOG.warn(StringUtils.stringifyException(ex));
       throw new IOException(ex.getMessage());
     }
@@ -94,8 +84,7 @@ class DomainSuffixesReader {
   void readGTLDs(DomainSuffixes tldEntries, Element el) {
     NodeList children = el.getElementsByTagName("tld");
     for (int i = 0; i < children.getLength(); i++) {
-      tldEntries.addDomainSuffix(readGTLD((Element) children.item(i),
-          Type.GENERIC));
+      tldEntries.addDomainSuffix(readGTLD((Element) children.item(i), Type.GENERIC));
     }
   }
 

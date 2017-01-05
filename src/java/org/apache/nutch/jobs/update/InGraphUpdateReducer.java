@@ -36,16 +36,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Metadata.Name.GENERATE_TIME;
-import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
-import static org.apache.nutch.metadata.Nutch.VAR_PAGE_EXISTENCE;
-import static org.apache.nutch.persist.Mark.*;
+import static org.apache.nutch.persist.Mark.UPDATEING;
+import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
 class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
 
-  public enum Counter { existInPages, pagesPeresist }
+  public enum Counter { existInPages }
   private DataStore<String, GoraWebPage> datastore;
 
   @Override
@@ -95,7 +93,6 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
     context.write(reversedUrl, page.get());
 
-    getCounter().increase(Counter.pagesPeresist);
     getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
   }
 
@@ -152,15 +149,15 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
       WebPage outgoingPage = graph.getEdgeTarget(outgoingEdge).getWebPage();
 
-      Params.of(
-          "reversedUrl", TableUtil.reverseUrlOrEmpty(outgoingEdge.getSourceUrl()),
-          "edge", outgoingEdge.getSourceUrl() + " -> " + outgoingEdge.getTargetUrl(),
-          "baseUrl", outgoingPage.getBaseUrl() + " -> " + page.getBaseUrl(),
-          "score", graph.getEdgeWeight(outgoingEdge),
-          "publishTime", outgoingPage.getRefPublishTime() + " -> " + page.getPublishTime(),
-          "pageCategory", outgoingPage.getPageCategory(),
-          "likelihood", outgoingPage.getPageCategoryLikelihood()
-      ).withLogger(LOG).info(true);
+//      Params.of(
+//          "reversedUrl", TableUtil.reverseUrlOrEmpty(outgoingEdge.getSourceUrl()),
+//          "edge", outgoingEdge.getSourceUrl() + " -> " + outgoingEdge.getTargetUrl(),
+//          "baseUrl", outgoingPage.getBaseUrl() + " -> " + page.getBaseUrl(),
+//          "score", graph.getEdgeWeight(outgoingEdge),
+//          "publishTime", outgoingPage.getRefPublishTime() + " -> " + page.getPublishTime(),
+//          "pageCategory", outgoingPage.getPageCategory(),
+//          "likelihood", outgoingPage.getPageCategoryLikelihood()
+//      ).withLogger(LOG).info(true);
 
       /* Update out-link page */
       if (outgoingPage.isDetailPage(0.80f)) {
@@ -172,15 +169,7 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
   }
 
   private void updateMetadata(WebPage page) {
-    // Clear temporary metadata
-    page.clearMetadata(REDIRECT_DISCOVERED);
-    page.clearMetadata(GENERATE_TIME);
-
     page.putMarkIfNonNull(UPDATEING, page.getMark(UPDATEOUTG));
-
-    page.removeMark(INJECT);
-    page.removeMark(GENERATE);
-    page.removeMark(FETCH);
-    page.removeMark(PARSE);
+    page.removeMark(UPDATEOUTG);
   }
 }

@@ -3,10 +3,12 @@ package org.apache.nutch.fetch;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.protocol.Content;
+import org.apache.nutch.util.NutchUtil;
 
 import java.time.Instant;
 
-import static org.apache.nutch.persist.Mark.*;
+import static org.apache.nutch.persist.Mark.FETCH;
+import static org.apache.nutch.persist.Mark.GENERATE;
 
 /**
  * Created by vincent on 16-9-10.
@@ -29,22 +31,16 @@ public class FetchUtil {
 
   static public void updateMarks(WebPage page) {
     page.putMarkIfNonNull(FETCH, page.getMark(GENERATE));
-    page.removeMark(INDEX);
   }
 
-  static public void updateContent(WebPage page, Content content) {
-    updateContent(page, content, null);
-  }
+  static public void updateContent(WebPage page, Content content) { updateContent(page, content, null); }
 
   static public void updateContent(WebPage page, Content content, String contentType) {
     if (content == null) {
       return;
     }
 
-    // Content is added to page here for ParseUtil be able to parse it.
-//    page.setBaseUrl(new Utf8(content.getBaseUrl()));
     page.setBaseUrl(content.getBaseUrl());
-//    page.setContent(ByteBuffer.wrap(content.getContent()));
     page.setContent(content.getContent());
 
     if (contentType != null) {
@@ -55,7 +51,9 @@ public class FetchUtil {
 
     if (contentType != null) {
       page.setContentType(contentType);
-      // LOG.error("Failed to determine content type!");
+    }
+    else {
+      NutchUtil.LOG.error("Failed to determine content type!");
     }
   }
 

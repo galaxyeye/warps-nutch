@@ -32,7 +32,7 @@ import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 
 public class SampleReducer extends NutchReducer<Text, GoraWebPage, String, GoraWebPage> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(SampleReducer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(SampleJob.class);
 
   public enum Counter { newRows }
 
@@ -67,9 +67,13 @@ public class SampleReducer extends NutchReducer<Text, GoraWebPage, String, GoraW
 
     String reversedUrl = key.toString();
     String url = TableUtil.unreverseUrl(reversedUrl);
-    LOG.debug("Reduce : " + url);
+    LOG.debug("Reduce : " + reversedUrl);
 
     for (GoraWebPage page : values) {
+      for (int i = 0; i < 5; ++i) {
+        page.getInlinks().put("http://www.example.com/reducer" + i, String.valueOf(i));
+      }
+
       context.write(reversedUrl, page);
     }
 

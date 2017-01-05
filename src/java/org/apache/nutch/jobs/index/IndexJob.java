@@ -226,7 +226,7 @@ public class IndexJob extends NutchJob implements Tool {
         + "\n \t \t   [-resume] [-threads N] [-limit limit] [-numTasks N]\n"
         + "\n \t \t   [-solrUrl url] [-zkHostString zk] [-collection collection]\n"
         + "    <batchId>     - crawl identifier returned by Generator, or -all for all \n \t \t    generated batchId-s\n"
-        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: persist.crawl.id)\n"
+        + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
         + "    -fetchMode <mode> - the fetch mode, can be one of [native|proxy|crowdsourcing], \n \t \t    (default: fetcher.fetch.mode)\");"
         + "    -threads N    - number of fetching threads per task\n"
         + "    -limit        - limit\n"
@@ -289,8 +289,6 @@ public class IndexJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("---------------------------------------------------\n\n");
-
     final int res = ToolRunner.run(ConfigUtils.create(), new IndexJob(), args);
     System.exit(res);
   }
