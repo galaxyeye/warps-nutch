@@ -34,11 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Objects;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.jobs.update.InGraphUpdateReducer.Counter.pagesNotExist;
+import static org.apache.nutch.metadata.Nutch.VAR_UPDATED_BY_OUT_PAGE;
 import static org.apache.nutch.persist.Mark.UPDATEING;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
@@ -46,7 +46,7 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
 
-  public enum Counter { pagesOutBatch, pagesNotExist }
+  public enum Counter { pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, updated }
 
   private DataStore<String, GoraWebPage> datastore;
 
@@ -55,6 +55,7 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     super.setup(context);
 
     getCounter().register(Counter.class);
+//    getReporter().setLog(LOG_ADDITIVITY);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
 
@@ -97,9 +98,10 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     updateGraph(graph);
     updateMetadata(page);
 
-    context.write(reversedUrl, page.get());
-
-    getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
+    if (page.getTempVar(VAR_UPDATED_BY_OUT_PAGE, false)) {
+      context.write(reversedUrl, page.get());
+      getCounter().updateAffectedRows(url);
+    }
   }
 
   /**
@@ -112,15 +114,15 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
    *      / \
    *     v  v
    *    v4  v5
-   *</pre>
-   * */
+   * </pre>
+   */
   private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
     WebGraph graph = new WebGraph();
 
     WebVertex focus = new WebVertex(url);
     WebPage page = null;
     for (WebGraphWritable graphWritable : subGraphs) {
-      assert(graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
+      assert (graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
 
       WebGraph subGraph = graphWritable.get();
       WebEdge edge = subGraph.firstEdge();
@@ -131,13 +133,15 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     }
 
     if (page == null) {
-      WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
+      page = WebPage.wrap(datastore.get(reversedUrl));
 
       // Page is already in the db
-      if (!loadedPage.isEmpty()) {
-        page = loadedPage;
-        getCounter().increase(Counter.pagesOutBatch);
+      if (!page.isEmpty()) {
+        getCounter().increase(Counter.pagesLoaded);
       }
+    }
+    else {
+      getCounter().increase(Counter.pagesPassed);
     }
 
     focus.setWebPage(page);
@@ -150,6 +154,7 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     WebVertex focus = graph.getFocus();
     WebPage page = focus.getWebPage();
 
+    int updated = 0;
     for (WebEdge outgoingEdge : graph.outgoingEdgesOf(focus)) {
       if (outgoingEdge.isLoop()) {
         continue;
@@ -172,7 +177,14 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
         page.updateRefPublishTime(outgoingPage.getPublishTime());
         page.increaseRefChars(outgoingPage.getTextContentLength());
         page.increaseRefArticles(1);
+        ++updated;
       }
+    }
+
+    if (updated > 0) {
+      page.setTempVar(VAR_UPDATED_BY_OUT_PAGE, true);
+      getCounter().increase(Counter.pagesUpdated);
+      getCounter().increase(Counter.updated, updated);
     }
   }
 

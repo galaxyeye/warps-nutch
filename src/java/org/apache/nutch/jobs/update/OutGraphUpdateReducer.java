@@ -22,7 +22,6 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.SignatureComparator;
-import org.apache.nutch.fetch.TaskScheduler;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
@@ -87,6 +86,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     super.setup(context);
 
     getCounter().register(Counter.class);
+//    getReporter().setLog(LOG_ADDITIVITY);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     retryMax = conf.getInt("db.fetch.retry.max", 3);
@@ -310,9 +310,9 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
 
     if (newDepth < page.getDepth()) {
-      page.setDepth(newDepth);
-      updateDepthCounter(newDepth);
       nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + page.getBaseUrl(), reportSuffix);
+      page.setDepth(newDepth);
+      updateDepthCounter(newDepth, page);
     }
 
     /* Update score */
@@ -434,9 +434,14 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
   }
 
-  private void updateDepthCounter(int depth) {
+  private void updateDepthCounter(int depth, WebPage page) {
     NutchCounter counter = getCounter();
-    counter.increase(Counter.pagesDepthUp);
+
+    PageExistence pageExistence = page.getTempVar(VAR_PAGE_EXISTENCE, PageExistence.PASSED);
+    if (pageExistence != PageExistence.CREATED) {
+      counter.increase(Counter.pagesDepthUp);
+    }
+
     if (depth == 0) {
       counter.increase(Counter.pagesDepth0);
     }

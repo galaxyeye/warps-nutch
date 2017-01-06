@@ -40,6 +40,7 @@ import java.io.IOException;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
+import static org.apache.nutch.jobs.NutchReporter.LOG_ADDITIVITY;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
 import static org.apache.nutch.metadata.Nutch.PARAM_LIMIT;

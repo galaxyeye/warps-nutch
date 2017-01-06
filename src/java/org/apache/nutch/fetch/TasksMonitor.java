@@ -319,14 +319,9 @@ public class TasksMonitor {
       LOG.info("Retired queues for host unreachable : " + unreachableQueueIds);
     }
 
-    int[] counter = {0, 0};
-    fetchQueues.forEach(queue -> {
-      queue.retune(force);
-      counter[0] += queue.readyCount();
-      counter[1] += queue.pendingCount();
-    });
-    readyTaskCount.set(counter[0]);
-    pendingTaskCount.set(counter[1]);
+    fetchQueues.forEach(queue -> queue.retune(force));
+
+    calculateTaskCounter();
   }
 
   /** Get a pending task, the task can be in working queues or in detached queues */
@@ -337,6 +332,7 @@ public class TasksMonitor {
 
   public synchronized void dump(int limit) {
     fetchQueues.dump(limit);
+    calculateTaskCounter();
   }
 
   /**
@@ -529,6 +525,16 @@ public class TasksMonitor {
   public int pendingTaskCount() { return pendingTaskCount.get(); }
 
   public int getFinishedTaskCount() {return finishedTaskCount.get(); }
+
+  private void calculateTaskCounter() {
+    int[] counter = {0, 0};
+    fetchQueues.forEach(queue -> {
+      counter[0] += queue.readyCount();
+      counter[1] += queue.pendingCount();
+    });
+    readyTaskCount.set(counter[0]);
+    pendingTaskCount.set(counter[1]);
+  }
 
   private FetchQueue getSlowestQueue() {
     FetchQueue queue = null;

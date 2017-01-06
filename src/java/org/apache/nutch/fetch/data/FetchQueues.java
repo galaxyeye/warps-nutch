@@ -77,31 +77,6 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
     return true;
   }
 
-//  private FetchQueue allocateTopPriorityFetchQueue() {
-//    if (priorityActiveQueues.isEmpty()) {
-//      activeQueues.values().stream().filter(FetchQueue::hasReadyTasks).forEach(priorityActiveQueues::add);
-//    }
-//
-//    FetchQueue queue = priorityActiveQueues.poll();
-//    return queue == null ? null : activeQueues.get(queue.getId());
-//  }
-
-//  public FetchQueue getOrPeek(String queueId) {
-//    FetchQueue queue = get(queueId);
-//
-//    if (queue == null) {
-//      queue = allocateTopPriorityFetchQueue();
-//      if (LOG.isTraceEnabled()) {
-//        if (queue != null && activeQueues.size() > 5) {
-//          LOG.trace(String.format("Fetch queue allocated, readyCount : %s, pendingCount : %s, queueId : %s",
-//              queue.readyCount(), queue.pendingCount(), queue.getId()));
-//        }
-//      }
-//    }
-//
-//    return queue;
-//  }
-
   @Override
   public Iterator<FetchQueue> iterator() { return priorityActiveQueues.iterator(); }
 
