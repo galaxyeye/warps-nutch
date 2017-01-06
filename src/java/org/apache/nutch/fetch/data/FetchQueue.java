@@ -250,9 +250,7 @@ public class FetchQueue implements Comparable<FetchQueue> {
 
   public int readyCount() { return readyTasks.size(); }
 
-  public int pendingCount() {
-    return pendingTasks.size();
-  }
+  public int pendingCount() { return pendingTasks.size(); }
 
   public int finishedCount() { return totalFinishedTasks; }
 

@@ -17,7 +17,6 @@
 package org.apache.nutch.persist;
 
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.PageCategory;
@@ -31,8 +30,6 @@ import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.jetbrains.annotations.Contract;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
@@ -42,9 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Metadata.*;
-import static org.apache.nutch.metadata.Metadata.Name.DISTANCE;
-import static org.apache.nutch.metadata.Metadata.Name.FETCH_NO_MORE;
-import static org.apache.nutch.metadata.Metadata.Name.PAGE_CATEGORY;
+import static org.apache.nutch.metadata.Metadata.Name.*;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 
@@ -83,9 +78,7 @@ public class WebPage {
     return new WebPage(page);
   }
 
-  public GoraWebPage get() {
-    return page;
-  }
+  public GoraWebPage get() { return page; }
 
   public boolean isEmpty() {
     return page == null;
@@ -726,20 +719,18 @@ public class WebPage {
     return firstIndexTime == null ? defaultValue : firstIndexTime;
   }
 
-  public Utf8 getMark(Mark mark) {
-    return (Utf8) page.getMarkers().get(u8(mark.value()));
-  }
+  public Utf8 getMark(Mark mark) { return (Utf8) page.getMarkers().get(wrapKey(mark)); }
 
   public boolean hasMark(Mark mark) {
     return getMark(mark) != null;
   }
 
   public void putMark(Mark mark, String value) {
-    putMark(mark, u8(value));
+    putMark(mark, wrapValue(value));
   }
 
   public void putMark(Mark mark, Utf8 value) {
-    page.getMarkers().put(u8(mark.value()), value);
+    page.getMarkers().put(wrapKey(mark), value);
   }
 
   public void putMarkIfNonNull(Mark mark, Utf8 value) {
@@ -748,8 +739,10 @@ public class WebPage {
     }
   }
 
-  public Utf8 removeMark(Mark mark) {
-    return (Utf8) page.getMarkers().put(u8(mark.value()), null);
+  public void removeMark(Mark mark) {
+    if (hasMark(mark)) {
+      page.getMarkers().put(wrapKey(mark), null);
+    }
   }
 
   public String getHeader(String name, String defaultValue) {

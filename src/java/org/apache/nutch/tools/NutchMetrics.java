@@ -4,8 +4,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.jobs.NutchReporter;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,7 @@ import static org.apache.nutch.metadata.Nutch.*;
 public class NutchMetrics implements AutoCloseable {
 
   public static final Logger LOG = LoggerFactory.getLogger(NutchMetrics.class);
-  public static final Logger REPORT_LOG = NutchReporter.chooseLog(false);
+  public static final Logger REPORT_LOG = NutchReporter.LOG_NON_ADDITIVITY;
 
   private static NutchMetrics instance;
 

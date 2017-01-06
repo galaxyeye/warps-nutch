@@ -30,14 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * */
 public class NutchReporter extends Thread {
 
-  private static final Logger LOG_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class + "Add");
-  private static final Logger LOG_NON_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class);
-  public static Logger LOG = LoggerFactory.getLogger(NutchReporter.class);
+  public static final Logger LOG_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class + "Add");
+  public static final Logger LOG_NON_ADDITIVITY = LoggerFactory.getLogger(NutchReporter.class);
 
-  public static Logger chooseLog(boolean additive) {
-    // LOG = additive ? LOG_ADDITIVITY : LOG_NON_ADDITIVITY;
-    return LOG;
-  }
+  private Logger LOG = LOG_NON_ADDITIVITY;
 
   @SuppressWarnings("rawtypes")
   protected final TaskInputOutputContext context;
@@ -71,6 +67,12 @@ public class NutchReporter extends Thread {
     setDaemon(true);
 
     startReporter();
+  }
+
+  public Logger getLog() { return LOG; }
+
+  public void setLog(Logger log) {
+    LOG = log;
   }
 
   /**

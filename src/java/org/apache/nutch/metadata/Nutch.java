@@ -17,9 +17,7 @@
 package org.apache.nutch.metadata;
 
 import org.apache.avro.util.Utf8;
-import org.apache.hadoop.io.Text;
 
-import java.nio.ByteBuffer;
 import java.time.Instant;
 
 /**
@@ -268,6 +266,7 @@ public interface Nutch {
    * */
   String VAR_OUTLINKS_COUNT = "outlinks_count";
   String VAR_PAGE_EXISTENCE = "page_existence";
+  String VAR_UPDATED_BY_OUT_PAGE = "updated_by_out_page";
 
   /**
    * Variable values

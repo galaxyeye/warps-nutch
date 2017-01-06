@@ -44,7 +44,7 @@ public class FetchThread extends Thread implements Comparable<FetchThread> {
   }
 
   private final Logger LOG = FetchMonitor.LOG;
-  public static final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
+  private final Logger REPORT_LOG = NutchMetrics.REPORT_LOG;
 
   private static AtomicInteger instanceSequence = new AtomicInteger(0);
 
