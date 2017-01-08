@@ -19,28 +19,32 @@ package org.apache.nutch.jobs.update;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.nutch.graph.GraphGroupKey;
-import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.graph.io.WebGraphWritable;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+
+import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 
 class OutGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, GraphGroupKey, WebGraphWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(OutGraphUpdateCombiner.class);
 
   private Configuration conf;
+  private WebGraphWritable webGraphWritable;
+  private int edgeCountBeforeCombine = 0;
+  private int edgeCountAfterCombine = 0;
 
   @Override
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
 
     conf = context.getConfiguration();
+    webGraphWritable = new WebGraphWritable(null, IGNORE_TARGET, conf);
 
     Params.of(
         "className", this.getClass().getSimpleName()
@@ -49,42 +53,24 @@ class OutGraphUpdateCombiner extends Reducer<GraphGroupKey, WebGraphWritable, Gr
 
   @Override
   protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> subGraphs, Context context) {
+    WebGraph graph = new WebGraph();
+
     try {
-      WebGraph graph = new WebGraph();
 
       for (WebGraphWritable graphWritable : subGraphs) {
-        WebGraph subGraph = graphWritable.get();
-        WebEdge edge = subGraph.firstEdge();
-        graph.addEdgeLenient(subGraph.getEdgeSource(edge), subGraph.getEdgeTarget(edge), subGraph.getEdgeWeight(edge));
+        edgeCountBeforeCombine += graphWritable.get().edgeSet().size();
+        graph.combine(graphWritable.get());
       }
 
-      graph.edgeSet().forEach(edge -> writeAsSubGraph(edge, graph, context));
+      edgeCountAfterCombine += graph.edgeSet().size();
+      context.write(key, webGraphWritable.reset(graph));
     } catch (Throwable e) {
       LOG.error(StringUtil.stringifyException(e));
     }
   }
 
-  /**
-   * The following graph shows the in-link graph. Every reduce group contains a center vertex and a batch of edges.
-   * The center vertex has a web page inside, and the edges has in-link information.
-   *
-   *        v1
-   *        |
-   *        v
-   * v2 -> vc <- v3
-   *       ^ ^
-   *      /  \
-   *     v4  v5
-   * */
-  private void writeAsSubGraph(WebEdge edge, WebGraph graph, Context context) {
-    try {
-      WebGraph subgraph = WebGraph.of(edge, graph);
-
-      String reverseUrl = TableUtil.reverseUrl(edge.getTargetUrl());
-      // noinspection unchecked
-      context.write(new GraphGroupKey(reverseUrl, graph.getEdgeWeight(edge)), new WebGraphWritable(subgraph, conf));
-    } catch (IOException|InterruptedException e) {
-      LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
-    }
+  @Override
+  protected void cleanup(Context context) {
+    LOG.info("Edge count in combiner : " + edgeCountBeforeCombine + " -> " + edgeCountAfterCombine);
   }
 }

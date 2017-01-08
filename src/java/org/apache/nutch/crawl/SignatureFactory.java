@@ -21,7 +21,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

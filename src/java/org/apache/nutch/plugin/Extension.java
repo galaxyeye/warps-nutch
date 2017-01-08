@@ -162,11 +162,7 @@ public class Extension {
           ((Configurable) object).setConf(this.conf);
         }
         return object;
-      } catch (ClassNotFoundException e) {
-        throw new PluginRuntimeException(e);
-      } catch (InstantiationException e) {
-        throw new PluginRuntimeException(e);
-      } catch (IllegalAccessException e) {
+      } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
         throw new PluginRuntimeException(e);
       }
     }

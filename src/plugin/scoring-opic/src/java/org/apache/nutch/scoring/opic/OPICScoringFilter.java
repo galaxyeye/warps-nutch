@@ -73,9 +73,9 @@ public class OPICScoringFilter implements ScoringFilter {
   }
 
   @Override
-  public void injectedScore(String url, WebPage row) throws ScoringFilterException {
-    float score = row.getScore();
-    row.setCash(score);
+  public void injectedScore(String url, WebPage page) throws ScoringFilterException {
+    float score = page.getScore();
+    page.setCash(score);
   }
 
   /**
@@ -96,25 +96,32 @@ public class OPICScoringFilter implements ScoringFilter {
 
   /** Increase the score by a sum of inlinked scores. */
   @Override
-  public void updateScore(String url, WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges) {
-    float addInlinkedScore = 0.0f;
+  public void updateScore(String url, WebPage page, WebGraph graph, Collection<WebEdge> inLinkEdges) {
     float factor1 = 1.0f;
-    float articleScoreDelta = updateArticleScore(row);
-    float factor2 = 2.0f;
-
-    // There is no inlinked score data in updateJIT mode
+    float inLinkScore = 0.0f;
     for (WebEdge edge : inLinkEdges) {
-      addInlinkedScore += graph.getEdgeWeight(edge);
+      if (!edge.isLoop()) {
+        inLinkScore += graph.getEdgeWeight(edge);
+      }
     }
 
-    row.setScore(row.getScore() + addInlinkedScore + articleScoreDelta);
-    row.setCash(row.getCash() + factor1 * addInlinkedScore);
+    float factor2 = 1.2f;
+    float oldArticleScore = page.getArticleScore();
+    float newArticleScore = calculateArticleScore(page);
+    float articleScoreDelta = newArticleScore - oldArticleScore;
+//    if (articleScoreDelta < 0) {
+//      LOG.debug("Nagtive article score, the article might be too old : " + newArticleScore + ", " + url);
+//    }
+
+    page.setArticleScore(newArticleScore);
+    page.setScore(page.getScore() + factor1 * inLinkScore + factor2 * articleScoreDelta);
+    page.setCash(page.getCash() + factor1 * inLinkScore);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
   @Override
-  public void distributeScoreToOutlinks(String fromUrl, WebPage row, WebGraph graph, Collection<WebEdge> scoreData, int allCount) {
-    float cash = row.getCash();
+  public void distributeScoreToOutlinks(String fromUrl, WebPage page, WebGraph graph, Collection<WebEdge> outgoingEdges, int allCount) {
+    float cash = page.getCash();
     if (cash == 0) {
       return;
     }
@@ -124,7 +131,11 @@ public class OPICScoringFilter implements ScoringFilter {
     // internal and external score factor
     float internalScore = scoreUnit * internalScoreFactor;
     float externalScore = scoreUnit * externalScoreFactor;
-    for (WebEdge edge : scoreData) {
+    for (WebEdge edge : outgoingEdges) {
+      if (edge.isLoop()) {
+        continue;
+      }
+
       double score = graph.getEdgeWeight(edge);
 
       try {
@@ -142,15 +153,13 @@ public class OPICScoringFilter implements ScoringFilter {
       }
     }
 
-    row.setCash(0.0f);
+    page.setCash(0.0f);
   }
 
-  private float updateArticleScore(WebPage row) {
-    float oldScore = row.getArticleScore();
-
-    float f1 = 2.0f;
+  private float calculateArticleScore(WebPage row) {
+    float f1 = 1.2f;
     float f2 = 1.0f;
-    float f3 = 2.0f;
+    float f3 = 1.2f;
 
     // Each article contributes 2 base score
     long ra = row.getRefArticles();
@@ -163,11 +172,7 @@ public class OPICScoringFilter implements ScoringFilter {
       rptd = 1;
     }
 
-    float newScore = f1 * ra + f2 * (rc / 1000) - f3 * rptd;
-
-    row.setArticleScore(newScore);
-
-    return newScore - oldScore;
+    return f1 * ra + f2 * (rc / 1000) - f3 * rptd;
   }
 
   /** Dampen the boost value by scorePower. */

@@ -950,10 +950,10 @@ Release 1.0 - 2009-03-23
 15. NUTCH-502 - Bug in SegmentReader causes infinite loop. 
     (Ilya Vishnevsky via dogacan)
     
-16. NUTCH-444 Possibly use a different library to parse RSS feed for improved 
+16. NUTCH-444 Possibly use a different library to parse RSS feed for improved
     performance and compatibility. This patch introduced a new plugin, feed,
     that includes an index filter and a parse plugin for feeds that uses ROME.
-    There was discussion to remove parse-rss, in light of the feed plugin, 
+    There was discussion to remove parse-rss, in light of the feed plugin,
     however, this patch does not explicitly remove parse-rss. (dogacan, mattmann)
 
 17. NUTCH-471 - Fix synchronization in NutchBean creation. 
@@ -1216,7 +1216,7 @@ Release 1.0 - 2009-03-23
 117. NUTCH-678 - Hadoop 0.19 requires an update of jets3t.
                  (julien nioche via dogacan)
 
-118. NUTCH-681 - parse-mp3 compilation problem. 
+118. NUTCH-681 - parse-mp3 compilation problem.
                  (Wildan Maulana via dogacan)
 
 119. NUTCH-676 - MapWritable is written inefficiently and confusingly.

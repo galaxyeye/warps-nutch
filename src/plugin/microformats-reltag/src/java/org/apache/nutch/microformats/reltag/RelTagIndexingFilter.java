@@ -21,6 +21,7 @@ package org.apache.nutch.microformats.reltag;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
@@ -66,6 +67,8 @@ public class RelTagIndexingFilter implements IndexingFilter {
   public void setConf(Configuration conf) {
     this.conf = conf;
   }
+
+  public Params getParams() { return new Params(); }
 
   /**
    * Get the {@link Configuration} object

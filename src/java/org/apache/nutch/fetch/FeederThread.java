@@ -5,7 +5,7 @@ import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 

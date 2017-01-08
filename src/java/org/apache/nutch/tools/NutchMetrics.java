@@ -1,8 +1,11 @@
 package org.apache.nutch.tools;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.filter.PageCategory;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.jobs.NutchReporter;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.TableUtil;
@@ -16,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,9 +44,10 @@ public class NutchMetrics implements AutoCloseable {
   private static NutchMetrics instance;
 
   private final Configuration conf;
+  private Map<Path, BufferedWriter> writers = new HashMap<>();
   private Path reportDir;
   private Path unreachableHostsPath;
-  private Map<Path, BufferedWriter> writers = new HashMap<>();
+  final DecimalFormat df = new DecimalFormat("0.0");
 
   /**
    * TODO : check if there is a singleton bug
@@ -95,6 +101,24 @@ public class NutchMetrics implements AutoCloseable {
     }
   }
 
+  public String getPageReport(String url, WebPage page) {
+    Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
+    String fetchTimeString =
+        DateTimeUtil.format(page.getPrevFetchTime()) + "->" + DateTimeUtil.format(page.getFetchTime())
+            + "," + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss");
+
+    Params params = Params.of(
+        "T", fetchTimeString,
+        "", page.getDepth() + "," + page.getFetchCount(),
+        "PT", DateTimeUtil.format(page.getPublishTime()) + "," + DateTimeUtil.format(page.getRefPublishTime()),
+        "C", page.getRefArticles() + "," + page.getRefChars(),
+        "S", df.format(page.getArticleScore()) + "," + df.format(page.getScore()) + "," + df.format(page.getCash()),
+        "U", StringUtils.substring(url, 0, 80)
+    ).withKVDelimiter(":");
+
+    return params.formatAsLine();
+  }
+
   public void reportRedirects(String redirectString, String reportSuffix) {
     // writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
   }
@@ -130,8 +154,9 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report + "\n", "depth-updated-" + reportSuffix + ".txt");
   }
 
-  public void debugUrls(String report, PageCategory pageCategory, String reportSuffix) {
-    writeReport(report + "\n", "urls-" + pageCategory.name().toLowerCase() + "-" + reportSuffix + ".txt");
+  public void reportWebPage(String url, WebPage page, String reportSuffix) {
+    String report = getPageReport(url, page);
+    writeReport(report + "\n", "urls-" + page.getPageCategory().name().toLowerCase() + "-" + reportSuffix + ".txt");
   }
 
   public void debugLongUrls(String report, String reportSuffix) {

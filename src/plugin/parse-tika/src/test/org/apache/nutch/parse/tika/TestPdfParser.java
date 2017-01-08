@@ -19,7 +19,7 @@ package org.apache.nutch.parse.tika;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
@@ -55,7 +55,7 @@ public class TestPdfParser {
   @Test
   public void testIt() throws ProtocolException, ParseException, IOException {
     String urlString;
-    Parse parse;
+    ParseResult parseResult;
     Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
@@ -74,9 +74,9 @@ public class TestPdfParser {
       String mtype = mimeutil.getMimeType(file);
       page.setContentType(mtype);
 
-      parse = new ParseUtil(conf).parse(urlString, page);
+      parseResult = new ParseUtil(conf).parse(urlString, page);
 
-      int index = parse.getText().indexOf(expectedText);
+      int index = parseResult.getText().indexOf(expectedText);
       assertTrue(index > 0);
     }
   }

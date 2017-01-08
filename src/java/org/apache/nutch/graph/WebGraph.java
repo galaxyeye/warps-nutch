@@ -40,6 +40,11 @@ public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
     return subgraph;
   }
 
+  public WebGraph combine(WebGraph other) {
+    other.edgeSet().forEach(edge -> addEdgeLenient(edge.getSource(), edge.getTarget(), other.getEdgeWeight(edge)));
+    return this;
+  }
+
   public WebVertex getFocus() { return focus; }
 
   public void setFocus(WebVertex focus) {

@@ -113,7 +113,7 @@ public class FeedParser implements Parser {
       feed = feedInput.build(input);
     } catch (Exception e) {
       // return empty parse
-      LOG.warn("Parse failed: url: " + content.getUrl() + ", exception: "
+      LOG.warn("ParseResult failed: url: " + content.getUrl() + ", exception: "
           + StringUtils.stringifyException(e));
       return new ParseStatus(e)
           .getEmptyParseResult(content.getUrl(), getConf());

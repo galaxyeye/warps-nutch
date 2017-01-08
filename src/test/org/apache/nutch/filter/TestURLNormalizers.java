@@ -16,16 +16,13 @@
  */
 package org.apache.nutch.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.net.MalformedURLException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
+
+import java.net.MalformedURLException;
+
+import static org.junit.Assert.*;
 
 public class TestURLNormalizers {
 
@@ -36,32 +33,26 @@ public class TestURLNormalizers {
     String clazz2 = "org.apache.nutch.net.urlnormalizer.basic.BasicURLNormalizer";
     conf.set("urlnormalizer.order", clazz1 + " " + clazz2);
 
-    URLNormalizers normalizers = new URLNormalizers(conf,
-        URLNormalizers.SCOPE_DEFAULT);
+    URLNormalizers normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_DEFAULT);
 
     assertNotNull(normalizers);
     try {
-      normalizers.normalize("http://www.example.com/",
-          URLNormalizers.SCOPE_DEFAULT);
+      normalizers.normalize("http://www.example.com/", URLNormalizers.SCOPE_DEFAULT);
     } catch (MalformedURLException mue) {
       fail(mue.toString());
     }
 
     // NUTCH-1011 - Get rid of superfluous slashes
     try {
-      String normalizedSlashes = normalizers.normalize(
-          "http://www.example.org//path/to//somewhere.html",
-          URLNormalizers.SCOPE_DEFAULT);
-      assertEquals(normalizedSlashes,
-          "http://www.example.org/path/to/somewhere.html");
+      String normalizedSlashes = normalizers.normalize( "http://www.example.org//path/to//somewhere.html", URLNormalizers.SCOPE_DEFAULT);
+      assertEquals(normalizedSlashes, "http://www.example.org/path/to/somewhere.html");
     } catch (MalformedURLException mue) {
       fail(mue.toString());
     }
 
     // check the order
     int pos1 = -1, pos2 = -1;
-    URLNormalizer[] impls = normalizers
-        .getURLNormalizers(URLNormalizers.SCOPE_DEFAULT);
+    URLNormalizer[] impls = normalizers.getURLNormalizers(URLNormalizers.SCOPE_DEFAULT);
     for (int i = 0; i < impls.length; i++) {
       if (impls[i].getClass().getName().equals(clazz1))
         pos1 = i;

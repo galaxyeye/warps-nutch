@@ -1578,7 +1578,7 @@
     <!-- 
       Below elements are generated from the file 
       at http://publicsuffix.org/.  
-      see org.apache.nutch.util.domain.MozillaPublicSuffixListParser.java
+      see org.apache.nutch.net.domain.MozillaPublicSuffixListParser.java
     -->
 
     <!--  ac : http://en.wikipedia.org/wiki/.am-->

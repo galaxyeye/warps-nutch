@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Extractor to extract {@link org.apache.nutch.parse.Outlink}s / URLs from
@@ -62,7 +61,7 @@ public class OutlinkExtractor {
    * 
    * @return Array of <code>Outlink</code>s within found in plainText
    */
-  public static Outlink[] getOutlinks(final String plainText, Configuration conf) {
+  public static ArrayList<Outlink> getOutlinks(final String plainText, Configuration conf) {
     return OutlinkExtractor.getOutlinks(plainText, "", conf);
   }
 
@@ -77,9 +76,9 @@ public class OutlinkExtractor {
    * 
    * @return Array of <code>Outlink</code>s within found in plainText
    */
-  public static Outlink[] getOutlinks(final String plainText, String anchor, Configuration conf) {
+  public static ArrayList<Outlink> getOutlinks(final String plainText, String anchor, Configuration conf) {
     long start = System.currentTimeMillis();
-    final List<Outlink> outlinks = new ArrayList<>();
+    final ArrayList<Outlink> outlinks = new ArrayList<>();
 
     try {
       final PatternCompiler cp = new Perl5Compiler();
@@ -115,16 +114,7 @@ public class OutlinkExtractor {
       }
     }
 
-    final Outlink[] retval;
-
-    // create array of the Outlinks
-    if (outlinks.size() > 0) {
-      retval = outlinks.toArray(new Outlink[0]);
-    } else {
-      retval = new Outlink[0];
-    }
-
-    return retval;
+    return outlinks;
   }
 
   /**

@@ -22,7 +22,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.persist.gora.Host;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.Histogram;
+import org.apache.nutch.common.Histogram;
 import org.apache.nutch.util.URLUtil;
 
 import java.io.IOException;

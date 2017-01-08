@@ -24,9 +24,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.crawl.URLPartitioner.SelectorEntryPartitioner;
 import org.apache.nutch.crawl.schedulers.DefaultFetchSchedule;
@@ -76,9 +76,9 @@ public class GenerateJob extends NutchJob implements Tool {
   /**
    * The field list affects which field to reads, but does not affect which field to to write
    * */
-  public Collection<GoraWebPage.Field> getFields(Job job) {
+  public Collection<GoraWebPage.Field> getFields(Configuration conf) {
     Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
-    fields.addAll(FetchScheduleFactory.getFetchSchedule(job.getConfiguration()).getFields());
+    fields.addAll(FetchScheduleFactory.getFetchSchedule(conf).getFields());
     return fields;
   }
 
@@ -155,7 +155,7 @@ public class GenerateJob extends NutchJob implements Tool {
   private Query<String, GoraWebPage> initQuery(DataStore<String, GoraWebPage> store) {
     Query<String, GoraWebPage> query = store.newQuery();
 
-    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    Collection<GoraWebPage.Field> fields = getFields(getConf());
     query.setFields(StorageUtils.toStringArray(fields));
 
     LOG.debug("Loaded Fields : " + StringUtils.join(StorageUtils.toStringArray(fields), ", "));

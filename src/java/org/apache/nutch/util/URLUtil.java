@@ -17,8 +17,8 @@
 
 package org.apache.nutch.util;
 
-import org.apache.nutch.util.domain.DomainSuffix;
-import org.apache.nutch.util.domain.DomainSuffixes;
+import org.apache.nutch.net.domain.DomainSuffix;
+import org.apache.nutch.net.domain.DomainSuffixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,21 +93,17 @@ public class URLUtil {
   private static Pattern IP_PATTERN = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
 
   public static URL getUrl(String url) {
-    URL u = null;
+    if (url == null || url.isEmpty()) {
+      return null;
+    }
 
     try {
-      u = new URL(url);
+      return new URL(url);
     }
-    catch (final MalformedURLException e) {
-      LOG.warn("Failed to parse url, " + e.toString());
-      return null;
-    }
-    catch (final Exception e) {
-      LOG.warn("Failed to parse url : " + url);
-      return null;
+    catch (final Exception ignored) {
     }
 
-    return u;
+    return null;
   }
 
   public static String getHost(CharSequence url, HostGroupMode hostGroupMode) {

@@ -103,16 +103,16 @@ public class TestInjector extends AbstractNutchTest {
   }
 
   private static final String[] fields = new String[] {
-      GoraWebPage.Field.MARKERS.getName(), GoraWebPage.Field.METADATA.getName(),
-      GoraWebPage.Field.SCORE.getName() };
+      GoraWebPage.Field.MARKERS.getName(),
+      GoraWebPage.Field.METADATA.getName(),
+      GoraWebPage.Field.SCORE.getName()
+  };
 
   private List<String> readDb() throws Exception {
-    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
-        fields);
+    List<WebPage> pages = CrawlTestUtil.readContents(datastore, null, fields);
     ArrayList<String> read = new ArrayList<>();
-    for (URLWebPage up : pages) {
-      WebPage page = up.getDatum();
-      String representation = up.getUrl();
+    for (WebPage page : pages) {
+      String representation = page.url();
       representation += "\tnutch.score=" + page.getScore();
       ByteBuffer bb = page.get().getMetadata().get(new Utf8("custom.attribute"));
       if (bb != null) {

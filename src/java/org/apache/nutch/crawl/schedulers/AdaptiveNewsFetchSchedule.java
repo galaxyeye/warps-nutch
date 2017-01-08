@@ -17,7 +17,6 @@
 
 package org.apache.nutch.crawl.schedulers;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 
@@ -25,8 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
-import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * This class implements an adaptive re-fetch algorithm.
@@ -43,10 +41,6 @@ import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   public static final Logger LOG = AbstractFetchSchedule.LOG;
 
-  public void setConf(Configuration conf) {
-    super.setConf(conf);
-  }
-
   @Override
   public void setFetchSchedule(String url, WebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
@@ -58,12 +52,12 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
 
     boolean changed = false;
     if (page.isSeed()) {
-      interval = adjustSeedFetchInterval(page, fetchTime, interval);
+      interval = adjustSeedFetchInterval(url, page, fetchTime, interval);
       changed = true;
     }
-    else if (page.veryLikeDetailPage()) {
+    else if (page.veryLikeDetailPage(url)) {
       // Detail pages are fetched only once
-      page.setNoFetch();
+      page.setNoMoreFetch();
       interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
       changed = true;
     }
@@ -82,7 +76,7 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private Duration adjustSeedFetchInterval(WebPage page, Instant fetchTime, Duration interval) {
+  private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Duration interval) {
     int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
       // Referred publish time is not initialized yet for this seed page
@@ -90,8 +84,8 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     Instant refPublishTime = page.getRefPublishTime();
-    if (refPublishTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
-      LOG.warn("Unexpected referred publish time : " + refPublishTime + ", " + page.getBaseUrl());
+    if (refPublishTime.isBefore(MIN_ARTICLE_PUBLISH_TIME)) {
+      LOG.warn("Unexpected referred publish time : " + refPublishTime + ", " + url);
     }
 
     long hours = ChronoUnit.HOURS.between(refPublishTime, fetchTime);

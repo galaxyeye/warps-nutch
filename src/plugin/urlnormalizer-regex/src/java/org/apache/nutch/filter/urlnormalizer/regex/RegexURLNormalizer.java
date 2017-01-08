@@ -294,9 +294,9 @@ public class RegexURLNormalizer extends Configured implements URLNormalizer {
         if (URLNormalizers.SCOPE_DEFAULT.equals(scope))
           continue;
         System.out.println("* Rules for '" + scope + "' scope:");
-        i = ((List<Rule>) scopedRules.get(scope)).iterator();
+        i = scopedRules.get(scope).iterator();
         while (i.hasNext()) {
-          Rule r = (Rule) i.next();
+          Rule r = i.next();
           System.out.print("  " + r.pattern.pattern() + " -> ");
           System.out.println(r.substitution);
         }

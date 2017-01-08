@@ -139,16 +139,6 @@
     </property>
 
     <property>
-        <name>db.fetch.interval.default</name>
-        <value>25920000</value>
-    </property>
-
-    <property>
-        <name>db.fetch.interval.max</name>
-        <value>25920000</value>
-    </property>
-
-    <property>
         <name>db.ignore.external.links</name>
         <value>false</value>
         <description>If true, outlinks leading from a page to external hosts

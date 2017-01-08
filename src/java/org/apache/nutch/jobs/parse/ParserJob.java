@@ -19,9 +19,10 @@ package org.apache.nutch.jobs.parse;
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.IdentityPageReducer;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.jobs.NutchJob;
 import org.apache.nutch.parse.ParseFilters;
@@ -29,8 +30,6 @@ import org.apache.nutch.parse.ParserFactory;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.IdentityPageReducer;
-import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +69,7 @@ public class ParserJob extends NutchJob implements Tool {
     setConf(conf);
   }
 
-  public static Collection<GoraWebPage.Field> getFields(Job job) {
-    Configuration conf = job.getConfiguration();
+  public static Collection<GoraWebPage.Field> getFields(Configuration conf) {
     Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
     ParserFactory parserFactory = new ParserFactory(conf);
     ParseFilters parseFilters = new ParseFilters(conf);
@@ -133,7 +131,7 @@ public class ParserJob extends NutchJob implements Tool {
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    Collection<GoraWebPage.Field> fields = getFields(getConf());
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
 
     StorageUtils.initMapperJob(currentJob, fields, String.class, GoraWebPage.class, ParserMapper.class, batchIdFilter);

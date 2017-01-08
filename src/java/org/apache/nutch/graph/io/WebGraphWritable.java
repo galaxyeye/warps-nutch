@@ -44,9 +44,6 @@ public class WebGraphWritable implements Writable {
   }
 
   private Configuration conf;
-  /**
-   * Reserved
-   */
   private OptimizeMode optimizeMode = OptimizeMode.NONE;
   private WebGraph graph;
 
@@ -64,8 +61,9 @@ public class WebGraphWritable implements Writable {
     this.graph = graph;
   }
 
-  public void reset(WebGraph graph) {
+  public WebGraphWritable reset(WebGraph graph) {
     this.graph = graph;
+    return this;
   }
 
   public OptimizeMode getOptimizeMode() { return optimizeMode; }
@@ -76,16 +74,20 @@ public class WebGraphWritable implements Writable {
   public void write(DataOutput output) throws IOException {
     output.writeChar(optimizeMode.value());
     output.writeInt(graph.edgeSet().size());
+
     for (WebEdge edge : graph.edgeSet()) {
+      output.writeBoolean(edge.isLoop());
+
+      if (optimizeMode != IGNORE_EDGE) {
+        Text.writeString(output, edge.getAnchor());
+        output.writeDouble(graph.getEdgeWeight(edge));
+      }
+
       if (optimizeMode != IGNORE_SOURCE) {
         IOUtils.serialize(conf, output, new WebVertexWritable(edge.getSource(), conf), WebVertexWritable.class);
       }
       if (optimizeMode != IGNORE_TARGET) {
         IOUtils.serialize(conf, output, new WebVertexWritable(edge.getTarget(), conf), WebVertexWritable.class);
-      }
-      if (optimizeMode != IGNORE_EDGE) {
-        Text.writeString(output, edge.getAnchor());
-        output.writeDouble(graph.getEdgeWeight(edge));
       }
     }
   }
@@ -96,17 +98,27 @@ public class WebGraphWritable implements Writable {
 
     optimizeMode = OptimizeMode.of(input.readChar());
     int edgeSize = input.readInt();
-    for (int i = 0; i < edgeSize; ++i) {
-      WebVertexWritable source = (optimizeMode == IGNORE_SOURCE) ? new WebVertexWritable()
-          : IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
-      WebVertexWritable target = (optimizeMode == IGNORE_TARGET) ? new WebVertexWritable()
-          : IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
 
-      String anchor = "";
-      double weight = 0;
+    String anchor = "";
+    double weight = 0;
+
+    for (int i = 0; i < edgeSize; ++i) {
+      boolean isLoop = input.readBoolean();
+
       if (optimizeMode != IGNORE_EDGE) {
         anchor = Text.readString(input);
         weight = input.readDouble();
+      }
+
+      WebVertexWritable source = new WebVertexWritable();
+      WebVertexWritable target = new WebVertexWritable();
+      if (optimizeMode != IGNORE_SOURCE) {
+        source = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
+        if (isLoop) target = source;
+      }
+      if (optimizeMode != IGNORE_TARGET) {
+        target = IOUtils.deserialize(conf, input, null, WebVertexWritable.class);
+        if (isLoop) source = target;
       }
 
       graph.addEdgeLenient(source.get(), target.get(), weight).setAnchor(anchor);

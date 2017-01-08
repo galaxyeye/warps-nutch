@@ -24,7 +24,6 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.TestInjector;
-import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -96,13 +95,12 @@ public class CrawlTestUtil {
   /**
    * Read entries from a data store
    * 
-   * @return list of matching {@link URLWebPage} objects
+   * @return list of matching {@link WebPage} objects
    * @throws Exception
    */
-  public static ArrayList<URLWebPage> readContents(
-      DataStore<String, GoraWebPage> store, Mark requiredMark, String... fields)
-      throws Exception {
-    ArrayList<URLWebPage> l = new ArrayList<URLWebPage>();
+  public static ArrayList<WebPage> readContents(
+      DataStore<String, GoraWebPage> store, Mark requiredMark, String... fields) throws Exception {
+    ArrayList<WebPage> l = new ArrayList<>();
 
     Query<String, GoraWebPage> query = store.newQuery();
     if (fields != null) {
@@ -123,11 +121,12 @@ public class CrawlTestUtil {
           continue;
         }
 
-        l.add(new URLWebPage(TableUtil.unreverseUrl(url), WebPage.newWebPage(page.get())));
+        l.add(new WebPage(url, page.get(), false));
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
+
     return l;
   }
 
@@ -140,8 +139,7 @@ public class CrawlTestUtil {
    *          folder where static content lives
    * @throws UnknownHostException
    */
-  public static Server getServer(int port, String staticContent)
-      throws UnknownHostException {
+  public static Server getServer(int port, String staticContent) throws UnknownHostException {
     Server webServer = new org.mortbay.jetty.Server(port);
     ResourceHandler handler = new ResourceHandler();
     handler.setResourceBase(staticContent);

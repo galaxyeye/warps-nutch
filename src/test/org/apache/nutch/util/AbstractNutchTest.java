@@ -32,22 +32,22 @@ public class AbstractNutchTest {
   protected Configuration conf;
   protected FileSystem fs;
   protected Path testdir = new Path("build/test/working");
-  protected DataStore<String, GoraWebPage> webPageStore;
+  protected DataStore<String, GoraWebPage> datastore;
   protected boolean persistentDataStore = false;
 
   public void setUp() throws Exception {
     conf = CrawlTestUtil.createConfiguration();
     conf.set("storage.data.store.class", "org.apache.gora.memory.store.MemStore");
     fs = FileSystem.get(conf);
-    webPageStore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
+    datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
   }
 
   public void tearDown() throws Exception {
     // empty the database after test
     if (!persistentDataStore) {
-      webPageStore.deleteByQuery(webPageStore.newQuery());
-      webPageStore.flush();
-      webPageStore.close();
+      datastore.deleteByQuery(datastore.newQuery());
+      datastore.flush();
+      datastore.close();
     }
     fs.delete(testdir, true);
   }

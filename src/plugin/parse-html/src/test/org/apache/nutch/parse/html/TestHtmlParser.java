@@ -20,7 +20,7 @@ package org.apache.nutch.parse.html;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.Parser;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
@@ -99,7 +99,7 @@ public class TestHtmlParser {
     return page;
   }
 
-  protected Parse parse(WebPage page) {
+  protected ParseResult parse(WebPage page) {
     return parser.getParse(dummyUrl, page);
   }
 
@@ -109,12 +109,12 @@ public class TestHtmlParser {
       String name = testPage[0];
       Charset charset = Charset.forName(testPage[1]);
       byte[] contentBytes = testPage[2].getBytes(charset);
-      // Parse parse = parse(contentBytes);
+      // ParseResult parseResult = parseResult(contentBytes);
       WebPage page = page(contentBytes);
-      Parse parse = parse(page);
-      String text = parse.getText();
-      String title = parse.getTitle();
-      // String keywords = parse.getMeta("keywords");
+      ParseResult parseResult = parse(page);
+      String text = parseResult.getText();
+      String title = parseResult.getTitle();
+      // String keywords = parseResult.getMeta("keywords");
       String keywords = Bytes.toString(page.get().getMetadata().get(new Utf8("keywords")).array());
       LOG.info(name);
       LOG.info("title:\t" + title);

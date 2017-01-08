@@ -17,14 +17,14 @@
 
 package org.apache.nutch.filter;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.util.ConfigUtils;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  * Checks one given filter or all filters.
@@ -85,12 +85,13 @@ public class URLFilterChecker {
   }
 
   private void checkAll() throws Exception {
-    System.out.println("Checking combination of all URLFilters available");
+    URLFilters filters = new URLFilters(this.conf);
+
+    System.out.println("Checking combination of all URLFilters available, " + filters.toString());
 
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     String line;
     while ((line = in.readLine()) != null) {
-      URLFilters filters = new URLFilters(this.conf);
       String out = filters.filter(line);
       if (out != null) {
         System.out.print("+");
@@ -103,7 +104,6 @@ public class URLFilterChecker {
   }
 
   public static void main(String[] args) throws Exception {
-
     String usage = "Usage: URLFilterChecker (-filterName filterName | -allCombined)";
 
     if (args.length == 0) {

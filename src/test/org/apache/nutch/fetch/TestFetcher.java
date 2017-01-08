@@ -21,11 +21,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.jobs.fetch.FetchJob;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.jobs.inject.InjectJob;
-import org.apache.nutch.crawl.URLWebPage;
-import org.apache.nutch.util.NutchUtil;
 import org.apache.nutch.persist.Mark;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
+import org.apache.nutch.util.NutchUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -106,17 +106,17 @@ public class TestFetcher extends AbstractNutchTest {
     int minimumTime = (int) ((urls.size() + 1) * 1000 * conf.getFloat("fetcher.server.delay", 5));
     assertTrue(time > minimumTime);
 
-    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, Mark.FETCH, (String[]) null);
+    List<WebPage> pages = CrawlTestUtil.readContents(datastore, Mark.FETCH, (String[]) null);
     assertEquals(urls.size(), pages.size());
     List<String> handledurls = new ArrayList<String>();
-    for (URLWebPage up : pages) {
-      ByteBuffer bb = up.getDatum().getContent();
+    for (WebPage up : pages) {
+      ByteBuffer bb = up.getContent();
       if (bb == null) {
         continue;
       }
       String content = Bytes.toString(bb.array());
       if (content.contains("Nutch fetcher test page")) {
-        handledurls.add(up.getUrl());
+        handledurls.add(up.url());
       }
     }
     Collections.sort(urls);

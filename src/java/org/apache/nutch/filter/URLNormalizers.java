@@ -23,7 +23,7 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -286,8 +286,7 @@ public final class URLNormalizers {
    * @throws MalformedURLException
    *           If the given URL string is malformed.
    */
-  public String normalize(String urlString, String scope)
-      throws MalformedURLException {
+  public String normalize(String urlString, String scope) throws MalformedURLException {
     // optionally loop several times, and break if no further changes
     String initialString = urlString;
     for (int k = 0; k < loopCount; k++) {

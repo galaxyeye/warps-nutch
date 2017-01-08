@@ -11,7 +11,7 @@
 # skip file:, ftp:, & mailto: urls
 -^(file|ftp|mailto):
 
-# skip image and other suffixes we can't yet parse
+# skip image and other suffixes we can't yet parseResult
 -\.(gif|GIF|jpg|JPG|ico|ICO|css|sit|eps|wmf|zip|ppt|mpg|xls|gz|rpm|tgz|mov|MOV|exe|png)$
 
 # skip URLs containing certain characters as probable queries, etc.

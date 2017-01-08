@@ -28,7 +28,7 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -126,8 +126,8 @@ public class ScoringFilters extends Configured implements ScoringFilter {
   }
 
   @Override
-  public void updateScore(String url, WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges)
-      throws ScoringFilterException {
+  public void updateScore(String url,
+                          WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges) throws ScoringFilterException {
     for (ScoringFilter filter : scoringFilters) {
       filter.updateScore(url, row, graph, inLinkEdges);
     }

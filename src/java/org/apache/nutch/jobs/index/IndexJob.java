@@ -24,21 +24,19 @@ import org.apache.gora.mapreduce.StringComparator;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexerOutputFormat;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.jobs.NutchJob;
-import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,9 +71,7 @@ public class IndexJob extends NutchJob implements Tool {
     FIELDS.add(GoraWebPage.Field.MARKERS);
   }
 
-  public static Collection<GoraWebPage.Field> getFields(Job job) {
-    Configuration conf = job.getConfiguration();
-
+  public static Collection<GoraWebPage.Field> getFields(Configuration conf) {
     Collection<GoraWebPage.Field> columns = new HashSet<>(FIELDS);
     IndexingFilters filters = new IndexingFilters(conf);
     columns.addAll(filters.getFields());
@@ -147,7 +143,7 @@ public class IndexJob extends NutchJob implements Tool {
     // TODO: Figure out why this needs to be here
     currentJob.getConfiguration().setClass("mapred.output.key.comparator.class", StringComparator.class, RawComparator.class);
 
-    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    Collection<GoraWebPage.Field> fields = getFields(getConf());
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, String.class, IndexDocument.class, IndexMapper.class, batchIdFilter);
 
@@ -207,12 +203,12 @@ public class IndexJob extends NutchJob implements Tool {
                    int threads, boolean resume, int limit, int numTasks,
                    String solrUrl, String zkHostString, String collection) throws Exception {
     run(Params.toArgMap(
-        Nutch.ARG_CRAWL, crawlId,
-        Nutch.ARG_BATCH, batchId,
-        Nutch.ARG_THREADS, threads,
-        Nutch.ARG_RESUME, resume,
+        ARG_CRAWL, crawlId,
+        ARG_BATCH, batchId,
+        ARG_THREADS, threads,
+        ARG_RESUME, resume,
         ARG_LIMIT, limit > 0 ? limit : null,
-        Nutch.ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
+        ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
         PARAM_SOLR_SERVER_URL, solrUrl,
         PARAM_SOLR_ZK, zkHostString,
         PARAM_SOLR_COLLECTION, collection

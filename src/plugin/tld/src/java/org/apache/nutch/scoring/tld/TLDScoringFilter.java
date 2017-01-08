@@ -25,8 +25,8 @@ import org.apache.nutch.scoring.ScoringFilter;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.domain.DomainSuffix;
-import org.apache.nutch.util.domain.DomainSuffixes;
+import org.apache.nutch.net.domain.DomainSuffix;
+import org.apache.nutch.net.domain.DomainSuffixes;
 
 import java.util.Collection;
 import java.util.HashSet;

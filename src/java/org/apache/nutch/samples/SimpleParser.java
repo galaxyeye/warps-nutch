@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.common.EncodingDetector;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.fetch.FetchUtil;
@@ -34,7 +35,7 @@ import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.*;
 import org.apache.nutch.persist.gora.ProtocolStatus;
@@ -79,9 +80,9 @@ import java.util.stream.Collectors;
  * <li><tt>Content Metadata</tt>: such as <i>X-AspNet-Version</i>, <i>Date</i>,
  * <i>Content-length</i>, <i>servedBy</i>, <i>Content-Type</i>,
  * <i>Cache-Control</>, etc.</li>
- * <li><tt>Parse Metadata</tt>: such as <i>CharEncodingForConversion</i>,
+ * <li><tt>ParseResult Metadata</tt>: such as <i>CharEncodingForConversion</i>,
  * <i>OriginalCharEncoding</i>, <i>language</i>, etc.</li>
- * <li><tt>ParseText</tt>: The page parse text which varies in length depdnecing
+ * <li><tt>ParseText</tt>: The page parseResult text which varies in length depdnecing
  * on <code>content.length</code> configuration.</li>
  * </ol>
  *
@@ -99,7 +100,7 @@ public class SimpleParser extends Configured {
 
   private String url;
   private WebPage page;
-  private Parse parse;
+  private ParseResult parseResult;
 
   public SimpleParser(Configuration conf) {
     setConf(conf);
@@ -133,7 +134,7 @@ public class SimpleParser extends Configured {
   public void parse(WebPage page) {
     ParseUtil parseUtil = new ParseUtil(getConf());
     if (page != null && !page.getBaseUrl().isEmpty()) {
-      parse = parseUtil.process(url, page);
+      parseResult = parseUtil.process(url, page);
     }
   }
 
@@ -240,8 +241,8 @@ public class SimpleParser extends Configured {
   }
 
   private Map<String, Object> processResult() throws MalformedURLException, URLFilterException {
-    if (parse == null) {
-      LOG.error("Problem with parse - check log");
+    if (parseResult == null) {
+      LOG.error("Problem with parseResult - check log");
       return results;
     }
 
@@ -278,7 +279,7 @@ public class SimpleParser extends Configured {
 
     // DiscardedOutlinks
     Set<String> discardedOutlinks = Sets.newTreeSet();
-    for (Outlink outlink : parse.getOutlinks()) {
+    for (Outlink outlink : parseResult.getOutlinks()) {
       String toUrl = outlink.getToUrl();
       toUrl = urlNormalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
       toUrl = urlFilters.filter(toUrl);
@@ -328,7 +329,7 @@ public class SimpleParser extends Configured {
     }
 
     SimpleParser parser = new SimpleParser(ConfigUtils.create());
-    // parser.parse(url, contentType);
+    // parser.parseResult(url, contentType);
     parser.extract(url, contentType);
 
     System.out.println(parser.getResult());

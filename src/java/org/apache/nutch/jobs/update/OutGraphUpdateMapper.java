@@ -30,7 +30,7 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -40,17 +40,14 @@ import java.io.IOException;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
-import static org.apache.nutch.jobs.NutchReporter.LOG_ADDITIVITY;
-import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_DISTANCE;
-import static org.apache.nutch.metadata.Nutch.PARAM_LIMIT;
+import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.persist.Mark.FETCH;
 
 class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
   public static final Logger LOG = LoggerFactory.getLogger(OutGraphUpdateMapper.class);
 
-  public enum Counter { rowsMapped, newRowsMapped, notFetched, urlFiltered, tooDeep }
+  public enum Counter { rowsMapped, newRowsMapped, notFetched, noOutLinks, tooDeep }
 
   private Configuration conf;
   private Mapper.Context context;
@@ -100,46 +97,53 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
     counter.increase(rows);
 
     WebPage page = WebPage.wrap(row);
+    String url = TableUtil.unreverseUrl(reversedUrl);
 
-    if (!page.hasMark(FETCH)) {
-      counter.increase(Counter.notFetched);
+    if (!shouldProcess(url, page)) {
       return;
     }
 
-    if (page.getOutlinks().isEmpty()) {
-      return;
+    WebGraph graph = new WebGraph();
+    WebVertex v1 = new WebVertex(url, page);
+
+    /* A loop in the graph */
+    graph.addEdgeLenient(v1, v1, page.getScore());
+
+    if (!page.getOutlinks().isEmpty()) {
+      page.getOutlinks().entrySet().stream().limit(maxOutlinks)
+          .forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
+
+      try {
+        scoringFilters.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
+      } catch (ScoringFilterException e) {
+        LOG.warn("Distributing score failed for URL: " + reversedUrl + "\n" + StringUtils.stringifyException(e));
+      }
+
+      counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
+    }
+
+    graph.outgoingEdgesOf(v1).forEach(edge -> writeAsSubGraph(edge, graph));
+    counter.increase(Counter.rowsMapped);
+  }
+
+  private boolean shouldProcess(String url, WebPage page) {
+    if (!page.hasMark(FETCH)) {
+      counter.increase(Counter.notFetched);
+      return false;
     }
 
     final int depth = page.getDepth();
     if (depth >= maxDistance) {
       counter.increase(Counter.tooDeep);
-      return;
+      return false;
     }
 
-    String url = TableUtil.unreverseUrl(reversedUrl);
-    WebGraph graph = new WebGraph();
-    WebVertex v1 = new WebVertex(url, page);
-
-    /* A loop in the graph */
-    graph.addEdgeLenient(v1, v1, Float.MAX_VALUE / 2);
-    page.getOutlinks().entrySet().stream()
-        .limit(maxOutlinks)
-        .forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
-
-    try {
-      scoringFilters.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
-    } catch (ScoringFilterException e) {
-      LOG.warn("Distributing score failed for URL: " + reversedUrl + "\n" + StringUtils.stringifyException(e));
-    }
-
-    graph.outgoingEdgesOf(v1).forEach(edge -> writeAsSubGraph(edge, graph));
-
-    counter.increase(Counter.rowsMapped);
-    counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
-
-    if (limit > 0 && ++count > limit) {
+    if (limit > 0 && count++ > limit) {
       stop("Hit limit, stop");
+      return false;
     }
+
+    return true;
   }
 
   /**

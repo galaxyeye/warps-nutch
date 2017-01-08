@@ -30,7 +30,7 @@ import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

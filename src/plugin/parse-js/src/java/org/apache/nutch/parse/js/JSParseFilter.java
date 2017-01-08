@@ -19,7 +19,6 @@ package org.apache.nutch.parse.js;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
@@ -35,7 +34,6 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -60,62 +58,42 @@ public class JSParseFilter implements ParseFilter, Parser {
    *          URL of the {@link WebPage} to be parsed
    * @param page
    *          {@link WebPage} object relative to the URL
-   * @param parse
-   *          {@link Parse} object holding parse status
+   * @param parseResult
+   *          {@link ParseResult} object holding parseResult status
    * @param metaTags
    *          within the {@link IndexDocument}
    * @param doc
    *          The {@link IndexDocument} object
-   * @return parse the actual {@link Parse} object
+   * @return parseResult the actual {@link ParseResult} object
    */
   @Override
-  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public ParseResult filter(String url, WebPage page, ParseResult parseResult, HTMLMetaTags metaTags, DocumentFragment doc) {
     ArrayList<Outlink> outlinks = new ArrayList<>();
-    walk(doc, parse, metaTags, url, outlinks);
-    if (outlinks.size() > 0) {
-      Outlink[] old = parse.getOutlinks();
-      String title = parse.getTitle();
-      List<Outlink> list = Arrays.asList(old);
-      outlinks.addAll(list);
-      ParseStatus status = parse.getParseStatus();
-      String text = parse.getText();
-      Outlink[] newlinks = outlinks.toArray(new Outlink[outlinks.size()]);
-      return new Parse(text, title, newlinks, status);
-    }
-    return parse;
+    walk(doc, parseResult, metaTags, url, outlinks);
+    parseResult.getOutlinks().addAll(outlinks);
+
+    return parseResult;
   }
 
-  private void walk(Node n, Parse parse, HTMLMetaTags metaTags, String base,
-      List<Outlink> outlinks) {
+  private void walk(Node n, ParseResult parseResult, HTMLMetaTags metaTags, String base, List<Outlink> outlinks) {
     if (n instanceof Element) {
       String name = n.getNodeName();
       if (name.equalsIgnoreCase("script")) {
-        @SuppressWarnings("unused")
-        String lang = null;
-        Node lNode = n.getAttributes().getNamedItem("language");
-        if (lNode == null)
-          lang = "javascript";
-        else
-          lang = lNode.getNodeValue();
         StringBuffer script = new StringBuffer();
+
         NodeList nn = n.getChildNodes();
-        if (nn.getLength() > 0) {
-          for (int i = 0; i < nn.getLength(); i++) {
-            if (i > 0)
-              script.append('\n');
-            script.append(nn.item(i).getNodeValue());
+        for (int i = 0; i < nn.getLength(); i++) {
+          if (i > 0) {
+            script.append('\n');
           }
-          // This logging makes the output very messy.
-          // if (LOG.isInfoEnabled()) {
-          // LOG.info("script: language=" + lang + ", text: " +
-          // script.toString());
-          // }
-          Outlink[] links = getJSLinks(script.toString(), "", base);
-          if (links != null && links.length > 0)
-            outlinks.addAll(Arrays.asList(links));
-          // no other children of interest here, go one level up.
-          return;
+          script.append(nn.item(i).getNodeValue());
         }
+        // This logging makes the output very messy.
+        // if (LOG.isInfoEnabled()) {
+        // LOG.info("script: language=" + lang + ", text: " +
+        // script.toString());
+        // }
+        outlinks.addAll(getJSLinks(script.toString(), "", base));
       } else {
         // process all HTML 4.0 events, if present...
         NamedNodeMap attrs = n.getAttributes();
@@ -127,23 +105,24 @@ public class JSParseFilter implements ParseFilter, Parser {
           // Mouse:
           // onclick,ondbclick,onmousedown,onmouseout,onmousover,onmouseup
           Node anode = attrs.item(i);
-          Outlink[] links = null;
+          ArrayList<Outlink> links = new ArrayList<>();
           if (anode.getNodeName().startsWith("on")) {
             links = getJSLinks(anode.getNodeValue(), "", base);
           } else if (anode.getNodeName().equalsIgnoreCase("href")) {
             String val = anode.getNodeValue();
-            if (val != null && val.toLowerCase().indexOf("javascript:") != -1) {
+            if (val != null && val.toLowerCase().contains("javascript:")) {
               links = getJSLinks(val, "", base);
             }
           }
-          if (links != null && links.length > 0)
-            outlinks.addAll(Arrays.asList(links));
+
+          outlinks.addAll(links);
         }
       }
     }
+
     NodeList nl = n.getChildNodes();
     for (int i = 0; i < nl.getLength(); i++) {
-      walk(nl.item(i), parse, metaTags, base, outlinks);
+      walk(nl.item(i), parseResult, metaTags, base, outlinks);
     }
   }
 
@@ -154,33 +133,29 @@ public class JSParseFilter implements ParseFilter, Parser {
    *          URL of the {@link WebPage} which is parsed
    * @param page
    *          {@link WebPage} object relative to the URL
-   * @return parse the actual {@link Parse} object
+   * @return parse the actual {@link ParseResult} object
    */
   @Override
-  public Parse getParse(String url, WebPage page) {
+  public ParseResult getParse(String url, WebPage page) {
     String type = page.getContentType();
     if (!type.startsWith("application/x-javascript"))
       return ParseStatusUtils.getEmptyParse(ParseStatusCodes.FAILED_INVALID_FORMAT,
           "Content not JavaScript: '" + type + "'", getConf());
     String script = page.getContentAsString();
 
-    Outlink[] outlinks = getJSLinks(script, "", url);
-    if (outlinks == null) {
-      outlinks = new Outlink[0];
-    }
+    ArrayList<Outlink> outlinks = getJSLinks(script, "", url);
     // Title? use the first line of the script...
     String title;
     int idx = script.indexOf('\n');
     if (idx != -1) {
-      if (idx > MAX_TITLE_LEN)
-        idx = MAX_TITLE_LEN;
+      if (idx > MAX_TITLE_LEN) idx = MAX_TITLE_LEN;
       title = script.substring(0, idx);
     } else {
       idx = Math.min(MAX_TITLE_LEN, script.length());
       title = script.substring(0, idx);
     }
 
-    return new Parse(script, title, outlinks, ParseStatusUtils.STATUS_SUCCESS);
+    return new ParseResult(script, title, outlinks, ParseStatusUtils.STATUS_SUCCESS);
   }
 
   private static final String STRING_PATTERN = "(\\\\*(?:\"|\'))([^\\s\"\']+?)(?:\\1)";
@@ -194,9 +169,8 @@ public class JSParseFilter implements ParseFilter, Parser {
   /**
    * This method extracts URLs from literals embedded in JavaScript.
    */
-  private Outlink[] getJSLinks(String plainText, String anchor, String base) {
-
-    final List<Outlink> outlinks = new ArrayList<Outlink>();
+  private ArrayList<Outlink> getJSLinks(String plainText, String anchor, String base) {
+    final ArrayList<Outlink> outlinks = new ArrayList<>();
     URL baseURL = null;
 
     try {
@@ -263,17 +237,7 @@ public class JSParseFilter implements ParseFilter, Parser {
       }
     }
 
-    final Outlink[] retval;
-
-    // create array of the Outlinks
-    if (!outlinks.isEmpty()) {
-      retval = outlinks.toArray(new Outlink[0]);
-    }
-    else {
-      retval = new Outlink[0];
-    }
-
-    return retval;
+    return outlinks;
   }
 
   /**
@@ -300,9 +264,9 @@ public class JSParseFilter implements ParseFilter, Parser {
 
     JSParseFilter parseFilter = new JSParseFilter();
     parseFilter.setConf(ConfigUtils.create());
-    Outlink[] links = parseFilter.getJSLinks(sb.toString(), "", args[1]);
-    System.out.println("Outlinks extracted: " + links.length);
-    Arrays.stream(links).map(l -> " - " + l).forEach(System.out::println);
+    ArrayList<Outlink> links = parseFilter.getJSLinks(sb.toString(), "", args[1]);
+    System.out.println("Outlinks extracted: " + links.size());
+    links.stream().map(l -> " - " + l).forEach(System.out::println);
   }
 
   /**

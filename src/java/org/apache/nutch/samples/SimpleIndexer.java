@@ -1,6 +1,7 @@
 package org.apache.nutch.samples;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.indexer.IndexingException;

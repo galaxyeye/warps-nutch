@@ -45,10 +45,11 @@ import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 
 /**
  * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency
- * TODO : check the difference between CharSequence field with actual type String and Utf8
  * */
 public class WebPage {
 
+  private String url = "";
+  private String reversedUrl = "";
   private GoraWebPage page;
 
   /**
@@ -60,6 +61,12 @@ public class WebPage {
    * Initialize a WebPage with the underlying GoraWebPage instance.
    */
   public WebPage(GoraWebPage page) {
+    this.page = page;
+  }
+
+  public WebPage(String url, GoraWebPage page, boolean urlReversed) {
+    this.url = urlReversed ? TableUtil.unreverseUrl(url) : url;
+    this.reversedUrl = urlReversed ? url : TableUtil.reverseUrlOrEmpty(url);
     this.page = page;
   }
 
@@ -77,6 +84,15 @@ public class WebPage {
   public static WebPage wrap(GoraWebPage page) {
     return new WebPage(page);
   }
+
+  @Contract("_, _, _ -> !null")
+  public static WebPage wrap(String url, GoraWebPage page, boolean urlReversed) {
+    return new WebPage(url, page, urlReversed);
+  }
+
+  public String url() { return url; }
+
+  public String reversedUrl() { return reversedUrl; }
 
   public GoraWebPage get() { return page; }
 
@@ -256,21 +272,13 @@ public class WebPage {
     page.setParseStatus(value);
   }
 
-  public float getScore() {
-    return page.getScore();
-  }
+  public float getScore() { return page.getScore(); }
 
-  public void setScore(float value) {
-    page.setScore(value);
-  }
+  public void setScore(float value) { page.setScore(value); }
 
-  public float getArticleScore() {
-    return getFloatMetadata(Name.ARTICLE_SCORE, 1.0f);
-  }
+  public float getArticleScore() { return getFloatMetadata(Name.ARTICLE_SCORE, 0.0f); }
 
-  public void setArticleScore(float value) {
-    setFloatMetadata(Name.ARTICLE_SCORE, 1.0f);
-  }
+  public void setArticleScore(float value) { setFloatMetadata(Name.ARTICLE_SCORE, value); }
 
   public CharSequence getReprUrl() {
     return page.getReprUrl();
@@ -324,9 +332,7 @@ public class WebPage {
   /**
    * Embedded hyperlinks which direct outside of the current domain.
    */
-  public Map<CharSequence, CharSequence> getOutlinks() {
-    return page.getOutlinks();
-  }
+  public Map<CharSequence, CharSequence> getOutlinks() { return page.getOutlinks(); }
 
   /**
    * Embedded hyperlinks which direct outside of the current domain.   * @param value the value to set.
@@ -401,12 +407,12 @@ public class WebPage {
 
   public int getTextContentLength() {
     String ds = getMetadata(Name.TEXT_CONTENT_LENGTH);
-    return StringUtil.tryParseInt(ds, -1);
+    return StringUtil.tryParseInt(ds, 0);
   }
 
   public int sniffTextLength() {
     int length = getTextContentLength();
-    if (length >= 0) {
+    if (length > 10) {
       return length;
     }
 
@@ -440,8 +446,8 @@ public class WebPage {
     return getPageCategory().isDetail() && getPageCategoryLikelihood() >= threshold;
   }
 
-  public boolean veryLikeDetailPage() {
-    return isDetailPage(0.85f) || CrawlFilter.sniffPageCategory(getBaseUrl()).isDetail();
+  public boolean veryLikeDetailPage(String url) {
+    return isDetailPage(0.85f) || CrawlFilter.sniffPageCategory(url, this).isDetail();
   }
 
   public void setPageCategory(PageCategory pageCategory) {
@@ -456,12 +462,12 @@ public class WebPage {
     }
   }
 
-  public void setNoFetch() {
+  public void setNoMoreFetch() {
     putMetadata(FETCH_NO_MORE, YES_STRING);
   }
 
-  public boolean isNoFetch() {
-    return getMetadata(FETCH_NO_MORE) != null;
+  public boolean noMoreFetch() {
+    return hasMetadata(FETCH_NO_MORE);
   }
 
   public int getDepth() { return getDistance(); }
@@ -523,9 +529,7 @@ public class WebPage {
     setFloatMetadata(Name.CASH_KEY, cash);
   }
 
-  public Instant getPublishTime() {
-    return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH);
-  }
+  public Instant getPublishTime() { return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH); }
 
   public void setPublishTime(Instant publishTime) {
     putMetadata(Name.PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
@@ -533,7 +537,7 @@ public class WebPage {
 
   public void updatePublishTime(Instant newPublishTime) {
     Instant publishTime = getPublishTime();
-    if (newPublishTime.isAfter(publishTime) && newPublishTime.isAfter(TCP_IP_STANDARDIZED_TIME)) {
+    if (newPublishTime.isAfter(publishTime) && newPublishTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)) {
       setPrevPublishTime(publishTime);
       setPublishTime(newPublishTime);
     }
@@ -594,7 +598,7 @@ public class WebPage {
 
   public void increaseTotalOutLinkCount(long count) {
     long oldCount = getTotalOutLinkCount();
-    putMetadata(Name.OUT_LINK_COUNT, String.valueOf(oldCount + count));
+    setTotalOutLinkCount(oldCount + count);
   }
 
   public int sniffOutLinkCount() {

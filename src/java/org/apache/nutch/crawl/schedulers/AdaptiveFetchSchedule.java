@@ -18,6 +18,7 @@
 package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
@@ -79,9 +80,12 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
 
   protected double SYNC_DELTA_RATE = 0.2f;
 
+  @Override
   public void setConf(Configuration conf) {
     super.setConf(conf);
     if (conf == null) {
+      LOG.warn("Unexpected null configuration for AdaptiveFetchSchedule");
+
       return;
     }
 
@@ -92,6 +96,19 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     SEED_MAX_INTERVAL = ConfigUtils.getDuration(conf, "db.fetch.schedule.adaptive.seed_max_interval", Duration.ofDays(1));
     SYNC_DELTA = conf.getBoolean("db.fetch.schedule.adaptive.sync_delta", true);
     SYNC_DELTA_RATE = conf.getFloat("db.fetch.schedule.adaptive.sync_delta_rate", 0.2f);
+
+    Params.of(
+        "className", getClass().getSimpleName()
+    ).merge(getParams()).withLogger(LOG).formatAsLine();
+  }
+
+  @Override
+  public Params getParams() {
+    return Params.of(
+        "MIN_INTERVAL", MIN_INTERVAL,
+        "MAX_INTERVAL", MAX_INTERVAL,
+        "SEED_MAX_INTERVAL", SEED_MAX_INTERVAL
+    ).merge(super.getParams());
   }
 
   @Override

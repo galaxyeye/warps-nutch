@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.SeedBuilder;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchJob;
@@ -35,9 +36,8 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +117,7 @@ public class InjectJob extends NutchJob implements Tool {
     Configuration conf = getConf();
 
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
-    String seedDir = params.get(ARG_SEEDDIR);
+    String seedDir = params.getString(ARG_SEEDDIR);
 
     conf.set(PARAM_CRAWL_ID, crawlId);
 
@@ -134,7 +134,7 @@ public class InjectJob extends NutchJob implements Tool {
     Params params = new Params(args);
     Configuration conf = getConf();
 
-    String seedDir = params.get(ARG_SEEDDIR);
+    String seedDir = params.getString(ARG_SEEDDIR);
     Path input = new Path(seedDir);
 
     if (!FileSystem.get(conf).exists(input)) {

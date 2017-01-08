@@ -31,7 +31,7 @@ import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +56,8 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     FIELDS.add(GoraWebPage.Field.METADATA);
     FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
     FIELDS.add(GoraWebPage.Field.FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
     FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
     FIELDS.add(GoraWebPage.Field.HEADERS);
@@ -89,9 +89,8 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
     currentJob.setSortComparatorClass(GraphKeyComparator.class);
 
-    // TODO : check if we need a combiner
-//    currentJob.setCombinerClass(OutGraphUpdateCombiner.class);
-//    currentJob.setCombinerKeyGroupingComparatorClass(UrlOnlyComparator.class);
+    // currentJob.setCombinerClass(OutGraphUpdateCombiner.class);
+    // currentJob.setCombinerKeyGroupingComparatorClass(UrlOnlyComparator.class);
 
     Collection<GoraWebPage.Field> fields = getFields(currentJob);
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);

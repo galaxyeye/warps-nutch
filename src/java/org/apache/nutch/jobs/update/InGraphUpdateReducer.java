@@ -17,6 +17,7 @@
 package org.apache.nutch.jobs.update;
 
 import org.apache.gora.store.DataStore;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
@@ -27,7 +28,8 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ import java.io.IOException;
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.jobs.update.InGraphUpdateReducer.Counter.pagesNotExist;
-import static org.apache.nutch.metadata.Nutch.VAR_UPDATED_BY_OUT_PAGE;
+import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
 import static org.apache.nutch.persist.Mark.UPDATEING;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
@@ -46,7 +48,10 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
   public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
 
-  public enum Counter { pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, updated }
+  public enum Counter { pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, totalUpdates }
+
+  private String reportSuffix;
+  private NutchMetrics nutchMetrics;
 
   private DataStore<String, GoraWebPage> datastore;
 
@@ -58,6 +63,8 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 //    getReporter().setLog(LOG_ADDITIVITY);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
+    nutchMetrics = NutchMetrics.getInstance(conf);
+    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
@@ -95,12 +102,10 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
       return;
     }
 
-    updateGraph(graph);
-    updateMetadata(page);
-
-    if (page.getTempVar(VAR_UPDATED_BY_OUT_PAGE, false)) {
+    if (updateGraph(graph)) {
       context.write(reversedUrl, page.get());
       getCounter().updateAffectedRows(url);
+      nutchMetrics.reportWebPage(url, page, reportSuffix);
     }
   }
 
@@ -120,23 +125,24 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     WebGraph graph = new WebGraph();
 
     WebVertex focus = new WebVertex(url);
-    WebPage page = null;
     for (WebGraphWritable graphWritable : subGraphs) {
       assert (graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
 
       WebGraph subGraph = graphWritable.get();
-      WebEdge edge = subGraph.firstEdge();
-      if (edge.isLoop()) {
-        page = edge.getTargetWebPage();
-      }
-      graph.addEdgeLenient(focus, edge.getTarget(), subGraph.getEdgeWeight(edge));
+      subGraph.edgeSet().forEach(edge -> {
+        if (edge.isLoop()) {
+          focus.setWebPage(edge.getTargetWebPage());
+        }
+        graph.addEdgeLenient(focus, edge.getTarget(), subGraph.getEdgeWeight(edge));
+      });
     }
 
-    if (page == null) {
-      page = WebPage.wrap(datastore.get(reversedUrl));
+    if (!focus.hasWebPage()) {
+      WebPage page = WebPage.wrap(datastore.get(reversedUrl));
 
       // Page is already in the db
       if (!page.isEmpty()) {
+        focus.setWebPage(page);
         getCounter().increase(Counter.pagesLoaded);
       }
     }
@@ -144,51 +150,43 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
       getCounter().increase(Counter.pagesPassed);
     }
 
-    focus.setWebPage(page);
     graph.setFocus(focus);
 
     return graph;
   }
 
-  private void updateGraph(WebGraph graph) {
+  private boolean updateGraph(WebGraph graph) {
     WebVertex focus = graph.getFocus();
     WebPage page = focus.getWebPage();
 
-    int updated = 0;
+    int totalUpdates = 0;
     for (WebEdge outgoingEdge : graph.outgoingEdgesOf(focus)) {
       if (outgoingEdge.isLoop()) {
         continue;
       }
 
-      WebPage outgoingPage = graph.getEdgeTarget(outgoingEdge).getWebPage();
-
-//      Params.of(
-//          "reversedUrl", TableUtil.reverseUrlOrEmpty(outgoingEdge.getSourceUrl()),
-//          "edge", outgoingEdge.getSourceUrl() + " -> " + outgoingEdge.getTargetUrl(),
-//          "baseUrl", outgoingPage.getBaseUrl() + " -> " + page.getBaseUrl(),
-//          "score", graph.getEdgeWeight(outgoingEdge),
-//          "publishTime", outgoingPage.getRefPublishTime() + " -> " + page.getPublishTime(),
-//          "pageCategory", outgoingPage.getPageCategory(),
-//          "likelihood", outgoingPage.getPageCategoryLikelihood()
-//      ).withLogger(LOG).info(true);
-
       /* Update out-link page */
-      if (outgoingPage.isDetailPage(0.80f)) {
-        page.updateRefPublishTime(outgoingPage.getPublishTime());
-        page.increaseRefChars(outgoingPage.getTextContentLength());
+      String targetUrl = outgoingEdge.getTargetUrl();
+      WebPage targetPage = outgoingEdge.getTargetWebPage();
+      if (targetPage.veryLikeDetailPage(targetUrl)) {
+        page.updateRefPublishTime(targetPage.getPublishTime());
+        page.increaseRefChars(targetPage.sniffTextLength());
         page.increaseRefArticles(1);
-        ++updated;
+        ++totalUpdates;
       }
     }
 
-    if (updated > 0) {
-      page.setTempVar(VAR_UPDATED_BY_OUT_PAGE, true);
+    if (totalUpdates > 0) {
       getCounter().increase(Counter.pagesUpdated);
-      getCounter().increase(Counter.updated, updated);
+      getCounter().increase(Counter.totalUpdates, totalUpdates);
+
+      return true;
     }
+
+    return false;
   }
 
-  private void updateMetadata(WebPage page) {
+  private void updateMarks(WebPage page) {
     page.putMarkIfNonNull(UPDATEING, page.getMark(UPDATEOUTG));
     page.removeMark(UPDATEOUTG);
   }

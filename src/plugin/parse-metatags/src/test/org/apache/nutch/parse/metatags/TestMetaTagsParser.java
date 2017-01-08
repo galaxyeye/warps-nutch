@@ -22,7 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
@@ -95,7 +95,7 @@ public class TestMetaTagsParser {
 
         MetaTagsParser mtp = new MetaTagsParser();
         mtp.setConf(conf);
-        mtp.filter(urlString, page, new Parse(), metaTags, node);
+        mtp.filter(urlString, page, new ParseResult(), metaTags, node);
       }
 
       return page.get().getMetadata();

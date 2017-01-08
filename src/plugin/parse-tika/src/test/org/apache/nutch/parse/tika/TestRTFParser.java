@@ -20,7 +20,7 @@ package org.apache.nutch.parse.tika;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
@@ -55,7 +55,7 @@ public class TestRTFParser {
   public void testIt() throws ProtocolException, ParseException, IOException {
 
     String urlString;
-    Parse parse;
+    ParseResult parseResult;
     Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
@@ -73,15 +73,15 @@ public class TestRTFParser {
     String mtype = mimeutil.getMimeType(file);
     page.setContentType(mtype);
 
-    parse = new ParseUtil(conf).parse(urlString, page);
+    parseResult = new ParseUtil(conf).parse(urlString, page);
 
-    String title = parse.getTitle();
-    String text = parse.getText();
+    String title = parseResult.getTitle();
+    String text = parseResult.getText();
     assertEquals("test rft document", title);
     // assertEquals("The quick brown fox jumps over the lazy dog", text.trim());
 
     // HOW DO WE GET THE PARSE METADATA?
-    // Metadata meta = parse();
+    // Metadata meta = parseResult();
 
     // METADATA extraction is not yet supported in Tika
     //

@@ -21,7 +21,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
@@ -43,9 +42,7 @@ import java.util.concurrent.Future;
 
 import static org.apache.nutch.metadata.Metadata.Name.CASH_KEY;
 import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Tests basic Gora functionality by writing and reading webpages.
@@ -73,8 +70,8 @@ public class TestGoraStorage extends AbstractNutchTest {
   // @Ignore("GORA-326 Removal of _g_dirty field from _ALL_FIELDS array and Field Enum in Persistent classes")
   public void testSinglethreaded() throws Exception {
     String id = "singlethread";
-    readWriteGoraWebPage(id, webPageStore);
-    readWriteWebPage(id, webPageStore);
+    readWriteGoraWebPage(id, datastore);
+    readWriteWebPage(id, datastore);
   }
 
   private static void readWriteGoraWebPage(String id, DataStore<String, GoraWebPage> store) throws Exception {
@@ -181,7 +178,7 @@ public class TestGoraStorage extends AbstractNutchTest {
         public Integer call() {
           try {
             // run a sequence
-            readWriteGoraWebPage(Thread.currentThread().getName(), webPageStore);
+            readWriteGoraWebPage(Thread.currentThread().getName(), datastore);
             // everything ok, return 0
             return 0;
           } catch (Exception e) {

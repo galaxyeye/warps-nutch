@@ -39,8 +39,7 @@ import org.apache.oro.text.regex.*;
  * </ul>
  */
 public class BasicURLNormalizer extends Configured implements URLNormalizer {
-  public static final Logger LOG = LoggerFactory
-      .getLogger(BasicURLNormalizer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(BasicURLNormalizer.class);
 
   private Perl5Compiler compiler = new Perl5Compiler();
   private ThreadLocal<Perl5Matcher> matchers = new ThreadLocal<Perl5Matcher>() {

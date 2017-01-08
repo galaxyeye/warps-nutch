@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.junit.Before;
 import org.junit.Test;
 

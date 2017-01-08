@@ -24,7 +24,7 @@ import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.w3c.dom.DocumentFragment;
 
 import java.util.ArrayList;
@@ -94,19 +94,19 @@ public class ParseFilters {
   }
 
   /** Run all defined filters. */
-  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public ParseResult filter(String url, WebPage page, ParseResult parseResult, HTMLMetaTags metaTags, DocumentFragment doc) {
     // loop on each filter
     for (ParseFilter parseFilter : parseFilters) {
       // call filter interface
-      parse = parseFilter.filter(url, page, parse, metaTags, doc);
+      parseResult = parseFilter.filter(url, page, parseResult, metaTags, doc);
 
-      // any failure on parse obj, return
-      if (!ParseStatusUtils.isSuccess(parse.getParseStatus())) {
-        return parse;
+      // any failure on parseResult obj, return
+      if (!ParseStatusUtils.isSuccess(parseResult.getParseStatus())) {
+        return parseResult;
       }
     }
 
-    return parse;
+    return parseResult;
   }
 
   public Collection<GoraWebPage.Field> getFields() {

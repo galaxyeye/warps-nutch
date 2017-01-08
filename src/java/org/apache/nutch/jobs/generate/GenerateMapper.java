@@ -16,8 +16,6 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.generate;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.filter.*;
@@ -30,14 +28,13 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Metadata.Name.TMP_PAGE_FROM_SEED;
 import static org.apache.nutch.metadata.Nutch.*;
 
 public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEntry, GoraWebPage> {
@@ -154,7 +150,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
 
     int priority = page.sniffFetchPriority();
-    float initSortScore = calculateInitSortScore(page);
+    float initSortScore = calculateInitSortScore(url, page);
     float sortScore = 0.0f;
 
     try {
@@ -162,24 +158,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
     } catch (ScoringFilterException ignored) {}
 
-    boolean debugPageFromSeed = true;
-    int depth = page.getDepth();
-    if (debugPageFromSeed && page.hasMetadata(TMP_PAGE_FROM_SEED)) {
-      if (depth != 1 || priority < FETCH_PRIORITY_DETAIL_PAGE || initSortScore < SCORE_DETAIL_PAGE) {
-        String report = Params.of(
-            "fromSeed", true,
-            "depth", depth,
-            "priority", priority,
-            "score", page.getScore(),
-            "initSortScore", initSortScore,
-            "sortScore", sortScore,
-            " -> ", url
-        ).formatAsLine();
-        nutchMetrics.reportPageFromSeed(report, reportSuffix);
-      }
-    }
-
-    output(url, new SelectorEntry(url, priority, sortScore), page, context);
+    output(new SelectorEntry(url, priority, sortScore), page, context);
 
     updateStatus(url, page);
   }
@@ -188,8 +167,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
    * Raise detail page's priority so them can be fetched sooner
    * Detail pages comes first, but we still need keep chances for pages with other category
    * */
-  private float calculateInitSortScore(WebPage page) {
-    boolean raise = page.veryLikeDetailPage() && ++detailPages < maxDetailPageCount;
+  private float calculateInitSortScore(String url, WebPage page) {
+    boolean raise = page.veryLikeDetailPage(url) && ++detailPages < maxDetailPageCount;
 
     float factor = raise ? 1.0f : 0.0f;
     int depth = page.getDepth();
@@ -230,11 +209,9 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
     int depth = page.getDepth();
     // Filter on distance
-    if (maxDistance > -1) {
-      if (depth > maxDistance) {
-        getCounter().increase(Counter.pagesTooDeep);
-        return false;
-      }
+    if (maxDistance > -1 && depth > maxDistance) {
+      getCounter().increase(Counter.pagesTooDeep);
+      return false;
     }
 
     // TODO : CrawlFilter may be move to be a plugin
@@ -293,13 +270,13 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       if (days <= 30) {
         getCounter().increase(Counter.pagesFetchLater);
       }
-      else if (days >= 3650) {
+      else if (days >= NEVER_FETCH_INTERVAL_DAYS) {
         getCounter().increase(Counter.pagesNeverFetch);
       }
 
       if (depth == 0) {
         getCounter().increase(Counter.seedsFetchLater);
-        debugFetchLaterSeeds(url, page);
+        nutchMetrics.debugFetchLaterSeeds(nutchMetrics.getPageReport(url, page), reportSuffix);
       }
 
       return false;
@@ -325,7 +302,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     return true;
   }
 
-  private void output(String url, SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
+  private void output(SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     context.write(entry, page.get());
   }
 
@@ -346,7 +323,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
     else if (depth == 1) {
       counter = Counter.rowsDepth1;
-      if (page.veryLikeDetailPage()) {
+      if (page.veryLikeDetailPage(url)) {
         counter = Counter.rowsDetailFromSeed;
       }
     }
@@ -363,30 +340,5 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     getCounter().increase(counter);
 
     getCounter().updateAffectedRows(url);
-  }
-
-  private void debugFetchLaterSeeds(String url, WebPage page) {
-    Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
-    String fetchTimeString =
-        DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime())
-            + " (" + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss") + ")";
-    final DecimalFormat df = new DecimalFormat("0.00");
-
-    Params params = Params.of(
-        "FT", fetchTimeString,
-        "DEP", page.getDepth(),
-        "FC", page.getFetchCount(),
-        "PT", DateTimeUtil.format(page.getPublishTime()),
-        "RPT", DateTimeUtil.format(page.getRefPublishTime()),
-        "RA", page.getRefArticles(),
-        "RC", page.getRefChars(),
-        "OL", page.getTotalOutLinkCount(),
-        "S", df.format(page.getScore()),
-        "AS", df.format(page.getArticleScore()),
-        "C", df.format(page.getCash()),
-        "U", StringUtils.substring(url, 0, 80)
-    ).withKVDelimiter(":");
-
-    nutchMetrics.debugFetchLaterSeeds(params.formatAsLine(), reportSuffix);
   }
 }

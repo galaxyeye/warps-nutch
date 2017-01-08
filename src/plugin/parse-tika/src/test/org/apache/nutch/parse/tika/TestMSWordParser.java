@@ -19,7 +19,7 @@ package org.apache.nutch.parse.tika;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
@@ -70,7 +70,7 @@ public class TestMSWordParser {
     DataInputStream in = new DataInputStream(new FileInputStream(file));
     in.readFully(bytes);
     in.close();
-    Parse parse;
+    ParseResult parseResult;
     WebPage page = WebPage.newWebPage();
     page.setBaseUrl(new Utf8("file:" + urlString));
     page.setContent(bytes);
@@ -79,8 +79,8 @@ public class TestMSWordParser {
     String mtype = mimeutil.getMimeType(file);
     page.setContentType(mtype);
 
-    parse = new ParseUtil(conf).parse("file:" + urlString, page);
-    return parse.getText();
+    parseResult = new ParseUtil(conf).parse("file:" + urlString, page);
+    return parseResult.getText();
   }
 
   @Test

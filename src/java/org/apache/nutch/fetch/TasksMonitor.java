@@ -7,11 +7,12 @@ import com.google.common.collect.TreeMultiset;
 import org.apache.commons.collections4.SortedBidiMap;
 import org.apache.commons.collections4.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
 import org.apache.nutch.fetch.data.FetchTask;
+import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.host.HostDb;
@@ -355,7 +356,7 @@ public class TasksMonitor {
 
     ++hostStat.urls;
 
-    PageCategory pageCategory = crawlFilters.sniffPageCategory(url);
+    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
     if (pageCategory.isIndex()) {
       ++hostStat.indexUrls;
     } else if (pageCategory.isDetail()) {
@@ -374,30 +375,6 @@ public class TasksMonitor {
       ++hostStat.unknownUrls;
     }
 
-    if (debugUrls) {
-      Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
-      String fetchTimeString =
-          DateTimeUtil.format(page.getPrevFetchTime()) + " -> " + DateTimeUtil.format(page.getFetchTime())
-              + " (" + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss") + ")";
-      final DecimalFormat df = new DecimalFormat("0.00");
-
-      Params params = Params.of(
-          "FT", fetchTimeString,
-          "DEP", page.getDepth(),
-          "FC", page.getFetchCount(),
-          "PT", DateTimeUtil.format(page.getPublishTime()),
-          "RPT", DateTimeUtil.format(page.getRefPublishTime()),
-          "RA", page.getRefArticles(),
-          "RC", page.getRefChars(),
-          "OL", page.getTotalOutLinkCount(),
-          "S", df.format(page.getScore()),
-          "AS", df.format(page.getArticleScore()),
-          "C", df.format(page.getCash()),
-          "U", StringUtils.substring(url, 0, 80)
-      ).withKVDelimiter(":");
-      nutchMetrics.debugUrls(params.formatAsLine(), pageCategory, reportSuffix);
-    }
-
     int depth = page.getDepth();
     if (depth == 1) {
       ++hostStat.urlsFromSeed;
@@ -405,9 +382,7 @@ public class TasksMonitor {
 
     if (url.length() > maxUrlLength) {
       ++hostStat.urlsTooLong;
-      if (debugUrls) {
-        nutchMetrics.debugLongUrls(url, reportSuffix);
-      }
+      nutchMetrics.debugLongUrls(url, reportSuffix);
     }
 
     availableHosts.put(host, hostStat);
@@ -457,7 +432,7 @@ public class TasksMonitor {
 
     int deleted = clearReadyTasks(queue);
 
-    DecimalFormat df = new DecimalFormat("0.##");
+    final DecimalFormat df = new DecimalFormat("0.##");
 
     LOG.warn("Retire slowest queue : " + queue.getId()
         + ", task stat : \n"
