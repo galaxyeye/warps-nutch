@@ -24,11 +24,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.NodeWalker;
+import org.apache.nutch.common.NodeWalker;
 import org.apache.tika.language.LanguageIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,35 +88,35 @@ public class HTMLLanguageParser implements ParseFilter {
    * -html.shtml#language) <li>3. meta http-equiv (content-language)
    * (http://www.w3.org/TR/REC-html40/struct/global.html#h-7.4.4.2) <br>
    */
-  public Parse filter(String url, WebPage page, Parse parse,
-                      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public ParseResult filter(String url, WebPage page, ParseResult parseResult,
+                            HTMLMetaTags metaTags, DocumentFragment doc) {
     String lang = null;
 
     if (detect >= 0 && identify < 0) {
       lang = detectLanguage(page, doc);
     } else if (detect < 0 && identify >= 0) {
-      lang = identifyLanguage(parse);
+      lang = identifyLanguage(parseResult);
     } else if (detect < identify) {
       lang = detectLanguage(page, doc);
       if (lang == null) {
-        lang = identifyLanguage(parse);
+        lang = identifyLanguage(parseResult);
       }
     } else if (identify < detect) {
-      lang = identifyLanguage(parse);
+      lang = identifyLanguage(parseResult);
       if (lang == null) {
         lang = detectLanguage(page, doc);
       }
     } else {
       LOG.warn("No configuration for language extraction policy is provided");
-      return parse;
+      return parseResult;
     }
 
     if (lang != null) {
       page.get().getMetadata().put(new Utf8(Metadata.LANGUAGE), ByteBuffer.wrap(lang.getBytes()));
-      return parse;
+      return parseResult;
     }
 
-    return parse;
+    return parseResult;
   }
 
   /** Try to find the document's language from page headers and metadata */
@@ -143,15 +143,15 @@ public class HTMLLanguageParser implements ParseFilter {
   }
 
   /** Use statistical language identification to extract page language */
-  private String identifyLanguage(Parse parse) {
+  private String identifyLanguage(ParseResult parseResult) {
     StringBuilder text = new StringBuilder();
-    if (parse != null) {
-      String title = parse.getTitle();
+    if (parseResult != null) {
+      String title = parseResult.getTitle();
       if (title != null) {
         text.append(title);
       }
 
-      String content = parse.getText();
+      String content = parseResult.getText();
       if (content != null) {
         text.append(" ").append(content);
       }
@@ -272,7 +272,7 @@ public class HTMLLanguageParser implements ParseFilter {
     }
 
     /**
-     * Parse a language string and return an ISO 639 primary code, or
+     * ParseResult a language string and return an ISO 639 primary code, or
      * <code>null</code> if something wrong occurs, or if no language is found.
      */
     final static String parseLanguage(String lang) {

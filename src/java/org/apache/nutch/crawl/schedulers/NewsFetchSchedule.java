@@ -17,7 +17,6 @@
 
 package org.apache.nutch.crawl.schedulers;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 
@@ -42,10 +41,6 @@ import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   public static final Logger LOG = AbstractFetchSchedule.LOG;
 
-  public void setConf(Configuration conf) {
-    super.setConf(conf);
-  }
-
   @Override
   public void setFetchSchedule(String url, WebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
@@ -60,9 +55,9 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
       interval = MIN_INTERVAL;
       changed = true;
     }
-    else if (page.veryLikeDetailPage()) {
+    else if (page.veryLikeDetailPage(url)) {
       // Detail pages are fetched only once
-      page.setNoFetch();
+      page.setNoMoreFetch();
       interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
       changed = true;
     }

@@ -28,7 +28,7 @@ import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.DbPageConverter;
+import org.apache.nutch.common.DbPageConverter;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

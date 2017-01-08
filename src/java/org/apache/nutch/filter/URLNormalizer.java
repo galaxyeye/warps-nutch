@@ -28,8 +28,8 @@ import org.apache.hadoop.conf.Configurable;
 public interface URLNormalizer extends Configurable {
 
   /* Extension ID */
-  public static final String X_POINT_ID = URLNormalizer.class.getName();
+  String X_POINT_ID = URLNormalizer.class.getName();
 
   /* Interface for URL normalization */
-  public String normalize(String urlString, String scope) throws MalformedURLException;
+  String normalize(String urlString, String scope) throws MalformedURLException;
 }

@@ -151,10 +151,9 @@ public class FetchQueues extends AbstractQueue<FetchQueue> {
   }
 
   public void dump(int limit) {
-    LOG.info("Start dump fetch queue status. "
+    LOG.info("Report fetch queue status. "
         + "Active : " + activeQueues.size() + ", inactive : " + inactiveQueues.size()+ " ...");
     activeQueues.values().stream().limit(limit).filter(FetchQueue::hasTasks).forEach(FetchQueue::dump);
     inactiveQueues.values().stream().limit(limit).filter(FetchQueue::hasPendingTasks).forEach(FetchQueue::dump);
-    LOG.info("Done.");
   }
 }

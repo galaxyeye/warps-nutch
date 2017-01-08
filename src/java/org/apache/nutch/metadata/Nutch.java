@@ -58,11 +58,13 @@ public interface Nutch {
 
   int MAX_DISTANCE = 1000000;
 
-  int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and 5 years
+  int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and five years
 
   int FETCH_TASK_REMAINDER_NUMBER = 5;
 
   Instant TCP_IP_STANDARDIZED_TIME = Instant.parse("1982-01-01T00:00:00Z");
+
+  Instant MIN_ARTICLE_PUBLISH_TIME = Instant.parse("1995-01-01T00:00:00Z");
 
   // The shortest url
   String SHORTEST_VALID_URL = "ftp://t.tt";
@@ -245,6 +247,14 @@ public interface Nutch {
   String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
   String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
 
+  String PARAM_FETCH_MIN_INTERVAL = "db.fetch.interval.min";
+  String PARAM_FETCH_MAX_INTERVAL = "db.fetch.interval.max";
+  String PARAM_FETCH_DEFAULT_INTERVAL = "db.fetch.interval.default";
+  String PARAM_FETCH_MAX_RETRY = "db.fetch.retry.max";
+
+  String PARAM_UPDATE_MAX_OUT_LINKS = "db.update.max.outlinks";
+  String PARAM_UPDATE_MAX_IN_LINKS = "db.update.max.inlinks";
+
   String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
 
   String PARAM_CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
@@ -266,7 +276,6 @@ public interface Nutch {
    * */
   String VAR_OUTLINKS_COUNT = "outlinks_count";
   String VAR_PAGE_EXISTENCE = "page_existence";
-  String VAR_UPDATED_BY_OUT_PAGE = "updated_by_out_page";
 
   /**
    * Variable values

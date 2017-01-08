@@ -4,9 +4,10 @@ package org.apache.nutch.indexer;
  * Created by vincent on 16-8-1.
  */
 import org.apache.hadoop.conf.Configurable;
-import org.apache.nutch.plugin.FieldPluggable;
+import org.apache.nutch.common.Parameterized;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.plugin.FieldPluggable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import java.util.Collection;
  * fields. All plugins found which implement this extension point are run
  * sequentially on the parse.
  */
-public interface IndexingFilter extends FieldPluggable, Configurable {
+public interface IndexingFilter extends FieldPluggable, Configurable, Parameterized {
 
   Logger LOG = LoggerFactory.getLogger(IndexingFilter.class);
 

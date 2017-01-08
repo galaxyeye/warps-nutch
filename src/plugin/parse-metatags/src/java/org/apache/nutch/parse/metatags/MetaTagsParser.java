@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -33,7 +33,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * Parse HTML meta tags (keywords, description) and store them in the parse
+ * ParseResult HTML meta tags (keywords, description) and store them in the parse
  * metadata so that they can be indexed with the index-metadata plugin with the
  * prefix 'metatag.'. Metatags are matched ignoring case.
  */
@@ -65,7 +65,7 @@ public class MetaTagsParser implements ParseFilter {
     return this.conf;
   }
 
-  public Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags, DocumentFragment doc) {
+  public ParseResult filter(String url, WebPage page, ParseResult parseResult, HTMLMetaTags metaTags, DocumentFragment doc) {
     // temporary map: cannot concurrently iterate over and modify page metadata
     Map<CharSequence, ByteBuffer> metadata = new HashMap<>();
 
@@ -102,7 +102,7 @@ public class MetaTagsParser implements ParseFilter {
       addIndexedMetatags(page.get().getMetadata(), name, value);
     }
 
-    return parse;
+    return parseResult;
   }
 
   /**

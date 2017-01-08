@@ -18,17 +18,18 @@
 package org.apache.nutch.filter;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.ObjectCache;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.util.ObjectCache;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Creates and caches {@link URLFilter} implementing plugins. */
 public class URLFilters {
@@ -54,7 +55,7 @@ public class URLFilters {
         if (point == null)
           throw new RuntimeException(URLFilter.X_POINT_ID + " not found.");
         Extension[] extensions = point.getExtensions();
-        Map<String, URLFilter> filterMap = new HashMap<String, URLFilter>();
+        Map<String, URLFilter> filterMap = new HashMap<>();
         for (int i = 0; i < extensions.length; i++) {
           Extension extension = extensions[i];
           URLFilter filter = (URLFilter) extension.getExtensionInstance();
@@ -71,7 +72,7 @@ public class URLFilters {
         if (orderedFilters == null) {
           objectCache.setObject(URLFilter.class.getName(), filterMap.values().toArray(new URLFilter[0]));
         } else {
-          ArrayList<URLFilter> filters = new ArrayList<URLFilter>();
+          ArrayList<URLFilter> filters = new ArrayList<>();
           for (int i = 0; i < orderedFilters.length; i++) {
             URLFilter filter = filterMap.get(orderedFilters[i]);
             if (filter != null) {
@@ -104,8 +105,6 @@ public class URLFilters {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    Arrays.stream(this.urlFilters).forEach(f -> sb.append(f.getClass().getSimpleName()).append(", "));
-    return sb.toString();
+    return Stream.of(urlFilters).map(f -> f.getClass().getSimpleName()).collect(Collectors.joining(", "));
   }
 }

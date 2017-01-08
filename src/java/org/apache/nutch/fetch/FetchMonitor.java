@@ -1,6 +1,7 @@
 package org.apache.nutch.fetch;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.indexer.IndexThread;
 import org.apache.nutch.fetch.indexer.JITIndexer;

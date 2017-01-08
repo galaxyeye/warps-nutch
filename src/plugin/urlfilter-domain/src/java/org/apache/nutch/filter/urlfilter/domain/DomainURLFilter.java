@@ -23,7 +23,7 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
-import org.apache.nutch.util.domain.DomainSuffix;
+import org.apache.nutch.net.domain.DomainSuffix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -51,7 +51,9 @@ public class TestGenerator extends AbstractNutchTest {
   public static final Logger LOG = LoggerFactory.getLogger(TestGenerator.class);
 
   private static String[] FIELDS = new String[] {
-      GoraWebPage.Field.MARKERS.getName(), GoraWebPage.Field.SCORE.getName() };
+      GoraWebPage.Field.MARKERS.getName(),
+      GoraWebPage.Field.SCORE.getName()
+  };
 
   @Override
   @Before
@@ -76,20 +78,20 @@ public class TestGenerator extends AbstractNutchTest {
 
     final int NUM_RESULTS = 2;
 
-    ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
+    ArrayList<WebPage> list = new ArrayList<>();
 
     for (int i = 0; i <= 100; i++) {
-      list.add(createURLWebPage("http://aaa/" + pad(i), 1, i));
+      list.add(createWebPage("http://aaa/" + pad(i), 1, i));
     }
 
-    for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
+    for (WebPage page : list) {
+      datastore.put(page.url(), page.get());
     }
-    webPageStore.flush();
+    datastore.flush();
 
     generateFetchlist(NUM_RESULTS, conf, false);
 
-    ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    ArrayList<WebPage> l = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // sort urls by score desc
     Collections.sort(l, new ScoreComparator());
@@ -98,8 +100,8 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(NUM_RESULTS, l.size());
 
     // verify we have the highest scoring urls
-    assertEquals("http://aaa/100", (l.get(0).getUrl()));
-    assertEquals("http://aaa/099", (l.get(1).getUrl()));
+    assertEquals("http://aaa/100", (l.get(0).url()));
+    assertEquals("http://aaa/099", (l.get(1).url()));
   }
 
   private String pad(int i) {
@@ -113,13 +115,13 @@ public class TestGenerator extends AbstractNutchTest {
   /**
    * Comparator that sorts by score desc.
    */
-  public class ScoreComparator implements Comparator<URLWebPage> {
+  public class ScoreComparator implements Comparator<WebPage> {
 
-    public int compare(URLWebPage tuple1, URLWebPage tuple2) {
-      if (tuple2.getDatum().getScore() - tuple1.getDatum().getScore() < 0) {
+    public int compare(WebPage tuple1, WebPage tuple2) {
+      if (tuple2.get().getScore() - tuple1.get().getScore() < 0) {
         return -1;
       }
-      if (tuple2.getDatum().getScore() - tuple1.getDatum().getScore() > 0) {
+      if (tuple2.get().getScore() - tuple1.get().getScore() > 0) {
         return 1;
       }
       return 0;
@@ -135,23 +137,23 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateHostLimit() throws Exception {
-    ArrayList<URLWebPage> list = new ArrayList<>();
+    ArrayList<WebPage> list = new ArrayList<>();
 
-    list.add(createURLWebPage("http://www.example.com/index1.html", 1, 1));
-    list.add(createURLWebPage("http://www.example.com/index2.html", 1, 1));
-    list.add(createURLWebPage("http://www.example.com/index3.html", 1, 1));
+    list.add(createWebPage("http://www.example.com/index1.html", 1, 1));
+    list.add(createWebPage("http://www.example.com/index2.html", 1, 1));
+    list.add(createWebPage("http://www.example.com/index3.html", 1, 1));
 
-    for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
+    for (WebPage page : list) {
+      datastore.put(TableUtil.reverseUrl(page.url()), page.get());
     }
-    webPageStore.flush();
+    datastore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 1);
     myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    ArrayList<WebPage> fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -160,7 +162,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as 2 + 1 skipped (already generated)
@@ -169,7 +171,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 3 as now all have generate mark
@@ -184,19 +186,19 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateDomainLimit() throws Exception {
-    ArrayList<URLWebPage> list = new ArrayList<>();
+    ArrayList<WebPage> list = new ArrayList<>();
 
-    list.add(createURLWebPage("http://one.example.com/index.html", 1, 1));
-    list.add(createURLWebPage("http://one.example.com/index1.html", 1, 1));
-    list.add(createURLWebPage("http://two.example.com/index.html", 1, 1));
-    list.add(createURLWebPage("http://two.example.com/index1.html", 1, 1));
-    list.add(createURLWebPage("http://three.example.com/index.html", 1, 1));
-    list.add(createURLWebPage("http://three.example.com/index1.html", 1, 1));
+    list.add(createWebPage("http://one.example.com/index.html", 1, 1));
+    list.add(createWebPage("http://one.example.com/index1.html", 1, 1));
+    list.add(createWebPage("http://two.example.com/index.html", 1, 1));
+    list.add(createWebPage("http://two.example.com/index1.html", 1, 1));
+    list.add(createWebPage("http://three.example.com/index.html", 1, 1));
+    list.add(createWebPage("http://three.example.com/index1.html", 1, 1));
 
-    for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
+    for (WebPage page : list) {
+      datastore.put(TableUtil.reverseUrl(page.url()), page.get());
     }
-    webPageStore.flush();
+    datastore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 1);
@@ -204,7 +206,7 @@ public class TestGenerator extends AbstractNutchTest {
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    ArrayList<WebPage> fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(1, fetchList.size());
@@ -213,7 +215,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(3, fetchList.size()); // 2 + 1 skipped (already generated)
@@ -222,7 +224,7 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify we got right amount of records
     assertEquals(6, fetchList.size()); // 3 + 3 skipped (already generated)
@@ -236,30 +238,30 @@ public class TestGenerator extends AbstractNutchTest {
    */
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
-  public void testFilter() throws IOException, Exception {
-    ArrayList<URLWebPage> list = new ArrayList<>();
+  public void testFilter() throws Exception {
+    ArrayList<WebPage> list = new ArrayList<>();
 
-    list.add(createURLWebPage("http://www.example.com/index.html", 1, 1));
-    list.add(createURLWebPage("http://www.example.net/index.html", 1, 1));
-    list.add(createURLWebPage("http://www.example.org/index.html", 1, 1));
+    list.add(createWebPage("http://www.example.com/index.html", 1, 1));
+    list.add(createWebPage("http://www.example.net/index.html", 1, 1));
+    list.add(createWebPage("http://www.example.org/index.html", 1, 1));
 
-    for (URLWebPage uwp : list) {
-      webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum().get());
+    for (WebPage page : list) {
+      datastore.put(page.url(), page.get());
     }
-    webPageStore.flush();
+    datastore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.set("urlfilter.suffix.file", "filter-all.txt");
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, true);
 
-    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    ArrayList<WebPage> fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     assertEquals(0, fetchList.size());
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
-    fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE, FIELDS);
+    fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
 
     // verify nothing got filtered
     assertEquals(list.size(), fetchList.size());
@@ -285,7 +287,7 @@ public class TestGenerator extends AbstractNutchTest {
   }
 
   /**
-   * Constructs new {@link URLWebPage} from submitted parameters.
+   * Constructs new {@link WebPage} from submitted parameters.
    * 
    * @param url
    *          url to use
@@ -293,11 +295,11 @@ public class TestGenerator extends AbstractNutchTest {
    * @param score
    * @return Constructed object
    */
-  private URLWebPage createURLWebPage(final String url, final int fetchInterval, final float score) {
-    WebPage page = WebPage.newWebPage();
+  private WebPage createWebPage(final String url, final int fetchInterval, final float score) {
+    GoraWebPage page = GoraWebPage.newBuilder().build();
     page.setFetchInterval(fetchInterval);
     page.setScore(score);
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-    return new URLWebPage(url, page);
+    return new WebPage(url, page, false);
   }
 }

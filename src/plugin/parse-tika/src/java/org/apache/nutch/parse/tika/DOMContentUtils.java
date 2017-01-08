@@ -19,7 +19,7 @@ package org.apache.nutch.parse.tika;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.util.NodeWalker;
+import org.apache.nutch.common.NodeWalker;
 import org.apache.nutch.util.URLUtil;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;

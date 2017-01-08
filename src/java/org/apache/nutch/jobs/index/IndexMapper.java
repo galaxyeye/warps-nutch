@@ -6,7 +6,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.jobs.parse.ParserJob;
 import org.apache.nutch.jobs.parse.ParserMapper;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.Mark;
@@ -14,7 +14,7 @@ import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.TableUtil;
 
 import java.io.IOException;
@@ -131,8 +131,8 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
           }
         }
 
-        Parse parse = parseUtil.parse(url, page);
-        if (parse == null) {
+        ParseResult parseResult = parseUtil.parse(url, page);
+        if (parseResult == null) {
           getCounter().increase(Counter.parseFailed);
           return;
         }

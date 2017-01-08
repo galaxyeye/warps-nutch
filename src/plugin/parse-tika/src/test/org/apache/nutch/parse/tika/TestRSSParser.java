@@ -17,24 +17,26 @@
 
 package org.apache.nutch.parse.tika;
 
+import com.google.common.collect.Lists;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseException;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.MimeUtil;
 import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -69,7 +71,7 @@ public class TestRSSParser {
   @Test
   public void testIt() throws ProtocolException, ParseException, IOException {
     String urlString;
-    Parse parse;
+    ParseResult parseResult;
 
     Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
@@ -88,36 +90,15 @@ public class TestRSSParser {
       String mtype = mimeutil.getMimeType(file);
       page.setContentType(mtype);
 
-      parse = new ParseUtil(conf).parse(urlString, page);
+      parseResult = new ParseUtil(conf).parse(urlString, page);
 
       // check that there are 2 outlinks:
-
       // http://www-scf.usc.edu/~mattmann/
       // http://www.nutch.org
-
-      Outlink[] theOutlinks = parse.getOutlinks();
-
-      assertTrue("There aren't 2 outlinks read!", theOutlinks.length == 2);
-
-      // now check to make sure that those are the two outlinks
-      boolean hasLink1 = false, hasLink2 = false;
-
-      for (int j = 0; j < theOutlinks.length; j++) {
-        // System.out.println("reading "+theOutlinks[j].getToUrl());
-        if (theOutlinks[j].getToUrl().equals(
-            "http://www-scf.usc.edu/~mattmann/")) {
-          hasLink1 = true;
-        }
-
-        if (theOutlinks[j].getToUrl().equals("http://www.nutch.org/")) {
-          hasLink2 = true;
-        }
-      }
-
-      if (!hasLink1 || !hasLink2) {
+      List<String> urls = parseResult.getOutlinks().stream().map(Outlink::getToUrl).collect(Collectors.toList());
+      if (!urls.containsAll(Lists.newArrayList("http://www-scf.usc.edu/~mattmann/", "http://www.nutch.org/"))) {
         fail("Outlinks read from sample rss file are not correct!");
       }
     }
   }
-
 }

@@ -22,7 +22,7 @@
   Description: This document is the schema for valid domain-suffixes
   definitions. For successful parsing of domain-suffixes xml files, 
   the xml file should be validated with this xsd. 
-  See        : org.apache.nutch.util.domain.DomainSuffixesReader.java
+  See        : org.apache.nutch.net.domain.DomainSuffixesReader.java
 -->
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"

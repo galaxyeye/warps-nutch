@@ -16,36 +16,36 @@
  ******************************************************************************/
 package org.apache.nutch.parse;
 
+import com.google.common.collect.Lists;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.TableUtil;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+
+import static org.apache.nutch.parse.ParseStatusCodes.*;
 
 public class ParseStatusUtils {
 
-  public static ParseStatus STATUS_SUCCESS = ParseStatus.newBuilder().build();
+  public static final ParseStatus STATUS_SUCCESS = ParseStatus.newBuilder().build();
   public static final HashMap<Short, String> minorCodes = new HashMap<>();
 
   static {
-    STATUS_SUCCESS.setMajorCode((int) ParseStatusCodes.SUCCESS);
-    minorCodes.put(ParseStatusCodes.SUCCESS_OK, "ok");
-    minorCodes.put(ParseStatusCodes.SUCCESS_REDIRECT, "redirect");
-    minorCodes.put(ParseStatusCodes.FAILED_EXCEPTION, "exception");
-    minorCodes.put(ParseStatusCodes.FAILED_INVALID_FORMAT, "invalid_format");
-    minorCodes.put(ParseStatusCodes.FAILED_MISSING_CONTENT, "missing_content");
-    minorCodes.put(ParseStatusCodes.FAILED_MISSING_PARTS, "missing_parts");
-    minorCodes.put(ParseStatusCodes.FAILED_TRUNCATED, "truncated");
+    STATUS_SUCCESS.setMajorCode((int) SUCCESS);
+    minorCodes.put(SUCCESS_OK, "ok");
+    minorCodes.put(SUCCESS_REDIRECT, "redirect");
+    minorCodes.put(FAILED_EXCEPTION, "exception");
+    minorCodes.put(FAILED_INVALID_FORMAT, "invalid_format");
+    minorCodes.put(FAILED_MISSING_CONTENT, "missing_content");
+    minorCodes.put(FAILED_MISSING_PARTS, "missing_parts");
+    minorCodes.put(FAILED_TRUNCATED, "truncated");
   }
 
   public static boolean isSuccess(ParseStatus status) {
-    if (status == null) {
-      return false;
-    }
-    return status.getMajorCode() == ParseStatusCodes.SUCCESS;
+    return status != null && status.getMajorCode() == SUCCESS;
   }
 
   /**
@@ -75,48 +75,34 @@ public class ParseStatusUtils {
     return null;
   }
 
-  public static Parse getEmptyParse(Exception e, Configuration conf) {
+  public static ParseResult getEmptyParse(Exception e, Configuration conf) {
     ParseStatus status = ParseStatus.newBuilder().build();
-    status.setMajorCode((int) ParseStatusCodes.FAILED);
-    status.setMinorCode((int) ParseStatusCodes.FAILED_EXCEPTION);
+    status.setMajorCode((int) FAILED);
+    status.setMinorCode((int) FAILED_EXCEPTION);
 
     if (e != null) {
       status.getArgs().add(new Utf8(e.toString()));
     }
 
-    return new Parse("", "", new Outlink[0], status);
+    return new ParseResult("", "", Lists.newArrayList(), status);
   }
 
-  public static Parse getEmptyParse(int minorCode, String message, Configuration conf) {
+  public static ParseResult getEmptyParse(int minorCode, String message, Configuration conf) {
     ParseStatus status = ParseStatus.newBuilder().build();
-    status.setMajorCode((int) ParseStatusCodes.FAILED);
+    status.setMajorCode((int) FAILED);
     status.setMinorCode(minorCode);
     status.getArgs().add(new Utf8(message));
 
-    return new Parse("", "", new Outlink[0], status);
+    return new ParseResult("", "", Lists.newArrayList(), status);
   }
 
   public static String toString(ParseStatus status) {
     if (status == null) {
       return "(null)";
     }
-    StringBuilder sb = new StringBuilder();
-    sb.append(ParseStatusCodes.majorCodes[status.getMajorCode()] + "/"
-        + minorCodes.get(status.getMinorCode().shortValue()));
-    sb.append(" (" + status.getMajorCode() + "/" + status.getMinorCode() + ")");
-    sb.append(", args=[");
-    List<CharSequence> args = status.getArgs();
-    if (args != null) {
-      int i = 0;
-      Iterator<CharSequence> it = args.iterator();
-      while (it.hasNext()) {
-        if (i > 0)
-          sb.append(',');
-        sb.append(it.next());
-        i++;
-      }
-    }
-    sb.append("]");
-    return sb.toString();
+
+    return majorCodes[status.getMajorCode()] + "/" + minorCodes.get(status.getMinorCode().shortValue()) +
+        " (" + status.getMajorCode() + "/" + status.getMinorCode() + ")" +
+        ", args=[" + StringUtils.join(status.getArgs(), ',') + "]";
   }
 }

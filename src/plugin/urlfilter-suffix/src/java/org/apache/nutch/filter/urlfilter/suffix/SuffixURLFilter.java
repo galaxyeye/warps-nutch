@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLFilter;
 
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.SuffixStringMatcher;
+import org.apache.nutch.common.SuffixStringMatcher;
 
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.PluginRepository;

@@ -23,7 +23,7 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -54,6 +54,8 @@ public class BasicIndexingFilter implements IndexingFilter {
     FIELDS.add(GoraWebPage.Field.TEXT);
     FIELDS.add(GoraWebPage.Field.CONTENT);
   }
+
+  public Params getParams() { return new Params(); }
 
   /**
    * The {@link BasicIndexingFilter} filter object which supports boolean

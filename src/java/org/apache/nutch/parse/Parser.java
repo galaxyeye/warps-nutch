@@ -40,5 +40,5 @@ public interface Parser extends FieldPluggable, Configurable {
    *          Page's URL
    * @param page
    */
-  Parse getParse(String url, WebPage page);
+  ParseResult getParse(String url, WebPage page);
 }

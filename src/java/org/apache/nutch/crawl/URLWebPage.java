@@ -18,6 +18,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.nutch.persist.WebPage;
 
+@Deprecated
 public class URLWebPage {
 
   private String url;

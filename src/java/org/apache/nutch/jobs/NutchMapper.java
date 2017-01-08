@@ -20,7 +20,7 @@ import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.persistency.Persistent;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

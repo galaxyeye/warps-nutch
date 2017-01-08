@@ -26,6 +26,7 @@ import java.io.InputStream;
 // Hadoop imports
 import org.apache.hadoop.conf.Configuration;
 // imported for Javadoc
+import org.apache.nutch.common.ObjectCache;
 import org.apache.nutch.protocol.ProtocolOutput;
 // Tika imports
 import org.apache.tika.Tika;

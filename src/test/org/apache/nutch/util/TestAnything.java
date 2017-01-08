@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.service.model.request.SeedUrl;
 import org.junit.Test;
@@ -13,11 +14,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_MAX_INTERVAL;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -201,8 +204,9 @@ public class TestAnything {
   public void testUtf8() {
     String s = "";
     Utf8 u = new Utf8(s);
-    System.out.println(u.length());
-    System.out.println(u.toString());
+    assertEquals(0, u.length());
+//    System.out.println(u.length());
+//    System.out.println(u.toString());
   }
 
   @Test
@@ -211,5 +215,12 @@ public class TestAnything {
     int deleted = 10;
     counter.addAndGet(-deleted);
     System.out.println(counter);
+  }
+
+  @Test
+  public void testConfig() {
+    Configuration conf = ConfigUtils.create();
+    Duration maxInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
+    System.out.println(maxInterval);
   }
 }

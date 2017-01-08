@@ -22,7 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.util.DomUtil;
-import org.apache.nutch.util.NodeWalker;
+import org.apache.nutch.common.NodeWalker;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

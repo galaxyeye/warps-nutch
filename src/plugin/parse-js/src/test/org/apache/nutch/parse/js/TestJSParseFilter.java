@@ -18,11 +18,11 @@ package org.apache.nutch.parse.js;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.parse.Parse;
 import org.apache.nutch.parse.ParseException;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
 import org.junit.Before;
@@ -32,6 +32,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 
@@ -63,10 +64,10 @@ public class TestJSParseFilter {
     conf.set("file.content.limit", "-1");
   }
 
-  public Outlink[] getOutlinks(String[] sampleFiles) throws ProtocolException,
+  public ArrayList<Outlink> getOutlinks(String[] sampleFiles) throws ProtocolException,
       ParseException, IOException {
     String urlString;
-    Parse parse;
+    ParseResult parseResult;
 
     urlString = "file:" + sampleDir + fileSeparator + sampleFiles;
     File file = new File(urlString);
@@ -82,8 +83,8 @@ public class TestJSParseFilter {
     String mime = mutil.getMimeType(file);
     page.setContentType(mime);
 
-    parse = new ParseUtil(conf).parse(urlString, page);
-    return parse.getOutlinks();
+    parseResult = new ParseUtil(conf).parse(urlString, page);
+    return parseResult.getOutlinks();
   }
 
   @Test
@@ -95,7 +96,7 @@ public class TestJSParseFilter {
 
     for (int i = 0; i < filenames.length; i++) {
       if (filenames[i].endsWith(".js")) {
-        assertEquals("number of outlinks in .js test file should be 5", 5, getOutlinks(sampleFiles));
+        assertEquals("number of outlinks in .js test file should be 5", 5, getOutlinks(sampleFiles).size());
         // temporarily disabled as a suitable pure JS file could not be be
         // found.
         // } else {

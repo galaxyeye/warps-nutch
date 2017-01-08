@@ -23,7 +23,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.jobs.NutchJob;
 import org.apache.nutch.samples.SimpleParser;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ import java.util.Map;
  * <li><tt>Content Metadata</tt>: such as <i>X-AspNet-Version</i>, <i>Date</i>,
  * <i>Content-length</i>, <i>servedBy</i>, <i>Content-Type</i>,
  * <i>Cache-Control</>, etc.</li>
- * <li><tt>Parse Metadata</tt>: such as <i>CharEncodingForConversion</i>,
+ * <li><tt>ParseResult Metadata</tt>: such as <i>CharEncodingForConversion</i>,
  * <i>OriginalCharEncoding</i>, <i>language</i>, etc.</li>
  * <li><tt>ParseText</tt>: The page parse text which varies in length depdnecing
  * on <code>content.length</code> configuration.</li>
@@ -79,7 +79,7 @@ public class ParserCheckJob extends NutchJob implements Tool {
 
     dumpText = params.getBoolean("dumpText", false);
     force = params.getBoolean("force", false);
-    url = params.get("url");
+    url = params.getString("url");
 
     if (url == null) {
       results.put("error", "Url must be specified");

@@ -18,6 +18,7 @@
 package org.apache.nutch.indexer.metadata;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
@@ -84,6 +85,8 @@ public class MetadataIndexer implements IndexingFilter {
 //        "resourceCategory", resourceCategory.count()
 //    ));
   }
+
+  public Params getParams() { return new Params(); }
 
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
     try {

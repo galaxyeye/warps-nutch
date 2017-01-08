@@ -21,7 +21,7 @@ package org.apache.nutch.microformats.reltag;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.parse.HTMLMetaTags;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -150,13 +150,13 @@ public class RelTagParser implements ParseFilter {
    * Scan the HTML document looking at possible rel-tags
    * @param url URL of the {@link WebPage} to be parsed
    * @param page {@link WebPage} object relative to the URL
-   * @param parse {@link Parse} object holding parse status
+   * @param parseResult {@link ParseResult} object holding parseResult status
    * @param metatags within the {@link NutchDocument}
    * @param doc The {@link NutchDocument} object
-   * @return parse the actual {@link Parse} object
+   * @return parseResult the actual {@link ParseResult} object
    */
-  public Parse filter(String url, WebPage page, Parse parse,
-                      HTMLMetaTags metaTags, DocumentFragment doc) {
+  public ParseResult filter(String url, WebPage page, ParseResult parseResult,
+                            HTMLMetaTags metaTags, DocumentFragment doc) {
     // Trying to find the document's rel-tags
     Parser parser = new Parser(doc);
     Set<String> tags = parser.getRelTags();
@@ -169,6 +169,6 @@ public class RelTagParser implements ParseFilter {
     }
     ByteBuffer bb = ByteBuffer.wrap(sb.toString().getBytes());
     page.get().getMetadata().put(new Utf8(REL_TAG), bb);
-    return parse;
+    return parseResult;
   }
 }

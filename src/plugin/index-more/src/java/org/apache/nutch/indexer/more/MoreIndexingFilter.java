@@ -2,6 +2,7 @@ package org.apache.nutch.indexer.more;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
@@ -216,6 +217,8 @@ public class MoreIndexingFilter implements IndexingFilter {
     this.conf = conf;
     MIME = new MimeUtil(conf);
   }
+
+  public Params getParams() { return new Params(); }
 
   public Configuration getConf() {
     return this.conf;

@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.crawl.SeedBuilder;
@@ -45,6 +46,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
@@ -610,8 +613,7 @@ public class TaskScheduler extends Configured {
 
   private void startFetchThreads(int threadCount, Configuration conf) {
     for (int i = 0; i < threadCount; i++) {
-      FetchThread fetchThread = new FetchThread(this, conf);
-      fetchThread.start();
+      new FetchThread(this, conf).start();
     }
   }
 
@@ -619,21 +621,15 @@ public class TaskScheduler extends Configured {
    * Dump fetch threads
    */
   public void dumpFetchThreads() {
-    LOG.debug("Fetch threads : active : " + activeFetchThreads.size() + ", idle : " + idleFetchThreads.size());
+    LOG.info("Fetch threads : active : " + activeFetchThreads.size() + ", idle : " + idleFetchThreads.size());
 
-    activeFetchThreads.stream().filter(Thread::isAlive).forEach(fetchThread -> {
-      StackTraceElement[] stack = fetchThread.getStackTrace();
-      StringBuilder sb = new StringBuilder();
-      sb.append(fetchThread.getName());
-      sb.append(" -> ");
-      sb.append(fetchThread.reprUrl());
-      sb.append(", Stack :\n");
-      for (StackTraceElement s : stack) {
-        sb.append(s.toString()).append('\n');
-      }
-
-      LOG.debug(sb.toString());
-    });
+    String report = activeFetchThreads.stream()
+        .filter(Thread::isAlive)
+        .map(Thread::getStackTrace)
+        .flatMap(Stream::of)
+        .map(StackTraceElement::toString)
+        .collect(Collectors.joining("\n"));
+    LOG.info(report);
   }
 
   /**
@@ -783,8 +779,8 @@ public class TaskScheduler extends Configured {
 
     output(reversedUrl, page);
     counter.increase(Counter.pagesPeresist);
-
-    updateStatus(fetchTask.getUrl(), page);
+    counter.increase(NutchCounter.Counter.outlinks, page.sniffOutLinkCount());
+    updateStatus(url, page);
   }
 
   @SuppressWarnings("unchecked")

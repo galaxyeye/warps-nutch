@@ -67,8 +67,7 @@ public class CrawlFilter extends Configured {
   /**
    * TODO : need carefully test
    */
-  public static PageCategory sniffPageCategory(WebPage page) {
-    String url = page.getBaseUrl();
+  public static PageCategory sniffPageCategory(String url, WebPage page) {
     if (url.isEmpty()) {
       return PageCategory.UNKNOWN;
     }

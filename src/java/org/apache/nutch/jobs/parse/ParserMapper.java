@@ -5,13 +5,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -81,19 +81,19 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
         return;
       }
 
-      Parse parse = parseUtil.process(url, page);
-      if (parse == null) {
+      ParseResult parseResult = parseUtil.process(url, page);
+      if (parseResult == null) {
         getCounter().increase(Counter.parseFailed);
         return;
       }
 
-      // if where is FETCH set, we also have PARSE set after the parse
+      // if where is FETCH set, we also have PARSE set after the parseResult
 
       ParseStatus pstatus = page.getParseStatus();
 
       countParseStatus(pstatus);
-      if (parse.getOutlinks() != null) {
-        getCounter().increase(NutchCounter.Counter.outlinks, parse.getOutlinks().length);
+      if (parseResult.getOutlinks() != null) {
+        getCounter().increase(NutchCounter.Counter.outlinks, parseResult.getOutlinks().size());
       }
       getCounter().updateAffectedRows(url);
 

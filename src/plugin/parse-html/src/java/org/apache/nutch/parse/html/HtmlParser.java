@@ -18,21 +18,21 @@
 package org.apache.nutch.parse.html;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.*;
-import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.EncodingDetector;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.EncodingDetector;
+import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
@@ -54,7 +54,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -107,7 +106,7 @@ public class HtmlParser implements Parser {
     ));
   }
 
-  public Parse getParse(String url, WebPage page) {
+  public ParseResult getParse(String url, WebPage page) {
     URL baseURL;
     try {
       baseURL = new URL(page.getBaseUrl());
@@ -122,7 +121,7 @@ public class HtmlParser implements Parser {
     docRoot = doParse(input);
 
     if (docRoot == null) {
-      LOG.warn("Failed to parse document with encoding " + encoding + ", url : " + url);
+      LOG.warn("Failed to parseResult document with encoding " + encoding + ", url : " + url);
       return ParseStatusUtils.getEmptyParse(null, getConf());
     }
 
@@ -140,13 +139,15 @@ public class HtmlParser implements Parser {
     String pageTitle = page.getTempVarAsString(DOC_FIELD_PAGE_TITLE, "");
     String textContent = page.getTempVarAsString(DOC_FIELD_TEXT_CONTENT, "");
 
-    tryGetValidOutlinks(page, url, baseURL);
+    if (!CrawlFilter.sniffPageCategory(url).isDetail()) {
+      tryGetValidOutlinks(page, url, baseURL);
+    }
 
     ParseStatus status = getStatus(metaTags);
-    Parse parse = new Parse(textContent, pageTitle, outlinks.toArray(new Outlink[0]), status);
-    parse = htmlParseFilters.filter(url, page, parse, metaTags, docRoot);
-    if (parse == null) {
-      LOG.debug("Parse filtered to null, url : " + url);
+    ParseResult parseResult = new ParseResult(textContent, pageTitle, outlinks, status);
+    parseResult = htmlParseFilters.filter(url, page, parseResult, metaTags, docRoot);
+    if (parseResult == null) {
+      LOG.debug("ParseResult filtered to null, url : " + url);
     }
 
     if (metaTags.getNoCache()) {
@@ -154,13 +155,12 @@ public class HtmlParser implements Parser {
       page.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
 
-    PageCategory pageCategory = CrawlFilter.sniffPageCategory(page);
+    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
     page.setPageCategory(pageCategory);
-    if (pageCategory.isDetail()) {
-      page.setPageCategoryLikelihood(0.9f);
-    }
+    // TODO : use a better score
+    page.setPageCategoryLikelihood(0.9f);
 
-    return parse;
+    return parseResult;
   }
 
   private DocumentFragment doParse(InputSource input) {
@@ -202,21 +202,18 @@ public class HtmlParser implements Parser {
   }
 
   private void tryGetValidOutlinks(WebPage page, String url, URL base) {
-    /*
-     * TODO : This is a temporary solution, and should be configured
-     * */
-    if (crawlFilters.veryLikelyBeSearchUrl(url)) {
+    url = crawlFilters.normalizeUrlToEmpty(url);
+    if (url.isEmpty()) {
       return;
     }
 
     if (!metaTags.getNoFollow()) { // okay to follow links
       outlinks.clear();
-
       URL baseTag = domContentUtils.getBase(docRoot);
-
       domContentUtils.getOutlinks(baseTag != null ? baseTag : base, outlinks, docRoot, crawlFilters);
     }
 
+    page.increaseTotalOutLinkCount(outlinks.size());
     page.setTempVar(VAR_OUTLINKS_COUNT, outlinks.size());
 
     if (LOG.isTraceEnabled()) {
@@ -370,10 +367,10 @@ public class HtmlParser implements Parser {
     page.setBaseUrl(url);
     page.setContent(bytes);
     page.setContentType("text/html");
-    Parse parse = parser.getParse(url, page);
+    ParseResult parseResult = parser.getParse(url, page);
 
-    System.out.println("title: " + parse.getTitle());
-    System.out.println("text: " + parse.getText());
-    System.out.println("outlinks: " + Arrays.toString(parse.getOutlinks()));
+    System.out.println("title: " + parseResult.getTitle());
+    System.out.println("text: " + parseResult.getText());
+    System.out.println("outlinks: " + StringUtils.join(parseResult.getOutlinks(), ","));
   }
 }

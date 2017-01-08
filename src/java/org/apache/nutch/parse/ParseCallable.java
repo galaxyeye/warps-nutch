@@ -20,7 +20,7 @@ import org.apache.nutch.persist.WebPage;
 
 import java.util.concurrent.Callable;
 
-class ParseCallable implements Callable<Parse> {
+class ParseCallable implements Callable<ParseResult> {
   private Parser p;
   private WebPage content;
   private String url;
@@ -32,7 +32,7 @@ class ParseCallable implements Callable<Parse> {
   }
 
   @Override
-  public Parse call() throws Exception {
+  public ParseResult call() throws Exception {
     return p.getParse(url, content);
   }
 }

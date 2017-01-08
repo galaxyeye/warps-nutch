@@ -24,7 +24,7 @@ import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.EncodingDetector;
+import org.apache.nutch.common.EncodingDetector;
 import org.apache.tika.language.LanguageIdentifier;
 import org.junit.Test;
 

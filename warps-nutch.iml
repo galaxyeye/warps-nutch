@@ -269,55 +269,55 @@
       <src_folder value="file://$MODULE_DIR$/src/test/" expected_position="2" />
       <src_folder value="file://$MODULE_DIR$/src/plugin/creativecommons/src/java/" expected_position="3" />
       <src_folder value="file://$MODULE_DIR$/src/plugin/creativecommons/src/test/" expected_position="4" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/indexer-solr/src/java/" expected_position="5" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-anchor/src/java/" expected_position="6" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-anchor/src/test/" expected_position="7" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-basic/src/java/" expected_position="8" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-basic/src/test/" expected_position="9" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-metadata/src/java/" expected_position="10" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-more/src/java/" expected_position="11" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/index-more/src/test/" expected_position="12" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/language-identifier/src/java/" expected_position="13" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/language-identifier/src/test/" expected_position="14" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/lib-http/src/java/" expected_position="15" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/lib-http/src/test/" expected_position="16" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/microformats-reltag/src/java/" expected_position="17" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/microformats-reltag/src/test/" expected_position="18" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-html/src/java/" expected_position="19" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-html/src/test/" expected_position="20" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-js/src/java/" expected_position="21" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-js/src/test/" expected_position="22" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-metatags/src/java/" expected_position="23" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-metatags/src/test/" expected_position="24" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/java/" expected_position="25" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/test/" expected_position="26" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/java/" expected_position="29" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/test/" expected_position="30" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/java/" expected_position="31" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/test/" expected_position="32" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-link/src/java/" expected_position="33" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/java/" expected_position="34" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/test/" expected_position="35" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/java/" expected_position="36" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/test/" expected_position="37" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/java/" expected_position="38" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/test/" expected_position="39" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/java/" expected_position="40" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/test/" expected_position="41" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/java/" expected_position="42" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/test/" expected_position="43" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/java/" expected_position="44" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/test/" expected_position="45" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/java/" expected_position="46" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/test/" expected_position="47" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/java/" expected_position="48" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/test/" expected_position="49" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/java/" expected_position="50" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test/" expected_position="51" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java/" expected_position="52" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test/" expected_position="53" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/java/" expected_position="27" />
-      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/test/" expected_position="28" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/indexer-solr/src/java/" expected_position="3" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-anchor/src/java/" expected_position="4" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-anchor/src/test/" expected_position="5" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-basic/src/java/" expected_position="6" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-basic/src/test/" expected_position="7" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-metadata/src/java/" expected_position="8" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-more/src/java/" expected_position="9" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/index-more/src/test/" expected_position="10" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/language-identifier/src/java/" expected_position="11" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/language-identifier/src/test/" expected_position="12" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/lib-http/src/java/" expected_position="13" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/lib-http/src/test/" expected_position="14" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/microformats-reltag/src/java/" expected_position="15" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/microformats-reltag/src/test/" expected_position="16" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-html/src/java/" expected_position="17" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-html/src/test/" expected_position="18" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-js/src/java/" expected_position="19" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-js/src/test/" expected_position="20" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-metatags/src/java/" expected_position="21" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-metatags/src/test/" expected_position="22" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/java/" expected_position="23" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/parse-tika/src/test/" expected_position="24" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/java/" expected_position="27" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-crowd/src/test/" expected_position="28" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/java/" expected_position="29" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-http/src/test/" expected_position="30" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-link/src/java/" expected_position="31" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/java/" expected_position="32" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/scoring-opic/src/test/" expected_position="33" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/java/" expected_position="34" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/tld/src/test/" expected_position="35" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/java/" expected_position="36" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-automaton/src/test/" expected_position="37" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/java/" expected_position="38" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-domain/src/test/" expected_position="39" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/java/" expected_position="40" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-prefix/src/test/" expected_position="41" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/java/" expected_position="42" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-suffix/src/test/" expected_position="43" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/java/" expected_position="44" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlfilter-validator/src/test/" expected_position="45" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/java/" expected_position="46" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-basic/src/test/" expected_position="47" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/java/" expected_position="48" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test/" expected_position="49" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java/" expected_position="50" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test/" expected_position="51" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/java/" expected_position="25" />
+      <src_folder value="file://$MODULE_DIR$/src/plugin/protocol-file/src/test/" expected_position="26" />
     </src_description>
   </component>
   <component name="FacetManager">
@@ -335,16 +335,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugin/creativecommons/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugin/creativecommons/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/indexer-solr/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-anchor/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-anchor/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-basic/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-basic/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-metadata/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-more/src/java" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-more/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/language-identifier/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/language-identifier/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/lib-http/src/java" isTestSource="false" />
@@ -604,7 +599,9 @@
           <root url="jar://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/commons-collections-3.2.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -856,9 +853,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/gora-core-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/gora-core-0.6-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -986,9 +981,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/hadoop-mapreduce-client-core-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/hadoop-mapreduce-client-core-2.5.2-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -1494,9 +1487,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/jgrapht-ext-1.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/jgrapht-ext-1.0.0-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -1601,7 +1592,7 @@
     <orderEntry type="module-library">
       <library name="mockito-all-1.9.5.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1880,7 +1871,7 @@
     <orderEntry type="module-library">
       <library name="spring-test-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -2504,7 +2495,9 @@
           <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/slf4j-api-1.6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

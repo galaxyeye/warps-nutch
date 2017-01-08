@@ -17,13 +17,13 @@
 
 package org.apache.nutch.parse;
 
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.nutch.util.URLUtil;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.net.MalformedURLException;
-
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 
 /* An outgoing link from a page. */
 public class Outlink implements Writable {
@@ -35,7 +35,11 @@ public class Outlink implements Writable {
   }
 
   public Outlink(CharSequence toUrl, CharSequence anchor) {
-    this(toUrl.toString(), anchor.toString());
+    this.toUrl = toUrl.toString();
+    if (anchor == null) {
+      anchor = "";
+    }
+    this.anchor = anchor.toString();
   }
 
   public Outlink(String toUrl, String anchor) {
@@ -44,6 +48,10 @@ public class Outlink implements Writable {
       anchor = "";
     }
     this.anchor = anchor;
+  }
+
+  public boolean hasLegalUrl() {
+    return URLUtil.getUrl(toUrl) != null;
   }
 
   public void readFields(DataInput in) throws IOException {

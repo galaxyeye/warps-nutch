@@ -18,13 +18,14 @@
 package org.apache.nutch.indexer.tld;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.URLUtil;
-import org.apache.nutch.util.domain.DomainSuffix;
+import org.apache.nutch.net.domain.DomainSuffix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +62,8 @@ public class TLDIndexingFilter implements IndexingFilter {
   public void setConf(Configuration conf) {
     this.conf = conf;
   }
+
+  public Params getParams() { return new Params(); }
 
   public Configuration getConf() {
     return this.conf;

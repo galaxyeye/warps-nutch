@@ -2,13 +2,14 @@ package org.apache.nutch.crawl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Parameterized;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ import static org.apache.nutch.metadata.Nutch.SHORTEST_VALID_URL_LENGTH;
  * Created by vincent on 16-9-24.
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
-public class SeedBuilder {
+public class SeedBuilder implements Parameterized {
 
   public static final Logger LOG = LoggerFactory.getLogger(SeedBuilder.class);
 
@@ -55,8 +56,9 @@ public class SeedBuilder {
     currentTime = Instant.now();
   }
 
+  @Override
   public Params getParams() {
-    return new Params(
+    return Params.of(
         "className", this.getClass().getSimpleName(),
         "fetchIntervalSec", fetchIntervalSec,
         "scoreInjected", scoreInjected,

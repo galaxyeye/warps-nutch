@@ -21,10 +21,9 @@ import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.crawl.FetchScheduleFactory;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.URLPartitioner.FetchEntryPartitioner;
 import org.apache.nutch.fetch.FetchMode;
 import org.apache.nutch.fetch.FetchMonitor;
@@ -38,7 +37,6 @@ import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.protocol.ProtocolFactory;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.Params;
 import org.slf4j.Logger;
 
 import java.util.Collection;
@@ -79,18 +77,17 @@ public class FetchJob extends NutchJob implements Tool {
   /**
    * The field list affects which field to reads, but does not affect which field to to write
    */
-  public Collection<GoraWebPage.Field> getFields(Job job) {
+  public Collection<GoraWebPage.Field> getFields(Configuration conf) {
     Collection<GoraWebPage.Field> fields = new HashSet<>(FIELDS);
-    Configuration conf = job.getConfiguration();
-    if (conf.getBoolean(PARAM_PARSE, false)) {
-      fields.addAll(ParserJob.getFields(job));
+    if (getConf().getBoolean(PARAM_PARSE, false)) {
+      fields.addAll(ParserJob.getFields(getConf()));
     }
 
-    if (conf.getBoolean(PARAM_INDEX_JUST_IN_TIME, false)) {
-      fields.addAll(IndexJob.getFields(job));
+    if (getConf().getBoolean(PARAM_INDEX_JUST_IN_TIME, false)) {
+      fields.addAll(IndexJob.getFields(conf));
     }
 
-    ProtocolFactory protocolFactory = new ProtocolFactory(job.getConfiguration());
+    ProtocolFactory protocolFactory = new ProtocolFactory(conf);
     fields.addAll(protocolFactory.getFields());
 
     return fields;
@@ -119,9 +116,6 @@ public class FetchJob extends NutchJob implements Tool {
     String solrUrl = params.get(ARG_SOLR_URL, conf.get(PARAM_SOLR_SERVER_URL));
     String zkHostString = params.get(ARG_ZK, conf.get(PARAM_SOLR_ZK));
     String solrCollection = params.get(ARG_COLLECTION, conf.get(PARAM_SOLR_COLLECTION));
-
-    /* Schedule & Scoring */
-    String fetchScheduler = FetchScheduleFactory.getFetchSchedule(conf).getClass().getSimpleName();
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
@@ -154,8 +148,7 @@ public class FetchJob extends NutchJob implements Tool {
         "index", index,
         "solrUrl", solrUrl,
         "zkHostString", zkHostString,
-        "solrCollection", solrCollection,
-        "fetchScheduler", fetchScheduler
+        "solrCollection", solrCollection
     ));
   }
 
@@ -164,7 +157,7 @@ public class FetchJob extends NutchJob implements Tool {
     // For politeness, don't permit parallel execution of a single task
     currentJob.setReduceSpeculativeExecution(false);
 
-    Collection<GoraWebPage.Field> fields = getFields(currentJob);
+    Collection<GoraWebPage.Field> fields = getFields(getConf());
     MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, IntWritable.class,
         FetchEntry.class, FetchMapper.class, FetchEntryPartitioner.class,

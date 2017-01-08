@@ -30,7 +30,7 @@ public class TestDateTime {
 
   @Test
   public void testDateTimeConvert() {
-    // Parse string into local date. LocalDateTime has no timezone component
+    // ParseResult string into local date. LocalDateTime has no timezone component
     LocalDateTime time = LocalDateTime.parse("2014-04-16T13:00:00");
 
     // Convert to Instant with no time zone offset

@@ -19,10 +19,13 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.nutch.common.Parameterized;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +36,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_DEFAULT_INTERVAL;
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_MAX_INTERVAL;
+
 /**
  * This class provides common methods for implementations of
  * {@link FetchSchedule}.
  * 
  * @author Andrzej Bialecki
  */
-public abstract class AbstractFetchSchedule extends Configured implements FetchSchedule {
+public abstract class AbstractFetchSchedule extends Configured implements FetchSchedule, Parameterized {
   protected static final Logger LOG = LoggerFactory.getLogger(AbstractFetchSchedule.class);
 
   protected Duration defaultInterval;
@@ -53,25 +60,31 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
     FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
   }
 
-  public AbstractFetchSchedule() {
-    super(null);
-  }
+  public AbstractFetchSchedule() { super(null); }
 
   public AbstractFetchSchedule(Configuration conf) {
-    super(conf);
+    setConf(conf);
   }
 
   @Override
   public void setConf(Configuration conf) {
     super.setConf(conf);
+
     if (conf == null) {
+      LOG.warn("Unexpected null configuration for AbstractFetchSchedule");
       return;
     }
 
-    defaultInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.default", 0));
-    maxInterval = Duration.ofSeconds(conf.getInt("db.fetch.interval.max", 0));
+    defaultInterval = ConfigUtils.getDuration(getConf(), PARAM_FETCH_DEFAULT_INTERVAL, Duration.ofDays(30));
+    maxInterval = ConfigUtils.getDuration(getConf(), PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
+  }
 
-    LOG.info("defaultInterval : " + defaultInterval + ", maxInterval : " + maxInterval);
+  @Override
+  public Params getParams() {
+    return Params.of(
+        "defaultInterval", defaultInterval,
+        "maxInterval", maxInterval
+    );
   }
 
   /**
@@ -189,7 +202,13 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
   @Override
   public boolean shouldFetch(String url, WebPage page, Instant curTime) {
     // pages are marked as never fetch again
-    if (page.isNoFetch()) {
+
+    if (page.getFetchInterval().toDays() >= NEVER_FETCH_INTERVAL_DAYS) {
+      return false;
+    }
+
+    // TODO : redundant mark, remove later. use NEVER_FETCH_INTERVAL_DAYS instead
+    if (page.noMoreFetch()) {
       return false;
     }
 
@@ -231,6 +250,15 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    */
   @Override
   public void forceRefetch(String url, WebPage page, boolean asap) {
+    if (page.getFetchInterval().toDays() >= NEVER_FETCH_INTERVAL_DAYS) {
+      return;
+    }
+
+    // TODO : redundant judgement
+    if (page.noMoreFetch()) {
+      return;
+    }
+
     // reduce fetchInterval so that it fits within the max value
     if (page.getFetchInterval().compareTo(maxInterval) > 0) {
       page.setFetchInterval(maxInterval.getSeconds() * 0.9f);

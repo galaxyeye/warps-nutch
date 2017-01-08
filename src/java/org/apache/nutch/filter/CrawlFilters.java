@@ -23,17 +23,22 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
+import static org.apache.nutch.filter.CrawlFilter.MEDIA_URL_SUFFIXES;
 
 /**
  * TODO : need full unit test
@@ -45,16 +50,21 @@ public class CrawlFilters extends Configured {
 
   public static final String CRAWL_FILTER_RULES = "crawl.filter.rules";
 
+  private final URLFilters urlFilters;
+  private final URLNormalizers urlNormalizers;
+  private final String scope;
   @Expose
-  private List<CrawlFilter> crawlFilters = Lists.newArrayList();
+  private final List<CrawlFilter> crawlFilters = Lists.newArrayList();
 
+  /**
+   * TODO : check thread safety
+   */
   public static CrawlFilters create(Configuration conf) {
-    String filterRules = conf.get(CRAWL_FILTER_RULES);
-//    Validate.isTrue(!filterRules.contains("\\uFFFF"));
+    return create(URLNormalizers.SCOPE_OUTLINK, conf);
+  }
 
-    if (LOG.isDebugEnabled()) {
-      // LOG.debug("Create CrawlFilters from Json : " + json);
-    }
+  public static CrawlFilters create(String scope, Configuration conf) {
+    String filterRules = conf.get(CRAWL_FILTER_RULES);
 
     ObjectCache objectCache = ObjectCache.get(conf);
     String cacheId = CrawlFilters.class.getName() + filterRules;
@@ -62,7 +72,7 @@ public class CrawlFilters extends Configured {
     if (objectCache.getObject(cacheId) != null) {
       return (CrawlFilters) objectCache.getObject(cacheId);
     } else {
-      CrawlFilters filters = new CrawlFilters(conf);
+      CrawlFilters filters = new CrawlFilters(scope, conf);
 
       if (filterRules != null) {
         Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
@@ -75,7 +85,10 @@ public class CrawlFilters extends Configured {
     }
   }
 
-  public CrawlFilters(Configuration conf) {
+  private CrawlFilters(String scope, Configuration conf) {
+    urlFilters = new URLFilters(conf);
+    urlNormalizers = new URLNormalizers(conf, scope);
+    this.scope = scope;
     setConf(conf);
   }
 
@@ -89,6 +102,51 @@ public class CrawlFilters extends Configured {
     for (CrawlFilter crawlFilter : crawlFilters) {
       crawlFilter.setConf(conf);
     }
+  }
+
+  public boolean normalizeAndValidateUrl(Outlink outlink) {
+    return normalizeAndValidateUrl(outlink.getToUrl());
+  }
+
+  public boolean normalizeAndValidateUrl(String url) {
+    return !normalizeUrlToEmpty(url).isEmpty();
+  }
+
+  public String normalizeUrlToEmpty(String url) {
+    if (url == null) {
+      return "";
+    }
+
+    String filteredUrl = temporaryUrlFilter(url);
+    if (filteredUrl.isEmpty()) {
+      return "";
+    }
+
+    try {
+      filteredUrl = urlFilters.filter(filteredUrl);
+      filteredUrl = urlNormalizers.normalize(url, scope);
+    } catch (URLFilterException|MalformedURLException e) {
+      LOG.error(e.toString());
+    }
+
+    return filteredUrl == null ? "" : filteredUrl;
+  }
+
+  // TODO : use suffix-urlfilter instead, this is a quick dirty fix
+  private String temporaryUrlFilter(String url) {
+    if (Stream.of(MEDIA_URL_SUFFIXES).anyMatch(url::endsWith)) {
+      url = "";
+    }
+
+    if (veryLikelyBeSearchUrl(url) || veryLikelyBeMediaUrl(url)) {
+      url = "";
+    }
+
+    if (containsOldDateString(url)) {
+      url = "";
+    }
+
+    return url;
   }
 
   public boolean testUrlSatisfied(String url) {
@@ -241,10 +299,6 @@ public class CrawlFilters extends Configured {
     return false;
   }
 
-  public PageCategory sniffPageCategory(String url) {
-    return CrawlFilter.sniffPageCategory(url);
-  }
-
   public boolean veryLikelyBeIndexUrl(String url) {
     if (url == null) return false;
 
@@ -302,14 +356,6 @@ public class CrawlFilters extends Configured {
     }
 
     return false;
-  }
-
-  public List<CrawlFilter> getCrawlFilters() {
-    return crawlFilters;
-  }
-
-  public void setCrawlFilters(List<CrawlFilter> crawlFilters) {
-    this.crawlFilters = crawlFilters;
   }
 
   public String toJson() {

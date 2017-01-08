@@ -59,7 +59,7 @@ public class NetUtil {
   }
 
   /**
-   * TODO : use package org.apache.nutch.util.domain
+   * TODO : use package org.apache.nutch.net.domain
    * */
   public static String getTopLevelDomain(String baseUri) {
     if (baseUri == null || baseUri.startsWith("/") || baseUri.startsWith("file://")) {

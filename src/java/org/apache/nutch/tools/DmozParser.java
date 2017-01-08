@@ -383,7 +383,7 @@ public class DmozParser {
     }
 
     //
-    // Parse the command line, figure out what kind of
+    // ParseResult the command line, figure out what kind of
     // URL file we need to load
     //
     int subsetDenom = 1;

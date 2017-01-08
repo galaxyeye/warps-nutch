@@ -19,7 +19,7 @@ package org.apache.nutch.parse.tika;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.Parse;
+import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseException;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.protocol.ProtocolException;
@@ -53,7 +53,7 @@ public class TestOOParser {
   @Test
   public void testIt() throws ProtocolException, ParseException, IOException {
     String urlString;
-    Parse parse;
+    ParseResult parseResult;
     Configuration conf = ConfigUtils.create();
     MimeUtil mimeutil = new MimeUtil(conf);
 
@@ -97,9 +97,9 @@ public class TestOOParser {
       String mtype = mimeutil.getMimeType(file);
       page.setContentType(mtype);
 
-      parse = new ParseUtil(conf).parse(urlString, page);
+      parseResult = new ParseUtil(conf).parse(urlString, page);
 
-      String text = parse.getText().replaceAll("[ \t\r\n]+", " ").trim();
+      String text = parseResult.getText().replaceAll("[ \t\r\n]+", " ").trim();
 
       // simply test for the presence of a text - the ordering of the
       // elements

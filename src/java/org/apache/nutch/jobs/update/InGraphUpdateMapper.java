@@ -26,7 +26,7 @@ import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
-import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
@@ -78,30 +77,38 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     counter.increase(rows);
 
+    String url = TableUtil.unreverseUrl(reversedUrl);
     WebPage page = WebPage.wrap(row);
 
-    if (!page.hasMark(UPDATEOUTG)) {
-      counter.increase(Counter.notUpdated);
+    if (shouldProcess(url, page)) {
       return;
     }
 
-    if (page.getInlinks().isEmpty()) {
-      counter.increase(Counter.noInLinks);
-      return;
-    }
-
-    String url = TableUtil.unreverseUrl(reversedUrl);
     WebGraph graph = new WebGraph();
     WebVertex v2 = new WebVertex(url, page);
 
     /* A loop in the graph */
-    graph.addEdgeLenient(v2, v2, Float.MAX_VALUE / 2);
+    graph.addEdgeLenient(v2, v2, page.getScore());
 
     page.getInlinks().entrySet().forEach(l -> graph.addEdgeLenient(new WebVertex(l.getKey()), v2));
     graph.incomingEdgesOf(v2).forEach(edge -> writeAsSubGraph(edge, graph));
 
     counter.increase(Counter.rowsMapped);
     counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v2));
+  }
+
+  private boolean shouldProcess(String url, WebPage page) {
+    if (!page.hasMark(UPDATEOUTG)) {
+      counter.increase(Counter.notUpdated);
+      return false;
+    }
+
+    if (page.getInlinks().isEmpty()) {
+      counter.increase(Counter.noInLinks);
+      return false;
+    }
+
+    return true;
   }
 
   /**

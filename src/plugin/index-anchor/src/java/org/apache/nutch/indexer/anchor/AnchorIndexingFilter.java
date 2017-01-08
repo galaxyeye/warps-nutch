@@ -17,6 +17,7 @@
 package org.apache.nutch.indexer.anchor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
@@ -57,6 +58,8 @@ public class AnchorIndexingFilter implements IndexingFilter {
     deduplicate = conf.getBoolean("anchorIndexingFilter.deduplicate", true);
 //    LOG.info("Anchor deduplication is: " + (deduplicate ? "on" : "off"));
   }
+
+  public Params getParams() { return Params.of("anchor.indexing.filter.deduplicate", deduplicate); }
 
   /**
    * Get the {@link Configuration} object

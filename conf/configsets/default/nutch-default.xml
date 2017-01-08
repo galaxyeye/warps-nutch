@@ -352,14 +352,14 @@
 
     <property>
         <name>db.fetch.interval.default</name>
-        <value>2592000</value>
+        <value>30d</value>
         <description>The default number of seconds between re-fetches of a page (30 days).
         </description>
     </property>
 
     <property>
         <name>db.fetch.interval.max</name>
-        <value>7776000</value>
+        <value>90d</value>
         <description>The maximum number of seconds between re-fetches of a page
             (90 days). After this period every page in the db will be re-tried, no
             matter what is its status.

@@ -32,9 +32,7 @@ public interface ParseFilter extends FieldPluggable, Configurable {
   String X_POINT_ID = ParseFilter.class.getName();
 
   /**
-   * Adds metadata or otherwise modifies a parse, given the DOM tree of a page.
+   * Adds metadata or otherwise modifies a parseResult, given the DOM tree of a page.
    */
-  Parse filter(String url, WebPage page, Parse parse, HTMLMetaTags metaTags,
-               DocumentFragment doc);
-
+  ParseResult filter(String url, WebPage page, ParseResult parseResult, HTMLMetaTags metaTags, DocumentFragment doc);
 }

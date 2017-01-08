@@ -25,7 +25,7 @@ import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.ObjectCache;
+import org.apache.nutch.common.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public final class ParserFactory {
     }
 
     if (this.parsePluginList == null) {
-      throw new RuntimeException("Parse Plugins preferences could not be loaded.");
+      throw new RuntimeException("ParseResult Plugins preferences could not be loaded.");
     }
   }
 
@@ -91,8 +91,7 @@ public final class ParserFactory {
    *         of two {@link Parser} interfaces,
    *         <code>[parse-html, parse-rtf]</code>.
    */
-  public Parser[] getParsers(String contentType, String url)
-      throws ParserNotFound {
+  public Parser[] getParsers(String contentType, String url) throws ParserNotFound {
 
     List<Parser> parsers;
     List<Extension> parserExts;

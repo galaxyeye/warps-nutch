@@ -34,7 +34,7 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.DeflateUtils;
 import org.apache.nutch.util.GZIPUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

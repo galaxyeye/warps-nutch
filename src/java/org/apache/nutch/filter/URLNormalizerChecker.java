@@ -17,14 +17,14 @@
 
 package org.apache.nutch.filter;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.util.ConfigUtils;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  * Checks one given normalizer or all normalizers.
@@ -78,6 +78,7 @@ public class URLNormalizerChecker {
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     String line;
     URLNormalizers normalizers = new URLNormalizers(conf, scope);
+
     while ((line = in.readLine()) != null) {
       String out = normalizers.normalize(line, scope);
       System.out.println(out);
@@ -102,8 +103,7 @@ public class URLNormalizerChecker {
       }
     }
 
-    URLNormalizerChecker checker = new URLNormalizerChecker(
-        ConfigUtils.create());
+    URLNormalizerChecker checker = new URLNormalizerChecker(ConfigUtils.create());
     if (normalizerName != null) {
       checker.checkOne(normalizerName, scope);
     } else {

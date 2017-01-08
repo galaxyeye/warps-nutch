@@ -28,7 +28,7 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.NutchUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

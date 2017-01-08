@@ -3,8 +3,6 @@
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER" />
   <classpathentry kind="src" path="src/java/" />
   <classpathentry kind="src" path="src/test/" output="build/test/classes" />
-  <classpathentry kind="src" path="src/plugin/creativecommons/src/java/" />
-  <classpathentry kind="src" path="src/plugin/creativecommons/src/test/" />
   <classpathentry kind="src" path="src/plugin/indexer-solr/src/java/" />
   <classpathentry kind="src" path="src/plugin/index-anchor/src/java/" />
   <classpathentry kind="src" path="src/plugin/index-anchor/src/test/" />

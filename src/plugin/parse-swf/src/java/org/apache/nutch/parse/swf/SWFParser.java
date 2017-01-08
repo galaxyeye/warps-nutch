@@ -126,9 +126,9 @@ public class SWFParser implements Parser {
                                           new Metadata(),
                                           NutchConfiguration.create()));
     Parse p = parseResult.get("file:" + args[0]);
-    System.out.println("Parse Text:");
+    System.out.println("ParseResult Text:");
     System.out.println(p.getText());
-    System.out.println("Parse Data:");
+    System.out.println("ParseResult Data:");
     System.out.println(p.getData());
   }
 }

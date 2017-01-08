@@ -28,7 +28,7 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.metadata.SolrConstants;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;

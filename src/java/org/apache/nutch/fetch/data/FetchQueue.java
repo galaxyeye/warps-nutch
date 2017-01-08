@@ -5,7 +5,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.nutch.fetch.FetchMonitor;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;

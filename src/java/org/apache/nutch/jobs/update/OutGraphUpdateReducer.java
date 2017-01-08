@@ -38,8 +38,9 @@ import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.Params;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -49,8 +50,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
@@ -89,12 +88,12 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 //    getReporter().setLog(LOG_ADDITIVITY);
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
-    retryMax = conf.getInt("db.fetch.retry.max", 3);
+    retryMax = conf.getInt(PARAM_FETCH_MAX_RETRY, 3);
     additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
-    maxFetchInterval = Duration.ofSeconds(conf.getLong("db.fetch.interval.max", Duration.ofDays(90).getSeconds()));
+    maxFetchInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
-    maxLinks = conf.getInt("db.update.max.inlinks", 10000);
+    maxLinks = conf.getInt(PARAM_UPDATE_MAX_IN_LINKS, 1000);
     nutchMetrics = NutchMetrics.getInstance(conf);
     reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
@@ -178,7 +177,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     updateMetadata(page);
 
     context.write(reversedUrl, page.get());
-    getCounter().updateAffectedRows(TableUtil.unreverseUrl(reversedUrl));
+    getCounter().updateAffectedRows(url);
+    nutchMetrics.reportWebPage(url, page, reportSuffix);
   }
 
   /**
@@ -196,25 +196,25 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
     WebGraph graph = new WebGraph();
 
-    WebPage page = null;
     WebVertex focus = new WebVertex(url);
     for (WebGraphWritable graphWritable : subGraphs) {
       assert(graphWritable.getOptimizeMode().equals(IGNORE_TARGET));
 
       WebGraph subGraph = graphWritable.get();
-      WebEdge edge = subGraph.firstEdge();
-      if (edge.isLoop()) {
-        page = edge.getSourceWebPage();
-        page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.PASSED);
-      }
-      graph.addEdgeLenient(edge.getSource(), focus, subGraph.getEdgeWeight(edge));
+      subGraph.edgeSet().forEach(edge -> {
+        if (edge.isLoop()) {
+          focus.setWebPage(edge.getSourceWebPage());
+        }
+        graph.addEdgeLenient(edge.getSource(), focus, subGraph.getEdgeWeight(edge));
+      });
     }
 
-    if (page == null) {
-      page = loadOrCreateWebPage(url, reversedUrl);
+    if (focus.hasWebPage()) {
+      focus.getWebPage().setTempVar(VAR_PAGE_EXISTENCE, PageExistence.PASSED);
     }
-
-    focus.setWebPage(page);
+    else {
+      focus.setWebPage(loadOrCreateWebPage(url, reversedUrl));
+    }
     graph.setFocus(focus);
 
     return graph;
@@ -278,39 +278,26 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
    * */
   private void updateGraph(WebGraph graph) {
     WebVertex focus = graph.getFocus();
-    Set<WebEdge> incomingEdges = graph.incomingEdgesOf(focus);
     WebPage page = focus.getWebPage();
+    Set<WebEdge> incomingEdges = graph.incomingEdgesOf(focus);
 
-    Map<CharSequence, CharSequence> inLinks = new HashMap<>();
+    page.getInlinks().clear();
     int newDepth = page.getDepth();
     for (WebEdge incomingEdge : incomingEdges) {
       if (incomingEdge.isLoop()) {
         continue;
       }
-
-      inLinks.put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
-      /* Find out the smallest depth of this page */
-      WebPage incomingWebPage = incomingEdge.getSourceWebPage();
-
-//      Params.of(
-//          "reversedUrl", TableUtil.reverseUrlOrEmpty(incomingEdge.getSourceUrl()),
-//          "edge", incomingEdge.getSourceUrl() + " -> " + incomingEdge.getTargetUrl(),
-////          "baseUrl", incomingWebPage.getBaseUrl() + " -> " + page.getBaseUrl(),
-//          "score", graph.getEdgeWeight(incomingEdge),
-//          "depth", newDepth + " -> " + (incomingWebPage.getDepth() + 1) // should be 0
-//      ).withLogger(LOG).info(true);
-
-      if (incomingWebPage.getDepth() + 1 < newDepth) {
-        newDepth = incomingWebPage.getDepth() + 1;
+      /* Update in-links */
+      page.getInlinks().put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
+      WebPage incomingPage = incomingEdge.getSourceWebPage();
+      if (incomingPage.getDepth() + 1 < newDepth) {
+        newDepth = incomingPage.getDepth() + 1;
       }
     }
 
-    if (!inLinks.isEmpty()) {
-      page.setInlinks(inLinks);
-    }
-
+    /* Update depth */
     if (newDepth < page.getDepth()) {
-      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + page.getBaseUrl(), reportSuffix);
+      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + focus.getUrl(), reportSuffix);
       page.setDepth(newDepth);
       updateDepthCounter(newDepth, page);
     }
@@ -322,13 +309,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       page.setScore(0.0f);
       getCounter().increase(NutchCounter.Counter.errors);
     }
-
-//    Params.of(
-//        "reversedUrl", TableUtil.reverseUrlOrEmpty(focus.getUrl()),
-//        "inlinks", page.getInlinks().size(),
-//        "score", page.getScore(),
-//        "depth", page.getDepth()
-//    ).withLogger(LOG).info(true);
   }
 
   private void updateMetadata(WebPage page) {
