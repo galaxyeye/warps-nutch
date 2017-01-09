@@ -257,8 +257,6 @@ public interface Nutch {
 
   String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
 
-  String PARAM_CRAWLDB_ADDITIONS_ALLOWED = "db.update.additions.allowed";
-
   /**
    * Document fields
    * */

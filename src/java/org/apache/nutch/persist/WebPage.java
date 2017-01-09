@@ -17,6 +17,7 @@
 package org.apache.nutch.persist;
 
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.PageCategory;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -337,8 +339,12 @@ public class WebPage {
   /**
    * Embedded hyperlinks which direct outside of the current domain.   * @param value the value to set.
    */
-  public void setOutlinks(Map<CharSequence, CharSequence> value) {
-    page.setOutlinks(value);
+  public void setOutlinks(Map<CharSequence, CharSequence> value) { page.setOutlinks(value); }
+
+  public String getOldOutLinks() { return getMetadata(Name.FETCHED_OUT_LINKS, ""); }
+
+  public void putOldOutLinks(Collection<CharSequence> outLinks) {
+    putMetadata(Name.FETCHED_OUT_LINKS, getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n"));
   }
 
   public Map<CharSequence, CharSequence> getInlinks() { return page.getInlinks(); }

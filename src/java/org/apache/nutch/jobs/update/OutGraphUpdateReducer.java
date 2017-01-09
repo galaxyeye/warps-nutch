@@ -74,8 +74,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private Duration maxFetchInterval;
   private FetchSchedule fetchSchedule;
   private ScoringFilters scoringFilters;
-  private boolean additionsAllowed;
-  private int maxLinks;
+  private int maxInLinks;
+  private int round;
   private DataStore<String, GoraWebPage> datastore;
   private String reportSuffix;
   private NutchMetrics nutchMetrics;
@@ -89,11 +89,12 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     retryMax = conf.getInt(PARAM_FETCH_MAX_RETRY, 3);
-    additionsAllowed = conf.getBoolean(PARAM_CRAWLDB_ADDITIONS_ALLOWED, true);
     maxFetchInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
     scoringFilters = new ScoringFilters(conf);
-    maxLinks = conf.getInt(PARAM_UPDATE_MAX_IN_LINKS, 1000);
+    maxInLinks = conf.getInt(PARAM_UPDATE_MAX_IN_LINKS, 100);
+    round = conf.getInt(PARAM_CRAWL_ROUND, -1);
+
     nutchMetrics = NutchMetrics.getInstance(conf);
     reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
@@ -106,11 +107,9 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     Params.of(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
-        "additionsAllowed", additionsAllowed,
-        "maxLinks", maxLinks,
+        "maxLinks", maxInLinks,
         "retryMax", retryMax,
         "maxFetchInterval", maxFetchInterval,
-        "maxLinks", maxLinks,
         "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
         "scoringFilters", StringUtils.join(scoringFilters.getScoringFilterNames(), ",")
     ).withLogger(LOG).info();
@@ -153,6 +152,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
    */
   private void doReduce(GraphGroupKey key, Iterable<WebGraphWritable> subGraphs, Context context)
       throws IOException, InterruptedException {
+    Instant reduceStart = Instant.now();
+
     getCounter().increase(rows);
 
     String reversedUrl = key.getReversedUrl();
@@ -179,6 +180,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     context.write(reversedUrl, page.get());
     getCounter().updateAffectedRows(url);
     nutchMetrics.reportWebPage(url, page, reportSuffix);
+    nutchMetrics.reportPreformance(url, DateTimeUtil.elapsedTime(reduceStart), reportSuffix);
   }
 
   /**
@@ -227,15 +229,17 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
    * 3. the page have not be fetched yet
    * */
   private WebPage loadOrCreateWebPage(String url, String reversedUrl) {
-    WebPage page = null;
-    WebPage loadedPage = WebPage.wrap(datastore.get(reversedUrl));
+    // TODO : Can we sure datastore.get is a local operation?
+    WebPage loadedPage = round <= 1 ? WebPage.newWebPage() : WebPage.wrap(datastore.get(reversedUrl));
+    WebPage page;
 
     // Page is already in the db
     if (!loadedPage.isEmpty()) {
       page = loadedPage;
       page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.LOADED);
       getCounter().increase(Counter.pagesLoaded);
-    } else if (additionsAllowed) {
+    }
+    else {
       // Here we got a new webpage from outlink
       page = createNewRow(url);
       page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.CREATED);
@@ -287,10 +291,14 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
       if (incomingEdge.isLoop()) {
         continue;
       }
+
       /* Update in-links */
-      page.getInlinks().put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
+      if (page.getInlinks().size() <= maxInLinks) {
+        page.getInlinks().put(incomingEdge.getSourceUrl(), incomingEdge.getAnchor());
+      }
+
       WebPage incomingPage = incomingEdge.getSourceWebPage();
-      if (incomingPage.getDepth() + 1 < newDepth) {
+      if (newDepth > 1 && incomingPage.getDepth() + 1 < newDepth) {
         newDepth = incomingPage.getDepth() + 1;
       }
     }

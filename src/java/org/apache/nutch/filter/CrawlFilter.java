@@ -25,7 +25,6 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
-import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
@@ -35,6 +34,9 @@ import java.util.stream.Stream;
 
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 
+/**
+ * TODO : configurable
+ * */
 public class CrawlFilter extends Configured {
 
   public static final Logger LOG = CrawlFilters.LOG;
@@ -42,7 +44,6 @@ public class CrawlFilter extends Configured {
   /**
    * The follow patterns are simple rule to indicate a url's category, this is a very simple solution, and the result is
    * not accurate
-   * TODO : configurable
    */
   public static Pattern[] INDEX_PAGE_URL_PATTERNS = {
       Pattern.compile(".+tieba.baidu.com/.+search.+"),
@@ -51,7 +52,6 @@ public class CrawlFilter extends Configured {
 
   public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
 
-  // TODO : configurable, testable
   public static Pattern[] DETAIL_PAGE_URL_PATTERNS = {
       Pattern.compile(".+tieba.baidu.com/p/(\\d+)"),
       Pattern.compile(".+(detail|item|article|book|good|product|thread|view|post|content|/20[012][0-9]/{0,1}[01][0-9]/|/20[012]-[0-9]{0,1}-[01][0-9]/|/\\d{2,}/\\d{5,}|\\d{7,}).+")
@@ -90,21 +90,14 @@ public class CrawlFilter extends Configured {
         pageCategory = PageCategory.INDEX;
       }
     } else {
-      return sniffPageCategory(url, _char, _a);
+      return sniffPageCategoryByTextDensity(_char, _a);
     }
 
     return pageCategory;
   }
 
-  public static PageCategory sniffPageCategory(String url, double _char, double _a) {
-    PageCategory pageCategory = sniffPageCategoryByTextDensity(_char, _a);
-
-    return pageCategory == PageCategory.UNKNOWN ? sniffPageCategory(url) : pageCategory;
-  }
-
   /* TODO : use machine learning to calculate the parameters */
-  @Contract(pure = true)
-  public static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
+  private static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
     PageCategory pageCategory = PageCategory.UNKNOWN;
 
     if (_a < 1) {

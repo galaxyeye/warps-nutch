@@ -79,15 +79,11 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Duration interval) {
     int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
-      // Referred publish time is not initialized yet for this seed page
+      // Ref-parameters are not initialized yet
       return MIN_INTERVAL;
     }
 
     Instant refPublishTime = page.getRefPublishTime();
-    if (refPublishTime.isBefore(MIN_ARTICLE_PUBLISH_TIME)) {
-      LOG.warn("Unexpected referred publish time : " + refPublishTime + ", " + url);
-    }
-
     long hours = ChronoUnit.HOURS.between(refPublishTime, fetchTime);
     if (hours <= 24) {
       // There are updates today, keep re-fetch the page in every crawl loop
