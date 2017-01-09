@@ -442,5 +442,4 @@ public class DOMContentUtils {
       }
     }
   }
-
 }

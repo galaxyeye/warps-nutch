@@ -82,8 +82,8 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     // Partition by {url}, sort by {url,score} and group by {url}.
     // This ensures that the inlinks are sorted by score when they enter the reducer.
     currentJob.setPartitionerClass(UrlOnlyPartitioner.class);
-    currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
     currentJob.setSortComparatorClass(GraphKeyComparator.class);
+    currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
 
     // currentJob.setCombinerClass(OutGraphUpdateCombiner.class);
     // currentJob.setCombinerKeyGroupingComparatorClass(UrlOnlyComparator.class);

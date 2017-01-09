@@ -68,6 +68,12 @@ fi
 # MODIFY THE PARAMETERS BELOW TO YOUR NEEDS #
 #############################################
 
+# set max depth, no more links are collected in deeper pages
+maxDepth=1
+
+# max out links per page collected each time
+maxOutLinks=100
+
 # set the number of slaves nodes
 numSlaves=1
 if [ -n "$NUMBER_SLAVES" ]; then
@@ -80,7 +86,7 @@ numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
 # It's depend on how fast do you want to finish the fetch loop
-sizeFetchlist=`expr $numSlaves \* 1000`
+sizeFetchlist=`expr $numSlaves \* 500`
 
 # time limit for feching
 fetchJobTimeout=1h
@@ -99,6 +105,8 @@ commonOptions=(
     "-D mapreduce.reduce.speculative=false"
     "-D mapreduce.map.speculative=false"
     "-D mapreduce.map.output.compress=true"
+    "-D generate.max.distance=$maxDepth"
+    "-D db.max.outlinks.per.page=$maxOutLinks"
 )
 
 # determines whether mode based on presence of job file

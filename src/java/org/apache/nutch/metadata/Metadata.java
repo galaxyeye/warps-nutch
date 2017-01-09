@@ -57,7 +57,8 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     REDIRECT_DISCOVERED("RD"),
 
     /** parse */
-    OUT_LINK_COUNT("OLC"),
+    OUT_LINK_COUNT("P_OLC"),
+    FETCHED_OUT_LINKS("P_AOL"),
 
     /** index */
     INDEX_TIME_HISTORY("ITH"),

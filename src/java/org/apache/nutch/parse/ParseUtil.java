@@ -18,7 +18,6 @@ package org.apache.nutch.parse;
 
 // Commons Logging imports
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
@@ -94,7 +93,7 @@ public class ParseUtil {
     urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     crawlFilters = CrawlFilters.create(conf);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 1000);
+    int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
     maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
     ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
     executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("parse-%d").setDaemon(true).build());
@@ -213,16 +212,17 @@ public class ParseUtil {
     }
     page.setSignature(sig.calculate(page));
 
-    if (!CrawlFilter.sniffPageCategory(url).isDetail()) {
+    // TODO : use no-follow
+    if (page.isSeed() || CrawlFilter.sniffPageCategory(url).isIndex()) {
       final String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
-      List<Outlink> outLinks = Lists.newLinkedList(parseResult.getOutlinks());
-      // Shuffle the links so they have a fair chance to be collected
-      Collections.shuffle(outLinks, rand);
-      Map<CharSequence, CharSequence> outlinks = outLinks.stream()
-          .filter(l -> validateOutLink(sourceHost, l))
+      final String oldOutLinks = page.getOldOutLinks();
+      Map<CharSequence, CharSequence> outlinks = parseResult.getOutlinks().stream()
+          .filter(l -> validateOutLink(l, sourceHost, oldOutLinks)) // filter out in-valid urls
+          .sorted((l1, l2) -> l2.getAnchor().length() - l1.getAnchor().length()) // longer anchor comes first
           .limit(maxOutlinks)
           .collect(Collectors.toMap(Outlink::getToUrl, Outlink::getAnchor, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
       page.setOutlinks(outlinks);
+      page.putOldOutLinks(outlinks.keySet());
     }
 
     // TODO : Marks should be set in mapper or reducer, not util methods
@@ -256,12 +256,33 @@ public class ParseUtil {
     }
   }
 
-  private boolean validateOutLink(String sourceHost, Outlink link) {
-    String toUrl = crawlFilters.normalizeUrlToEmpty(link.getToUrl());
-    return validateHosts(sourceHost, URLUtil.getHost(toUrl, hostGroupMode));
-  }
+  private boolean validateOutLink(Outlink link, String sourceHost, String oldOutLinks) {
+    if (link.getToUrl().isEmpty() || sourceHost.isEmpty()) {
+      return false;
+    }
 
-  private boolean validateHosts(String sourceHost, String destHost) {
-    return sourceHost != null && destHost != null && (!ignoreExternalLinks || destHost.equals(sourceHost));
+    if (oldOutLinks.contains(link.getToUrl() + "\n")) {
+      return false;
+    }
+
+    String toUrl = crawlFilters.normalizeUrlToEmpty(link.getToUrl());
+    if (toUrl.isEmpty()) {
+      return false;
+    }
+
+    if (oldOutLinks.contains(toUrl + "\n")) {
+      return false;
+    }
+
+    String destHost = URLUtil.getHost(toUrl, hostGroupMode);
+    if (destHost == null) {
+      return false;
+    }
+
+    if (ignoreExternalLinks && !sourceHost.equals(destHost)) {
+      return false;
+    }
+
+    return true;
   }
 }

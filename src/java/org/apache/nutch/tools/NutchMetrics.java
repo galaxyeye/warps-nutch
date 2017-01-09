@@ -159,6 +159,10 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report + "\n", "urls-" + page.getPageCategory().name().toLowerCase() + "-" + reportSuffix + ".txt");
   }
 
+  public void reportPreformance(String url, String elapsed, String reportSuffix) {
+    writeReport(elapsed + " -> url" + "\n", "performace-" + reportSuffix + ".txt");
+  }
+
   public void debugLongUrls(String report, String reportSuffix) {
     writeReport(report + "\n", "urls-long-" + reportSuffix + ".txt");
   }

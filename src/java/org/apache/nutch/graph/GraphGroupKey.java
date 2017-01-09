@@ -163,12 +163,10 @@ public final class GraphGroupKey implements WritableComparable<GraphGroupKey> {
       try {
         int deptLen1 = WritableUtils.decodeVIntSize(b1[s1]) + WritableComparator.readVInt(b1, s1);
         int deptLen2 = WritableUtils.decodeVIntSize(b2[s2]) + WritableComparator.readVInt(b2, s2);
-
         int cmp = urlComp.compare(b1, s1, deptLen1, b2, s2, deptLen2);
         if (cmp != 0) {
           return cmp;
         }
-
         // reverse order
         return -scoreComp.compare(b1, s1 + deptLen1, l1 - deptLen1, b2, s2 + deptLen2, l2 - deptLen2);
       } catch (IOException e) {

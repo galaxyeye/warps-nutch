@@ -54,7 +54,7 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
   private NutchCounter counter;
 
   private int maxDistance = Integer.MAX_VALUE;
-  private int maxOutlinks = 1000;
+  private int maxOutlinks = 100;
   private int limit = -1;
   private int count = 0;
 
