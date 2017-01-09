@@ -36,6 +36,11 @@ abstract class WebGraphUpdateJob extends NutchJob implements Tool {
 
   public abstract Collection<GoraWebPage.Field> getFields(Job job);
 
+  protected String crawlId;
+  protected String batchId;
+  protected int limit;
+  protected int round;
+
   @Override
   protected void setup(Map<String, Object> args) throws Exception {
     super.setup(args);
@@ -43,11 +48,10 @@ abstract class WebGraphUpdateJob extends NutchJob implements Tool {
     Params params = new Params(args);
     Configuration conf = getConf();
 
-    String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
-    String batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
-    int limit = params.getInt(ARG_LIMIT, -1);
-
-    int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
+    crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
+    batchId = params.get(ARG_BATCH, ALL_BATCH_ID_STR);
+    limit = params.getInt(ARG_LIMIT, -1);
+    round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);

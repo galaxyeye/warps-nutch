@@ -80,7 +80,7 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
     String url = TableUtil.unreverseUrl(reversedUrl);
     WebPage page = WebPage.wrap(row);
 
-    if (shouldProcess(url, page)) {
+    if (!shouldProcess(url, page)) {
       return;
     }
 
