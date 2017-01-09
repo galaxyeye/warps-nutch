@@ -21,6 +21,7 @@ import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator;
 import org.apache.nutch.graph.GraphGroupKey.UrlOnlyComparator;
@@ -30,15 +31,12 @@ import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-
-import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID_STR;
 
 public class InGraphUpdateJob extends WebGraphUpdateJob {
 
@@ -51,8 +49,6 @@ public class InGraphUpdateJob extends WebGraphUpdateJob {
     FIELDS.add(GoraWebPage.Field.MARKERS);
     FIELDS.add(GoraWebPage.Field.METADATA);
   }
-
-  private String batchId = ALL_BATCH_ID_STR;
 
   public InGraphUpdateJob() {
   }

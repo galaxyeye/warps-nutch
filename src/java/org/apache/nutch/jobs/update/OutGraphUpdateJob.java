@@ -22,6 +22,7 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.GraphGroupKey.GraphKeyComparator;
 import org.apache.nutch.graph.GraphGroupKey.UrlOnlyComparator;
@@ -31,15 +32,12 @@ import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-
-import static org.apache.nutch.metadata.Nutch.*;
 
 public class OutGraphUpdateJob extends WebGraphUpdateJob {
 
@@ -62,8 +60,6 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
     FIELDS.add(GoraWebPage.Field.HEADERS);
   }
-
-  private String batchId = ALL_BATCH_ID_STR;
 
   public OutGraphUpdateJob() {
   }

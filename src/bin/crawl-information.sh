@@ -75,7 +75,7 @@ if [ -n "$NUMBER_SLAVES" ]; then
 fi
 
 # and the total number of available tasks
-# sets Hadoop parameter "jobs.job.reduces"
+# sets Hadoop parameter "mapreduce.job.reduces"
 numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
@@ -83,7 +83,7 @@ numTasks=`expr $numSlaves \* 2`
 sizeFetchlist=`expr $numSlaves \* 1000`
 
 # time limit for feching
-fetchJobTimeout=3h
+fetchJobTimeout=1h
 
 # Adds <days> to the current time to facilitate
 # crawling urls already fetched sooner then
@@ -94,11 +94,11 @@ addDays=0
 # note that some of the options listed here could be set in the
 # corresponding hadoop site xml param file
 commonOptions=(
-    "-D jobs.job.reduces=$numTasks"
+    "-D mapreduce.job.reduces=$numTasks"
     "-D mapred.child.java.opts=-Xmx1000m"
-    "-D jobs.reduce.speculative=false"
-    "-D jobs.map.speculative=false"
-    "-D jobs.map.output.compress=true"
+    "-D mapreduce.reduce.speculative=false"
+    "-D mapreduce.map.speculative=false"
+    "-D mapreduce.map.output.compress=true"
 )
 
 # determines whether mode based on presence of job file
@@ -216,13 +216,13 @@ do
   fi
 
   echo "Fetching : "
-  __bin_nutch fetch "${commonOptions[@]}" -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
+  __bin_nutch fetch "${commonOptions[@]}" -D crawl.round=$a -D fetcher.timelimit=$fetchJobTimeout $batchId -crawlId "$CRAWL_ID" -threads 50 -index -collection $SOLR_COLLECTION
 
   echo "Updating outgoing pages : "
-  __bin_nutch updateoutgraph "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
+  __bin_nutch updateoutgraph "${commonOptions[@]}" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID"
 
   echo "Updating incoming pages : "
-  __bin_nutch updateingraph "${commonOptions[@]}" $batchId -crawlId "$CRAWL_ID"
+  __bin_nutch updateingraph "${commonOptions[@]}" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID"
 
 done
 
