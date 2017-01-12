@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.inject;
 
+import com.google.common.io.Files;
 import org.apache.gora.mapreduce.GoraOutputFormat;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -38,10 +39,12 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.HadoopFSUtil;
 import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -117,30 +120,41 @@ public class InjectJob extends NutchJob implements Tool {
     Configuration conf = getConf();
 
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
-    String seedDir = params.getString(ARG_SEEDDIR);
+    String seedPath = params.getString(ARG_SEED_PATH);
+    String seedUrls = params.get(ARG_SEED_URLS, "");
+
+    // Seed urls have higher priority
+    if (!seedUrls.isEmpty()) {
+      File seedFile = File.createTempFile("seed", ".txt");
+      Files.write(seedUrls.getBytes(), seedFile);
+      seedPath = seedFile.getAbsolutePath();
+    }
+
+    if (HadoopFSUtil.isDistributedFS(conf)) {
+      LOG.info("Running under hadoop distributed file system");
+
+      FileSystem fs = FileSystem.get(conf);
+      org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(seedPath);
+      fs.copyFromLocalFile(path, path);
+    }
 
     conf.set(PARAM_CRAWL_ID, crawlId);
+    conf.set(PARAM_SEED_PATH, seedPath);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
         "crawlId", crawlId,
-        "seedDir", seedDir,
+        "seedPath", seedPath,
+        "seedUrls", seedUrls,
         "jobStartTime", DateTimeUtil.format(startTime)
     ));
   }
 
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
-    Params params = new Params(args);
     Configuration conf = getConf();
 
-    String seedDir = params.getString(ARG_SEEDDIR);
-    Path input = new Path(seedDir);
-
-    if (!FileSystem.get(conf).exists(input)) {
-      LOG.warn("Seed dir does not exit!!!");
-      return;
-    }
+    String seedPath = conf.get(PARAM_SEED_PATH);
 
     // TODO : local file system does not support directory while hdfs file system does
 //    if (!input.getFileSystem(conf).isFile(input)) {
@@ -148,7 +162,7 @@ public class InjectJob extends NutchJob implements Tool {
 //      return;
 //    }
 
-    FileInputFormat.addInputPath(currentJob, input);
+    FileInputFormat.addInputPath(currentJob, new Path(seedPath));
     currentJob.setMapperClass(UrlMapper.class);
     currentJob.setMapOutputKeyClass(String.class);
     currentJob.setMapOutputValueClass(WebPage.class);
@@ -164,8 +178,7 @@ public class InjectJob extends NutchJob implements Tool {
         "className", this.getClass().getSimpleName(),
         "workingDir", currentJob.getWorkingDirectory(),
         "jobName", currentJob.getJobName(),
-        "realSchema", store.getSchemaName(),
-        "seedDir", seedDir
+        "realSchema", store.getSchemaName()
     ));
 
     currentJob.waitForCompletion(true);
@@ -174,13 +187,13 @@ public class InjectJob extends NutchJob implements Tool {
   public void inject(Path path, String crawlId) throws Exception {
     run(Params.toArgMap(
         ARG_CRAWL, crawlId,
-        ARG_SEEDDIR, path.toString()
+        ARG_SEED_PATH, path.toString()
     ));
   }
 
   public void inject(String urlDir, String crawlId) throws Exception {
     run(Params.toArgMap(
-        ARG_SEEDDIR, urlDir,
+        ARG_SEED_PATH, urlDir,
         ARG_CRAWL, crawlId
     ));
   }

@@ -20,7 +20,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.jobs.NutchJob;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.service.ConfManager;
 import org.apache.nutch.service.JobManager;
 import org.apache.nutch.service.NutchMaster;
@@ -30,6 +29,8 @@ import org.apache.nutch.service.model.response.JobInfo.State;
 import org.slf4j.Logger;
 
 import java.util.Collection;
+
+import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
 
 public class JobManagerImpl implements JobManager {
 
@@ -69,7 +70,7 @@ public class JobManagerImpl implements JobManager {
     conf = fixCrawlFilterRules(conf);
 
     if (jobConfig.getCrawlId() != null) {
-      conf.set(Nutch.PARAM_CRAWL_ID, jobConfig.getCrawlId());
+      conf.set(PARAM_CRAWL_ID, jobConfig.getCrawlId());
     }
 
     NutchJob nutchJob = createNutchJob(jobConfig, conf);
@@ -172,9 +173,8 @@ public class JobManagerImpl implements JobManager {
       // JUST DO this : 
       // raw string "\\uFFFF" => "\uFFFF"
       filterRules = filterRules.replaceAll("\\uFFFF", "\uFFFF");
-      // LOG.debug(filterRules);
+      conf.set(CrawlFilters.CRAWL_FILTER_RULES, filterRules);
     }
-    conf.set(CrawlFilters.CRAWL_FILTER_RULES, filterRules);
 
     return conf;
   }

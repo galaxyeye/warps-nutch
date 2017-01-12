@@ -110,7 +110,7 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
           return; // filter urls not parsed
         }
 
-        if (!page.hasMark(Mark.UPDATEING)) {
+        if (!page.hasMark(Mark.UPDATEOUTG)) {
           getCounter().increase(Counter.notUpdated);
           // LOG.debug("Not db updated : " + TableUtil.unreverseUrl(key));
           return;

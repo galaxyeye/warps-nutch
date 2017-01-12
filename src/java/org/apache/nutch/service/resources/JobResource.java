@@ -27,6 +27,8 @@ import java.util.Collection;
 @Path(value = "/job")
 public class JobResource extends AbstractResource {
 
+  public static String PATH = "job";
+
   @GET
   @Path(value = "/")
   public Collection<JobInfo> getJobs(@QueryParam("crawlId") String crawlId, @QueryParam("state") State state) {

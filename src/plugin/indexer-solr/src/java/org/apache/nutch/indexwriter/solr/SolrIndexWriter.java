@@ -20,15 +20,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexField;
 import org.apache.nutch.indexer.IndexWriter;
 import org.apache.nutch.jobs.index.IndexJob;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.metadata.SolrConstants;
-import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.common.Params;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -54,8 +53,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
-
 public class SolrIndexWriter implements IndexWriter {
 
   public static final Logger LOG = LoggerFactory.getLogger(SolrIndexWriter.class);
@@ -75,9 +72,6 @@ public class SolrIndexWriter implements IndexWriter {
   private int totalUpdates = 0;
   private boolean delete = false;
   private boolean writeFile = false;
-
-  private String reportSuffix;
-  private NutchMetrics nutchMetrics;
 
   private final List<SolrInputDocument> inputDocs = new ArrayList<>();
   private final List<SolrInputDocument> updateDocs = new ArrayList<>();
@@ -185,7 +179,6 @@ public class SolrIndexWriter implements IndexWriter {
     IndexDocument debugDoc = new IndexDocument();
     String[] debugFields = {"page_category", "last_crawl_time", "publish_time", "url"};
     Arrays.stream(debugFields).forEachOrdered(f -> debugDoc.addIfNotNull(f, doc.getFieldValue(f)));
-    nutchMetrics.debugIndexDocTime(debugDoc.formatAsLine(), reportSuffix);
   }
 
   @Override
@@ -337,9 +330,6 @@ public class SolrIndexWriter implements IndexWriter {
         params.add(kv[0], kv[1]);
       }
     }
-
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
-    this.nutchMetrics = NutchMetrics.getInstance(conf);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),

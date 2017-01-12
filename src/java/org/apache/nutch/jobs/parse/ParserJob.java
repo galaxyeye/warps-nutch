@@ -198,7 +198,8 @@ public class ParserJob extends NutchJob implements Tool {
       }
       else if ("-force".equals(args[i])) {
         force = true;
-      }    }
+      }
+    }
 
     parse(crawlId, batchId, limit, resume, force);
 

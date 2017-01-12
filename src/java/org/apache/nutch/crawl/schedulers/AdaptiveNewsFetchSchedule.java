@@ -24,7 +24,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
+import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 
 /**
  * This class implements an adaptive re-fetch algorithm.
@@ -94,7 +95,7 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
       interval = Duration.ofHours(1);
     }
     else {
-      // If there is no any updates in 72 hours, check the page at least 1 hour later
+      // If there is no any updates in 72 hours, check the page at least 1 hour later and increase fetch interval time by time
       // TODO : fetch it at night
       long inc = (long)(interval.getSeconds() * INC_RATE);
 
@@ -102,12 +103,16 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
       if (interval.toHours() < 1) {
         interval = Duration.ofHours(1);
       }
-    }
 
-    // No longer than SEED_MAX_INTERVAL
-    if (interval.compareTo(SEED_MAX_INTERVAL) > 0) {
-      // TODO : LOG non-updating seeds
-      interval = SEED_MAX_INTERVAL;
+      if (hours < 240) {
+        // No longer than SEED_MAX_INTERVAL
+        if (interval.compareTo(SEED_MAX_INTERVAL) > 0) {
+          interval = SEED_MAX_INTERVAL;
+        }
+      }
+      else {
+        nutchMetrics.reportInactiveSeeds(hours + "H, " + url);
+      }
     }
 
     return interval;

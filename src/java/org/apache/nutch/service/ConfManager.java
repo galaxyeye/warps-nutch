@@ -16,27 +16,27 @@
  ******************************************************************************/
 package org.apache.nutch.service;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.service.model.request.NutchConfig;
 
+import java.util.Map;
+import java.util.Set;
+
 public interface ConfManager {
 
-  public static final String DEFAULT = "default";
+  String DEFAULT = "default";
 
-  public Set<String> list();
+  Set<String> list();
 
-  public Configuration getDefault();
+  Configuration getDefault();
 
-  public Configuration get(String confId);
+  Configuration get(String confId);
 
-  public Map<String, String> getAsMap(String confId);
+  Map<String, String> getAsMap(String confId);
 
-  public void delete(String confId);
+  void delete(String confId);
 
-  public void setProperty(String confId, String propName, String propValue);
+  void setProperty(String confId, String propName, String propValue);
 
-  public String create(NutchConfig nutchConfig);
+  String create(NutchConfig nutchConfig);
 }

@@ -24,7 +24,6 @@ import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.URLUtil;
 import org.jetbrains.annotations.Contract;
@@ -33,8 +32,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.*;
-
-import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
 
 /**
  * Indexer which can be configured to extract metadata from the crawldb, parse
@@ -60,8 +57,6 @@ public class MetadataIndexer implements IndexingFilter {
   }
 
   private Configuration conf;
-  private NutchMetrics nutchMetrics;
-  private String reportSuffix;
 
   public void setConf(Configuration conf) {
     this.conf = conf;
@@ -75,9 +70,6 @@ public class MetadataIndexer implements IndexingFilter {
 
     siteNames = new SiteNames(conf);
     resourceCategory = new ResourceCategory(conf);
-
-    this.nutchMetrics = NutchMetrics.getInstance(conf);
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
 //    LOG.info(StringUtil.formatAsLine(
 //        "className", this.getClass().getSimpleName(),

@@ -29,7 +29,6 @@ import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -40,7 +39,6 @@ import java.io.IOException;
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.jobs.update.InGraphUpdateReducer.Counter.pagesNotExist;
-import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_JOB_NAME;
 import static org.apache.nutch.persist.Mark.UPDATEING;
 import static org.apache.nutch.persist.Mark.UPDATEOUTG;
 
@@ -50,7 +48,6 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
   public enum Counter { pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, totalUpdates }
 
-  private String reportSuffix;
   private NutchMetrics nutchMetrics;
 
   private DataStore<String, GoraWebPage> datastore;
@@ -64,7 +61,6 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
 
     String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
     nutchMetrics = NutchMetrics.getInstance(conf);
-    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
@@ -105,7 +101,7 @@ class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable,
     if (updateGraph(graph)) {
       context.write(reversedUrl, page.get());
       getCounter().updateAffectedRows(url);
-      nutchMetrics.reportWebPage(url, page, reportSuffix);
+      nutchMetrics.reportWebPage(url, page);
     }
   }
 

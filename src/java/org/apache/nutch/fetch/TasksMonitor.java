@@ -72,8 +72,6 @@ public class TasksMonitor {
   private final int maxQueueThreads; // TODO : max pending tasks
   private final boolean useHostSettings;
 
-  private final String reportSuffix;
-
   private final NutchMetrics nutchMetrics;
 
   /**
@@ -102,7 +100,6 @@ public class TasksMonitor {
     minCrawlDelay = Duration.ofMillis((long)(conf.getFloat("fetcher.server.min.delay", 0.0f) * 1000));
     queuePendingTimeout = ConfigUtils.getDuration(conf, "fetcher.pending.timeout", Duration.ofMinutes(3));
 
-    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
     nutchMetrics = NutchMetrics.getInstance(conf);
     nutchMetrics.loadUnreachableHosts(unreachableHosts);
     debugUrls = conf.getBoolean("fetcher.debug.urls", false);
@@ -382,7 +379,7 @@ public class TasksMonitor {
 
     if (url.length() > maxUrlLength) {
       ++hostStat.urlsTooLong;
-      nutchMetrics.debugLongUrls(url, reportSuffix);
+      nutchMetrics.debugLongUrls(url);
     }
 
     availableHosts.put(host, hostStat);
@@ -567,7 +564,6 @@ public class TasksMonitor {
     });
 
     REPORT_LOG.info("Served threads : \n" + report);
-    nutchMetrics.writeReport("Served threads : \n" + report, "queue-served-threads-" + reportSuffix + ".txt", true);
   }
 
   private void reportAndLogUnreachableHosts() {
@@ -615,7 +611,6 @@ public class TasksMonitor {
     report += "\n";
 
     REPORT_LOG.info(report);
-    nutchMetrics.writeReport(report, "available-hosts-" + reportSuffix + ".txt", true);
   }
 
   private void reportCost(Map<Double, String> costRecorder) {
@@ -632,13 +627,11 @@ public class TasksMonitor {
     });
 
     REPORT_LOG.info(sb.toString());
-    nutchMetrics.writeReport(sb.toString(), "queue-costs-" + reportSuffix + ".txt", true);
   }
 
   private void reportCost() {
     String report = "Top slow hosts : \n" + fetchQueues.getCostReport();
     report += "\n";
     REPORT_LOG.info(report);
-    nutchMetrics.writeReport(report, "queue-costs-" + reportSuffix + ".txt", true);
   }
 }

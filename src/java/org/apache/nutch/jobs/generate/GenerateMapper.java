@@ -58,7 +58,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   }
 
   private NutchMetrics nutchMetrics;
-  private String reportSuffix;
   private final Set<String> unreachableHosts = new HashSet<>();
 
   private String batchId;
@@ -98,7 +97,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
-    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
     urlFilters = filter ? new URLFilters(conf) : null;
@@ -276,7 +274,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
       if (depth == 0) {
         getCounter().increase(Counter.seedsFetchLater);
-        nutchMetrics.debugFetchLaterSeeds(nutchMetrics.getPageReport(url, page), reportSuffix);
+        nutchMetrics.debugFetchLaterSeeds(nutchMetrics.getPageReport(url, page));
       }
 
       return false;

@@ -17,9 +17,8 @@
 package org.apache.nutch.filter;
 
 // JDK imports
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -28,9 +27,9 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 // Logging imports
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 // Nutch imports
 
 //import org.junit.runners.Suite;
@@ -45,8 +44,7 @@ import org.slf4j.LoggerFactory;
 public abstract class RegexURLFilterBaseTest {
 
   /** My logger */
-  protected static final Logger LOG = LoggerFactory
-      .getLogger(RegexURLFilterBaseTest.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(RegexURLFilterBaseTest.class);
 
   private final static String SEPARATOR = System.getProperty("file.separator");
   private final static String SAMPLES = System.getProperty("test.data", ".");
@@ -107,18 +105,17 @@ public abstract class RegexURLFilterBaseTest {
 
   private static FilteredURL[] readURLFile(Reader reader) throws IOException {
     BufferedReader in = new BufferedReader(reader);
-    List<FilteredURL> list = new ArrayList<FilteredURL>();
+    List<FilteredURL> list = new ArrayList<>();
     String line;
     while ((line = in.readLine()) != null) {
       if (line.length() != 0) {
         list.add(new FilteredURL(line));
       }
     }
-    return (FilteredURL[]) list.toArray(new FilteredURL[list.size()]);
+    return new FilteredURL[list.size()];
   }
 
   private static class FilteredURL {
-
     boolean sign;
     String url;
 
@@ -136,5 +133,4 @@ public abstract class RegexURLFilterBaseTest {
       url = line.substring(1);
     }
   }
-
 }

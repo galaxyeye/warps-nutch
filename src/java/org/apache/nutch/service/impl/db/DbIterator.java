@@ -21,14 +21,13 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.gora.query.Result;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.DbPageConverter;
 import org.apache.nutch.filter.RegexURLFilter;
 import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.service.model.request.DbFilter;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.common.DbPageConverter;
+import org.apache.nutch.service.model.request.DbQuery;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +35,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
+
+import static org.apache.nutch.metadata.Nutch.ALL_BATCH_ID;
 
 public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(DbReader.class);
+  public static final Logger LOG = LoggerFactory.getLogger(Db.class);
 
-  public static long DefaultDbLimit = 100000L;
+  public static long DefaultDbLimit = 1000L;
 
   private Result<String, GoraWebPage> result;
   private WebPage page;
@@ -55,7 +55,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   private RegexURLFilter urlFilter;
   private int urlRegexNotMatch = 0;
 
-  DbIterator(Result<String, GoraWebPage> res, DbFilter filter, Configuration conf) {
+  DbIterator(Result<String, GoraWebPage> res, DbQuery filter, Configuration conf) {
     this.result = res;
     if (filter.getFields() != null) { this.fields = filter.getFields(); }
     if (filter.getBatchId() != null) { this.batchId = new Utf8(filter.getBatchId()); }
@@ -70,7 +70,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       }
     }
 
-    LOG.info("regex : " + urlRegexRule + ", batchId : " + batchId);
+    // LOG.info("regex : " + urlRegexRule + ", batchId : " + batchId);
 
     try {
       skipNonRelevant();
@@ -79,7 +79,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     }
   }
 
-  private void skipNonRelevant() throws IOException, Exception {
+  private void skipNonRelevant() throws Exception {
     do {
       hasNext = result.next();
       String skey = result.getKey();
@@ -96,13 +96,13 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   }
 
   private boolean isRelevant(String url) throws URLFilterException {
-    if (urlFilter != null && urlFilter.filter(url) == null) {
-      ++urlRegexNotMatch;
-      return false;
-    }
+//    if (urlFilter != null && urlFilter.filter(url) == null) {
+//      ++urlRegexNotMatch;
+//      return false;
+//    }
 
     WebPage page = WebPage.wrap(result.get());
-    Utf8 mark = page.getMark(Mark.UPDATEING);
+    Utf8 mark = page.getMark(Mark.UPDATEOUTG);
     return batchId == null || shouldProcess(mark, batchId);
   }
 
@@ -115,7 +115,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return false;
     }
 
-    boolean isAll = batchId.equals(Nutch.ALL_CRAWL_ID);
+    boolean isAll = batchId.equals(ALL_BATCH_ID);
     if (!isAll && !mark.equals(batchId)) {
       return false;
     }
@@ -173,16 +173,5 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
     }
 
     return result;
-  }
-
-  public static void main(String[] args) throws Exception {
-    Pattern urlPattern = Pattern.compile("^http://www.hahaertong.com/goods/(\\d+)$");
-    String url = "http://www.hahaertong.com/goods/6669";
-    if (urlPattern.matcher(url).matches()) {
-      System.out.println("good");
-    }
-    else {
-      System.out.println("bad");
-    }
   }
 }

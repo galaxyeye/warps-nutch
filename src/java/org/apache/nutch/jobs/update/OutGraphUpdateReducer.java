@@ -18,6 +18,7 @@ package org.apache.nutch.jobs.update;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.gora.store.DataStore;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
@@ -39,8 +40,6 @@ import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -77,7 +76,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
   private int maxInLinks;
   private int round;
   private DataStore<String, GoraWebPage> datastore;
-  private String reportSuffix;
   private NutchMetrics nutchMetrics;
 
   @Override
@@ -96,7 +94,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     round = conf.getInt(PARAM_CRAWL_ROUND, -1);
 
     nutchMetrics = NutchMetrics.getInstance(conf);
-    reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     try {
       datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
@@ -179,8 +176,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
     context.write(reversedUrl, page.get());
     getCounter().updateAffectedRows(url);
-    nutchMetrics.reportWebPage(url, page, reportSuffix);
-    nutchMetrics.reportPreformance(url, DateTimeUtil.elapsedTime(reduceStart), reportSuffix);
+    nutchMetrics.reportWebPage(url, page);
+    // nutchMetrics.reportPreformance(url, DateTimeUtil.elapsedTime(reduceStart));
   }
 
   /**
@@ -305,7 +302,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
     /* Update depth */
     if (newDepth < page.getDepth()) {
-      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + focus.getUrl(), reportSuffix);
+      nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + focus.getUrl());
       page.setDepth(newDepth);
       updateDepthCounter(newDepth, page);
     }

@@ -5,7 +5,7 @@
 
 <configuration>
 
-  <!-- persist -->
+  <!-- storage -->
   <property>
     <name>storage.crawl.id</name>
     <value>information</value>
@@ -17,11 +17,46 @@
     <value>org.apache.gora.memory.store.MemStore</value>
   </property>
 
+  <!-- plugin -->
+  <property>
+    <name>plugin.includes</name>
+    <value>protocol-(http|crowd)|urlfilter-(prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+    <description>Regular expression naming plugin directory names to
+      include.  Any plugin not matching this expression is excluded.
+      In any case you need at least include the nutch-extensionpoints plugin. By
+      default Nutch includes crawling just HTML and plain text via HTTP,
+      and basic indexing and search plugins. In order to use HTTPS please enable
+      protocol-httpclient, but be aware of possible intermittent problems with the
+      underlying commons-httpclient library.
+    </description>
+  </property>
+
   <!-- fetcher -->
   <property>
     <name>fetcher.fetch.mode</name>
     <value>NATIVE</value>
     <description>native, proxy and crowdsourcing</description>
+  </property>
+
+  <property>
+    <name>db.fetch.schedule.class</name>
+    <value>org.apache.nutch.crawl.schedulers.AdaptiveNewsFetchSchedule</value>
+    <description>The implementation of fetch schedule. AdaptiveNewsFetchSchedule has the following rules :
+      1. Seed pages are fetched very frequently if it changes
+      2. Detail pages are fetched just once
+      3. Other pages are fetched using AdaptiveFetchSchedule, but with lower priority
+    </description>
+  </property>
+
+  <property>
+    <name>fetcher.store.content</name>
+    <value>false</value>
+    <description>since every content is index into solr, we do not store the content</description>
+  </property>
+
+  <property>
+    <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
+    <value>true</value>
   </property>
 
   <property>
@@ -31,21 +66,51 @@
 
   <property>
     <name>fetcher.threads.fetch</name>
-    <value>5</value>
+    <value>10</value>
+  </property>
+
+  <property>
+    <name>fetcher.timelimit</name>
+    <value>1h</value>
+    <description>The feeder does not feed any fetch tasks any more if time exceed</description>
+  </property>
+
+  <property>
+    <name>fetcher.throughput.threshold.pages</name>
+    <value>1</value>
+    <description>The threshold of minimum pages per second. If the fetcher
+      downloads less
+      pages per second than the configured threshold, the
+      fetcher stops, preventing slow queue's
+      from stalling the throughput.
+      This threshold must be an integer. This can be useful when
+      fetcher.timelimit.mins is hard to determine. The default value of -1
+      disables this check.
+    </description>
+  </property>
+
+  <property>
+    <name>fetcher.pending.queue.check.time</name>
+    <value>2m</value>
+    <description>Check pending queue to see if any tasks is hang</description>
   </property>
 
   <property>
     <name>fetcher.net.bandwidth.m</name>
     <value>4</value>
     <description>Hardware bandwidth in Mbytes, if exceed the limit,
-    slows down the task scheduling.
+      slows down the task scheduling.
     </description>
   </property>
 
   <property>
     <name>nutch.master.host</name>
     <value>localhost</value>
-    <description></description>
+    <description>
+      A internet ip, hostname, or domain.
+      All fetch servers register itself using a internet domain so satellites
+      can do tasks from the internet.
+    </description>
   </property>
 
   <property>
@@ -68,33 +133,29 @@
   <property>
     <name>http.robots.obey</name>
     <value>false</value>
-    <description>sorry, we do not obey the robots.txt protocol
-    </description>
+    <description>sorry, we do not obey the robots.txt protocol</description>
   </property>
 
   <property>
     <name>http.agent.name</name>
-    <value>Warp Speed Knowledge Engine</value>
+    <value>Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20121202 Firefox/17.0 Iceweasel/17.0.1</value>
     <description></description>
   </property>
 
   <property>
     <name>http.timeout</name>
-    <value>300000</value>
-    <description>we have a very long time out setting, it's for a reason
-    </description>
+    <value>10000</value>
   </property>
 
   <property>
     <name>fetcher.task.timeout</name>
     <value>10m</value>
-    <description>fetch thread will exit if no any fetch item for
-      fetcher.task.timeout minutes</description>
+    <description>fetch thread will exit if no any fetch item for fetcher.task.timeout minutes</description>
   </property>
 
   <property>
     <name>http.fetch.max.retry</name>
-    <value>5</value>
+    <value>1</value>
   </property>
 
   <property>
@@ -105,13 +166,17 @@
   <property>
     <name>parser.skip.truncated</name>
     <value>false</value>
-    <description>no truncate actually since we give a very large value for
-      http.content.limit</description>
+    <description>no truncate actually since we give a very large value for http.content.limit</description>
   </property>
 
   <property>
     <name>parser.character.encoding.default</name>
     <value>utf-8</value>
+  </property>
+
+  <property>
+    <name>parser.ignore.detail.page.outlinks</name>
+    <value>true</value>
   </property>
 
   <property>
@@ -125,6 +190,11 @@
     <value>false</value>
   </property>
 
+  <property>
+    <name>db.update.max.outlinks</name>
+    <value>1000</value>
+  </property>
+
   <!-- Parsing -->
   <property>
     <name>db.max.anchor.length</name>
@@ -133,12 +203,28 @@
     </description>
   </property>
 
-  <!-- 
+  <!-- Indexing -->
+  <!-- index-metadata plugin properties -->
   <property>
-    <name>plugin.includes</name>
-   <value>protocol-(http|crowd)|urlfilter-regex|parse-(html)|index-(basic|anchor)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+    <name>index.metadata</name>
+    <value>description,keywords</value>
+    <description>
+      Comma-separated list of keys to be taken from the metadata to generate fields.
+      Can be used e.g. for 'description' or 'keywords' provided that these values are generated
+      by a parser (see parse-metatags plugin)
+    </description>
   </property>
-   -->
+
+  <property>
+    <name>solr.commit.size</name>
+    <value>100</value>
+    <description>solr collection</description>
+  </property>
+
+  <property>
+    <name>indexer.ignore.empty.pages</name>
+    <value>true</value>
+  </property>
 
   <!-- Scoring -->
   <!-- This is a temporary solution to indicate important links -->
@@ -150,9 +236,22 @@
 
   <!-- Generate -->
   <property>
+    <name>generate.max.distance</name>
+    <value>3</value>
+    <description>The maximum distance of an URL that the generator is allowed
+      to select for fetch. The distance is the smallest number of nodes (shortest path)
+      of an URL from the original injected URL. (Injected URLs have distance 0).
+    </description>
+  </property>
+
+  <property>
     <name>generator.map.threads.per.task</name>
     <value>50</value>
-    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.job.reduces</name>
+    <value>1</value>
   </property>
 
 </configuration>

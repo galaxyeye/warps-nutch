@@ -16,23 +16,24 @@
  ******************************************************************************/
 package org.apache.nutch.service.resources;
 
+import org.apache.nutch.service.ConfManager;
+import org.apache.nutch.service.JobManager;
+import org.apache.nutch.service.NutchMaster;
+import org.restlet.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.nutch.service.ConfManager;
-import org.apache.nutch.service.JobManager;
-import org.apache.nutch.service.NutchMaster;
-import org.restlet.Context;
-import org.slf4j.Logger;
-import org.springframework.context.ApplicationContext;
-
 @Produces({ MediaType.APPLICATION_JSON })
 public abstract class AbstractResource {
 
-  public static final Logger LOG = NutchMaster.LOG;
+  public static final Logger LOG = LoggerFactory.getLogger(AbstractResource.class);
 
   protected NutchMaster server;
   protected ConfManager configManager;

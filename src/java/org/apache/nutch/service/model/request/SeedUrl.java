@@ -2,6 +2,7 @@ package org.apache.nutch.service.model.request;
 
 import java.io.Serializable;
 
+@Deprecated
 public class SeedUrl implements Serializable {
 
   /**
@@ -9,26 +10,16 @@ public class SeedUrl implements Serializable {
    */
   private static final long serialVersionUID = 1L;
 
-  private Long id;
-
-  private SeedList seedList = new SeedList();
+  private Integer id;
 
   private String url;
 
   public SeedUrl() {
   }
 
-  public SeedUrl(Long id, String url) {
+  public SeedUrl(int id, String url) {
     this.id = id;
     this.url = url;
-  }
-  
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
   }
 
   public String getUrl() {
@@ -37,14 +28,6 @@ public class SeedUrl implements Serializable {
 
   public void setUrl(String url) {
     this.url = url;
-  }
-
-  public SeedList getSeedList() {
-    return seedList;
-  }
-
-  public void setSeedList(SeedList seedList) {
-    this.seedList = seedList;
   }
 
   @Override

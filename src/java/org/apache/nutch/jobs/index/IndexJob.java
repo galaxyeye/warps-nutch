@@ -31,6 +31,7 @@ import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexerOutputFormat;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.jobs.NutchJob;
+import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.Mark;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
@@ -106,7 +107,7 @@ public class IndexJob extends NutchJob implements Tool {
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
 
-    /**
+    /*
      * Re-set computed properties
      * */
     conf.set(PARAM_CRAWL_ID, crawlId);
@@ -119,7 +120,7 @@ public class IndexJob extends NutchJob implements Tool {
     ConfigUtils.setIfNotNull(conf, PARAM_SOLR_ZK, zkHostString);
     ConfigUtils.setIfNotNull(conf, PARAM_SOLR_COLLECTION, solrCollection);
 
-    /**
+    /*
      * Report parameters
      * */
     LOG.info(Params.format(
@@ -177,7 +178,7 @@ public class IndexJob extends NutchJob implements Tool {
     filter.setFieldName(GoraWebPage.Field.MARKERS.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.setMapKey(WebPage.wrapKey(Mark.UPDATEING));
+    filter.setMapKey(WebPage.wrapKey(Mark.UPDATEOUTG));
     filter.getOperands().add(WebPage.wrapValue(batchId));
 
     return filter;
@@ -208,7 +209,7 @@ public class IndexJob extends NutchJob implements Tool {
         ARG_THREADS, threads,
         ARG_RESUME, resume,
         ARG_LIMIT, limit > 0 ? limit : null,
-        ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
+        Nutch.ARG_NUMTASKS, numTasks > 0 ? numTasks : null,
         PARAM_SOLR_SERVER_URL, solrUrl,
         PARAM_SOLR_ZK, zkHostString,
         PARAM_SOLR_COLLECTION, collection

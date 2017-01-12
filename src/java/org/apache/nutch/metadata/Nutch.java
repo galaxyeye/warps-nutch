@@ -54,7 +54,7 @@ public interface Nutch {
 
   String ALL_BATCH_ID_STR = "-all";
 
-  Utf8 ALL_CRAWL_ID = new Utf8(ALL_BATCH_ID_STR);
+  Utf8 ALL_BATCH_ID = new Utf8(ALL_BATCH_ID_STR);
 
   int MAX_DISTANCE = 1000000;
 
@@ -125,34 +125,23 @@ public interface Nutch {
 
   String ARG_LIMIT = "limit";
 
-  /**
-   * Injector Relative
-   * */
-  /** Whitespace-separated list of seed URLs. */
-  String ARG_SEEDLIST = "seed";
-  /** a path to a directory containing a list of seed URLs. */
-  String ARG_SEEDDIR = "seedDir";
+  /** Injector Relative */
+  String ARG_SEED_PATH = "seedDir";
+  /** \n-separated list of seed URLs. */
+  String ARG_SEED_URLS = "seedUrls";
 
-  /**
-   * Fetcher Relative
-   * */
-  /** Fetch mode. */
+  /** Fetcher Relative */
+  /* Fetch mode. */
   String ARG_FETCH_MODE = "fetchMode";
 
-  /**
-   * Generator Relative
-   * */
-  /** Generate topN scoring URLs. */
+  /** Generator Relative */
+  /* Generate topN scoring URLs. */
   String ARG_TOPN = "topN";
 
-  /**
-   * Reparse
-   * */
+  /** Reparse */
   String ARG_REPARSE = "reparse";
 
-  /**
-   * Indexer Relative Arguments
-   * */
+  /** Indexer Relative Arguments */
   /** Index immediately once the content is fetched. */
   String ARG_INDEX = "index";
   /** Update immediately once the content is fetched. */
@@ -211,7 +200,8 @@ public interface Nutch {
   String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
   String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
 
-  // String PARAM_SEED_FILE_LOCK_NAME = "seed.file.lock.name";
+  String PARAM_SEED_PATH = "inject.seed.dir";
+  String PARAM_SEED_URLS = "inject.seed.urls";
 
   /**
    * Fetch parameters
@@ -256,6 +246,7 @@ public interface Nutch {
   String PARAM_UPDATE_MAX_IN_LINKS = "db.update.max.inlinks";
 
   String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
+  String PARAM_NUTCH_MASTER_PORT = "nutch.master.port";
 
   /**
    * Document fields

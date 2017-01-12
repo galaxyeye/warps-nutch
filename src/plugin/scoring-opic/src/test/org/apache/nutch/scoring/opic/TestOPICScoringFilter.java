@@ -75,7 +75,7 @@ public class TestOPICScoringFilter {
         private static final long serialVersionUID = 6145080304388858096L;
 
         {
-          put("http://a.com", new Float(1.833));
+          put("http://a.com", 1.833f);
           put("http://b.com", 2.333f);
           put("http://c.com", 1.5f);
           put("http://d.com", 0.333f);
@@ -88,10 +88,10 @@ public class TestOPICScoringFilter {
         private static final long serialVersionUID = 8948751511219885073L;
 
         {
-          put(new String("http://a.com"), new Float(2.666));
-          put(new String("http://b.com"), new Float(3.333));
-          put(new String("http://c.com"), new Float(2.166));
-          put(new String("http://d.com"), new Float(0.278));
+          put("http://a.com", 2.666f);
+          put("http://b.com", 3.333f);
+          put("http://c.com", 2.166f);
+          put("http://d.com", 0.278f);
         }
       });
       put(3, new HashMap<String, Float>() {
@@ -181,19 +181,13 @@ public class TestOPICScoringFilter {
           page.getOutlinks().put(seedOutlink, "");
         }
 
-        // Existing outlinks are added to outlinkedScoreData
-//        Map<CharSequence, CharSequence> outlinks = row.getOutlinks();
-//        for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-//          self.outlinkedScoreData.add(new WebEdge(0.0f, e.getKey().toString(), e.getValue().toString(), Integer.MAX_VALUE));
-//        }
-
         WebVertex v1 = new WebVertex(url, page);
 
-    /* A loop in the graph */
+        /* A loop in the graph */
         graph.addVertex(v1);
         graph.addEdge(v1, v1);
 
-        page.getOutlinks().entrySet().forEach(l -> graph.addEdge(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
+        page.getOutlinks().entrySet().forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
 
         scoringFilter.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
 

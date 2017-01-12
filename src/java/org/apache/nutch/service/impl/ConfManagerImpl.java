@@ -74,9 +74,7 @@ public class ConfManagerImpl implements ConfManager {
     return nutchConfig.getConfigId();
   }
 
-  public Configuration getDefault() {
-    return configurations.get(ConfManager.DEFAULT);
-  }
+  public Configuration getDefault() { return configurations.get(ConfManager.DEFAULT); }
 
   public Configuration get(String confId) {
     if (confId == null) {
@@ -119,7 +117,7 @@ public class ConfManagerImpl implements ConfManager {
   }
 
   /**
-   * Add a qiwu ui specified part to construct the id
+   * Add an ui specified part to construct the id
    * */
   private String generateId(NutchConfig nutchConfig) {
     String configId = String.valueOf(configSequence.incrementAndGet());

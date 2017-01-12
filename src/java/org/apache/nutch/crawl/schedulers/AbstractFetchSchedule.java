@@ -25,6 +25,7 @@ import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
-import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_DEFAULT_INTERVAL;
-import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_MAX_INTERVAL;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * This class provides common methods for implementations of
@@ -51,6 +50,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
 
   protected Duration defaultInterval;
   protected Duration maxInterval;
+  protected NutchMetrics nutchMetrics;
 
   private static final Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
@@ -62,9 +62,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
 
   public AbstractFetchSchedule() { super(null); }
 
-  public AbstractFetchSchedule(Configuration conf) {
-    setConf(conf);
-  }
+  public AbstractFetchSchedule(Configuration conf) { setConf(conf); }
 
   @Override
   public void setConf(Configuration conf) {
@@ -77,6 +75,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
 
     defaultInterval = ConfigUtils.getDuration(getConf(), PARAM_FETCH_DEFAULT_INTERVAL, Duration.ofDays(30));
     maxInterval = ConfigUtils.getDuration(getConf(), PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
+    nutchMetrics = NutchMetrics.getInstance(conf);
   }
 
   @Override

@@ -44,10 +44,12 @@ public class NutchMetrics implements AutoCloseable {
   private static NutchMetrics instance;
 
   private final Configuration conf;
+  private String reportSuffix;
+  private final DecimalFormat df = new DecimalFormat("0.0");
+
   private Map<Path, BufferedWriter> writers = new HashMap<>();
   private Path reportDir;
   private Path unreachableHostsPath;
-  final DecimalFormat df = new DecimalFormat("0.0");
 
   /**
    * TODO : check if there is a singleton bug
@@ -64,6 +66,8 @@ public class NutchMetrics implements AutoCloseable {
     this.conf = conf;
 
     try {
+      reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
+      
       reportDir = ConfigUtils.getPath(conf, PARAM_NUTCH_REPORT_DIR, Paths.get(PATH_NUTCH_REPORT_DIR));
       reportDir = Paths.get(reportDir.toAbsolutePath().toString(), DateTimeUtil.format(System.currentTimeMillis(), "yyyyMMdd"));
       Files.createDirectories(reportDir);
@@ -119,21 +123,21 @@ public class NutchMetrics implements AutoCloseable {
     return params.formatAsLine();
   }
 
-  public void reportRedirects(String redirectString, String reportSuffix) {
+  public void reportRedirects(String redirectString) {
     // writeReport(redirectString, "fetch-redirects-" + reportSuffix + ".txt");
   }
 
-  public void reportPageFromSeedersist(String report, String reportSuffix) {
+  public void reportPageFromSeedersist(String report) {
     // String reportString = seedUrl + " -> " + url + "\n";
     writeReport(report + "\n", "fetch-urls-from-seed-persist-" + reportSuffix + ".txt");
   }
 
-  public void reportPageFromSeed(String report, String reportSuffix) {
+  public void reportPageFromSeed(String report) {
     // String reportString = seedUrl + " -> " + url + "\n";
     writeReport(report + "\n", "fetch-urls-from-seed-" + reportSuffix + ".txt");
   }
 
-  public void reportFetchTimeHistory(String fetchTimeHistory, String reportSuffix) {
+  public void reportFetchTimeHistory(String fetchTimeHistory) {
     // writeReport(fetchTimeHistory, "fetch-time-history-" + reportSuffix + ".txt");
   }
 
@@ -146,29 +150,33 @@ public class NutchMetrics implements AutoCloseable {
     writeReport(report, "generate-hosts-" + postfix + ".txt", true);
   }
 
-  public void debugFetchLaterSeeds(String report, String reportSuffix) {
+  public void debugFetchLaterSeeds(String report) {
     writeReport(report + "\n", "seeds-fetch-later-" + reportSuffix + ".txt");
   }
 
-  public void debugDepthUpdated(String report, String reportSuffix) {
+  public void debugDepthUpdated(String report) {
     writeReport(report + "\n", "depth-updated-" + reportSuffix + ".txt");
   }
 
-  public void reportWebPage(String url, WebPage page, String reportSuffix) {
+  public void reportWebPage(String url, WebPage page) {
     String report = getPageReport(url, page);
     writeReport(report + "\n", "urls-" + page.getPageCategory().name().toLowerCase() + "-" + reportSuffix + ".txt");
   }
 
-  public void reportPreformance(String url, String elapsed, String reportSuffix) {
+  public void reportPreformance(String url, String elapsed) {
     writeReport(elapsed + " -> url" + "\n", "performace-" + reportSuffix + ".txt");
   }
 
-  public void debugLongUrls(String report, String reportSuffix) {
+  public void debugLongUrls(String report) {
     writeReport(report + "\n", "urls-long-" + reportSuffix + ".txt");
   }
 
-  public void debugIndexDocTime(String timeStrings, String reportSuffix) {
+  public void debugIndexDocTime(String timeStrings) {
     writeReport(timeStrings + "\n", "index-doc-time-" + reportSuffix + ".txt");
+  }
+
+  public void reportInactiveSeeds(String report) {
+    writeReport(report + "\n", "inactive-urls.txt");
   }
 
   public void writeReport(Path reportFile, String report) {

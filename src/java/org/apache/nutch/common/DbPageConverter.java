@@ -16,13 +16,8 @@
  ******************************************************************************/
 package org.apache.nutch.common;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
@@ -30,23 +25,31 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.parse.ParseStatusUtils;
-import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.protocol.ProtocolStatusUtils;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class DbPageConverter {
 
+  public static final String[] FIELDS = {
+      "metadata", "protocolStatus", "parseStatus", "content",
+      "markers", "inlinks", "outlinks"
+  };
+
   public static Map<String, Object> convertPage(WebPage page, Set<String> fields) {
     Map<String, Object> result = Maps.newHashMap();
-    for (Field field : filterFields(page.get(), fields)) {
+
+    for (Field field : filterFields(page, fields)) {
       Object value = convertField(page, field);
       if (value != null) {
         result.put(field.name(), value);
       }
     }
+
     return result;
   }
 
@@ -98,10 +101,13 @@ public class DbPageConverter {
     return value;
   }
 
-  private static Set<Field> filterFields(GoraWebPage page, Set<String> queryFields) {
+  private static Set<Field> filterFields(WebPage page, Set<String> queryFields) {
+    if (page.isEmpty()) {
+      return new HashSet<>();
+    }
     // DbIterator.LOG.error("queryFields : {}", new Gson().toJson(queryFields));
 
-    List<Field> pageFields = page.getSchema().getFields();
+    List<Field> pageFields = page.get().getSchema().getFields();
     if (CollectionUtils.isEmpty(queryFields)) {
       return Sets.newHashSet(pageFields);
     }

@@ -6,13 +6,13 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.nutch.metadata.Nutch.*;
 
 public class NutchClient {
 
@@ -26,8 +26,8 @@ public class NutchClient {
 
   public NutchClient(Configuration conf) {
     this(conf,
-        conf.get("nutch.master.hostname", Nutch.DEFAULT_MASTER_HOSTNAME),
-        conf.getInt("nutch.server.port", Nutch.DEFAULT_MASTER_PORT));
+        conf.get(PARAM_NUTCH_MASTER_HOST, DEFAULT_MASTER_HOSTNAME),
+        conf.getInt(PARAM_NUTCH_MASTER_PORT, DEFAULT_MASTER_PORT));
   }
 
   public NutchClient(Configuration conf, String host, int port) {

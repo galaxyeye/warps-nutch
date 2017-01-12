@@ -6,7 +6,6 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.PageCategory;
-import org.apache.nutch.service.model.request.SeedUrl;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -54,18 +53,6 @@ public class TestAnything {
 
     System.out.println(lines2.size());
     System.out.println(StringUtils.join(lines2, ","));
-  }
-
-  @Test
-  public void testUniqueSeedUrls() {
-    List<SeedUrl> seedUrls = Lists.newArrayList();
-    for (int i = 0; i < 10; i += 2) {
-      seedUrls.add(new SeedUrl(i + 0L, "http://www.warpspeed.cn/" + i));
-      seedUrls.add(new SeedUrl(i + 1L, "http://www.warpspeed.cn/" + i));
-    }
-    Set<SeedUrl> uniqueSeedUrls = Sets.newTreeSet((seedUrl, seedUrl2) -> seedUrl.getUrl().compareTo(seedUrl2.getUrl()));
-    uniqueSeedUrls.addAll(seedUrls);
-    uniqueSeedUrls.stream().map(SeedUrl::getUrl).forEach(System.out::println);
   }
 
   @Test

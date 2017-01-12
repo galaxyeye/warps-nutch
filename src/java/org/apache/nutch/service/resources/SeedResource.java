@@ -16,103 +16,62 @@
  ******************************************************************************/
 package org.apache.nutch.service.resources;
 
-import com.google.common.io.Files;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.nutch.service.ConfManager;
-import org.apache.nutch.service.model.request.SeedList;
-import org.apache.nutch.service.model.request.SeedUrl;
+import org.apache.nutch.util.HadoopFSUtil;
 import org.slf4j.Logger;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import static javax.ws.rs.core.Response.status;
 
-@Path("/seed")
+@javax.ws.rs.Path("/seed")
 public class SeedResource extends AbstractResource {
   private static final Logger LOG = AbstractResource.LOG;
 
+  /**
+   * Method creates seed list file and returns temorary directory path
+   *
+   * @param seedList seed list
+   * @return String
+   */
   @POST
   @Path("/create")
   @Consumes(MediaType.APPLICATION_JSON)
-  /**
-   * Method creates seed list file and returns temorary directory path
-   * @param seedList
-   * @return
-   */
-  public String createSeedFile(SeedList seedList) {
-    if (seedList == null) {
-      throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
-          .entity("Seed list cannot be empty!").build());
-    }
-
-    File seedFile = createSeedFile();
-    BufferedWriter writer = getWriter(seedFile);
-
-    Collection<SeedUrl> seedUrls = seedList.getSeedUrls();
-    if (CollectionUtils.isNotEmpty(seedUrls)) {
-      for (SeedUrl seedUrl : seedUrls) {
-        writeUrl(writer, seedUrl);
-      }
+  public String createSeedFile(Collection<String> seedList) {
+    if (seedList == null || seedList.isEmpty()) {
+      throw new WebApplicationException(
+          Response.status(Status.BAD_REQUEST).entity("Seed list cannot be empty!").build());
     }
 
     try {
-      Configuration conf = configManager.get(ConfManager.DEFAULT);
-      String fsName = conf.get("fs.defaultFS");
-      LOG.info("FS : " + fsName);
+      File seedFile = File.createTempFile("seed", ".txt");
+      FileUtils.writeLines(seedFile, seedList);
 
-      if (fsName.contains("hdfs")) {
+      Configuration conf = configManager.get(ConfManager.DEFAULT);
+      if (HadoopFSUtil.isDistributedFS(conf)) {
         LOG.info("Running under hadoop distributed file system");
 
         FileSystem fs = FileSystem.get(conf);
         org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(seedFile.getAbsolutePath());
         fs.copyFromLocalFile(path, path);
       }
-      else {
-        LOG.info("Running under local file system");
-      }
+
+      return seedFile.getAbsolutePath();
     } catch (IOException e) {
       LOG.error(e.toString());
+      handleException(e);
     }
 
-    return seedFile.getParent();
-  }
-
-  private void writeUrl(BufferedWriter writer, SeedUrl seedUrl) {
-    try {
-      writer.write(seedUrl.getUrl());
-      writer.newLine();
-      writer.flush();
-    } catch (IOException e) {
-      throw handleException(e);
-    }
-  }
-
-  private BufferedWriter getWriter(File seedFile) {
-    try {
-      return new BufferedWriter(new FileWriter(seedFile));
-    } catch (FileNotFoundException e) {
-      throw handleException(e);
-    } catch (IOException e) {
-      throw handleException(e);
-    }
-  }
-
-  private File createSeedFile() {
-    try {
-      return File.createTempFile("seed", ".txt", Files.createTempDir());
-    } catch (IOException e) {
-      throw handleException(e);
-    }
+    return "";
   }
 
   private RuntimeException handleException(Exception e) {
@@ -120,5 +79,4 @@ public class SeedResource extends AbstractResource {
     return new WebApplicationException(status(Status.INTERNAL_SERVER_ERROR)
         .entity("Cannot create seed file!").build());
   }
-
 }

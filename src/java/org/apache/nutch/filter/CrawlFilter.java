@@ -393,18 +393,6 @@ public class CrawlFilter extends Configured {
   }
 
   public static void main(String[] args) throws Exception {
-//    Configuration conf = ConfigUtils.create();
-//    conf.setBoolean(CRAWL_FILTER_FILTER, false);
-//    conf.setBoolean(CRAWL_FILTER_NORMALISE, false);
-//
-//    String json = FileUtils.readFileToString(new File("/tmp/crawl-filters-test.json"));
-//    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-////    Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.FINAL).create();
-//    CrawlFilter crawlFilter = gson.fromJson(json, CrawlFilter.class);
-//    crawlFilter.setConf(conf);
-//
-//    System.out.println(crawlFilter);
-
     String test =  "com.github:https/about";
     String bound = "com.github:https/\uFFFF";
     System.out.println(test.compareTo(bound));

@@ -42,13 +42,13 @@ public class Params {
     return entry == null ? null : entry.getValue();
   }
 
-  public String getString(String name) {
-    return (String)get(name);
-  }
-
   public String get(String name, String defaultValue) {
     String value = (String)get(name);
     return value == null ? defaultValue : value;
+  }
+
+  public String getString(String name) {
+    return (String)get(name);
   }
 
   public <T extends Enum<T>> T getEnum(String name, T defaultValue) {

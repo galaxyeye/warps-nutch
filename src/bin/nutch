@@ -133,7 +133,7 @@ unset IFS
 if [ "$COMMAND" = "samplejob" ] ; then
   CLASS=org.apache.nutch.jobs.samples.SampleJob
 elif [ "$COMMAND" = "master" ] ; then
-  CLASS=org.apache.nutch.service.NutchServer
+  CLASS=org.apache.nutch.service.NutchMaster
 elif [ "$COMMAND" = "inject" ] ; then
   CLASS=org.apache.nutch.jobs.inject.InjectJob
 elif [ "$COMMAND" = "hostinject" ] ; then
