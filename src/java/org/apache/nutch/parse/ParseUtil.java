@@ -27,7 +27,7 @@ import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.filter.*;
 import org.apache.nutch.jobs.fetch.FetchJob;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;

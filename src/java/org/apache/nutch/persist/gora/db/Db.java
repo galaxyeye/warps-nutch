@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.service.impl.db;
+package org.apache.nutch.persist.gora.db;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,12 +22,11 @@ import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.common.DbPageConverter;
+import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.service.model.request.DbQuery;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class Db {
 
   public Db(Configuration conf, String crawlId) {
     this.conf = conf;
-    if (crawlId != null) {
+    if (crawlId != null && !crawlId.isEmpty()) {
       conf.set(PARAM_CRAWL_ID, crawlId);
     }
 
@@ -65,6 +64,18 @@ public class Db {
     }
 
     return WebPage.wrap(store.get(reversedUrl));
+  }
+
+  public Map<String, Object> get(String url, Set<String> fields) {
+    WebPage page = WebPage.wrap(store.get(TableUtil.reverseUrlOrEmpty(url)));
+
+    Params.of(
+        "crawlId", conf.get(PARAM_CRAWL_ID),
+        "url", url,
+        "fields", StringUtils.join(fields, ",")
+    ).withLogger(LOG).info(true);
+
+    return WebPageConverter.convert(page, fields);
   }
 
   public boolean update(String url, WebPage page) {
@@ -87,16 +98,17 @@ public class Db {
     return false;
   }
 
-  public Map<String, Object> get(String url, Set<String> fields) {
-    WebPage page = WebPage.wrap(store.get(TableUtil.reverseUrlOrEmpty(url)));
-
-    Params.of(
-        "crawlId", conf.get(PARAM_CRAWL_ID),
-        "url", url,
-        "fields", StringUtils.join(fields, ",")
-    ).withLogger(LOG).info(true);
-
-    return DbPageConverter.convertPage(page, fields);
+  public boolean truncate() {
+    String schemaName = store.getSchemaName();
+    if (schemaName.startsWith("tmp_") || schemaName.endsWith("_tmp_webpage")) {
+      store.truncateSchema();
+      LOG.info("Schema " + schemaName + " is truncated");
+      return true;
+    }
+    else {
+      LOG.info("Only schema name starts with tmp_ or ends with _tmp can be truncated using this API");
+      return false;
+    }
   }
 
   public DbIterator query(DbQuery filter) {
@@ -139,7 +151,7 @@ public class Db {
 
   private String[] prepareFields(Set<String> fields) {
     if (CollectionUtils.isEmpty(fields)) {
-      return DbPageConverter.FIELDS;
+      return GoraWebPage._ALL_FIELDS;
     }
     fields.remove("url");
     return fields.toArray(new String[fields.size()]);

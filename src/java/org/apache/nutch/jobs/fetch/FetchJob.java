@@ -182,7 +182,7 @@ public class FetchJob extends NutchJob implements Tool {
   }
 
   public int fetch(String crawlId, String fetchMode, String batchId, int threads, boolean resume, int limit, int numTasks) throws Exception {
-    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks);
+    return fetch(crawlId, fetchMode, batchId, threads, resume, limit, numTasks, false, null, null, null);
   }
 
   /**
@@ -306,8 +306,9 @@ public class FetchJob extends NutchJob implements Tool {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = ConfigUtils.create();
-    // NutchMaster should run on master instance
-    NutchMaster.startAsDaemon(conf);
+    if (!NutchMaster.isRunning(conf)) {
+      NutchMaster.startAsDaemon(conf);
+    }
 
     int res = ToolRunner.run(conf, new FetchJob(), args);
     System.exit(res);

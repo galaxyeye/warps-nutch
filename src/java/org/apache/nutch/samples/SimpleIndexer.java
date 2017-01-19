@@ -26,13 +26,15 @@ public class SimpleIndexer {
 
   private Configuration conf;
   private String solrUrl;
-  private SimpleParser simpleParser;
+  private SimpleFetcher fetcher;
+  private SimpleParser parser;
   private IndexingFilters indexingFilters;
   private IndexWriters indexWriters;
 
   public SimpleIndexer(Configuration conf) throws IOException {
     this.conf = conf;
-    this.simpleParser = new SimpleParser(conf);
+    this.fetcher = new SimpleFetcher(conf);
+    this.parser = new SimpleParser(conf);
     this.indexingFilters = new IndexingFilters(conf);
     this.solrUrl = conf.get(Nutch.PARAM_SOLR_SERVER_URL);
 
@@ -61,14 +63,14 @@ public class SimpleIndexer {
     IndexDocument doc = null;
 
     try {
-      WebPage page = simpleParser.download(url, contentType);
+      WebPage page = fetcher.fetch(url, contentType);
       if (page == null) {
         return null;
       }
 
-      String key = TableUtil.reverseUrl(url);
-      simpleParser.parse(page);
-      doc = indexingFilters.filter(new IndexDocument(key), url, page);
+      String reversedUrl = TableUtil.reverseUrl(url);
+      parser.parse(page);
+      doc = indexingFilters.filter(new IndexDocument(reversedUrl), url, page);
       if (indexWriters != null) {
         indexWriters.write(doc);
         page.putIndexTimeHistory(Instant.now());
@@ -80,7 +82,7 @@ public class SimpleIndexer {
         int d = --depth;
         page.getOutlinks().keySet().stream().map(CharSequence::toString)
             .filter(link -> !link.matches("(.+)(jpg|png|gif|js|css|json)"))
-            .filter(link -> link.length() > SimpleParser.SHORTEST_URL.length())
+            .filter(link -> link.length() > Nutch.SHORTEST_VALID_URL_LENGTH)
             .forEach(link -> index(link, contentType, d));
       }
     } catch (ProtocolNotFound|IndexingException |IOException e) {

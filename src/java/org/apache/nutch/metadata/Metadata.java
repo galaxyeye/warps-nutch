@@ -40,6 +40,8 @@ import java.util.Properties;
 public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
   public enum Name {
+    UNKNOWN(""),
+
     IS_NAVIGATOR("I_N"),
     IS_SEED("I_S"),
     IS_DETAIL("I_D"),
@@ -52,13 +54,12 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     FETCH_TIME_HISTORY("F_FTH"),
     FETCH_COUNT("F_FC"),
     FETCH_PRIORITY("F_FP"),
-    FETCH_NO_MORE("F_FNM"),
 
     REDIRECT_DISCOVERED("RD"),
 
     /** parse */
-    OUT_LINK_COUNT("P_OLC"),
-    FETCHED_OUT_LINKS("P_AOL"),
+    TOTAL_OUT_LINKS("P_OLC"),
+    OLD_OUT_LINKS("P_AOL"),
 
     /** index */
     INDEX_TIME_HISTORY("ITH"),
@@ -81,22 +82,32 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     PUBLISH_TIME("C_PT"),
     PREV_PUBLISH_TIME("C_PPT"),
 
+    META_KEYWORDS("meta_keywords"),
+    META_DESCRIPTION("meta_description"),
+
     /** tmp */
     TMP_PAGE_FROM_SEED("T_PFS"),
     TMP_IS_DETAIL("T_ID"),
     TMP_CHARS("T_C");
 
-    private String value;
+    private String text;
 
-    Name(String value) {
-      this.value = value;
+    Name(String name) {
+      this.text = name;
     }
 
-    public String value() {
-      return this.value;
+    public String text() {
+      return this.text;
     }
 
-    public static boolean validate() { return values().length == 10; }
+    public static Name of(String name) {
+      try {
+        return valueOf(name);
+      }
+      catch (Throwable e) {
+        return UNKNOWN;
+      }
+    }
   }
 
   public static final String META_TMP = "TMP_";
@@ -148,7 +159,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
   }
 
   public String get(final Name name) {
-    return get(name.value());
+    return get(name.text());
   }
 
   /**
@@ -188,7 +199,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     }
   }
 
-  public void add(final Name name, final String value) { add(name.value(), value); }
+  public void add(final Name name, final String value) { add(name.text(), value); }
 
   public void add(Name name, int value) { add(name, String.valueOf(value)); }
 
@@ -197,12 +208,12 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
   public void add(Name name, Instant value) { add(name, DateTimeUtil.solrCompatibleFormat(value)); }
 
   public int getInteger(Name name, int defaultValue) {
-    String s = get(name.value());
+    String s = get(name.text());
     return StringUtil.tryParseInt(s, defaultValue);
   }
 
   public long getLong(Name name, long defaultValue) {
-    String s = get(name.value());
+    String s = get(name.text());
     return StringUtil.tryParseLong(s, defaultValue);
   }
 
@@ -245,7 +256,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
   }
 
   public void set(Name name, String value) {
-    set(name.value(), value);
+    set(name.text(), value);
   }
 
   public void set(Name name, int value) { set(name, String.valueOf(value)); }

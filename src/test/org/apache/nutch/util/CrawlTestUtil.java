@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.nutch.crawl.TestInjector;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.mortbay.jetty.Handler;

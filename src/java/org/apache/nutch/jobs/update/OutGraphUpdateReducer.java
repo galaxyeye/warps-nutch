@@ -33,6 +33,7 @@ import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchReducer;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
@@ -56,7 +57,7 @@ import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Metadata.Name.GENERATE_TIME;
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.persist.Mark.*;
+import static org.apache.nutch.metadata.Mark.*;
 
 class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 
@@ -369,7 +370,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
 
         Duration fetchInterval = page.getFetchInterval();
-        if (fetchInterval.toDays() < NEVER_FETCH_INTERVAL_DAYS && fetchInterval.compareTo(maxFetchInterval) > 0) {
+        if (!page.hasMark(Mark.INACTIVE) && fetchInterval.compareTo(maxFetchInterval) > 0) {
           LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
           fetchSchedule.forceRefetch(url, page, false);
         }

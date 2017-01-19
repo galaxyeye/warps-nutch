@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Deprecated
 public class SeedList implements Serializable {
 
   private Collection<String> seedUrls = new ArrayList<>();

@@ -41,7 +41,7 @@ import java.io.IOException;
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.persist.Mark.FETCH;
+import static org.apache.nutch.metadata.Mark.FETCH;
 
 class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 

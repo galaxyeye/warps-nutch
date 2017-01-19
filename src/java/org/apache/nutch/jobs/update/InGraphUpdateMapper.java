@@ -37,7 +37,7 @@ import java.io.IOException;
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.PARAM_CRAWL_ID;
-import static org.apache.nutch.persist.Mark.UPDATEOUTG;
+import static org.apache.nutch.metadata.Mark.UPDATEOUTG;
 
 class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 

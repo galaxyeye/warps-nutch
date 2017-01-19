@@ -9,7 +9,7 @@ import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;

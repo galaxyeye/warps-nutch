@@ -16,19 +16,17 @@
  ******************************************************************************/
 package org.apache.nutch.service.resources;
 
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.Maps;
+import org.apache.nutch.fetch.service.FetchServer;
+import org.apache.nutch.persist.local.model.ServerInstance;
+import org.apache.nutch.service.impl.PortManager;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-
-import org.apache.nutch.fetch.service.FetchServer;
-import org.apache.nutch.service.impl.PortManager;
-import org.apache.nutch.persist.local.model.ServerInstance;
-
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
 
 @Path("/port")
 public class PortResource extends AbstractResource {

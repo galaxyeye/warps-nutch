@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.service.impl.db;
+package org.apache.nutch.persist.gora.db;
 
 import com.google.common.collect.UnmodifiableIterator;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.gora.query.Result;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.common.DbPageConverter;
+import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.filter.RegexURLFilter;
 import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.service.model.request.DbQuery;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,7 +165,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   }
 
   private Map<String, Object> pageAsMap(String url, WebPage page) {
-    Map<String, Object> result = DbPageConverter.convertPage(page, fields);
+    Map<String, Object> result = WebPageConverter.convert(page, fields);
 
     if (CollectionUtils.isEmpty(fields) || fields.contains("url")) {
       result.put("url", TableUtil.unreverseUrl(url));

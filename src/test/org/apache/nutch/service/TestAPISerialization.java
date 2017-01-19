@@ -22,7 +22,7 @@ package org.apache.nutch.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.nutch.service.model.request.DbQuery;
+import org.apache.nutch.persist.gora.db.DbQuery;
 import org.apache.nutch.service.model.request.JobConfig;
 import org.apache.nutch.service.model.request.SeedList;
 import org.junit.Test;

@@ -19,7 +19,7 @@ package org.apache.nutch.crawl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;

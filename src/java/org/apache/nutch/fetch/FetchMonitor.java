@@ -6,11 +6,15 @@ import org.apache.nutch.crawl.NutchContext;
 import org.apache.nutch.fetch.indexer.IndexThread;
 import org.apache.nutch.fetch.indexer.JITIndexer;
 import org.apache.nutch.fetch.service.FetchServer;
+import org.apache.nutch.fetch.service.FetchServerThread;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.*;
+import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.NetUtil;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +50,7 @@ public class FetchMonitor {
 
   /** Threads */
   private Integer fetchServerPort;
-  private FetchServer fetchServer;
+  private FetchServerThread fetchServerThread;
   private int fetchThreadCount = 5;
 
   /** Monitors */
@@ -193,9 +197,8 @@ public class FetchMonitor {
 
   public void cleanup() {
     try {
-      if (fetchServer != null && fetchServer.isRunning()) {
-        fetchServer.stop(true);
-      }
+      LOG.info("Clean up FetchMonitor");
+      fetchServerThread.getServer().stop(true);
 
       if (taskScheduler != null) {
         taskScheduler.cleanup();
@@ -271,8 +274,9 @@ public class FetchMonitor {
     }
   }
 
-  private void startFetchService(final Configuration conf, final int port) {
-    fetchServer = FetchServer.startAsDaemon(conf, port);
+  private void startFetchService(Configuration conf, int port) {
+    fetchServerThread = new FetchServerThread(conf, port);
+    fetchServerThread.start();
   }
 
   private int tryAcquireFetchServerPort() {

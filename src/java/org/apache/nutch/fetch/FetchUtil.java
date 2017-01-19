@@ -7,8 +7,8 @@ import org.apache.nutch.util.NutchUtil;
 
 import java.time.Instant;
 
-import static org.apache.nutch.persist.Mark.FETCH;
-import static org.apache.nutch.persist.Mark.GENERATE;
+import static org.apache.nutch.metadata.Mark.FETCH;
+import static org.apache.nutch.metadata.Mark.GENERATE;
 
 /**
  * Created by vincent on 16-9-10.

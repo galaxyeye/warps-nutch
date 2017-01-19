@@ -26,7 +26,7 @@ import org.apache.nutch.jobs.index.IndexJob;
 import org.apache.nutch.jobs.inject.InjectJob;
 import org.apache.nutch.jobs.parse.ParserCheckJob;
 import org.apache.nutch.jobs.parse.ParserJob;
-import org.apache.nutch.jobs.read.WebTableReader;
+import org.apache.nutch.jobs.db.WebTableReader;
 import org.apache.nutch.jobs.update.InGraphUpdateJob;
 import org.apache.nutch.jobs.update.OutGraphUpdateJob;
 import org.apache.nutch.service.JobManager.JobType;

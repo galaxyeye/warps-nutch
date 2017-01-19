@@ -24,8 +24,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
+import static org.apache.nutch.metadata.Mark.INACTIVE;
 
 /**
  * This class implements an adaptive re-fetch algorithm.
@@ -53,13 +54,13 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
 
     boolean changed = false;
     if (page.isSeed()) {
-      interval = adjustSeedFetchInterval(url, page, fetchTime, interval);
+      interval = adjustSeedFetchInterval(url, page, fetchTime, modifiedTime, state);
+      // interval = MIN_INTERVAL;
       changed = true;
     }
     else if (page.veryLikeDetailPage(url)) {
-      // Detail pages are fetched only once
-      page.setNoMoreFetch();
-      interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
+      // Detail pages are fetched only once, once it's mark
+      page.putMark(INACTIVE, YES_STRING);
       changed = true;
     }
     else {
@@ -77,15 +78,22 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   /**
    * Adjust fetch interval for article pages
    * */
-  private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Duration interval) {
+  private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Instant modifiedTime, int state) {
     int fetchCount = page.getFetchCount();
     if (fetchCount <= 1) {
       // Ref-parameters are not initialized yet
       return MIN_INTERVAL;
     }
 
+    Duration interval = page.getFetchInterval();
+
     Instant refPublishTime = page.getRefPublishTime();
     long hours = ChronoUnit.HOURS.between(refPublishTime, fetchTime);
+    if (hours > 360 * 24 * 10) {
+      // Longer than 10 years, it's very likely the refPublishTime is wrong
+      // return super.getFetchInterval(page, fetchTime, modifiedTime, state);
+    }
+
     if (hours <= 24) {
       // There are updates today, keep re-fetch the page in every crawl loop
       interval = MIN_INTERVAL;

@@ -86,7 +86,7 @@ numTasks=`expr $numSlaves \* 2`
 
 # number of urls to fetch in one iteration
 # It's depend on how fast do you want to finish the fetch loop
-sizeFetchlist=`expr $numSlaves \* 500`
+sizeFetchlist=`expr $numSlaves \* 1000`
 
 # time limit for feching
 fetchJobTimeout=1h

@@ -41,7 +41,7 @@ public class NutchClient {
     String baseUrl = "http://" + host + ":" + port;
     nutchResource = client.resource(baseUrl);
 
-    LOG.debug("NutchClient created, baseUrl : " + baseUrl);
+    LOG.info("NutchClient created, baseUrl : " + baseUrl);
   }
 
   public String host() {

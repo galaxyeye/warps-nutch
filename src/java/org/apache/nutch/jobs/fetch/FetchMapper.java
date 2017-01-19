@@ -5,7 +5,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.nutch.fetch.data.FetchEntry;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.jobs.NutchMapper;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;

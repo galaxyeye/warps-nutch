@@ -39,8 +39,8 @@ import java.io.IOException;
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_SOURCE;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.jobs.update.InGraphUpdateReducer.Counter.pagesNotExist;
-import static org.apache.nutch.persist.Mark.UPDATEING;
-import static org.apache.nutch.persist.Mark.UPDATEOUTG;
+import static org.apache.nutch.metadata.Mark.UPDATEING;
+import static org.apache.nutch.metadata.Mark.UPDATEOUTG;
 
 class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 

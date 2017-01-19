@@ -14,22 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.service.model.response;
+package org.apache.nutch.metadata;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+public enum Mark {
+  INJECT("inj"), GENERATE("gn"), FETCH("fth"), PARSE("prs"), UPDATEOUTG("updo"),
+  UPDATEING("updi"), INDEX("idx"), INACTIVE("iat");
 
-import com.google.common.collect.Lists;
-
-public class DbQueryResult {
-  private List<Map<String, Object>> values = Lists.newLinkedList();
-
-  public List<Map<String, Object>> getValues() {
-    return Collections.unmodifiableList(values);
-  }
-
-  public void addValue(Map<String, Object> next) {
-    values.add(next);
-  }
+  private String value;
+  Mark(String value) {this.value = value; }
+  public String value() { return value; }
 }

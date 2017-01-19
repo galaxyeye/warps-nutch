@@ -125,7 +125,7 @@ public class NutchMaster extends Application {
     application.setStatusService(new ErrorStatusService());
     childContext.getAttributes().put(NUTCH_SERVER, this);
 
-    // Attach the application
+    // Attach the application.
     component.getDefaultHost().attach(application);
   }
 
@@ -165,6 +165,9 @@ public class NutchMaster extends Application {
     if (!isRunning(conf)) {
       NutchMaster server = new NutchMaster();
       server.start();
+    }
+    else {
+      LOG.warn("Nutch master is already running.");
     }
   }
 

@@ -18,29 +18,23 @@
 package org.apache.nutch.samples;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.common.EncodingDetector;
-import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.fetch.FetchUtil;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.filter.URLFilters;
-import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.*;
-import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.*;
+import org.apache.nutch.protocol.ProtocolNotFound;
+import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.warps.scent.document.TextDocument;
@@ -56,73 +50,40 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Parser checker, useful for testing parser. It also accurately reports
  * possible fetching and parsing failures and presents protocol status signals
  * to aid debugging. The tool enables us to retrieve the following data from any
- * url:
- * <ol>
- * <li><tt>contentType</tt>: The URL {@link Content} type.</li>
- * <li><tt>signature</tt>: Digest is used to identify pages (like unique ID) and
- * is used to remove duplicates during the dedup procedure. It is calculated
- * using {@link org.apache.nutch.crawl.MD5Signature} or
- * {@link org.apache.nutch.crawl.TextProfileSignature}.</li>
- * <li><tt>Version</tt>: From {@link org.apache.nutch.parse}.</li>
- * <li><tt>Status</tt>: From {@link org.apache.nutch.parse}.</li>
- * <li><tt>Title</tt>: of the URL</li>
- * <li><tt>Outlinks</tt>: associated with the URL</li>
- * <li><tt>Content Metadata</tt>: such as <i>X-AspNet-Version</i>, <i>Date</i>,
- * <i>Content-length</i>, <i>servedBy</i>, <i>Content-Type</i>,
- * <i>Cache-Control</>, etc.</li>
- * <li><tt>ParseResult Metadata</tt>: such as <i>CharEncodingForConversion</i>,
- * <i>OriginalCharEncoding</i>, <i>language</i>, etc.</li>
- * <li><tt>ParseText</tt>: The page parseResult text which varies in length depdnecing
- * on <code>content.length</code> configuration.</li>
- * </ol>
- *
- * @author John Xing
  */
 public class SimpleParser extends Configured {
 
   public static final Logger LOG = LoggerFactory.getLogger(SimpleParser.class);
 
-  public static final String SHORTEST_URL = "http://t.tt/ttt";
   private CrawlFilters crawlFilters;
-  private URLFilters urlFilters;
-  private URLNormalizers urlNormalizers;
   private Map<String, Object> results = Maps.newHashMap();
 
   private String url;
   private WebPage page;
+  private SimpleFetcher fetcher;
   private ParseResult parseResult;
 
   public SimpleParser(Configuration conf) {
     setConf(conf);
     crawlFilters = CrawlFilters.create(conf);
-    urlFilters = new URLFilters(conf);
-    urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
+    fetcher = new SimpleFetcher(conf);
   }
 
-  public void parse(String url) {
-    parse(url, null);
-  }
+  public void parse(String url) { parse(url, null); }
 
   public void parse(String url, String contentType) {
-    LOG.info("parsing: " + url);
-
-    if (url.length() < SHORTEST_URL.length()) {
-      return;
-    }
+    LOG.info("Parsing: " + url);
 
     try {
       this.url = url;
-      page = download(url, contentType);
+      page = fetcher.fetch(url, contentType);
       if (page != null) {
         parse(page);
       }
@@ -139,11 +100,11 @@ public class SimpleParser extends Configured {
   }
 
   public void extract(String url, String contentType) {
-    LOG.info("parsing: " + url);
+    LOG.info("Extract: " + url);
 
     try {
       this.url = url;
-      page = download(url, contentType);
+      page = fetcher.fetch(url, contentType);
       if (page != null) {
         extract(page);
       }
@@ -188,44 +149,6 @@ public class SimpleParser extends Configured {
     return results;
   }
 
-  public WebPage download(String url) throws ProtocolNotFound {
-    return download(url, null);
-  }
-
-  public WebPage download(String url, String contentType) throws ProtocolNotFound {
-    LOG.info("Fetching: " + url);
-
-    ProtocolFactory factory = new ProtocolFactory(getConf());
-    Protocol protocol = factory.getProtocol(url);
-    WebPage page = WebPage.newWebPage();
-
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
-    ProtocolStatus pstatus = protocolOutput.getStatus();
-
-    if (!pstatus.isSuccess()) {
-      LOG.error("Fetch failed with protocol status, "
-          + ProtocolStatusUtils.getName(pstatus.getCode())
-          + " : " + ProtocolStatusUtils.getMessage(pstatus));
-      return null;
-    }
-
-    Content content = protocolOutput.getContent();
-
-    FetchUtil.updateStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
-    FetchUtil.updateContent(page, content);
-    FetchUtil.updateFetchTime(page);
-    FetchUtil.updateMarks(page);
-
-    if (content == null) {
-      LOG.error("No content for " + url);
-      return null;
-    }
-
-    saveWebPage(page);
-
-    return page;
-  }
-
   private void saveWebPage(WebPage page) {
     try {
       Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl()));
@@ -246,7 +169,7 @@ public class SimpleParser extends Configured {
       return results;
     }
 
-    results.put("content", page.toString());
+    results.put("content", page.getContent());
 
     if (ParserMapper.isTruncated(url, page)) {
       results.put("contentStatus", "truncated");
@@ -254,59 +177,27 @@ public class SimpleParser extends Configured {
 
     // Calculate the signature
     byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
+    results.put("Signature", StringUtil.toHexString(signature));
 
-    LOG.info("signature: " + StringUtil.toHexString(signature));
+    String metadata = page.get().getMetadata().entrySet().stream()
+        .map(e -> e.getKey() + " : " + e.getValue())
+        .collect(Collectors.joining("\n"));
+    results.put("Metadata", metadata);
 
-    // LOG.info("---------\nMetadata\n---------\n");
-    Map<CharSequence, ByteBuffer> metadata = page.get().getMetadata();
-    StringBuffer sb = new StringBuffer();
-    if (metadata != null) {
-      Iterator<Entry<CharSequence, ByteBuffer>> iterator = metadata.entrySet().iterator();
+    String filteredOutlinks = parseResult.getOutlinks().stream()
+        .map(Outlink::getToUrl)
+        .filter(l -> crawlFilters.normalizeAndValidateUrl(l)).sorted().distinct().collect(Collectors.joining("\n"));
+    results.put("FilteredOutlinks", filteredOutlinks);
 
-      while (iterator.hasNext()) {
-        Entry<CharSequence, ByteBuffer> entry = iterator.next();
-        sb.append(entry.getKey().toString()).append(" : \t")
-            .append(Bytes.toString(entry.getValue().array())).append("\n");
-      }
+    String discardedOutlinks = parseResult.getOutlinks().stream()
+        .map(Outlink::getToUrl)
+        .filter(l -> !crawlFilters.normalizeAndValidateUrl(l)).sorted().distinct().collect(Collectors.joining("\n"));
+    results.put("DiscardOutlinks", discardedOutlinks);
 
-      results.put("Metadata", sb);
-    }
-
-    // Set<String> filteredOutlinks = page.getOutlinks().keySet().stream().map(CharSequence::toString).collect(Collectors.toSet());
-    String filteredOutlinks = page.getOutlinks().keySet().stream()
-        .map(CharSequence::toString).sorted().distinct().collect(Collectors.joining(", "));
-    results.put("Outlinks", filteredOutlinks);
-
-    // DiscardedOutlinks
-    Set<String> discardedOutlinks = Sets.newTreeSet();
-    for (Outlink outlink : parseResult.getOutlinks()) {
-      String toUrl = outlink.getToUrl();
-      toUrl = urlNormalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
-      toUrl = urlFilters.filter(toUrl);
-      if (toUrl == null) {
-        discardedOutlinks.add(outlink.getToUrl());
-      }
-    }
-    results.put("DiscardOutlinks", StringUtils.join(discardedOutlinks, '\n'));
-
-    if (page.getHeaders() != null) {
-      Map<CharSequence, CharSequence> headers = page.getHeaders();
-      StringBuffer headersb = new StringBuffer();
-      if (metadata != null) {
-        Iterator<Entry<CharSequence, CharSequence>> iterator = headers.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-          Entry<CharSequence, CharSequence> entry = iterator.next();
-          headersb
-              .append(entry.getKey().toString())
-              .append(" : \t")
-              .append(entry.getValue())
-              .append("\n");
-        }
-
-        results.put("Headers", headersb);
-      }
-    }
+    String headerStr = page.getHeaders().entrySet().stream()
+        .map(e -> e.getKey() + " : " + e.getValue())
+        .collect(Collectors.joining("\n"));
+    results.put("Headers", headerStr);
 
     return results;
   }
@@ -330,7 +221,7 @@ public class SimpleParser extends Configured {
 
     SimpleParser parser = new SimpleParser(ConfigUtils.create());
     // parser.parseResult(url, contentType);
-    parser.extract(url, contentType);
+    parser.parse(url, contentType);
 
     System.out.println(parser.getResult());
   }

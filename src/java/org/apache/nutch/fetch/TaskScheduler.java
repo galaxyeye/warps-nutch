@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.persist.Mark.*;
+import static org.apache.nutch.metadata.Mark.*;
 
 public class TaskScheduler extends Configured {
 
@@ -157,8 +157,6 @@ public class TaskScheduler extends Configured {
    */
   private final Path outputDir;
 
-  private final String reportSuffix;
-
   private final NutchMetrics nutchMetrics;
 
   /**
@@ -203,8 +201,6 @@ public class TaskScheduler extends Configured {
     this.storingContent = conf.getBoolean("fetcher.store.content", true);
 
     this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
-
-    this.reportSuffix = conf.get(PARAM_NUTCH_JOB_NAME, "job-unknown-" + DateTimeUtil.now("MMdd.HHmm"));
 
     this.nutchMetrics = NutchMetrics.getInstance(conf);
 
@@ -494,10 +490,10 @@ public class TaskScheduler extends Configured {
 
     String statusString = getStatusString(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
 
-    /** Status string shows in yarn admin ui */
+    /* Status string shows in yarn admin ui */
     context.setStatus(statusString);
 
-    /** And also log it */
+    /* And also log it */
     LOG.info(statusString);
 
     return new Status(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
@@ -718,7 +714,7 @@ public class TaskScheduler extends Configured {
 
     String reprUrl = setRedirectRepresentativeUrl(page, url, newUrl, temp);
 
-    nutchMetrics.reportRedirects(String.format("[%s] - %100s -> %s\n", redirType, url, reprUrl), reportSuffix);
+    nutchMetrics.reportRedirects(String.format("[%s] - %100s -> %s\n", redirType, url, reprUrl));
 
     counter.increase(Counter.rowsRedirect);
   }
@@ -842,7 +838,7 @@ public class TaskScheduler extends Configured {
           + "\tstatus : " + CrawlStatus.getName(status)
 //          + "\tsignature : " + StringUtil.toHexString(page.getSignature())
           + "\n";
-      nutchMetrics.reportFetchTimeHistory(report, reportSuffix);
+      nutchMetrics.reportFetchTimeHistory(report);
     }
   }
 

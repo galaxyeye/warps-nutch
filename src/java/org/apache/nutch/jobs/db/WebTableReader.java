@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.jobs.read;
+package org.apache.nutch.jobs.db;
 
 import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;

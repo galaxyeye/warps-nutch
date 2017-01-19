@@ -21,7 +21,7 @@ import com.google.common.collect.Multiset;
 import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.jobs.NutchReducer;
 import org.apache.nutch.jobs.fetch.FetchMapper;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;

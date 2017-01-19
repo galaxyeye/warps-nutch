@@ -16,18 +16,17 @@
  ******************************************************************************/
 package org.apache.nutch.service.model.response;
 
-import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.nutch.service.JobManager.JobType;
 import org.apache.nutch.service.model.request.JobConfig;
 
-import com.google.common.collect.Maps;
+import java.util.Map;
 
 public class JobInfo {
 
-  public static enum State {
+  public enum State {
     IDLE, RUNNING, FINISHED, FAILED, KILLED, STOPPING, KILLING, ANY, NOT_FOUND, CAN_NOT_CREATE
-  };
+  }
 
   private String id;
   private String jobName;

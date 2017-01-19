@@ -50,7 +50,7 @@ public class FetchServer extends Application {
 
   private String logLevel = "INFO";
 
-  private Integer port;
+  private int port;
 
   private Component component;
 
@@ -91,29 +91,6 @@ public class FetchServer extends Application {
     return resources;
   }
 
-  public static FetchServer startServer(Configuration conf, int port) {
-    if (!isRunning(port)) {
-      FetchServer server = new FetchServer(conf, port);
-      server.start();
-
-      return server;
-    }
-
-    return null;
-  }
-
-  public static FetchServer startAsDaemon(final Configuration conf, final int port) {
-    if (isRunning(port)) {
-      return null;
-    }
-
-    FetchServerThread thread = new FetchServerThread(conf, port);
-    thread.setDaemon(true);
-    thread.start();
-
-    return thread.getServer();
-  }
-
   public static int acquirePort(Configuration conf) {
     NutchClient client = new NutchClient(conf);
     if (client.available()) {
@@ -121,26 +98,6 @@ public class FetchServer extends Application {
     }
 
     return -1;
-  }
-
-  private static class FetchServerThread extends Thread {
-    private FetchServer server;
-    private final Configuration conf;
-    private final int port;
-
-    public FetchServerThread(final Configuration conf, final int port) {
-      this.conf = conf;
-      this.port = port;
-    }
-
-    @Override
-    public void run() {
-      server = startServer(conf, port);
-    }
-
-    public FetchServer getServer() {
-      return server;
-    }
   }
 
   /**

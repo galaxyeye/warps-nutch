@@ -21,6 +21,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;

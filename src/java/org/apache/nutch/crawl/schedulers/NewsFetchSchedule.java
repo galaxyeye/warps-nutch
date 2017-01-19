@@ -23,8 +23,9 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.time.Instant;
 
-import static org.apache.nutch.metadata.Nutch.NEVER_FETCH_INTERVAL_DAYS;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
+import static org.apache.nutch.metadata.Nutch.YES_STRING;
+import static org.apache.nutch.metadata.Mark.INACTIVE;
 
 /**
  * This class implements an adaptive re-fetch algorithm.
@@ -57,8 +58,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
     }
     else if (page.veryLikeDetailPage(url)) {
       // Detail pages are fetched only once
-      page.setNoMoreFetch();
-      interval = Duration.ofDays(NEVER_FETCH_INTERVAL_DAYS);
+      page.putMark(INACTIVE, YES_STRING);
       changed = true;
     }
     else {

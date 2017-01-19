@@ -14,17 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.persist;
+package org.apache.nutch.persist.gora.db;
 
-import org.apache.gora.store.DataStore;
-import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.util.ConfigUtils;
+import com.google.common.collect.Lists;
 
-public class WebTableCreator {
-  public static void main(String[] args) throws Exception {
-    DataStore<String, GoraWebPage> store = StorageUtils.createWebStore(
-        ConfigUtils.create(), String.class, GoraWebPage.class);
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-    System.out.println(store);
+public class DbQueryResult {
+  private List<Map<String, Object>> values = Lists.newLinkedList();
+
+  public List<Map<String, Object>> getValues() {
+    return Collections.unmodifiableList(values);
+  }
+
+  public void addValue(Map<String, Object> next) {
+    values.add(next);
   }
 }

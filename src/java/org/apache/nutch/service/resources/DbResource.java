@@ -20,10 +20,10 @@ import com.google.common.collect.Lists;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.service.ConfManager;
-import org.apache.nutch.service.impl.db.Db;
-import org.apache.nutch.service.impl.db.DbIterator;
-import org.apache.nutch.service.model.request.DbQuery;
-import org.apache.nutch.service.model.response.DbQueryResult;
+import org.apache.nutch.persist.gora.db.Db;
+import org.apache.nutch.persist.gora.db.DbIterator;
+import org.apache.nutch.persist.gora.db.DbQuery;
+import org.apache.nutch.persist.gora.db.DbQueryResult;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -69,6 +69,13 @@ public class DbResource extends AbstractResource {
   public boolean remove(@QueryParam("crawlId") String crawlId, @QueryParam("dbUrl") String url) {
     Db db = getDb(ConfManager.DEFAULT, crawlId);
     return db.delete(url);
+  }
+
+  @DELETE
+  @Path("/truncate")
+  public boolean truncate(@QueryParam("crawlId") String crawlId) {
+    Db db = getDb(ConfManager.DEFAULT, crawlId);
+    return db.truncate();
   }
 
   @GET

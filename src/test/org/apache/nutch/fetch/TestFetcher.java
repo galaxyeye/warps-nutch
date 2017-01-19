@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.jobs.fetch.FetchJob;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.jobs.inject.InjectJob;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;

@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.nutch.jobs.read.WebTableReader;
+import org.apache.nutch.jobs.db.WebTableReader;
 import org.apache.nutch.jobs.fetch.FetchJob;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.jobs.inject.InjectJob;

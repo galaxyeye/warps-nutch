@@ -1,14 +1,13 @@
 package org.apache.nutch.service.impl;
 
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PortManager {
 
@@ -48,7 +47,7 @@ public class PortManager {
   }
 
   public synchronized Integer acquire() {
-    Integer port = null;
+    Integer port;
 
     if (!freePorts.isEmpty()) {
       port = freePorts.iterator().next();

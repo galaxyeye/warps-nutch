@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.persist.io;
+package org.apache.nutch.persist.gora.io;
 
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.conf.Configuration;

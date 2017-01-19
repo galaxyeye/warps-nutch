@@ -7,7 +7,7 @@ import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;

@@ -58,8 +58,6 @@ public interface Nutch {
 
   int MAX_DISTANCE = 1000000;
 
-  int NEVER_FETCH_INTERVAL_DAYS = 3650 + 5; // ten and five years
-
   int FETCH_TASK_REMAINDER_NUMBER = 5;
 
   Instant TCP_IP_STANDARDIZED_TIME = Instant.parse("1982-01-01T00:00:00Z");

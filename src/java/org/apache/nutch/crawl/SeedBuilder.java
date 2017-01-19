@@ -5,7 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.common.Parameterized;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;

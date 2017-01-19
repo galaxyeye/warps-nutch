@@ -32,7 +32,7 @@ import org.apache.nutch.indexer.IndexerOutputFormat;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.jobs.NutchJob;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;

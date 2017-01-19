@@ -23,7 +23,7 @@ import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.persist.Mark;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
@@ -262,14 +262,14 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
    * */
   private boolean checkFetchSchedule(String url, WebPage page, int depth) {
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
-      Instant fetchTime = page.getFetchTime();
+      if (page.hasMark(Mark.INACTIVE)) {
+        getCounter().increase(Counter.pagesNeverFetch);
+      }
 
+      Instant fetchTime = page.getFetchTime();
       long days = ChronoUnit.DAYS.between(fetchTime, pseudoCurrTime);
       if (days <= 30) {
         getCounter().increase(Counter.pagesFetchLater);
-      }
-      else if (days >= NEVER_FETCH_INTERVAL_DAYS) {
-        getCounter().increase(Counter.pagesNeverFetch);
       }
 
       if (depth == 0) {

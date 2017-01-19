@@ -23,6 +23,7 @@ import org.apache.nutch.common.Parameterized;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
@@ -37,7 +38,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.nutch.metadata.Nutch.*;
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_DEFAULT_INTERVAL;
+import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_MAX_INTERVAL;
 
 /**
  * This class provides common methods for implementations of
@@ -200,14 +202,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    */
   @Override
   public boolean shouldFetch(String url, WebPage page, Instant curTime) {
-    // pages are marked as never fetch again
-
-    if (page.getFetchInterval().toDays() >= NEVER_FETCH_INTERVAL_DAYS) {
-      return false;
-    }
-
-    // TODO : redundant mark, remove later. use NEVER_FETCH_INTERVAL_DAYS instead
-    if (page.noMoreFetch()) {
+    if (page.hasMark(Mark.INACTIVE)) {
       return false;
     }
 
@@ -224,7 +219,6 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
     // pages with too long fetchInterval are adjusted so that they fit within
     // maximum fetchInterval (batch retention period).
     Instant fetchTime = page.getFetchTime();
-
     if (curTime.plus(maxInterval).isBefore(fetchTime)) {
       if (page.getFetchInterval().compareTo(maxInterval) > 0) {
         page.setFetchInterval(maxInterval.getSeconds() * 0.9f);
@@ -249,12 +243,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    */
   @Override
   public void forceRefetch(String url, WebPage page, boolean asap) {
-    if (page.getFetchInterval().toDays() >= NEVER_FETCH_INTERVAL_DAYS) {
-      return;
-    }
-
-    // TODO : redundant judgement
-    if (page.noMoreFetch()) {
+    if (page.hasMark(Mark.INACTIVE)) {
       return;
     }
 
@@ -265,7 +254,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
 
     page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
     page.setRetriesSinceFetch(0);
-    // TODO: row.setSignature(null) ??
+    page.setSignature("".getBytes());
     page.setModifiedTime(Instant.EPOCH);
     if (asap) {
       page.setFetchTime(Instant.now());

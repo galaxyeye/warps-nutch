@@ -20,6 +20,9 @@ package org.apache.nutch.util;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** Unit tests for StringUtil methods. */
@@ -36,6 +39,12 @@ public class TestStringUtil {
     String s = "a,b,c,d";
     StringUtils.substringAfter(s, ",");
     System.out.println(s);
+  }
+
+  @Test
+  public void testToHexString() {
+    ByteBuffer buffer = ByteBuffer.wrap("".getBytes());
+    assertEquals("", StringUtil.toHexString(buffer));
   }
 
   @Test

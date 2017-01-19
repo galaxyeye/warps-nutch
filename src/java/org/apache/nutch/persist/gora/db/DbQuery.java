@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.service.model.request;
+package org.apache.nutch.persist.gora.db;
 
 import java.util.HashSet;
 import java.util.Set;

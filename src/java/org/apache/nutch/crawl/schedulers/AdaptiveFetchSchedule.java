@@ -119,6 +119,12 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       modifiedTime = fetchTime;
     }
 
+    Duration newInterval = getFetchInterval(page, fetchTime, modifiedTime, state);
+
+    updateRefetchTime(page, newInterval, fetchTime, prevModifiedTime, modifiedTime);
+  }
+
+  protected Duration getFetchInterval(WebPage page, Instant fetchTime, Instant modifiedTime, int state) {
     long interval = page.getFetchInterval(TimeUnit.SECONDS);
     switch (state) {
       case FetchSchedule.STATUS_MODIFIED:
@@ -136,6 +142,7 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
       if (gap > interval) {
         interval = gap;
       }
+      // TODO : check fetch time
       fetchTime = fetchTime.minusSeconds(Math.round(gap * SYNC_DELTA_RATE));
     }
 
@@ -143,6 +150,6 @@ public class AdaptiveFetchSchedule extends AbstractFetchSchedule {
     if (newInterval.compareTo(MIN_INTERVAL) < 0) newInterval = MIN_INTERVAL;
     if (newInterval.compareTo(MAX_INTERVAL) > 0) newInterval = MAX_INTERVAL;
 
-    updateRefetchTime(page, newInterval, fetchTime, prevModifiedTime, modifiedTime);
+    return newInterval;
   }
 }

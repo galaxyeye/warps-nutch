@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.HttpHeaders;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
@@ -230,6 +231,14 @@ public class WebPage {
     return page.getPrevSignature();
   }
 
+  public String setPrevSignatureAsString() {
+    ByteBuffer sig = getPrevSignature();
+    if (sig == null) {
+      sig = ByteBuffer.wrap("".getBytes());
+    }
+    return StringUtil.toHexString(sig);
+  }
+
   public void setPrevSignature(ByteBuffer value) {
     page.setPrevSignature(value);
   }
@@ -243,7 +252,11 @@ public class WebPage {
   }
 
   public String getSignatureAsString() {
-    return getSignature() == null ? "" : StringUtil.toHexString(getSignature());
+    ByteBuffer sig = getSignature();
+    if (sig == null) {
+      sig = ByteBuffer.wrap("".getBytes());
+    }
+    return StringUtil.toHexString(sig);
   }
 
   public void setSignature(byte[] value) {
@@ -341,10 +354,10 @@ public class WebPage {
    */
   public void setOutlinks(Map<CharSequence, CharSequence> value) { page.setOutlinks(value); }
 
-  public String getOldOutLinks() { return getMetadata(Name.FETCHED_OUT_LINKS, ""); }
+  public String getOldOutLinks() { return getMetadata(Name.OLD_OUT_LINKS, ""); }
 
   public void putOldOutLinks(Collection<CharSequence> outLinks) {
-    putMetadata(Name.FETCHED_OUT_LINKS, getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n"));
+    putMetadata(Name.OLD_OUT_LINKS, getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n"));
   }
 
   public Map<CharSequence, CharSequence> getInlinks() { return page.getInlinks(); }
@@ -468,14 +481,6 @@ public class WebPage {
     }
   }
 
-  public void setNoMoreFetch() {
-    putMetadata(FETCH_NO_MORE, YES_STRING);
-  }
-
-  public boolean noMoreFetch() {
-    return hasMetadata(FETCH_NO_MORE);
-  }
-
   public int getDepth() { return getDistance(); }
 
   public void setDepth(int newDepth) {
@@ -593,17 +598,17 @@ public class WebPage {
     putMetadata(Name.REFERRED_ARTICLES, String.valueOf(oldCount + count));
   }
 
-  public long getTotalOutLinkCount() {
-    String outLinks = getMetadata(Name.OUT_LINK_COUNT);
+  public long getTotalOutLinks() {
+    String outLinks = getMetadata(Name.TOTAL_OUT_LINKS);
     return StringUtil.tryParseLong(outLinks, 0);
   }
 
   public void setTotalOutLinkCount(long count) {
-    putMetadata(Name.OUT_LINK_COUNT, String.valueOf(count));
+    putMetadata(Name.TOTAL_OUT_LINKS, String.valueOf(count));
   }
 
   public void increaseTotalOutLinkCount(long count) {
-    long oldCount = getTotalOutLinkCount();
+    long oldCount = getTotalOutLinks();
     setTotalOutLinkCount(oldCount + count);
   }
 
@@ -777,7 +782,7 @@ public class WebPage {
   }
 
   public void putMetadata(Name name, String value) {
-    putMetadata(name.value(), value);
+    putMetadata(name.text(), value);
   }
 
   public void putMetadata(String key, String value) {
@@ -789,7 +794,7 @@ public class WebPage {
   }
 
   public ByteBuffer getRawMetadata(Name name) {
-    return getRawMetadata(name.value());
+    return getRawMetadata(name.text());
   }
 
   public ByteBuffer getRawMetadata(String name) {
@@ -797,7 +802,7 @@ public class WebPage {
   }
 
   public String getMetadata(Name name) {
-    return getMetadata(name.value());
+    return getMetadata(name.text());
   }
 
   public String getMetadata(String name) {
@@ -811,7 +816,7 @@ public class WebPage {
   }
 
   public boolean hasMetadata(Name name) {
-    return hasMetadata(name.value());
+    return hasMetadata(name.text());
   }
 
   public boolean hasMetadata(String key) {
@@ -829,7 +834,7 @@ public class WebPage {
   }
 
   public void clearMetadata(Name name) {
-    clearMetadata(name.value());
+    clearMetadata(name.text());
   }
 
   // But only delete when they exist. This is much faster for the underlying store
@@ -851,7 +856,7 @@ public class WebPage {
   }
 
   public float getFloatMetadata(Name name, float defaultValue) {
-    return getFloatMetadata(name.value(), defaultValue);
+    return getFloatMetadata(name.text(), defaultValue);
   }
 
   public float getFloatMetadata(String name, float defaultValue) {
@@ -864,7 +869,7 @@ public class WebPage {
   }
 
   public void setFloatMetadata(Name name, float value) {
-    setFloatMetadata(name.value(), value);
+    setFloatMetadata(name.text(), value);
   }
 
   public void setFloatMetadata(String key, float value) {
@@ -877,7 +882,7 @@ public class WebPage {
   }
 
   public static Utf8 wrapKey(Name name) {
-    return u8(name.value());
+    return u8(name.text());
   }
 
   public static Utf8 wrapKey(Mark mark) {
