@@ -38,7 +38,7 @@ import java.util.logging.Level;
  * */
 public class FetchServer extends Application {
 
-  public static final String FETCHER_SERVER = "FETCHER_SERVER";
+  public static final String FETCH_SERVER = "FETCH_SERVER";
 
   public static final Logger LOG = LoggerFactory.getLogger(FetchServer.class);
 
@@ -76,10 +76,33 @@ public class FetchServer extends Application {
     JaxRsApplication application = new JaxRsApplication(childContext);
     application.add(this);
     application.setStatusService(new ErrorStatusService());
-    childContext.getAttributes().put(FETCHER_SERVER, this);
+    childContext.getAttributes().put(FETCH_SERVER, this);
 
     // Attach the application
     component.getDefaultHost().attach(application);
+  }
+
+  public static int acquirePort(Configuration conf) {
+    NutchClient client = new NutchClient(conf);
+    if (client.available()) {
+      return client.acquirePort(ServerInstance.Type.FetcherServer);
+    }
+    else {
+      LOG.warn("Client is not available");
+    }
+
+    return -1;
+  }
+
+  public void recyclePort() {
+    NutchClient client = new NutchClient(conf);
+    if (client.available()) {
+      client.recyclePort(ServerInstance.Type.FetcherServer, port);
+      client.unregister(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
+    }
+    else {
+      LOG.warn("Client is not available");
+    }
   }
 
   @Override
@@ -89,15 +112,6 @@ public class FetchServer extends Application {
     resources.add(FetchResource.class);
 
     return resources;
-  }
-
-  public static int acquirePort(Configuration conf) {
-    NutchClient client = new NutchClient(conf);
-    if (client.available()) {
-      return client.acquirePort(ServerInstance.Type.FetcherServer);
-    }
-
-    return -1;
   }
 
   /**
@@ -125,7 +139,7 @@ public class FetchServer extends Application {
    */
   public void start() {
     if (isRunning()) {
-      LOG.info("FetchServer is already running");
+      LOG.warn("FetchServer is already running");
     }
 
     LOG.info("Starting FetchServer on port: {} with logging level: {} ...", port, logLevel);
@@ -136,11 +150,10 @@ public class FetchServer extends Application {
       throw new IllegalStateException("Cannot start server!", e);
     }
 
-    LOG.info("Started FetchServer on port {}", port);
+    LOG.info("FetchServer is started on port {}", port);
     startTime = System.currentTimeMillis();
 
     // We use an Internet ip rather than an Intranet ip
-    // TODO : (later issue) but why? it seems Intranet host is OK
     NutchClient client = new NutchClient(conf);
     client.register(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
   }
@@ -181,18 +194,13 @@ public class FetchServer extends Application {
       return false;
     }
 
-    LOG.info("Stopping FetchServer on port {}...", port);
     try {
+      recyclePort();
       component.stop();
-
-      LOG.info("Stopped FetchServer on port {}", port);
+      LOG.info("FetchServer is stopped. Port : {}", port);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot stop nutch server", e);
     }
-
-    NutchClient client = new NutchClient(conf);
-    client.unregister(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
-    client.recyclePort(ServerInstance.Type.FetcherServer, port);
 
     return true;
   }

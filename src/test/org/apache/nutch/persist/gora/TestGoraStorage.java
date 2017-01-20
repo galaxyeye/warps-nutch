@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.persist;
+package org.apache.nutch.persist.gora;
 
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
@@ -22,7 +22,8 @@ import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Mark;
-import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.CrawlTestUtil;
 import org.hsqldb.Server;

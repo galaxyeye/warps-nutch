@@ -383,6 +383,9 @@
       <sourceFolder url="file://$MODULE_DIR$/src/bin" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/protocol-file/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/protocol-file/src/test" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-anchor/src/test" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-basic/src/test" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/plugin/index-more/src/test" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -599,9 +602,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/commons-collections-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/commons-collections-3.2.1-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -853,9 +854,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/gora-core-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/gora-core-0.6-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -945,9 +944,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/hadoop-common-2.5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/hadoop-common-2.5.2-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -1478,9 +1475,7 @@
           <root url="jar://$MODULE_DIR$/build/lib/jgrapht-core-1.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/jgrapht-core-1.0.0-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -2497,9 +2492,7 @@
           <root url="jar://$MODULE_DIR$/build/plugins/parse-tika/slf4j-api-1.6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.ideaLibSources/slf4j-api-1.6.1-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">

@@ -6,6 +6,9 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.PageCategory;
+import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.net.client.NutchClient;
+import org.apache.nutch.persist.local.model.ServerInstance;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -27,6 +30,8 @@ import static org.junit.Assert.assertEquals;
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
  */
 public class TestAnything {
+
+  private Configuration conf = ConfigUtils.create();
 
   @Test
   public void generateRegexUrlFilter() throws IOException {
@@ -97,6 +102,15 @@ public class TestAnything {
     ints.put(5, "5");
 
     System.out.println(ints.keySet().iterator().next());
+  }
+
+  @Test
+  public void testNutchClient() {
+    conf.set(Nutch.PARAM_NUTCH_MASTER_HOST, "localhost");
+    NutchClient client = new NutchClient(conf);
+    String result = client.test(ServerInstance.Type.FetcherServer, 21001);
+    client.recyclePort(ServerInstance.Type.FetcherServer, 21001);
+    System.out.println(result);
   }
 
   @Test

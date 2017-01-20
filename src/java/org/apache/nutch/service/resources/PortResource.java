@@ -31,10 +31,10 @@ import java.util.Map;
 @Path("/port")
 public class PortResource extends AbstractResource {
 
-  private static Map<String, PortManager> portManagers = Maps.newConcurrentMap();
+  private Map<String, PortManager> portManagers = Maps.newConcurrentMap();
 
-  static {
-    portManagers.put(ServerInstance.Type.FetcherServer.name(), 
+  public PortResource() {
+    portManagers.put(ServerInstance.Type.FetcherServer.name(),
         new PortManager(ServerInstance.Type.FetcherServer, FetchServer.BASE_PORT, FetchServer.MAX_PORT));
   }
 

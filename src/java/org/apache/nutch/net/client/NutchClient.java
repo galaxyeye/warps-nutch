@@ -5,11 +5,14 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.util.NetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.MultivaluedMap;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -87,9 +90,23 @@ public class NutchClient {
    * Resycle a available fetch server port
    * */
   public void recyclePort(ServerInstance.Type type, int port) {
-    nutchResource.path("port/recycle")
+    MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+    formData.add("type", type.name());
+    formData.add("port", String.valueOf(port));
+    nutchResource.path("port/recycle").queryParams(formData).put();
+
+    // Notice : The following code failed to set the port parameter, while #test(ServerInstance.Type, port) method is OK.
+    // We do not know why, this may indicate a Jersey bug
+//    WebResource r = nutchResource.path("port/recycle")
+//        .queryParam("type", type.name())
+//        .queryParam("port", String.valueOf(port));
+  }
+
+  public String test(ServerInstance.Type type, int port) {
+    String url = nutchResource.path("port/recycle")
         .queryParam("type", type.name())
         .queryParam("port", String.valueOf(port))
-        .put();
+        .toString();
+    return url;
   }
 }
