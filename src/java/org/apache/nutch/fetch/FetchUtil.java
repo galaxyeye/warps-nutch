@@ -33,7 +33,9 @@ public class FetchUtil {
     page.putMarkIfNonNull(FETCH, page.getMark(GENERATE));
   }
 
-  static public void updateContent(WebPage page, Content content) { updateContent(page, content, null); }
+  static public void updateContent(WebPage page, Content content) {
+    updateContent(page, content, null);
+  }
 
   static public void updateContent(WebPage page, Content content, String contentType) {
     if (content == null) {
@@ -51,15 +53,17 @@ public class FetchUtil {
 
     if (contentType != null) {
       page.setContentType(contentType);
-    }
-    else {
+    } else {
       NutchUtil.LOG.error("Failed to determine content type!");
     }
   }
 
   static public void updateFetchTime(WebPage page) {
+    updateFetchTime(page, Instant.now());
+  }
+
+  static public void updateFetchTime(WebPage page, Instant fetchTime) {
     Instant prevFetchTime = page.getFetchTime();
-    Instant fetchTime = Instant.now();
 
     page.setPrevFetchTime(prevFetchTime);
     page.setFetchTime(fetchTime);

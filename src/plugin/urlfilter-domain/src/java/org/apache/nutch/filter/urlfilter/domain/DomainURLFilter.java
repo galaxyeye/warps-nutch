@@ -16,20 +16,21 @@
  */
 package org.apache.nutch.filter.urlfilter.domain;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.filter.URLFilter;
+import org.apache.nutch.net.domain.DomainSuffix;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
-import org.apache.nutch.net.domain.DomainSuffix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -72,33 +73,19 @@ import java.util.Set;
  */
 public class DomainURLFilter implements URLFilter {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(DomainURLFilter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DomainURLFilter.class);
 
   // read in attribute "file" of this plugin.
-  private static String attributeFile = null;
+  private static String PLUGIN_NAME = "urlfilter-domain";
   private Configuration conf;
   private String domainFile = null;
-  private Set<String> domainSet = new LinkedHashSet<String>();
-
-  private void readConfiguration(Reader configReader) throws IOException {
-
-    // read the configuration file, line by line
-    BufferedReader reader = new BufferedReader(configReader);
-    String line = null;
-    while ((line = reader.readLine()) != null) {
-      if (StringUtils.isNotBlank(line) && !line.startsWith("#")) {
-        // add non-blank lines and non-commented lines
-        domainSet.add(StringUtils.lowerCase(line));
-      }
-    }
-  }
+  private String attributeFile = null;
+  private Set<String> domainSet = new LinkedHashSet<>();
 
   /**
    * Default constructor.
    */
   public DomainURLFilter() {
-
   }
 
   /**
@@ -106,67 +93,23 @@ public class DomainURLFilter implements URLFilter {
    * 
    * @param domainFile
    *          The domain file, overrides domain-urlfilter.text default.
-   * 
-   * @throws IOException
    */
   public DomainURLFilter(String domainFile) {
     this.domainFile = domainFile;
   }
 
   /**
-   * Sets the configuration.
+   * Constructor that specifies the domain file to use.
+   *
+   * @param domainFile
+   *          The domain file, overrides domain-urlfilter.text default.
+   *
+   * @param conf
+   *          The configuration
    */
-  public void setConf(Configuration conf) {
-    this.conf = conf;
-
-    // get the extensions for domain urlfilter
-    String pluginName = "urlfilter-domain";
-    Extension[] extensions = PluginRepository.get(conf).getExtensionPoint(URLFilter.class.getName()).getExtensions();
-    for (int i = 0; i < extensions.length; i++) {
-      Extension extension = extensions[i];
-      if (extension.getDescriptor().getPluginId().equals(pluginName)) {
-        attributeFile = extension.getAttribute("file");
-        break;
-      }
-    }
-
-    // handle blank non empty input
-    if (attributeFile != null && attributeFile.trim().equals("")) {
-      attributeFile = null;
-    }
-
-    if (attributeFile != null) {
-      LOG.info("Attribute \"file\" is defined for plugin " + pluginName + " as " + attributeFile);
-    } else {
-      LOG.warn("Attribute \"file\" is not defined in plugin.xml for plugin " + pluginName);
-    }
-
-    // domain file and attribute "file" take precedence if defined
-    String file = conf.get("urlfilter.domain.file");
-    String stringRules = conf.get("urlfilter.domain.rules");
-    if (domainFile != null) {
-      file = domainFile;
-    } else if (attributeFile != null) {
-      file = attributeFile;
-    }
-    Reader reader = null;
-    if (stringRules != null) { // takes precedence over files
-      reader = new StringReader(stringRules);
-    } else {
-      reader = conf.getConfResourceAsReader(file);
-    }
-    try {
-      if (reader == null) {
-        reader = new FileReader(file);
-      }
-      readConfiguration(reader);
-    } catch (IOException e) {
-      LOG.error(StringUtil.stringifyException(e));
-    }
-  }
-
-  public Configuration getConf() {
-    return this.conf;
+  public DomainURLFilter(String domainFile, Configuration conf) {
+    this.domainFile = domainFile;
+    setConf(conf);
   }
 
   public String filter(String url) {
@@ -190,9 +133,78 @@ public class DomainURLFilter implements URLFilter {
     } catch (Exception e) {
 
       // if an error happens, allow the url to pass
-      LOG.error("Could not apply filter on url: " + url + "\n"
-          + org.apache.hadoop.util.StringUtils.stringifyException(e));
+      LOG.error("Could not apply filter on url: " + url + "\n" + StringUtil.stringifyException(e));
       return null;
     }
   }
+
+  /**
+   * Sets the configuration.
+   */
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+    load();
+    LOG.debug("domainSet : " + StringUtils.join(domainSet, ", "));
+  }
+
+  public Configuration getConf() { return this.conf; }
+
+  private void load() {
+    // get the extensions for domain urlfilter
+    Extension[] extensions = PluginRepository.get(conf).getExtensionPoint(URLFilter.class.getName()).getExtensions();
+    for (Extension extension : extensions) {
+      // LOG.info(extension.getDescriptor().toString());
+      if (extension.getDescriptor().getPluginId().equals(PLUGIN_NAME)) {
+        attributeFile = extension.getAttribute("file");
+        break;
+      }
+    }
+
+    // handle blank non empty input
+    if (attributeFile != null && attributeFile.trim().equals("")) {
+      attributeFile = null;
+    }
+
+    if (attributeFile != null) {
+      LOG.info("Attribute \"file\" is defined for plugin " + PLUGIN_NAME + " as " + attributeFile);
+    } else {
+      LOG.warn("Attribute \"file\" is not defined in plugin.xml for plugin " + PLUGIN_NAME);
+    }
+
+    try (Reader reader = getReader()) {
+      domainSet = new BufferedReader(reader).lines()
+          .map(String::toLowerCase)
+          .filter(l -> !l.startsWith("#") && !l.trim().isEmpty())
+          .collect(Collectors.toSet());
+    } catch (IOException e) {
+      LOG.error(StringUtil.stringifyException(e));
+    }
+  }
+
+  private Reader getReader() throws FileNotFoundException {
+    // domain file and attribute "file" take precedence if defined
+    String file = conf.get("urlfilter.domain.file");
+    String stringRules = conf.get("urlfilter.domain.rules");
+
+    if (domainFile != null) {
+      file = domainFile;
+    } else if (attributeFile != null) {
+      file = attributeFile;
+    }
+
+    Reader reader;
+    if (stringRules != null) { // takes precedence over files
+      reader = new StringReader(stringRules);
+    }
+    else {
+      reader = conf.getConfResourceAsReader(file);
+    }
+
+    if (reader == null) {
+      reader = new FileReader(file);
+    }
+
+    return reader;
+  }
+
 }

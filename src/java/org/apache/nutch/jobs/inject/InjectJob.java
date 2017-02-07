@@ -191,15 +191,15 @@ public class InjectJob extends NutchJob implements Tool {
     ));
   }
 
-  public void inject(String urlDir, String crawlId) throws Exception {
+  public void inject(String seedDir, String crawlId) throws Exception {
     run(Params.toArgMap(
-        ARG_SEED_PATH, urlDir,
+        ARG_SEED_PATH, seedDir,
         ARG_CRAWL, crawlId
     ));
   }
 
   private void printUsage() {
-    System.err.println("Usage: InjectJob <url_dir> [-crawlId <id>]");
+    System.err.println("Usage: InjectJob <seedDir> [-crawlId <id>]");
   }
 
   @Override

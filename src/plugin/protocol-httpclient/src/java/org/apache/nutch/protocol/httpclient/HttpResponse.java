@@ -27,10 +27,9 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.protocol.http.api.HttpBase;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -68,8 +67,7 @@ public class HttpResponse implements Response {
    * @throws IOException
    *           When an error occurs
    */
-  HttpResponse(Http http, URL url, GoraWebPage page, boolean followRedirects)
-      throws IOException {
+  HttpResponse(Http http, URL url, GoraWebPage page, boolean followRedirects) throws IOException {
 
     // Prepare GET method for HTTP request
     this.url = url;
@@ -77,8 +75,7 @@ public class HttpResponse implements Response {
     get.setFollowRedirects(followRedirects);
     get.setDoAuthentication(true);
     if (page.getModifiedTime() > 0) {
-      get.setRequestHeader("If-Modified-Since",
-          HttpDateFormat.toString(page.getModifiedTime()));
+      get.setRequestHeader("If-Modified-Since", DateTimeFormatter.RFC_1123_DATE_TIME.format(page.getModifiedTime()));
     }
 
     // Set HTTP parameters

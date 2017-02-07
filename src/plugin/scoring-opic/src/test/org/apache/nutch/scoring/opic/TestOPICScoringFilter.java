@@ -150,20 +150,21 @@ public class TestOPICScoringFilter {
 
     // Depth Loop
     for (int i = 1; i <= DEPTH; i++) {
-      Iterator<Map.Entry<String, Map<WebPage, List<WebEdge>>>> iter = dbWebPages.entrySet().iterator();
-
       // OPIC Score calculated for each website one by one
-      while (iter.hasNext()) {
-        Map.Entry<String, Map<WebPage, List<WebEdge>>> entry = iter.next();
+      for (Map.Entry<String, Map<WebPage, List<WebEdge>>> entry : dbWebPages.entrySet()) {
         Map<WebPage, List<WebEdge>> webPageMap = entry.getValue();
 
         WebPage page = null;
-        List<WebEdge> scoreList = null;
+        List<WebEdge> scoreList;
         Iterator<Map.Entry<WebPage, List<WebEdge>>> iters = webPageMap.entrySet().iterator();
         if (iters.hasNext()) {
           Map.Entry<WebPage, List<WebEdge>> values = iters.next();
           page = values.getKey();
           scoreList = values.getValue();
+        }
+
+        if (page == null) {
+          return;
         }
 
         String reverseUrl = entry.getKey();
@@ -235,12 +236,11 @@ public class TestOPICScoringFilter {
         // Scores are updated here
         scoringFilter.updateScore(url, row, graph, inlinkedScoreDataList);
         inlinkedScoreDataList.clear();
-        HashMap<String, Float> result = new HashMap<String, Float>();
+        HashMap<String, Float> result = new HashMap<>();
         result.put(url, row.getScore());
 
         resultScores.put(i, result);
       }
-
     }
   }
 

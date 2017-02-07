@@ -1,5 +1,6 @@
 package org.apache.nutch.graph;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.nutch.persist.WebPage;
 import org.jgrapht.ext.*;
 import org.jgrapht.graph.DefaultEdge;
@@ -13,6 +14,8 @@ import java.util.Map;
 /**
  * Created by vincent on 16-12-21.
  * Copyright @ 2013-2016 Warpspeed Information. All rights reserved
+ *
+ * A pseudograph is a non-simple graph in which both graph loops and multiple edges are permitted.
  */
 public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
 
@@ -23,9 +26,17 @@ public class WebGraph extends DirectedWeightedPseudograph<WebVertex, WebEdge> {
   public WebGraph() { super(WebEdge.class); }
 
   public WebEdge addEdgeLenient(WebVertex sourceVertex, WebVertex targetVertex, double weight) {
-    addVertex(sourceVertex);
-    addVertex(targetVertex);
-    WebEdge edge = addEdge(sourceVertex, targetVertex);
+    WebVertex v1 = sourceVertex;
+    WebVertex v2 = targetVertex;
+    boolean added = addVertex(sourceVertex);
+    if (!added) {
+      v1 = CollectionUtils.find(vertexSet(), v -> v.equals(sourceVertex));
+    }
+    added = addVertex(targetVertex);
+    if (!added) {
+      v2 = CollectionUtils.find(vertexSet(), v -> v.equals(targetVertex));
+    }
+    WebEdge edge = addEdge(v1, v2);
     setEdgeWeight(edge, weight);
     return edge;
   }

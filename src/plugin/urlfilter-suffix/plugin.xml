@@ -31,7 +31,7 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlfilter.suffix"
+   <extension id="org.apache.nutch.filter.urlfilter.suffix"
               name="Nutch Suffix URL Filter"
               point="org.apache.nutch.filter.URLFilter">
       <implementation id="SuffixURLFilter"

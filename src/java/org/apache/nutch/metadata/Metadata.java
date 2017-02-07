@@ -58,6 +58,9 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     REDIRECT_DISCOVERED("RD"),
 
     /** parse */
+    CONTENT_TITLE("P_CT"),
+    TEXT_CONTENT("P_TC"),
+    HTML_CONTENT("P_HC"),
     TOTAL_OUT_LINKS("P_OLC"),
     OLD_OUT_LINKS("P_AOL"),
 
@@ -101,11 +104,84 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     }
 
     public static Name of(String name) {
-      try {
-        return valueOf(name);
-      }
-      catch (Throwable e) {
-        return UNKNOWN;
+      switch (name) {
+        case "I_N":
+          return IS_NAVIGATOR;
+        case "I_S":
+          return IS_SEED;
+        case "I_D":
+          return IS_DETAIL;
+
+        /** generate */
+        case "G_GT":
+          return GENERATE_TIME;
+        case "G_D":
+          return DISTANCE;
+
+        /** fetch */
+        case "F_FTH":
+          return FETCH_TIME_HISTORY;
+        case "F_FC":
+          return FETCH_COUNT;
+        case "F_FP":
+          return FETCH_PRIORITY;
+
+        case "RD":
+          return REDIRECT_DISCOVERED;
+
+        case "P_CT":
+          return CONTENT_TITLE;
+        case "P_TC":
+          return TEXT_CONTENT;
+        case "P_HC":
+          return HTML_CONTENT;
+        case "P_OLC":
+          return TOTAL_OUT_LINKS;
+        case "P_AOL":
+          return OLD_OUT_LINKS;
+
+        /** index */
+        case "ITH":
+          return INDEX_TIME_HISTORY;
+
+        /** score */
+        case "S_AS":
+          return ARTICLE_SCORE;
+        case "S_CASH":
+          return CASH_KEY;
+
+        /** content */
+        case "C_OCE":
+          return ORIGINAL_CHAR_ENCODING;
+        case "C_CEFC":
+          return CHAR_ENCODING_FOR_CONVERSION;
+        case "C_PC":
+          return PAGE_CATEGORY;
+        case "C_PCL":
+          return PAGE_CATEGORY_LIKELIHOOD;
+        case "C_TCL":
+          return TEXT_CONTENT_LENGTH;
+        case "C_R":
+          return REFERRER;
+        case "C_RA":
+          return REFERRED_ARTICLES;
+        case "C_RC":
+          return REFERRED_CHARS;
+        case "C_RPT":
+          return REFERRED_PUBLISH_TIME;
+        case "C_PRPT":
+          return PREV_REFERRED_PUBLISH_TIME;
+        case "C_PT":
+          return PUBLISH_TIME;
+        case "C_PPT":
+          return PREV_PUBLISH_TIME;
+
+        case "meta_keywords":
+          return META_KEYWORDS;
+        case "meta_description":
+          return META_DESCRIPTION;
+        default:
+          return UNKNOWN;
       }
     }
   }
@@ -205,7 +281,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
   public void add(Name name, long value) { add(name, String.valueOf(value)); }
 
-  public void add(Name name, Instant value) { add(name, DateTimeUtil.solrCompatibleFormat(value)); }
+  public void add(Name name, Instant value) { add(name, DateTimeUtil.isoInstantFormat(value)); }
 
   public int getInteger(Name name, int defaultValue) {
     String s = get(name.text());
@@ -226,8 +302,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
   }
 
   public Instant getInstant(Metadata.Name name, Instant defaultValue) {
-    String s = get(name);
-    return DateTimeUtil.parseTime(s, defaultValue);
+    return DateTimeUtil.parseInstant(get(name), defaultValue);
   }
 
   /**
@@ -263,7 +338,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
   public void set(Name name, long value) { set(name, String.valueOf(value)); }
 
-  public void set(Name name, Instant value) { set(name, DateTimeUtil.solrCompatibleFormat(value)); }
+  public void set(Name name, Instant value) { set(name, DateTimeUtil.isoInstantFormat(value)); }
 
   /**
    * Remove a metadata and all its associated values.

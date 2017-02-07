@@ -31,11 +31,9 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlfilter.prefix"
-              name="Nutch Prefix URL Filter"
+   <extension id="org.apache.nutch.filter.urlfilter.prefix" name="Nutch Prefix URL Filter"
               point="org.apache.nutch.filter.URLFilter">
-      <implementation id="PrefixURLFilter"
-                      class="org.apache.nutch.filter.urlfilter.prefix.PrefixURLFilter"/>
+      <implementation id="PrefixURLFilter" class="org.apache.nutch.filter.urlfilter.prefix.PrefixURLFilter"/>
       <!-- by default, attribute "file" is undefined, to keep classic behavior.
       <implementation id="PrefixURLFilter"
                       class="org.apache.nutch.net.PrefixURLFilter">

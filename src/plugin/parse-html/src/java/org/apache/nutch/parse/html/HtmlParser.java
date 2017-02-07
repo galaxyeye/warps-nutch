@@ -23,7 +23,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
-import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.persist.WebPage;
@@ -133,18 +132,31 @@ public class HtmlParser implements Parser {
     if (!metaTags.getNoIndex()) { // okay to index
       // Get input source, again. It's not reusable
       InputSource input2 = getContentAsInputSource(page, encoding);
-      extract(page, input2);
-    }
+      TextDocument doc = extract(page, input2);
 
-    String pageTitle = page.getTempVarAsString(DOC_FIELD_PAGE_TITLE, "");
-    String textContent = page.getTempVarAsString(DOC_FIELD_TEXT_CONTENT, "");
+      if (doc != null) {
+        page.setPageTitle(doc.getPageTitle());
+        page.setContentTitle(doc.getContentTitle());
+        page.setText(domContentUtils.getText(docRoot));
+        page.setTextContent(doc.getTextContent());
+        page.setHtmlContent(doc.getHtmlContent());
+
+        doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
+
+//      LOG.info("Text content length : " + doc.getTextContent().length()
+//          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
+
+        page.setTextContentLength(doc.getTextContent().length());
+        page.updatePublishTime(DateTimeUtil.parseInstant(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH));
+      }
+    }
 
     if (!CrawlFilter.sniffPageCategory(url).isDetail()) {
       tryGetValidOutlinks(page, url, baseURL);
     }
 
     ParseStatus status = getStatus(metaTags);
-    ParseResult parseResult = new ParseResult(textContent, pageTitle, outlinks, status);
+    ParseResult parseResult = new ParseResult(page.getText(), page.getPageTitle(), outlinks, status);
     parseResult = htmlParseFilters.filter(url, page, parseResult, metaTags, docRoot);
     if (parseResult == null) {
       LOG.debug("ParseResult filtered to null, url : " + url);
@@ -154,11 +166,6 @@ public class HtmlParser implements Parser {
       // Not okay to cache
       page.putMetadata(CACHING_FORBIDDEN_KEY, cachingPolicy);
     }
-
-    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
-    page.setPageCategory(pageCategory);
-    // TODO : use a better score
-    page.setPageCategoryLikelihood(0.9f);
 
     return parseResult;
   }
@@ -238,12 +245,12 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private void extract(WebPage page, InputSource input) {
-    LOG.trace("Try extract by Scent");
+  private TextDocument extract(WebPage page, InputSource input) {
+    LOG.trace("Try extract by scent");
 
     if (page.getContent() == null) {
       LOG.warn("Can not extract content, page content is null");
-      return;
+      return null;
     }
 
     try {
@@ -258,20 +265,12 @@ public class HtmlParser implements Parser {
 
       extractor.process(doc);
 
-      page.setTitle(doc.getPageTitle());
-      page.setTempVar(DOC_FIELD_TEXT_CONTENT, doc.getTextContent());
-      page.setTempVar(DOC_FIELD_HTML_CONTENT, doc.getHtmlContent());
-      doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
-
-//      LOG.info("Text content length : " + doc.getTextContent().length()
-//          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
-
-      page.setTextContentLength(doc.getTextContent().length());
-      page.updatePublishTime(DateTimeUtil.parseTime(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH));
-
+      return doc;
     } catch (ProcessingException|SAXException e) {
       LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
     }
+
+    return null;
   }
 
   public Configuration getConf() {
@@ -369,7 +368,7 @@ public class HtmlParser implements Parser {
     page.setContentType("text/html");
     ParseResult parseResult = parser.getParse(url, page);
 
-    System.out.println("title: " + parseResult.getTitle());
+    System.out.println("title: " + parseResult.getPageTitle());
     System.out.println("text: " + parseResult.getText());
     System.out.println("outlinks: " + StringUtils.join(parseResult.getOutlinks(), ","));
   }

@@ -32,8 +32,6 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
-
 /**
  * TODO : configurable
  * */
@@ -77,7 +75,7 @@ public class CrawlFilter extends Configured {
       return pageCategory;
     }
 
-    String textContent = (String) page.getTempVar(DOC_FIELD_TEXT_CONTENT);
+    String textContent = page.getTextContent();
     if (textContent == null) {
       return pageCategory;
     }
@@ -166,14 +164,6 @@ public class CrawlFilter extends Configured {
   private String reversedStartKey;
   private String reversedEndKey;
 
-//  private boolean filter;
-//  private boolean normalise;
-//  private URLFilters filters;
-//  private URLNormalizers normalizers;
-  // additional url filter,
-  // TODO : merge to filters
-  private RegexURLFilter urlFilter;
-
   public CrawlFilter() {
     
   }
@@ -202,7 +192,7 @@ public class CrawlFilter extends Configured {
 
       // CrawlFilter specified RegexURLFilter
       if (urlRegexRule != null) {
-        urlFilter = new RegexURLFilter(urlRegexRule);
+        // urlFilter = new RegexURLFilter(urlRegexRule);
       }
 
       // TODO : move to Table utils just like scent project does
@@ -252,10 +242,10 @@ public class CrawlFilter extends Configured {
 //      passed = false;
 //    }
 
-    if (passed && urlFilter != null) {
-      url = urlFilter.filter(url);
-      passed = url != null;
-    }
+//    if (passed && urlFilter != null) {
+//      url = urlFilter.filter(url);
+//      passed = url != null;
+//    }
 
     return passed;
   }

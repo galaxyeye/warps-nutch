@@ -72,6 +72,12 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
 
   private HtmlMapper HTMLMapper;
 
+  public TikaParser() {}
+
+  public TikaParser(Configuration conf) {
+    setConf(conf);
+  }
+
   @Override
   public ParseResult getParse(String url, WebPage page) {
     String baseUrl = page.getBaseUrl();
@@ -243,7 +249,7 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     ParseResult parseResult = new ParseUtil(conf).parse(url, page);
 
     System.out.println("content type: " + mtype);
-    System.out.println("title: " + parseResult.getTitle());
+    System.out.println("title: " + parseResult.getPageTitle());
     System.out.println("text: " + parseResult.getText());
     System.out.println("outlinks: " + StringUtils.join(parseResult.getOutlinks(), ","));
   }

@@ -140,10 +140,10 @@ public class SolrIndexWriter implements IndexWriter {
         Object val2 = val;
 
         if (val instanceof Date) {
-          val2 = DateTimeUtil.solrCompatibleFormat((Date)val2);
+          val2 = DateTimeUtil.isoInstantFormat((Date)val2);
         }
         else if (val instanceof Instant) {
-          val2 = DateTimeUtil.solrCompatibleFormat((Instant)val2);
+          val2 = DateTimeUtil.isoInstantFormat((Instant)val2);
         }
 
         String key = solrMapping.mapKeyIfExists(e.getKey());

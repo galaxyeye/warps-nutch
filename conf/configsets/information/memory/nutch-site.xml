@@ -20,7 +20,7 @@
   <!-- plugin -->
   <property>
     <name>plugin.includes</name>
-    <value>protocol-(http|crowd)|urlfilter-(prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
+    <value>protocol-(http|crowd)|urlfilter-(prefix|suffix|regex)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-monitor</value>
     <description>Regular expression naming plugin directory names to
       include.  Any plugin not matching this expression is excluded.
       In any case you need at least include the nutch-extensionpoints plugin. By

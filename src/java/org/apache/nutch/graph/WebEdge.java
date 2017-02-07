@@ -50,6 +50,8 @@ public class WebEdge extends DefaultWeightedEdge {
 
   public WebPage getSourceWebPage() { return getSource().getWebPage(); }
 
+  public boolean hasSourceWebPage() { return getSource().hasWebPage(); }
+
   /**
    * Retrieves the target of this edge.
    *
@@ -60,6 +62,8 @@ public class WebEdge extends DefaultWeightedEdge {
   public String getTargetUrl() { return getTarget().getUrl(); }
 
   public WebPage getTargetWebPage() { return getTarget().getWebPage(); }
+
+  public boolean hasTargetWebPage() { return getTarget().hasWebPage(); }
 
   @Override
   public String toString() { return getSourceUrl() + " -> " + getTargetUrl(); }

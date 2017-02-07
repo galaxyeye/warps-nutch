@@ -2,20 +2,19 @@ package org.apache.nutch.jobs.index;
 
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.jobs.parse.ParserJob;
 import org.apache.nutch.jobs.parse.ParserMapper;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseStatusCodes;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.metadata.Mark;
-import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.common.Params;
-import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.persist.gora.ParseStatus;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -74,16 +73,14 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
     ));
   }
 
-  public static boolean isParseSuccess(ParseStatus status) {
-    if (status == null) {
-      return false;
-    }
-    return status.getMajorCode() == ParseStatusCodes.SUCCESS;
+  private static boolean isParseSuccess(ParseStatus status) {
+    return status != null && status.getMajorCode() == ParseStatusCodes.SUCCESS;
   }
 
   @Override
   public void map(String reverseUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
-    WebPage page = WebPage.wrap(row);
+    WebPage page = WebPage.wrap(reverseUrl, row, true);
+    String url = page.url();
 
     try {
       getCounter().increase(rows);
@@ -92,8 +89,6 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
         stop("hit limit " + limit + ", finish mapper");
         return;
       }
-
-      String url = TableUtil.unreverseUrl(reverseUrl);
 
       // For test only
       ParseStatus pstatus = page.getParseStatus();
@@ -145,7 +140,7 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
         return;
       }
 
-      String textContent = doc.getFieldValueAsString(DOC_FIELD_TEXT_CONTENT);
+      String textContent = page.getTextContent();
       if (textContent == null || textContent.length() < minTextLenght) {
         getCounter().increase(Counter.shortContent);
         return;

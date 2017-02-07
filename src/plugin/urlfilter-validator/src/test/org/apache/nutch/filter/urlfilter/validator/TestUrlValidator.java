@@ -101,29 +101,23 @@ public class TestUrlValidator extends TestCase {
    * Generate Sample of Valid Tld.
    */
   public String generateValidTld(int length) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 1; i <= length; i++) {
-
       char c = (char) ('a' + Math.random() * 26);
       buffer.append(c);
     }
-    String tempValidUrl = preUrl + buffer.toString();
-    return tempValidUrl;
+    return preUrl + buffer.toString();
   }
 
   /**
    * Generate Sample of Invalid Tld. character
    */
   public String generateInvalidTld(int length) {
-
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 1; i <= length + 1; i++) {
-
       char c = (char) ('a' + Math.random() * 26);
       buffer.append(c);
     }
-    String tempInvalidUrl = preUrl + buffer.toString();
-    return tempInvalidUrl;
-
+    return preUrl + buffer.toString();
   }
 }

@@ -21,17 +21,15 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.gora.query.Result;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.persist.gora.WebPageConverter;
-import org.apache.nutch.filter.RegexURLFilter;
 import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,23 +49,12 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
   private long limit = DefaultDbLimit;
   private Utf8 batchId;
   private Set<String> fields;
-  private RegexURLFilter urlFilter;
-  private int urlRegexNotMatch = 0;
 
   DbIterator(Result<String, GoraWebPage> res, DbQuery filter, Configuration conf) {
     this.result = res;
     if (filter.getFields() != null) { this.fields = filter.getFields(); }
     if (filter.getBatchId() != null) { this.batchId = new Utf8(filter.getBatchId()); }
     this.limit = filter.getLimit();
-
-    String urlRegexRule = filter.getUrlFilter();
-    if (urlRegexRule != null) {
-      try {
-        urlFilter = new RegexURLFilter(urlRegexRule);
-      } catch (IllegalArgumentException | IOException e) {
-        LOG.error(e.toString());
-      }
-    }
 
     // LOG.info("regex : " + urlRegexRule + ", batchId : " + batchId);
 

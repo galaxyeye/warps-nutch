@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class uses a "chained filter" pattern to run defined normalizers.
@@ -103,8 +105,7 @@ public final class URLNormalizers {
    */
   public static final String SCOPE_OUTLINK = "outlink";
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(URLNormalizers.class);
+  public static final Logger LOG = LoggerFactory.getLogger(URLNormalizers.class);
 
   /* Empty extension list for caching purposes. */
   private final List<Extension> EMPTY_EXTENSION_LIST = Collections.emptyList();
@@ -132,6 +133,7 @@ public final class URLNormalizers {
     if (normalizers == null) {
       normalizers = getURLNormalizers(scope);
     }
+
     if (normalizers == EMPTY_NORMALIZERS) {
       normalizers = (URLNormalizer[]) objectCache.getObject(URLNormalizer.X_POINT_ID + "_" + SCOPE_DEFAULT);
       if (normalizers == null) {
@@ -161,18 +163,16 @@ public final class URLNormalizers {
       return EMPTY_NORMALIZERS;
     }
 
-    List<URLNormalizer> normalizers = new Vector<URLNormalizer>(extensions.size());
-
-    Iterator<Extension> it = extensions.iterator();
-    while (it.hasNext()) {
-      Extension ext = it.next();
-      URLNormalizer normalizer = null;
+    List<URLNormalizer> normalizers = new LinkedList<>();
+    for (Extension ext : extensions) {
+      URLNormalizer normalizer;
       try {
         // check to see if we've cached this URLNormalizer instance yet
         normalizer = (URLNormalizer) objectCache.getObject(ext.getId());
         if (normalizer == null) {
           // go ahead and instantiate it and then cache it
           normalizer = (URLNormalizer) ext.getExtensionInstance();
+          normalizer.setConf(conf);
           objectCache.setObject(ext.getId(), normalizer);
         }
         normalizers.add(normalizer);
@@ -200,8 +200,7 @@ public final class URLNormalizers {
   @SuppressWarnings("unchecked")
   private List<Extension> getExtensions(String scope) {
     ObjectCache objectCache = ObjectCache.get(conf);
-    List<Extension> extensions = (List<Extension>) objectCache
-        .getObject(URLNormalizer.X_POINT_ID + "_x_" + scope);
+    List<Extension> extensions = (List<Extension>) objectCache.getObject(URLNormalizer.X_POINT_ID + "_x_" + scope);
 
     // Just compare the reference:
     // if this is the empty list, we know we will find no extension.
@@ -212,13 +211,11 @@ public final class URLNormalizers {
     if (extensions == null) {
       extensions = findExtensions(scope);
       if (extensions != null) {
-        objectCache.setObject(URLNormalizer.X_POINT_ID + "_x_" + scope,
-            extensions);
+        objectCache.setObject(URLNormalizer.X_POINT_ID + "_x_" + scope, extensions);
       } else {
         // Put the empty extension list into cache
         // to remember we don't know any related extension.
-        objectCache.setObject(URLNormalizer.X_POINT_ID + "_x_" + scope,
-            EMPTY_EXTENSION_LIST);
+        objectCache.setObject(URLNormalizer.X_POINT_ID + "_x_" + scope, EMPTY_EXTENSION_LIST);
         extensions = EMPTY_EXTENSION_LIST;
       }
     }
@@ -235,11 +232,11 @@ public final class URLNormalizers {
    * @throws PluginRuntimeException
    */
   private List<Extension> findExtensions(String scope) {
-
     String[] orders = null;
     String orderlist = conf.get("urlnormalizer.order." + scope);
-    if (orderlist == null)
+    if (orderlist == null) {
       orderlist = conf.get("urlnormalizer.order");
+    }
     if (orderlist != null && !orderlist.trim().equals("")) {
       orders = orderlist.split("\\s+");
     }
@@ -247,17 +244,17 @@ public final class URLNormalizers {
     Set<String> impls = null;
     if (scopelist != null && !scopelist.trim().equals("")) {
       String[] names = scopelist.split("\\s+");
-      impls = new HashSet<String>(Arrays.asList(names));
+      impls = new HashSet<>(Arrays.asList(names));
     }
     Extension[] extensions = this.extensionPoint.getExtensions();
-    HashMap<String, Extension> normalizerExtensions = new HashMap<String, Extension>();
-    for (int i = 0; i < extensions.length; i++) {
-      Extension extension = extensions[i];
-      if (impls != null && !impls.contains(extension.getClazz()))
+    HashMap<String, Extension> normalizerExtensions = new HashMap<>();
+    for (Extension extension : extensions) {
+      if (impls != null && !impls.contains(extension.getClazz())) {
         continue;
+      }
       normalizerExtensions.put(extension.getClazz(), extension);
     }
-    List<Extension> res = new ArrayList<Extension>();
+    List<Extension> res = new ArrayList<>();
     if (orders == null) {
       res.addAll(normalizerExtensions.values());
     } else {
@@ -291,14 +288,21 @@ public final class URLNormalizers {
     String initialString = urlString;
     for (int k = 0; k < loopCount; k++) {
       for (int i = 0; i < this.normalizers.length; i++) {
-        if (urlString == null)
+        if (urlString == null) {
           return null;
+        }
         urlString = this.normalizers[i].normalize(urlString, scope);
       }
-      if (initialString.equals(urlString))
+      if (initialString.equals(urlString)) {
         break;
+      }
       initialString = urlString;
     }
     return urlString;
+  }
+
+  @Override
+  public String toString() {
+    return Stream.of(normalizers).map(f -> f.getClass().getSimpleName()).collect(Collectors.joining(", "));
   }
 }

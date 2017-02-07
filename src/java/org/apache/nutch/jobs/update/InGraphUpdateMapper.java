@@ -77,8 +77,8 @@ class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     counter.increase(rows);
 
-    String url = TableUtil.unreverseUrl(reversedUrl);
-    WebPage page = WebPage.wrap(row);
+    WebPage page = WebPage.wrap(reversedUrl, row, true);
+    String url = page.url();
 
     if (!shouldProcess(url, page)) {
       return;

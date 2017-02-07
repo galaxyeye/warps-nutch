@@ -17,6 +17,7 @@
 
 package org.apache.nutch.crawl.schedulers;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 
@@ -42,6 +43,13 @@ import static org.apache.nutch.metadata.Mark.INACTIVE;
  */
 public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   public static final Logger LOG = AbstractFetchSchedule.LOG;
+
+  public AdaptiveNewsFetchSchedule() { super(); }
+
+  public AdaptiveNewsFetchSchedule(Configuration conf) {
+    super();
+    setConf(conf);
+  }
 
   @Override
   public void setFetchSchedule(String url, WebPage page,

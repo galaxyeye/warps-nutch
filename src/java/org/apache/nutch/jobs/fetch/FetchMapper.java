@@ -2,15 +2,14 @@ package org.apache.nutch.jobs.fetch;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.fetch.data.FetchEntry;
-import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.jobs.NutchMapper;
+import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.common.Params;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 
 import java.io.IOException;
@@ -94,13 +93,12 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
    * and then filtered by mapper, which is a scan, the time complex is O(N)
    * */
   @Override
-  protected void map(String key, GoraWebPage row, Context context) throws IOException, InterruptedException {
+  protected void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-    String url = TableUtil.unreverseUrl(key);
-    WebPage page = WebPage.wrap(row);
+    WebPage page = WebPage.wrap(reversedUrl, row, true);
 
-    if (unreachableHosts.contains(URLUtil.getDomainName(url))) {
+    if (unreachableHosts.contains(URLUtil.getDomainName(page.url()))) {
       getCounter().increase(Counter.hostsUnreachable);
       return;
     }
@@ -125,8 +123,8 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
     int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
     // Higher priority, comes first
     int shuffleOrder = random.nextInt(65536) - 65536 * priority;
-    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, key, page));
-    updateStatus(url, page);
+    context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, page.reversedUrl(), page));
+    updateStatus(page.url(), page);
 
     if (limit > 0 && ++count > limit) {
       stop("Hit limit " + limit + ", finish the mapper.");

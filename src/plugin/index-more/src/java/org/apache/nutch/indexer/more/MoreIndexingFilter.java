@@ -64,7 +64,7 @@ public class MoreIndexingFilter implements IndexingFilter {
 
     CharSequence lastModified = page.getHeaders().get(new Utf8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) { // try parse last-modified
-      time = DateTimeUtil.parseTime(lastModified.toString(), Instant.EPOCH); // use as time
+      time = DateTimeUtil.parseHttpDateTime(lastModified.toString(), Instant.EPOCH); // use as time
     }
 
     if (time.toEpochMilli() > 0) { // if no last-modified
@@ -73,8 +73,8 @@ public class MoreIndexingFilter implements IndexingFilter {
 
     // un-stored, indexed and un-tokenized
     if (time.toEpochMilli() > 0) {
-      doc.add("header_last_modified", DateTimeUtil.solrCompatibleFormat(time));
-      doc.add("last_modified_s", DateTimeUtil.solrCompatibleFormat(time));
+      doc.add("header_last_modified", DateTimeUtil.isoInstantFormat(time));
+      doc.add("last_modified_s", DateTimeUtil.isoInstantFormat(time));
     }
 
     return doc;

@@ -16,71 +16,29 @@
  */
 package org.apache.nutch.parse.tika;
 
-import org.apache.avro.util.Utf8;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseException;
-import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.MimeUtil;
+import org.apache.nutch.protocol.ProtocolException;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestImageMetadata {
+@Ignore("Image parser is not required currently")
+public class TestImageMetadata extends TikaTestBase {
 
-  private String fileSeparator = System.getProperty("file.separator");
-  // This system property is defined in ./src/plugin/build-plugin.xml
-  private String sampleDir = System.getProperty("test.data", ".");
   // Make sure sample files are copied to "test.data" as specified in
   private String[] sampleFiles = { "nutch_logo_tm.gif" };
 
   @Test
   public void testIt() throws ProtocolException, ParseException, IOException {
-    String urlString;
-    @SuppressWarnings("unused")
-    ParseResult parseResult;
-    Configuration conf = ConfigUtils.create();
-    MimeUtil mimeutil = new MimeUtil(conf);
+    for (String sampleFile : sampleFiles) {
+      WebPage page = parse(sampleFile);
 
-    for (int i = 0; i < sampleFiles.length; i++) {
-      urlString = "file:" + sampleDir + fileSeparator + sampleFiles[i];
-
-      File file = new File(sampleDir + fileSeparator + sampleFiles[i]);
-      byte[] bytes = new byte[(int) file.length()];
-      DataInputStream in = new DataInputStream(new FileInputStream(file));
-      in.readFully(bytes);
-      in.close();
-
-      WebPage page = WebPage.newWebPage();
-      page.setBaseUrl(new Utf8(urlString));
-      page.setContent(bytes);
-      String mtype = mimeutil.getMimeType(file);
-      page.setContentType(mtype);
-
-      parseResult = new ParseUtil(conf).parse(urlString, page);
-
-      // assert width
-      ByteBuffer bbufW = page.get().getMetadata().get(new Utf8("width"));
-      byte[] byteArrayW = new byte[bbufW.remaining()];
-      bbufW.get(byteArrayW);
-      String width = new String(byteArrayW);
-      assertEquals("121", width);
-
-      // assert height
-      ByteBuffer bbufH = page.get().getMetadata().get(new Utf8("height"));
-      byte[] byteArrayH = new byte[bbufH.remaining()];
-      bbufH.get(byteArrayH);
-      String height = new String(byteArrayH);
-      assertEquals("48", height);
+      assertEquals("121", page.getMetadata("width"));
+      assertEquals("48", page.getMetadata("height"));
     }
   }
 }

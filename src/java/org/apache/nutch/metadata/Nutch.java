@@ -183,7 +183,9 @@ public interface Nutch {
   String PARAM_CRAWL_ID = "storage.crawl.id";
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
   String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
+  String PARAM_FETCH_QUEUE_RETUNE_INTERVAL = "fetcher.pending.queue.check.time";
   String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
+  String PARAM_FETCH_REPORT_INTERVAL = "fetcher.report.interval";
   String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
   String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
 
@@ -249,11 +251,8 @@ public interface Nutch {
   /**
    * Document fields
    * */
-  String DOC_FIELD_PAGE_TITLE = "page_title";
-  String DOC_FIELD_ARTICLE_TITLE = "article_title";
+  String DOC_FIELD_ARTICLE_TILE = "article_title";
   String DOC_FIELD_TEXT_CONTENT_LENGTH = "text_content_length";
-  String DOC_FIELD_TEXT_CONTENT = "text_content";
-  String DOC_FIELD_HTML_CONTENT = "html_content";
   String DOC_FIELD_PAGE_CATEGORY = "page_category";
   String DOC_FIELD_PUBLISH_TIME = "publish_time";
   String DOC_FIELD_OUTLINKS_COUNT = "outlinks_count";

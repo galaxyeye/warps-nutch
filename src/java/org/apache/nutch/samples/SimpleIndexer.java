@@ -85,7 +85,7 @@ public class SimpleIndexer {
             .filter(link -> link.length() > Nutch.SHORTEST_VALID_URL_LENGTH)
             .forEach(link -> index(link, contentType, d));
       }
-    } catch (ProtocolNotFound|IndexingException |IOException e) {
+    } catch (IndexingException |IOException e) {
       LOG.error(e.getMessage());
     }
 

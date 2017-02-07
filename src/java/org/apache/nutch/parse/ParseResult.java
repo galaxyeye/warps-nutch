@@ -23,16 +23,16 @@ import java.util.ArrayList;
 public class ParseResult {
 
   private String text = "";
-  private String title = "";
+  private String pageTitle = "";
   private ArrayList<Outlink> outlinks = new ArrayList<>();
   private ParseStatus parseStatus;
 
   public ParseResult() {
   }
 
-  public ParseResult(String text, String title, ArrayList<Outlink> outlinks, ParseStatus parseStatus) {
+  public ParseResult(String text, String pageTitle, ArrayList<Outlink> outlinks, ParseStatus parseStatus) {
     this.text = text;
-    this.title = title;
+    this.pageTitle = pageTitle;
     this.outlinks = outlinks;
     this.parseStatus = parseStatus;
   }
@@ -45,10 +45,10 @@ public class ParseResult {
     this.text = text;
   }
 
-  public String getTitle() { return title; }
+  public String getPageTitle() { return pageTitle; }
 
-  public void setTitle(String title) {
-    this.title = title;
+  public void setPageTitle(String pageTitle) {
+    this.pageTitle = pageTitle;
   }
 
   public ArrayList<Outlink> getOutlinks() { return outlinks; }

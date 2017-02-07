@@ -11,10 +11,13 @@ import org.apache.nutch.net.client.NutchClient;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
@@ -219,9 +222,19 @@ public class TestAnything {
   }
 
   @Test
-  public void testConfig() {
+  public void testConfig() throws IOException {
     Configuration conf = ConfigUtils.create();
     Duration maxInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
     System.out.println(maxInterval);
+
+    Path path = Paths.get("/home/vincent/workspace/warps-nutch/build/urlfilter-domain/test/data/hosts.txt");
+    System.out.println(Files.readAllLines(path));
+
+    Reader reader = conf.getConfResourceAsReader("hosts.txt");
+    String line;
+    BufferedReader bufferedReader = new BufferedReader(reader);
+    while ((line = bufferedReader.readLine()) != null) {
+      System.out.println(line);
+    }
   }
 }

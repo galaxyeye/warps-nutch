@@ -42,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Metadata.*;
-import static org.apache.nutch.metadata.Metadata.Name.*;
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
+import static org.apache.nutch.metadata.Metadata.Name.DISTANCE;
+import static org.apache.nutch.metadata.Metadata.Name.PAGE_CATEGORY;
 import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 
 /**
@@ -70,25 +70,28 @@ public class WebPage {
   public WebPage(String url, GoraWebPage page, boolean urlReversed) {
     this.url = urlReversed ? TableUtil.unreverseUrl(url) : url;
     this.reversedUrl = urlReversed ? url : TableUtil.reverseUrlOrEmpty(url);
+    assert(!reversedUrl.startsWith("http"));
     this.page = page;
   }
 
-  @Contract(" -> !null")
   public static WebPage newWebPage() {
     return new WebPage(GoraWebPage.newBuilder().build());
   }
 
-  @Contract("_ -> !null")
-  public static WebPage newWebPage(GoraWebPage page) {
-    return new WebPage(GoraWebPage.newBuilder(page).build());
+  public static WebPage newWebPage(String url) {
+    return new WebPage(url, GoraWebPage.newBuilder().build(), false);
   }
 
-  @Contract("_ -> !null")
+  public static WebPage newWebPage(String url, float score) {
+    WebPage page = new WebPage(url, GoraWebPage.newBuilder().build(), false);
+    page.setScore(score);
+    return page;
+  }
+
   public static WebPage wrap(GoraWebPage page) {
     return new WebPage(page);
   }
 
-  @Contract("_, _, _ -> !null")
   public static WebPage wrap(String url, GoraWebPage page, boolean urlReversed) {
     return new WebPage(url, page, urlReversed);
   }
@@ -263,21 +266,39 @@ public class WebPage {
     page.setSignature(ByteBuffer.wrap(value));
   }
 
-  public String getTitle() {
+  public String getPageTitle() {
     return page.getTitle() == null ? "" : page.getTitle().toString();
   }
 
-  public void setTitle(String value) {
+  public void setPageTitle(String value) {
     if (value != null) page.setTitle(u8(value));
   }
+
+  public void setContentTitle(String contentTitle) {
+    if (contentTitle != null && !contentTitle.isEmpty()) putMetadata(Name.CONTENT_TITLE, contentTitle);
+  }
+
+  public String getContentTitle() { return getMetadata(Name.CONTENT_TITLE, ""); }
 
   public String getText() {
     return page.getText() == null ? "" : page.getText().toString();
   }
 
   public void setText(String value) {
-    if (value != null) page.setText(u8(value));
+    if (value != null && !value.isEmpty()) page.setText(u8(value));
   }
+
+  public void setTextContent(String textContent) {
+    if (textContent != null && !textContent.isEmpty()) putMetadata(Name.TEXT_CONTENT, textContent);
+  }
+
+  public String getTextContent() { return getMetadata(Name.TEXT_CONTENT, ""); }
+
+  public void setHtmlContent(String textContent) {
+    if (textContent != null && !textContent.isEmpty()) putMetadata(Name.HTML_CONTENT, textContent);
+  }
+
+  public String getHtmlContent() { return getMetadata(Name.HTML_CONTENT, ""); }
 
   public ParseStatus getParseStatus() {
     return page.getParseStatus();
@@ -440,12 +461,17 @@ public class WebPage {
       return ((Integer) obj);
     }
 
-    obj = getTempVar(DOC_FIELD_TEXT_CONTENT);
-    if (obj != null && obj instanceof String) {
-      return ((String) obj).length();
+//    obj = getTempVar(DOC_FIELD_TEXT_CONTENT);
+//    if (obj != null && obj instanceof String) {
+//      return ((String) obj).length();
+//    }
+
+    CharSequence text = getTextContent();
+    if (text != null) {
+      return text.length();
     }
 
-    CharSequence text = page.getText();
+    text = page.getText();
     if (text != null) {
       return text.length();
     }
@@ -457,6 +483,9 @@ public class WebPage {
     return getFloatMetadata(Name.PAGE_CATEGORY_LIKELIHOOD, 0f);
   }
 
+  /**
+   * Reserved
+   * */
   public void setPageCategoryLikelihood(float likelihood) {
     setFloatMetadata(Name.PAGE_CATEGORY_LIKELIHOOD, likelihood);
   }
@@ -540,10 +569,10 @@ public class WebPage {
     setFloatMetadata(Name.CASH_KEY, cash);
   }
 
-  public Instant getPublishTime() { return DateTimeUtil.parseTime(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH); }
+  public Instant getPublishTime() { return DateTimeUtil.parseInstant(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH); }
 
   public void setPublishTime(Instant publishTime) {
-    putMetadata(Name.PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+    putMetadata(Name.PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
   }
 
   public void updatePublishTime(Instant newPublishTime) {
@@ -555,11 +584,11 @@ public class WebPage {
   }
 
   public Instant getPrevPublishTime() {
-    return DateTimeUtil.parseTime(getMetadata(Name.PREV_PUBLISH_TIME), Instant.EPOCH);
+    return DateTimeUtil.parseInstant(getMetadata(Name.PREV_PUBLISH_TIME), Instant.EPOCH);
   }
 
   public void setPrevPublishTime(Instant publishTime) {
-    putMetadata(Name.PREV_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+    putMetadata(Name.PREV_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
   }
 
   public String getReferrer() {
@@ -640,20 +669,20 @@ public class WebPage {
 
   public Instant getRefPublishTime() {
     String time = getMetadata(Name.REFERRED_PUBLISH_TIME);
-    return DateTimeUtil.parseTime(time, Instant.EPOCH);
+    return DateTimeUtil.parseInstant(time, Instant.EPOCH);
   }
 
   public void setRefPublishTime(Instant publishTime) {
-    putMetadata(Name.REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+    putMetadata(Name.REFERRED_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
   }
 
   public Instant getPrevRefPublishTime() {
     String time = getMetadata(Name.PREV_REFERRED_PUBLISH_TIME);
-    return DateTimeUtil.parseTime(time, Instant.EPOCH);
+    return DateTimeUtil.parseInstant(time, Instant.EPOCH);
   }
 
   public void setPrevRefPublishTime(Instant publishTime) {
-    putMetadata(Name.PREV_REFERRED_PUBLISH_TIME, DateTimeUtil.solrCompatibleFormat(publishTime));
+    putMetadata(Name.PREV_REFERRED_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
   }
 
   public boolean updateRefPublishTime(Instant newRefPublishTime) {
@@ -661,8 +690,6 @@ public class WebPage {
     if (newRefPublishTime.isAfter(latestTime)) {
       setPrevRefPublishTime(latestTime);
       setRefPublishTime(newRefPublishTime);
-
-      updatePublishTime(newRefPublishTime);
 
       return true;
     }
@@ -673,7 +700,7 @@ public class WebPage {
   public Instant getHeaderLastModifiedTime(Instant defaultValue) {
     CharSequence lastModified = page.getHeaders().get(u8(HttpHeaders.LAST_MODIFIED));
     if (lastModified != null) {
-      return DateTimeUtil.parseTime(lastModified.toString(), Instant.EPOCH);
+      return DateTimeUtil.parseHttpDateTime(lastModified.toString(), Instant.EPOCH);
     }
 
     return defaultValue;
@@ -696,7 +723,7 @@ public class WebPage {
     String fetchTimeHistory = getFetchTimeHistory("");
     if (!fetchTimeHistory.isEmpty()) {
       String[] times = fetchTimeHistory.split(",");
-      Instant time = DateTimeUtil.parseTime(times[0], Instant.EPOCH);
+      Instant time = DateTimeUtil.parseInstant(times[0], Instant.EPOCH);
       if (time.isAfter(Instant.EPOCH)) {
         firstCrawlTime = time;
       }
@@ -725,7 +752,7 @@ public class WebPage {
     String indexTimeHistory = getIndexTimeHistory("");
     if (!indexTimeHistory.isEmpty()) {
       String[] times = indexTimeHistory.split(",");
-      Instant time = DateTimeUtil.parseTime(times[0], Instant.EPOCH);
+      Instant time = DateTimeUtil.parseInstant(times[0], Instant.EPOCH);
       if (time.isAfter(Instant.EPOCH)) {
         firstIndexTime = time;
       }
@@ -811,6 +838,11 @@ public class WebPage {
   }
 
   public String getMetadata(Name name, String defaultValue) {
+    String value = getMetadata(name);
+    return value == null ? defaultValue : value;
+  }
+
+  public String getMetadata(String name, String defaultValue) {
     String value = getMetadata(name);
     return value == null ? defaultValue : value;
   }

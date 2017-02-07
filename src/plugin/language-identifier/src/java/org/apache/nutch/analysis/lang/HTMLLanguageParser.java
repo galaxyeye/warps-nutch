@@ -146,7 +146,7 @@ public class HTMLLanguageParser implements ParseFilter {
   private String identifyLanguage(ParseResult parseResult) {
     StringBuilder text = new StringBuilder();
     if (parseResult != null) {
-      String title = parseResult.getTitle();
+      String title = parseResult.getPageTitle();
       if (title != null) {
         text.append(title);
       }

@@ -49,9 +49,7 @@ public class URLFilterChecker {
     }
 
     Extension[] extensions = point.getExtensions();
-
-    for (int i = 0; i < extensions.length; i++) {
-      Extension extension = extensions[i];
+    for (Extension extension : extensions) {
       filter = (URLFilter) extension.getExtensionInstance();
       if (filter.getClass().getName().equals(filterName)) {
         break;

@@ -19,7 +19,6 @@ package org.apache.nutch.util;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -118,15 +117,15 @@ public class DateTimeUtil {
     return DateFormat.format(System.currentTimeMillis());
   }
 
-  public static String solrCompatibleFormat(long time) {
+  public static String isoInstantFormat(long time) {
     return DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
   }
 
-  public static String solrCompatibleFormat(Date date) {
+  public static String isoInstantFormat(Date date) {
     return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
   }
 
-  public static String solrCompatibleFormat(Instant time) {
+  public static String isoInstantFormat(Instant time) {
     return DateTimeFormatter.ISO_INSTANT.format(time);
   }
 
@@ -179,38 +178,38 @@ public class DateTimeUtil {
     return sb.toString();
   }
 
-  public static Instant parseTime(String dateTime, Instant defaultValue) {
-    Instant time = defaultValue;
-
-    if (dateTime == null || dateTime.isEmpty()) {
-      return time;
-    }
-
+  public static Instant parseHttpDateTime(String text, Instant defaultValue) {
     try {
-      time = Instant.ofEpochMilli(HttpDateFormat.toLong(dateTime));
-    } catch (ParseException e) {
-      try {
-        Date parsedDate = DateUtils.parseDate(dateTime, GENERAL_DATE_TIME_FORMATS);
-        time = parsedDate.toInstant();
-      } catch (Exception ignored) {}
+      // RFC 2616 defines three different date formats that a conforming client must understand.
+      Date d = org.apache.http.client.utils.DateUtils.parseDate(text);
+      return d.toInstant();
+    } catch (Throwable e) {
+      return defaultValue;
     }
-
-    return time;
   }
 
-  public static Date tryParseDate(String dateStr) {
-    Date parsedDate = null;
+  public static Instant parseInstant(String text, Instant defaultValue) {
+    try {
+      // equals to Instant.parse()
+      return DateTimeFormatter.ISO_INSTANT.parse(text, Instant::from);
+    } catch (Throwable e) {
+      return defaultValue;
+    }
+  }
+
+  public static Date tryParseDateTime(String dateStr) {
+    Date parsedDateTime = null;
 
     try {
-      parsedDate = DateUtils.parseDate(dateStr, GENERAL_DATE_TIME_FORMATS);
+      parsedDateTime = DateUtils.parseDate(dateStr, GENERAL_DATE_TIME_FORMATS);
     } catch (ParseException ignored) {
     }
 
-    return parsedDate;
+    return parsedDateTime;
   }
 
   public static String constructTimeHistory(String timeHistory, Instant fetchTime, int maxRecords) {
-    String dateStr = solrCompatibleFormat(fetchTime);
+    String dateStr = isoInstantFormat(fetchTime);
 
     if (timeHistory == null) {
       timeHistory = dateStr;

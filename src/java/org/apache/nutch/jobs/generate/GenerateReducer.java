@@ -18,14 +18,15 @@ package org.apache.nutch.jobs.generate;
 
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
-import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
+import org.apache.nutch.common.Params;
+import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchReducer;
 import org.apache.nutch.jobs.fetch.FetchMapper;
+import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
@@ -34,7 +35,6 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
-import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
 
 /**
@@ -88,8 +88,8 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
   }
 
   @Override
-  protected void reduce(SelectorEntry key, Iterable<GoraWebPage> values, Context context) throws IOException, InterruptedException {
-    getCounter().increase(rows);
+  protected void reduce(SelectorEntry key, Iterable<GoraWebPage> rows, Context context) throws IOException, InterruptedException {
+    getCounter().increase(NutchCounter.Counter.rows);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Generate reduce " + key.url);
@@ -103,8 +103,9 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
       return;
     }
 
-    for (GoraWebPage value : values) {
-      WebPage page = WebPage.wrap(value);
+    for (GoraWebPage row : rows) {
+      WebPage page = WebPage.wrap(url, row, false);
+
       try {
         if (count >= limit) {
           stop("Enough pages generated, quit");

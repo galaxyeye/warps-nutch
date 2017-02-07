@@ -19,10 +19,10 @@ package org.apache.nutch.protocol.file;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.Content;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.protocol.Content;
+import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.MimeUtil;
 
 import java.io.IOException;
@@ -147,7 +147,7 @@ public class FileResponse {
       }
       if (f.lastModified() <= page.getModifiedTime().toEpochMilli()) {
         this.code = 304;
-        this.headers.set("Last-Modified", HttpDateFormat.toString(f.lastModified()));
+        this.headers.set("Last-Modified", DateTimeUtil.format(f.lastModified()));
         return;
       }
 
@@ -204,9 +204,7 @@ public class FileResponse {
 
     // set headers
     headers.set(Response.CONTENT_LENGTH, new Long(size).toString());
-    headers.set(Response.LAST_MODIFIED,
-        HttpDateFormat.toString(f.lastModified()));
-
+    this.headers.set("Last-Modified", DateTimeUtil.isoInstantFormat(f.lastModified()));
     String mimeType = MIME.getMimeType(f);
     String mimeTypeString = mimeType != null ? mimeType.toString() : "";
     headers.set(Response.CONTENT_TYPE, mimeTypeString);
@@ -226,11 +224,9 @@ public class FileResponse {
       this.content = list2html(f.listFiles(), path, false);
 
     // set headers
-    headers.set(Response.CONTENT_LENGTH,
-        new Integer(this.content.length).toString());
+    headers.set(Response.CONTENT_LENGTH, new Integer(this.content.length).toString());
     headers.set(Response.CONTENT_TYPE, "text/html");
-    headers.set(Response.LAST_MODIFIED,
-        HttpDateFormat.toString(f.lastModified()));
+    headers.set("Last-Modified", DateTimeUtil.isoInstantFormat(f.lastModified()));
 
     // response code
     this.code = 200; // http OK
@@ -254,7 +250,7 @@ public class FileResponse {
     for (int i = 0; i < list.length; i++) {
       f = list[i];
       String name = f.getName();
-      String time = HttpDateFormat.toString(f.lastModified());
+      String time = DateTimeUtil.isoInstantFormat(f.lastModified());
       if (f.isDirectory()) {
         // java 1.4.2 service says dir itself and parent dir are not listed
         // so the following is not needed.

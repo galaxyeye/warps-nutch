@@ -50,15 +50,21 @@ public class SimpleFetcher extends Configured {
     setConf(conf);
   }
 
-  public WebPage fetch(String url) throws ProtocolNotFound {
+  public WebPage fetch(String url) {
     return fetch(url, null);
   }
 
-  public WebPage fetch(String url, String contentType) throws ProtocolNotFound {
+  public WebPage fetch(String url, String contentType) {
     LOG.info("Fetching: " + url);
 
     ProtocolFactory factory = new ProtocolFactory(getConf());
-    Protocol protocol = factory.getProtocol(url);
+    Protocol protocol = null;
+    try {
+      protocol = factory.getProtocol(url);
+    } catch (ProtocolNotFound protocolNotFound) {
+      protocolNotFound.printStackTrace();
+      return null;
+    }
     WebPage page = WebPage.newWebPage();
 
     ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);

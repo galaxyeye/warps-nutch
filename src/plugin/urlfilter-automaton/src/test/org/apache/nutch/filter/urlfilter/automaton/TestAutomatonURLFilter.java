@@ -16,17 +16,14 @@
  */
 package org.apache.nutch.filter.urlfilter.automaton;
 
-// JDK imports
-
-import org.apache.nutch.filter.RegexURLFilterBaseTest;
 import org.apache.nutch.filter.URLFilter;
+import org.apache.nutch.filter.urlfilter.RegexURLFilterBaseTest;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.Reader;
 
 import static org.junit.Assert.fail;
-// Nutch imports
 
 /**
  * JUnit based test of class <code>AutomatonURLFilter</code>.
@@ -54,5 +51,4 @@ public class TestAutomatonURLFilter extends RegexURLFilterBaseTest {
     bench(400, "Benchmarks");
     bench(800, "Benchmarks");
   }
-
 }

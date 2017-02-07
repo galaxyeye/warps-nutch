@@ -16,39 +16,75 @@
  */
 package org.apache.nutch.filter.urlfilter.domain;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.util.ConfigUtils;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.hadoop.conf.Configuration;
+
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class TestDomainURLFilter {
 
-  protected static final Logger LOG = LoggerFactory
-      .getLogger(TestDomainURLFilter.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(TestDomainURLFilter.class);
 
   private final static String SEPARATOR = System.getProperty("file.separator");
   private final static String SAMPLES = System.getProperty("test.data", ".");
 
-  @Test
-  public void testFilter() throws Exception {
+  private Configuration conf = ConfigUtils.create();
 
-    String domainFile = SAMPLES + SEPARATOR + "hosts.txt";
-    Configuration conf = ConfigUtils.create();
-    DomainURLFilter domainFilter = new DomainURLFilter(domainFile);
-    domainFilter.setConf(conf);
-    assertNotNull(domainFilter.filter("http://lucene.apache.org"));
-    assertNotNull(domainFilter.filter("http://hadoop.apache.org"));
-    assertNotNull(domainFilter.filter("http://www.apache.org"));
-    assertNull(domainFilter.filter("http://www.google.com"));
-    assertNull(domainFilter.filter("http://mail.yahoo.com"));
-    assertNotNull(domainFilter.filter("http://www.foobar.net"));
-    assertNotNull(domainFilter.filter("http://www.foobas.net"));
-    assertNotNull(domainFilter.filter("http://www.yahoo.com"));
-    assertNotNull(domainFilter.filter("http://www.foobar.be"));
-    assertNull(domainFilter.filter("http://www.adobe.com"));
+  @Test
+  public void testGeneralFilter() throws Exception {
+    String[] allowedUrls = {
+        "http://sz.sxrb.com/sxxww/dspd/szpd/bwch/",
+        "http://www.sxrb.com/sxxww/dspd/czpd/czsq/",
+        "http://yc.sxrb.com/sxxww/dspd/ycpd/bwbd/",
+        "http://yq.sxrb.com/sxxww/dspd/yqpd/fz/",
+        "http://lucene.apache.org",
+        "http://hadoop.apache.org",
+        "http://www.apache.org",
+        "http://www.foobar.net",
+        "http://www.foobas.net",
+        "http://www.yahoo.com",
+        "http://www.foobar.be"
+    };
+
+    String[] disallowedUrls = {
+        "http://www.google.com",
+        "http://mail.yahoo.com",
+        "http://www.adobe.com"
+    };
+
+    String domainFile = SAMPLES + SEPARATOR + "general" + SEPARATOR + "hosts.txt";
+    DomainURLFilter domainFilter = new DomainURLFilter(domainFile, conf);
+
+    Stream.of(allowedUrls).forEach(url -> assertNotNull(domainFilter.filter(url)));
+    Stream.of(disallowedUrls).forEach(url -> assertNull(domainFilter.filter(url)));
   }
 
+  @Test
+  public void testInformationFilter() throws Exception {
+    String[] allowedUrls = {
+        "http://sz.sxrb.com/sxxww/dspd/szpd/bwch/",
+        "http://www.sxrb.com/sxxww/dspd/czpd/czsq/",
+        "http://yc.sxrb.com/sxxww/dspd/ycpd/bwbd/",
+        "http://yq.sxrb.com/sxxww/dspd/yqpd/fz/",
+    };
+
+    String[] disallowedUrls = {
+        "http://jz.sxrb.com/",
+        "http://kqjk.sxrb.com/",
+        "http://lf.sxrb.com/",
+        "http://ll.sxrb.com/"
+    };
+
+    String domainFile = SAMPLES + SEPARATOR + "information" + SEPARATOR + "hosts.txt";
+    DomainURLFilter domainFilter = new DomainURLFilter(domainFile, conf);
+
+    Stream.of(allowedUrls).forEach(url -> assertNotNull(domainFilter.filter(url)));
+    Stream.of(disallowedUrls).forEach(url -> assertNull(domainFilter.filter(url)));
+  }
 }

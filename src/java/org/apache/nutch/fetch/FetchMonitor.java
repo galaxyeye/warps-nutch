@@ -94,7 +94,7 @@ public class FetchMonitor {
 
     fetchJobTimeout = ConfigUtils.getDuration(conf, "fetcher.timelimit", Duration.ofHours(1));
     fetchTaskTimeout = ConfigUtils.getDuration(conf, "fetcher.task.timeout", Duration.ofMinutes(10));
-    queueRetuneInterval = ConfigUtils.getDuration(conf, "fetcher.pending.queue.check.time", Duration.ofMinutes(8));
+    queueRetuneInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_QUEUE_RETUNE_INTERVAL, Duration.ofMinutes(8));
     queuePendingTimeout = ConfigUtils.getDuration(conf, "fetcher.pending.timeout", queueRetuneInterval.multipliedBy(2));
     queueRetuneTime = startTime;
 
@@ -114,7 +114,7 @@ public class FetchMonitor {
     fetchMonitor = taskScheduler.getTasksMonitor();
 
     // report
-    reportInterval = ConfigUtils.getDuration(conf, "fetcher.report.interval", Duration.ofSeconds(20));
+    reportInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_REPORT_INTERVAL, Duration.ofSeconds(20));
 
     // scripts
     Path nutchTmpDir = ConfigUtils.getPath(conf, PARAM_NUTCH_TMP_DIR, Paths.get(PATH_NUTCH_TMP_DIR));

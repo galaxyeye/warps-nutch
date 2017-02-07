@@ -14,24 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nutch.filter;
+package org.apache.nutch.filter.urlfilter;
 
 // JDK imports
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.filter.URLFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 // Hadoop imports
-import org.apache.hadoop.conf.Configuration;
 // Commons Logging imports
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 // Nutch imports
 
 /**
@@ -39,9 +35,7 @@ import org.slf4j.LoggerFactory;
  * expressions.
  * 
  * <p>
- * The regular expressions rules are expressed in a file. The file of rules is
- * provided by each implementation using the
- * {@link #getRulesFile(Configuration)} method.
+ * The regular expressions rules are expressed in a file.
  * </p>
  * 
  * <p>

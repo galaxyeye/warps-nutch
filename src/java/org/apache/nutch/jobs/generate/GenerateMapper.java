@@ -16,20 +16,19 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.generate;
 
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
 import org.apache.nutch.filter.*;
-import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.jobs.NutchMapper;
-import org.apache.nutch.scoring.ScoringFilterException;
-import org.apache.nutch.scoring.ScoringFilters;
+import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.scoring.ScoringFilterException;
+import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.common.Params;
-import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
@@ -140,8 +139,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
     getCounter().increase(rows);
 
-    String url = TableUtil.unreverseUrl(reversedUrl);
-    WebPage page = WebPage.wrap(row);
+    WebPage page = WebPage.wrap(reversedUrl, row, true);
+    String url = page.url();
 
     if (!shouldFetch(url, reversedUrl, page)) {
       return;

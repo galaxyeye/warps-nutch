@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -97,7 +95,6 @@ public class OPICScoringFilter implements ScoringFilter {
   /** Increase the score by a sum of inlinked scores. */
   @Override
   public void updateScore(String url, WebPage page, WebGraph graph, Collection<WebEdge> inLinkEdges) {
-    float factor1 = 1.0f;
     float inLinkScore = 0.0f;
     for (WebEdge edge : inLinkEdges) {
       if (!edge.isLoop()) {
@@ -105,17 +102,8 @@ public class OPICScoringFilter implements ScoringFilter {
       }
     }
 
-    float factor2 = 1.2f;
-    float oldArticleScore = page.getArticleScore();
-    float newArticleScore = calculateArticleScore(page);
-    float articleScoreDelta = newArticleScore - oldArticleScore;
-//    if (articleScoreDelta < 0) {
-//      LOG.debug("Nagtive article score, the article might be too old : " + newArticleScore + ", " + url);
-//    }
-
-    page.setArticleScore(newArticleScore);
-    page.setScore(page.getScore() + factor1 * inLinkScore + factor2 * articleScoreDelta);
-    page.setCash(page.getCash() + factor1 * inLinkScore);
+    page.setScore(page.getScore() + inLinkScore);
+    page.setCash(page.getCash() + inLinkScore);
   }
 
   /** Get cash on hand, divide it by the number of outlinks and apply. */
@@ -154,25 +142,6 @@ public class OPICScoringFilter implements ScoringFilter {
     }
 
     page.setCash(0.0f);
-  }
-
-  private float calculateArticleScore(WebPage row) {
-    float f1 = 1.2f;
-    float f2 = 1.0f;
-    float f3 = 1.2f;
-
-    // Each article contributes 2 base score
-    long ra = row.getRefArticles();
-    // Each one thousand chars contributes another 1 base score
-    long rc = row.getRefChars();
-    // Each day descreases 1 base score
-    long rptd = ChronoUnit.DAYS.between(row.getRefPublishTime(), Instant.now());
-    if (rptd > 30) {
-      // Invalid ref publish time, descrease 1 base score
-      rptd = 1;
-    }
-
-    return f1 * ra + f2 * (rc / 1000) - f3 * rptd;
   }
 
   /** Dampen the boost value by scorePower. */

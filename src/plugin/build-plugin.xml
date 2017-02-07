@@ -32,7 +32,7 @@
   <available file="${src.test}" type="dir" property="test.available"/>
 
   <property name="conf.dir" location="${nutch.root}/conf"/>
-
+  <property name="default.conf.dir" location="${nutch.root}/conf/configsets/default"/>
   <property name="build.dir" location="${nutch.root}/build/${name}"/>
   <property name="build.classes" location="${build.dir}/classes"/>
   <property name="build.test" location="${build.dir}/test"/>
@@ -68,14 +68,17 @@
     <pathelement location="${nutch.root}/build/test/classes"/>
     <pathelement location="${nutch.root}/src/test"/>
     <pathelement location="${conf.dir}"/>
+    <pathelement location="${default.conf.dir}"/>
     <pathelement location="${nutch.root}/build"/>
     <path refid="classpath"/>
   </path>
 
   <target name="info">
-    <echo>Apache Ant version is ${ant.version} - You are at ${sitename} </echo>
+    <echo>Apache Ant version is ${ant.version}</echo>
     <echo>Name : ${name}, root : ${root}, nutch.root : ${nutch.root} </echo>
     <echo>ivy:settings : ${ivy:settings} </echo>
+    <echo>Additional Property File : ${nutch.root}/build.properties</echo>
+    <echo>Config directoy : ${conf.dir}, default config directory : ${default.conf.dir}</echo>
   </target>
 
   <!-- ====================================================== -->
@@ -127,24 +130,18 @@
   <target name="compile-core">
     <ant target="compile-core" inheritall="false" dir="${nutch.root}"/>
   </target>
-  
+
   <!-- ================================================================== -->
   <!-- Make plugin .jar                                                   -->
   <!-- ================================================================== -->
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="compile">
-    <jar
-      jarfile="${build.dir}/${name}.jar"
-      basedir="${build.classes}"
-    />
+    <jar jarfile="${build.dir}/${name}.jar" basedir="${build.classes}" />
   </target>
 
   <target name="jar-core" depends="compile-core">
-    <jar
-        jarfile="${build.dir}/${name}.jar"
-        basedir="${build.classes}"
-        />
+    <jar jarfile="${build.dir}/${name}.jar" basedir="${build.classes}" />
   </target>
 
   <!-- ================================================================== -->
@@ -154,16 +151,14 @@
   <!-- ================================================================== -->
   <target name="deploy" depends="jar, deps-test">
     <mkdir dir="${deploy.dir}"/>
-    <copy file="plugin.xml" todir="${deploy.dir}" 
-          preservelastmodified="true"/>
-    <available property="lib-available"
-                 file="${build.dir}/${name}.jar"/>
+    <copy file="plugin.xml" todir="${deploy.dir}" preservelastmodified="true"/>
+    <available property="lib-available" file="${build.dir}/${name}.jar"/>
     <antcall target="copy-generated-lib"/>
     <copy todir="${deploy.dir}" flatten="true">
       <fileset refid="lib.jars"/>
     </copy>
   </target>
-	
+
   <target name="copy-generated-lib" if="lib-available">
     <copy file="${build.dir}/${name}.jar" todir="${deploy.dir}" failonerror="false"/>
   </target>
@@ -183,7 +178,7 @@
      source="${javac.version}"
      deprecation="${javac.deprecation}">
       <classpath refid="test.classpath"/>
-    </javac>    
+    </javac>
   </target>
 
   <!-- ================================================================== -->
@@ -196,7 +191,7 @@
       errorProperty="tests.failed" failureProperty="tests.failed">
       <sysproperty key="test.data" value="${build.test}/data"/>
       <sysproperty key="test.input" value="${root}/data"/>
-      <sysproperty key="javax.xml.parsers.DocumentBuilderFactory" value="com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"/> 
+      <sysproperty key="javax.xml.parsers.DocumentBuilderFactory" value="com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"/>
       <classpath refid="test.classpath"/>
       <formatter type="plain" />
       <batchtest todir="${build.test}" unless="testcase">
@@ -210,7 +205,7 @@
 
     <fail if="tests.failed">Tests failed!</fail>
 
-  </target>   
+  </target>
 
   <!-- target: resolve  ================================================= -->
   <target name="resolve-default" depends="clean-lib" description="resolve and retrieve dependencies with ivy">

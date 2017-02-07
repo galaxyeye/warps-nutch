@@ -17,6 +17,7 @@
 package org.apache.nutch.indexwriter.solr;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -25,6 +26,7 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +46,11 @@ import static org.junit.Assert.assertTrue;
  *
  * @since solr 6.1.0
  */
+@Ignore("Start solr server first!")
 public class TestSolrJ {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private Configuration conf = NutchConfiguration.create();
+  private Configuration conf = ConfigUtils.create();
   private String serverUrl;
 
   @Before

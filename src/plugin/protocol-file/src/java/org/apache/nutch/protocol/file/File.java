@@ -201,10 +201,8 @@ public class File implements Protocol {
         + ProtocolStatusUtils.getName(status.getCode())
         + (protocolMessage == null ? "" : ": " + protocolMessage));
     System.out.println("Content-Type: " + content.getContentType());
-    System.out.println("Content-Length: "
-        + content.getMetadata().get(Response.CONTENT_LENGTH));
-    System.out.println("Last-Modified: "
-        + content.getMetadata().get(Response.LAST_MODIFIED));
+    System.out.println("Content-Length: " + content.getMetadata().get(Response.CONTENT_LENGTH));
+    System.out.println("Last-Modified: " + content.getMetadata().get(Response.LAST_MODIFIED));
     String redirectLocation = content.getMetadata().get("Location");
     if (redirectLocation != null) {
       System.err.println("Location: " + redirectLocation);

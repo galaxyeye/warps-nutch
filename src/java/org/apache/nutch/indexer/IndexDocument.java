@@ -236,10 +236,10 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
   private String format(Object obj) {
     if (obj instanceof Date) {
-      return DateTimeUtil.solrCompatibleFormat((Date)obj);
+      return DateTimeUtil.isoInstantFormat((Date)obj);
     }
     else if (obj instanceof Instant) {
-      return DateTimeUtil.solrCompatibleFormat((Instant)obj);
+      return DateTimeUtil.isoInstantFormat((Instant)obj);
     }
     else {
       return obj.toString();

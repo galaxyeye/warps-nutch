@@ -31,12 +31,11 @@
       <import plugin="nutch-extensionpoints"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlfilter.domain"
+   <extension id="org.apache.nutch.filter.urlfilter.domain"
               name="Nutch Domain URL Filter"
               point="org.apache.nutch.filter.URLFilter">
-      <implementation id="DomainURLFilter"
-        class="org.apache.nutch.filter.urlfilter.domain.DomainURLFilter">
-        <!-- <parameter name="file" value="domain-urlfilter.txt"/> -->
+      <implementation id="DomainURLFilter" class="org.apache.nutch.filter.urlfilter.domain.DomainURLFilter">
+         <parameter name="file" value="domain-urlfilter.txt"/>
       </implementation>
    </extension>
 

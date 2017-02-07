@@ -54,8 +54,7 @@ public class PluginRepository {
 
   private Configuration conf;
 
-  public static final Logger LOG = LoggerFactory
-      .getLogger(PluginRepository.class);
+  public static final Logger LOG = LoggerFactory.getLogger(PluginRepository.class);
 
   /**
    * @throws PluginRuntimeException
@@ -127,9 +126,8 @@ public class PluginRepository {
         String xpId = extension.getTargetPoint();
         ExtensionPoint point = getExtensionPoint(xpId);
         if (point == null) {
-          throw new PluginRuntimeException("Plugin ("
-              + descriptor.getPluginId() + "), " + "extension point: " + xpId
-              + " does not exist.");
+          throw new PluginRuntimeException("Plugin (" + descriptor.getPluginId() + "), "
+              + "extension point: " + xpId + " does not exist.");
         }
         point.addExtension(extension);
       }
@@ -256,35 +254,24 @@ public class PluginRepository {
    * @return Plugin
    * @throws PluginRuntimeException
    */
-  public Plugin getPluginInstance(PluginDescriptor pDescriptor)
+  public synchronized Plugin getPluginInstance(PluginDescriptor pDescriptor)
       throws PluginRuntimeException {
-    if (fActivatedPlugins.containsKey(pDescriptor.getPluginId()))
+    if (fActivatedPlugins.containsKey(pDescriptor.getPluginId())) {
       return fActivatedPlugins.get(pDescriptor.getPluginId());
+    }
+
     try {
       // Must synchronize here to make sure creation and initialization
       // of a plugin instance are done by one and only one thread.
       // The same is in Extension.getExtensionInstance().
       // Suggested by Stefan Groschupf <sg@media-style.com>
-      synchronized (pDescriptor) {
-        Class<?> pluginClass = getCachedClass(pDescriptor,
-            pDescriptor.getPluginClass());
-        Constructor<?> constructor = pluginClass.getConstructor(new Class<?>[] {
-            PluginDescriptor.class, Configuration.class });
-        Plugin plugin = (Plugin) constructor.newInstance(new Object[] {
-            pDescriptor, this.conf });
-        plugin.startUp();
-        fActivatedPlugins.put(pDescriptor.getPluginId(), plugin);
-        return plugin;
-      }
-    } catch (ClassNotFoundException e) {
-      throw new PluginRuntimeException(e);
-    } catch (InstantiationException e) {
-      throw new PluginRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new PluginRuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new PluginRuntimeException(e);
-    } catch (InvocationTargetException e) {
+      Class<?> pluginClass = getCachedClass(pDescriptor, pDescriptor.getPluginClass());
+      Constructor<?> constructor = pluginClass.getConstructor(PluginDescriptor.class, Configuration.class);
+      Plugin plugin = (Plugin) constructor.newInstance(pDescriptor, this.conf);
+      plugin.startUp();
+      fActivatedPlugins.put(pDescriptor.getPluginId(), plugin);
+      return plugin;
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
       throw new PluginRuntimeException(e);
     }
   }
@@ -296,6 +283,7 @@ public class PluginRepository {
    */
   public void finalize() throws Throwable {
     shutDownActivatedPlugins();
+    super.finalize();
   }
 
   /**
@@ -326,25 +314,28 @@ public class PluginRepository {
   }
 
   private void displayStatus() {
-    LOG.info("Plugin Auto-activation mode: [" + this.auto + "]");
-    LOG.info("Registered Plugins:");
+    String info = "";
+    info += "Plugin Auto-activation mode: [" + this.auto + "]" + "\n";
+    info += "Registered Plugins:" + "\n";
 
     if ((fRegisteredPlugins == null) || (fRegisteredPlugins.size() == 0)) {
-      LOG.info("\tNONE");
+      info += "\tNONE" + "\n";
     } else {
       for (PluginDescriptor plugin : fRegisteredPlugins) {
-        LOG.info("\t" + plugin.getName() + " (" + plugin.getPluginId() + ")");
+        info += "\t" + plugin.getName() + " (" + plugin.getPluginId() + ")" + "\n";
       }
     }
 
-    LOG.info("Registered Extension-Points:");
+    info += "Registered Extension-Points:" + "\n";
     if ((fExtensionPoints == null) || (fExtensionPoints.size() == 0)) {
-      LOG.info("\tNONE");
+      info += "\tNONE" + "\n";
     } else {
       for (ExtensionPoint ep : fExtensionPoints.values()) {
-        LOG.info("\t" + ep.getName() + " (" + ep.getId() + ")");
+        info += "\t" + ep.getName() + " (" + ep.getId() + ")" + "\n";
       }
     }
+
+    LOG.info(info);
   }
 
   /**
@@ -359,9 +350,9 @@ public class PluginRepository {
    * @return map of plugins matching the configuration
    */
   private Map<String, PluginDescriptor> filter(Pattern excludes,
-      Pattern includes, Map<String, PluginDescriptor> plugins) {
+                                               Pattern includes, Map<String, PluginDescriptor> plugins) {
 
-    Map<String, PluginDescriptor> loadedPlugins = new HashMap<String, PluginDescriptor>();
+    Map<String, PluginDescriptor> loadedPlugins = new HashMap<>();
     List<String> notIncludedPlugins = Lists.newArrayList();
     List<String> excludedPlugins = Lists.newArrayList();
 

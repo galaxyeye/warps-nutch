@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by vincent on 16-7-20.
@@ -104,6 +105,15 @@ public class TestDateTime {
 
     LocalDateTime ldt = LocalDateTime.now();
     System.out.println(ldt);
+  }
+
+  @Test
+  public void testParseDateTime() {
+    String t = "2017-02-06T02:15:11.174Z";
+    Instant instant = DateTimeUtil.parseInstant(t, Instant.EPOCH);
+    assertEquals(t, DateTimeFormatter.ISO_INSTANT.format(instant));
+//    System.out.println(instant);
+//    System.out.println(Instant.parse(t));
   }
 
   @Test

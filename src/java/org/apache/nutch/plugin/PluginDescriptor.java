@@ -16,19 +16,15 @@
  */
 package org.apache.nutch.plugin;
 
+import org.apache.hadoop.conf.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-
-import org.apache.hadoop.conf.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 /**
  * The <code>PluginDescriptor</code> provide access to all meta information of a
@@ -44,15 +40,14 @@ public class PluginDescriptor {
   private String fVersion;
   private String fName;
   private String fProviderName;
-  private HashMap<String, ResourceBundle> fMessages = new HashMap<String, ResourceBundle>();
-  private ArrayList<ExtensionPoint> fExtensionPoints = new ArrayList<ExtensionPoint>();
-  private ArrayList<String> fDependencies = new ArrayList<String>();
-  private ArrayList<URL> fExportedLibs = new ArrayList<URL>();
-  private ArrayList<URL> fNotExportedLibs = new ArrayList<URL>();
-  private ArrayList<Extension> fExtensions = new ArrayList<Extension>();
+  private HashMap<String, ResourceBundle> fMessages = new HashMap<>();
+  private ArrayList<ExtensionPoint> fExtensionPoints = new ArrayList<>();
+  private ArrayList<String> fDependencies = new ArrayList<>();
+  private ArrayList<URL> fExportedLibs = new ArrayList<>();
+  private ArrayList<URL> fNotExportedLibs = new ArrayList<>();
+  private ArrayList<Extension> fExtensions = new ArrayList<>();
   private PluginClassLoader fClassLoader;
-  public static final Logger LOG = LoggerFactory
-      .getLogger(PluginDescriptor.class);
+  public static final Logger LOG = LoggerFactory.getLogger(PluginDescriptor.class);
   private Configuration fConf;
 
   /**
@@ -189,8 +184,7 @@ public class PluginDescriptor {
    * @return ExtensionPoint[]
    */
   public ExtensionPoint[] getExtenstionPoints() {
-    return fExtensionPoints
-        .toArray(new ExtensionPoint[fExtensionPoints.size()]);
+    return fExtensionPoints.toArray(new ExtensionPoint[fExtensionPoints.size()]);
   }
 
   /**
@@ -217,10 +211,8 @@ public class PluginDescriptor {
    * 
    * @param pLibPath
    */
-  public void addExportedLibRelative(String pLibPath)
-      throws MalformedURLException {
-    URL url = new File(getPluginPath() + File.separator + pLibPath).toURI()
-        .toURL();
+  public void addExportedLibRelative(String pLibPath) throws MalformedURLException {
+    URL url = new File(getPluginPath() + File.separator + pLibPath).toURI().toURL();
     fExportedLibs.add(url);
   }
 
@@ -247,10 +239,8 @@ public class PluginDescriptor {
    * 
    * @param pLibPath
    */
-  public void addNotExportedLibRelative(String pLibPath)
-      throws MalformedURLException {
-    URL url = new File(getPluginPath() + File.separator + pLibPath).toURI()
-        .toURL();
+  public void addNotExportedLibRelative(String pLibPath) throws MalformedURLException {
+    URL url = new File(getPluginPath() + File.separator + pLibPath).toURI().toURL();
     fNotExportedLibs.add(url);
   }
 
@@ -271,9 +261,10 @@ public class PluginDescriptor {
    * @return PluginClassLoader the classloader for the plugin
    */
   public PluginClassLoader getClassLoader() {
-    if (fClassLoader != null)
+    if (fClassLoader != null) {
       return fClassLoader;
-    ArrayList<URL> arrayList = new ArrayList<URL>();
+    }
+    ArrayList<URL> arrayList = new ArrayList<>();
     arrayList.addAll(fExportedLibs);
     arrayList.addAll(fNotExportedLibs);
     arrayList.addAll(getDependencyLibs());
@@ -296,7 +287,7 @@ public class PluginDescriptor {
    * @return Collection
    */
   private ArrayList<URL> getDependencyLibs() {
-    ArrayList<URL> list = new ArrayList<URL>();
+    ArrayList<URL> list = new ArrayList<>();
     collectLibs(list, this);
     return list;
   }
@@ -306,13 +297,9 @@ public class PluginDescriptor {
    * @param pDescriptor
    */
   private void collectLibs(ArrayList<URL> pLibs, PluginDescriptor pDescriptor) {
-
     for (String id : pDescriptor.getDependencies()) {
-      PluginDescriptor descriptor = PluginRepository.get(fConf)
-          .getPluginDescriptor(id);
-      for (URL url : descriptor.getExportedLibUrls()) {
-        pLibs.add(url);
-      }
+      PluginDescriptor descriptor = PluginRepository.get(fConf).getPluginDescriptor(id);
+      Collections.addAll(pLibs, descriptor.getExportedLibUrls());
       collectLibs(pLibs, descriptor);
     }
   }
@@ -326,8 +313,7 @@ public class PluginDescriptor {
    * @return String
    * @throws IOException
    */
-  public String getResourceString(String pKey, Locale pLocale)
-      throws IOException {
+  public String getResourceString(String pKey, Locale pLocale) throws IOException {
     if (fMessages.containsKey(pLocale.toString())) {
       ResourceBundle bundle = fMessages.get(pLocale.toString());
       try {
@@ -337,8 +323,7 @@ public class PluginDescriptor {
       }
     }
     try {
-      ResourceBundle res = ResourceBundle.getBundle("messages", pLocale,
-          getClassLoader());
+      ResourceBundle res = ResourceBundle.getBundle("messages", pLocale, getClassLoader());
       return res.getString(pKey);
     } catch (MissingResourceException x) {
       return '!' + pKey + '!';

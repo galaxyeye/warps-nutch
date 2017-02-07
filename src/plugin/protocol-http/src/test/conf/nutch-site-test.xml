@@ -18,6 +18,11 @@
 -->
 
 <configuration>
+  <property>
+    <name>fetcher.fetch.mode</name>
+    <value>NATIVE</value>
+    <description>native, proxy and crowdsourcing</description>
+  </property>
 
 <property>
   <name>http.robots.agents</name>

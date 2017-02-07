@@ -27,6 +27,7 @@ import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.DataInputStream;
@@ -75,7 +76,7 @@ public class TestRTFParser {
 
     parseResult = new ParseUtil(conf).parse(urlString, page);
 
-    String title = parseResult.getTitle();
+    String title = parseResult.getPageTitle();
     String text = parseResult.getText();
     assertEquals("test rft document", title);
     // assertEquals("The quick brown fox jumps over the lazy dog", text.trim());

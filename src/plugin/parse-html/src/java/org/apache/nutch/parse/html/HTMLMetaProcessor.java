@@ -41,13 +41,18 @@ public class HTMLMetaProcessor {
    * Sets the indicators in <code>robotsMeta</code> to appropriate values, based
    * on any META tags found under the given <code>node</code>.
    */
-  public static final void getMetaTags(HTMLMetaTags metaTags, Node node, URL currURL) {
+  public static final void getMetaTags(HTMLMetaTags metaTags, Node node,
+                                       URL currURL) {
+
     metaTags.reset();
     getMetaTagsHelper(metaTags, node, currURL);
   }
 
-  private static final void getMetaTagsHelper(HTMLMetaTags metaTags, Node node, URL currURL) {
+  private static final void getMetaTagsHelper(HTMLMetaTags metaTags, Node node,
+                                              URL currURL) {
+
     if (node.getNodeType() == Node.ELEMENT_NODE) {
+
       if ("body".equalsIgnoreCase(node.getNodeName())) {
         // META tags should not be under body
         return;
@@ -58,12 +63,10 @@ public class HTMLMetaProcessor {
         Node nameNode = null;
         Node equivNode = null;
         Node contentNode = null;
-
         // Retrieves name, http-equiv and content attribues
         for (int i = 0; i < attrs.getLength(); i++) {
           Node attr = attrs.item(i);
           String attrName = attr.getNodeName().toLowerCase();
-
           if (attrName.equals("name")) {
             nameNode = attr;
           } else if (attrName.equals("http-equiv")) {
@@ -77,10 +80,39 @@ public class HTMLMetaProcessor {
           if (contentNode != null) {
             String name = nameNode.getNodeValue().toLowerCase();
             metaTags.getGeneralTags().add(name, contentNode.getNodeValue());
-
             if ("robots".equals(name)) {
-              processRobotsNode(metaTags, contentNode);
-            }
+
+              if (contentNode != null) {
+                String directives = contentNode.getNodeValue().toLowerCase();
+                int index = directives.indexOf("none");
+
+                if (index >= 0) {
+                  metaTags.setNoIndex();
+                  metaTags.setNoFollow();
+                }
+
+                index = directives.indexOf("all");
+                if (index >= 0) {
+                  // do nothing...
+                }
+
+                index = directives.indexOf("noindex");
+                if (index >= 0) {
+                  metaTags.setNoIndex();
+                }
+
+                index = directives.indexOf("nofollow");
+                if (index >= 0) {
+                  metaTags.setNoFollow();
+                }
+
+                index = directives.indexOf("noarchive");
+                if (index >= 0) {
+                  metaTags.setNoCache();
+                }
+              }
+
+            } // end if (name == robots)
           }
         }
 
@@ -95,14 +127,81 @@ public class HTMLMetaProcessor {
               if (index >= 0)
                 metaTags.setNoCache();
             } else if ("refresh".equals(name)) {
-              processRefreshNode(metaTags, content, currURL);
+              int idx = content.indexOf(';');
+              String time = null;
+              if (idx == -1) { // just the refresh time
+                time = content;
+              } else
+                time = content.substring(0, idx);
+              try {
+                metaTags.setRefreshTime(Integer.parseInt(time));
+                // skip this if we couldn't parse the time
+                metaTags.setRefresh(true);
+              } catch (Exception e) {
+                ;
+              }
+              URL refreshUrl = null;
+              if (metaTags.getRefresh() && idx != -1) { // set the URL
+                idx = content.toLowerCase().indexOf("url=");
+                if (idx == -1) { // assume a mis-formatted entry with just the
+                  // url
+                  idx = content.indexOf(';') + 1;
+                } else
+                  idx += 4;
+                if (idx != -1) {
+                  String url = content.substring(idx);
+                  try {
+                    refreshUrl = new URL(url);
+                  } catch (Exception e) {
+                    // XXX according to the spec, this has to be an absolute
+                    // XXX url. However, many websites use relative URLs and
+                    // XXX expect browsers to handle that.
+                    // XXX Unfortunately, in some cases this may create a
+                    // XXX infinitely recursive paths (a crawler trap)...
+                    // if (!url.startsWith("/")) url = "/" + url;
+                    try {
+                      refreshUrl = new URL(currURL, url);
+                    } catch (Exception e1) {
+                      refreshUrl = null;
+                    }
+                  }
+                }
+              }
+              if (metaTags.getRefresh()) {
+                if (refreshUrl == null) {
+                  // apparently only refresh time was present. set the URL
+                  // to the same URL.
+                  refreshUrl = currURL;
+                }
+                metaTags.setRefreshHref(refreshUrl);
+              }
             }
           }
         }
 
       } else if ("base".equalsIgnoreCase(node.getNodeName())) {
-        processBaseNode(metaTags, node, currURL);
+        NamedNodeMap attrs = node.getAttributes();
+        Node hrefNode = attrs.getNamedItem("href");
+
+        if (hrefNode != null) {
+          String urlString = hrefNode.getNodeValue();
+
+          URL url = null;
+          try {
+            if (currURL == null)
+              url = new URL(urlString);
+            else
+              url = new URL(currURL, urlString);
+          } catch (Exception e) {
+            ;
+          }
+
+          if (url != null)
+            metaTags.setBaseHref(url);
+        }
+
       }
+
     }
 
     NodeList children = node.getChildNodes();
@@ -114,109 +213,4 @@ public class HTMLMetaProcessor {
     }
   }
 
-  private static void processRefreshNode(HTMLMetaTags metaTags, String content, URL currURL) {
-    int idx = content.indexOf(';');
-    String time;
-    if (idx == -1) { // just the refresh time
-      time = content;
-    } else
-      time = content.substring(0, idx);
-    try {
-      metaTags.setRefreshTime(Integer.parseInt(time));
-      // skip this if we couldn't parse the time
-      metaTags.setRefresh(true);
-    } catch (Exception e) {
-      ;
-    }
-    URL refreshUrl = null;
-    if (metaTags.getRefresh() && idx != -1) { // set the URL
-      idx = content.toLowerCase().indexOf("url=");
-      if (idx == -1) { // assume a mis-formatted entry with just the
-        // url
-        idx = content.indexOf(';') + 1;
-      } else
-        idx += 4;
-      if (idx != -1) {
-        String url = content.substring(idx);
-        try {
-          refreshUrl = new URL(url);
-        } catch (Exception e) {
-          // XXX according to the spec, this has to be an absolute
-          // XXX url. However, many websites use relative URLs and
-          // XXX expect browsers to handle that.
-          // XXX Unfortunately, in some cases this may create a
-          // XXX infinitely recursive paths (a crawler trap)...
-          // if (!url.startsWith("/")) url = "/" + url;
-          try {
-            refreshUrl = new URL(currURL, url);
-          } catch (Exception e1) {
-            refreshUrl = null;
-          }
-        }
-      }
-    }
-    if (metaTags.getRefresh()) {
-      if (refreshUrl == null) {
-        // apparently only refresh time was present. set the URL
-        // to the same URL.
-        refreshUrl = currURL;
-      }
-      metaTags.setRefreshHref(refreshUrl);
-    }
-  }
-
-  private static void processRobotsNode(HTMLMetaTags metaTags, Node contentNode) {
-    if (contentNode != null) {
-      String directives = contentNode.getNodeValue().toLowerCase();
-      int index = directives.indexOf("none");
-
-      if (index >= 0) {
-        metaTags.setNoIndex();
-        metaTags.setNoFollow();
-      }
-
-      index = directives.indexOf("all");
-      if (index >= 0) {
-        // do nothing...
-      }
-
-      index = directives.indexOf("noindex");
-      if (index >= 0) {
-        metaTags.setNoIndex();
-      }
-
-      index = directives.indexOf("nofollow");
-      if (index >= 0) {
-        metaTags.setNoFollow();
-      }
-
-      index = directives.indexOf("noarchive");
-      if (index >= 0) {
-        metaTags.setNoCache();
-      }
-    }
-
-  }
-
-  private static void processBaseNode(HTMLMetaTags metaTags, Node node, URL currURL) {
-    NamedNodeMap attrs = node.getAttributes();
-    Node hrefNode = attrs.getNamedItem("href");
-
-    if (hrefNode != null) {
-      String urlString = hrefNode.getNodeValue();
-
-      URL url = null;
-      try {
-        if (currURL == null)
-          url = new URL(urlString);
-        else
-          url = new URL(currURL, urlString);
-      } catch (Exception e) {
-        ;
-      }
-
-      if (url != null)
-        metaTags.setBaseHref(url);
-    }
-  }
 }

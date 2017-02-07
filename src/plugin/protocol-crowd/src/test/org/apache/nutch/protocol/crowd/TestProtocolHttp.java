@@ -18,9 +18,12 @@
 package org.apache.nutch.protocol.crowd;
 
 
+import org.junit.Ignore;
+
 /**
  * Test cases for protocol-http
  */
+@Ignore
 public class TestProtocolHttp {
 
   private void fetchPage(String page, int expectedCode) throws Exception {

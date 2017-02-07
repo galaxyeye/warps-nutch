@@ -18,7 +18,6 @@
 /**
  * URL filter plugin to include only URLs which match an element in a given list of
  * domain suffixes, domain names, and/or host names.
- * See {@link org.apache.nutch.filter.urlfilter.domainblacklist} for the counterpart
  * (exclude URLs by host or domain).
  */
 package org.apache.nutch.filter.urlfilter.domain;

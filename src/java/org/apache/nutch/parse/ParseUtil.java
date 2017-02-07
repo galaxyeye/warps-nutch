@@ -204,7 +204,10 @@ public class ParseUtil {
 
   private void processSuccess(String url, WebPage page, ParseResult parseResult) {
     page.setText(parseResult.getText());
-    page.setTitle(parseResult.getTitle());
+    page.setPageTitle(parseResult.getPageTitle());
+
+    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
+    page.setPageCategory(pageCategory);
 
     ByteBuffer prevSig = page.getSignature();
     if (prevSig != null) {

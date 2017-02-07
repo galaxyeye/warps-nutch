@@ -26,6 +26,7 @@ import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.DataInputStream;

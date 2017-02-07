@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nutch.filter;
+package org.apache.nutch.filter.urlfilter;
 
 // JDK imports
+import org.apache.nutch.filter.URLFilter;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +27,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -64,7 +65,7 @@ public abstract class RegexURLFilterBaseTest {
     long start = System.currentTimeMillis();
     try {
       URLFilter filter = getURLFilter(rules);
-      FilteredURL[] expected = readURLFile(urls);
+      ArrayList<FilteredURL> expected = readURLFile(urls);
       for (int i = 0; i < loops; i++) {
         test(filter, expected);
       }
@@ -77,6 +78,9 @@ public abstract class RegexURLFilterBaseTest {
 
   protected void test(String file) {
     try {
+      LOG.info("Rules File : " + SAMPLES + SEPARATOR + file + ".rules");
+      LOG.info("Urls File : " + SAMPLES + SEPARATOR + file + ".urls");
+
       test(new FileReader(SAMPLES + SEPARATOR + file + ".rules"),
           new FileReader(SAMPLES + SEPARATOR + file + ".urls"));
     } catch (Exception e) {
@@ -88,31 +92,23 @@ public abstract class RegexURLFilterBaseTest {
     try {
       test(getURLFilter(rules), readURLFile(urls));
     } catch (Exception e) {
-      fail(e.toString());
+      fail(StringUtil.stringifyException(e));
     }
   }
 
-  protected void test(URLFilter filter, FilteredURL[] expected) {
-    for (int i = 0; i < expected.length; i++) {
-      String result = filter.filter(expected[i].url);
+  protected void test(URLFilter filter, ArrayList<FilteredURL> expected) {
+    expected.forEach(url -> {
+      String result = filter.filter(url.url);
       if (result != null) {
-        assertTrue(expected[i].url, expected[i].sign);
+        assertTrue(url.url, url.sign);
       } else {
-        assertFalse(expected[i].url, expected[i].sign);
+        assertFalse(url.url, url.sign);
       }
-    }
+    });
   }
 
-  private static FilteredURL[] readURLFile(Reader reader) throws IOException {
-    BufferedReader in = new BufferedReader(reader);
-    List<FilteredURL> list = new ArrayList<>();
-    String line;
-    while ((line = in.readLine()) != null) {
-      if (line.length() != 0) {
-        list.add(new FilteredURL(line));
-      }
-    }
-    return new FilteredURL[list.size()];
+  private static ArrayList<FilteredURL> readURLFile(Reader reader) throws IOException {
+    return new BufferedReader(reader).lines().map(FilteredURL::new).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
   }
 
   private static class FilteredURL {

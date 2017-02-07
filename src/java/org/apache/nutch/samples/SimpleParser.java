@@ -81,14 +81,10 @@ public class SimpleParser extends Configured {
   public void parse(String url, String contentType) {
     LOG.info("Parsing: " + url);
 
-    try {
-      this.url = url;
-      page = fetcher.fetch(url, contentType);
-      if (page != null) {
-        parse(page);
-      }
-    } catch (ProtocolNotFound e) {
-      LOG.error(e.getMessage());
+    this.url = url;
+    page = fetcher.fetch(url, contentType);
+    if (page != null) {
+      parse(page);
     }
   }
 
@@ -108,7 +104,7 @@ public class SimpleParser extends Configured {
       if (page != null) {
         extract(page);
       }
-    } catch (ProtocolNotFound|SAXException|IOException|ProcessingException e) {
+    } catch (SAXException|IOException|ProcessingException e) {
       LOG.error(e.getMessage());
     }
   }
@@ -132,7 +128,7 @@ public class SimpleParser extends Configured {
 
     input = getContentAsInputSource(page);
     TextDocument scentDoc = new SAXInput(input).getTextDocument();
-    System.out.println(scentDoc.getText(true, true));
+    System.out.println(scentDoc.getTextContent(true, true));
   }
 
   public WebPage getWebPage() {
@@ -184,10 +180,10 @@ public class SimpleParser extends Configured {
         .collect(Collectors.joining("\n"));
     results.put("Metadata", metadata);
 
-    String filteredOutlinks = parseResult.getOutlinks().stream()
+    String validOutlinks = parseResult.getOutlinks().stream()
         .map(Outlink::getToUrl)
         .filter(l -> crawlFilters.normalizeAndValidateUrl(l)).sorted().distinct().collect(Collectors.joining("\n"));
-    results.put("FilteredOutlinks", filteredOutlinks);
+    results.put("Outlinks", validOutlinks);
 
     String discardedOutlinks = parseResult.getOutlinks().stream()
         .map(Outlink::getToUrl)

@@ -79,8 +79,9 @@ public class DOMContentUtils {
     linkParams.put("area", new LinkParams("area", "href", 0));
     if (conf.getBoolean("parser.html.form.use_action", true)) {
       linkParams.put("form", new LinkParams("form", "action", 1));
-      if (conf.get("parser.html.form.use_action") != null)
+      if (conf.get("parser.html.form.use_action") != null) {
         forceTags.add("form");
+      }
     }
     linkParams.put("frame", new LinkParams("frame", "src", 0));
     linkParams.put("iframe", new LinkParams("iframe", "src", 0));
@@ -127,49 +128,16 @@ public class DOMContentUtils {
     getText(sb, node, false);
   }
 
-  // returns true if abortOnNestedAnchors is true and we find nested
-  // anchors
-  private boolean getTextHelper(StringBuilder sb, Node node,
-      boolean abortOnNestedAnchors, int anchorDepth) {
-    boolean abort = false;
-    NodeWalker walker = new NodeWalker(node);
+  public String getText(Node node) {
+    StringBuilder sb = new StringBuilder();
+    getText(sb, node, false);
+    return sb.toString();
+  }
 
-    while (walker.hasNext()) {
-
-      Node currentNode = walker.nextNode();
-      String nodeName = currentNode.getNodeName();
-      short nodeType = currentNode.getNodeType();
-
-      if ("script".equalsIgnoreCase(nodeName)) {
-        walker.skipChildren();
-      }
-      if ("style".equalsIgnoreCase(nodeName)) {
-        walker.skipChildren();
-      }
-      if (abortOnNestedAnchors && "a".equalsIgnoreCase(nodeName)) {
-        anchorDepth++;
-        if (anchorDepth > 1) {
-          abort = true;
-          break;
-        }
-      }
-      if (nodeType == Node.COMMENT_NODE) {
-        walker.skipChildren();
-      }
-      if (nodeType == Node.TEXT_NODE) {
-        // cleanup and trim the value
-        String text = currentNode.getNodeValue();
-        text = text.replaceAll("\\s+", " ");
-        text = text.trim();
-        if (text.length() > 0) {
-          if (sb.length() > 0)
-            sb.append(' ');
-          sb.append(text);
-        }
-      }
-    }
-
-    return abort;
+  public String getTitle(Node node) {
+    StringBuilder sb = new StringBuilder();
+    getTitle(sb, node);
+    return sb.toString();
   }
 
   /**
@@ -289,6 +257,53 @@ public class DOMContentUtils {
     return null;
   }
 
+  // returns true if abortOnNestedAnchors is true and we find nested
+  // anchors
+  private boolean getTextHelper(StringBuilder sb, Node node, boolean abortOnNestedAnchors, int anchorDepth) {
+    boolean abort = false;
+    NodeWalker walker = new NodeWalker(node);
+
+    while (walker.hasNext()) {
+      Node currentNode = walker.nextNode();
+      String nodeName = currentNode.getNodeName();
+      short nodeType = currentNode.getNodeType();
+
+      if ("script".equalsIgnoreCase(nodeName)) {
+        walker.skipChildren();
+      }
+      if ("style".equalsIgnoreCase(nodeName)) {
+        walker.skipChildren();
+      }
+
+      if (abortOnNestedAnchors && "a".equalsIgnoreCase(nodeName)) {
+        anchorDepth++;
+        if (anchorDepth > 1) {
+          abort = true;
+          break;
+        }
+      }
+
+      if (nodeType == Node.COMMENT_NODE) {
+        walker.skipChildren();
+      }
+
+      if (nodeType == Node.TEXT_NODE) {
+        // cleanup and trim the value
+        String text = currentNode.getNodeValue();
+        text = text.replaceAll("\\s+", " ");
+        text = text.trim();
+        if (text.length() > 0) {
+          if (sb.length() > 0) {
+            sb.append(' ');
+          }
+          sb.append(text);
+        }
+      }
+    }
+
+    return abort;
+  }
+
   private boolean hasOnlyWhiteSpace(Node node) {
     String val = node.getNodeValue();
     for (int i = 0; i < val.length(); i++) {
@@ -300,22 +315,16 @@ public class DOMContentUtils {
 
   // this only covers a few cases of empty links that are symptomatic
   // of nekohtml's DOM-fixup process...
-  private boolean shouldThrowAwayLink(Node node, NodeList children,
-      int childLen, LinkParams params) {
+  private boolean shouldThrowAwayLink(Node node, NodeList children, int childLen, LinkParams params) {
     if (childLen == 0) {
       // this has no inner structure
-      if (params.childLen == 0)
-        return false;
-      else
-        return true;
+      return params.childLen != 0;
     } else if ((childLen == 1)
         && (children.item(0).getNodeType() == Node.ELEMENT_NODE)
         && (params.elName.equalsIgnoreCase(children.item(0).getNodeName()))) {
       // single nested link
       return true;
-
     } else if (childLen == 2) {
-
       Node c0 = children.item(0);
       Node c1 = children.item(1);
 
@@ -363,13 +372,22 @@ public class DOMContentUtils {
    * which contain only single nested links and empty text nodes (this is a
    * common DOM-fixup artifact, at least with nekohtml).
    */
-  public void getOutlinks(URL base, ArrayList<Outlink> outlinks, Node root, CrawlFilters crawlFilters) {
+
+  public ArrayList<Outlink> getOutlinks(URL base, Node root) {
+    return getOutlinks(base, root, null);
+  }
+
+  public ArrayList<Outlink> getOutlinks(URL base, Node root, CrawlFilters crawlFilters) {
+    return getOutlinks(base, new ArrayList<>(), root, crawlFilters);
+  }
+
+  public ArrayList<Outlink> getOutlinks(URL base, ArrayList<Outlink> outlinks, Node root, CrawlFilters crawlFilters) {
     NodeWalker walker = new NodeWalker(root);
 
     while (walker.hasNext()) {
       Node currentNode = walker.nextNode();
 
-      if (crawlFilters.isAllowed(currentNode)) {
+      if (crawlFilters == null || crawlFilters.isAllowed(currentNode)) {
         getOutlinksStep2(base, outlinks, currentNode, crawlFilters);
         walker.skipChildren();
       }
@@ -377,16 +395,18 @@ public class DOMContentUtils {
         LOG.debug("Block disallowed, skip : " + DomUtil.getPrettyName(currentNode));
       }
     }
+
+    return outlinks;
   }
 
   private void getOutlinksStep2(URL base, ArrayList<Outlink> outlinks, Node node, CrawlFilters crawlFilters) {
     NodeWalker walker = new NodeWalker(node);
-//    LOG.debug("Get outlinks for " + DomUtil.getPrettyName(node));
+    // LOG.debug("Get outlinks for " + DomUtil.getPrettyName(node));
 
     while (walker.hasNext()) {
       Node currentNode = walker.nextNode();
 
-      if (crawlFilters.isDisallowed(currentNode)) {
+      if (crawlFilters != null && crawlFilters.isDisallowed(currentNode)) {
         LOG.debug("Block disallowed, skip : " + DomUtil.getPrettyName(currentNode));
         walker.skipChildren();
         continue;

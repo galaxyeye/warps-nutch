@@ -30,13 +30,12 @@
 
    <requires>
       <import plugin="nutch-extensionpoints"/>
+      <import plugin="lib-regex-filter"/>
    </requires>
 
-   <extension id="org.apache.nutch.net.urlfilter.automaton"
-              name="Nutch Automaton URL Filter"
+   <extension id="org.apache.nutch.filter.urlfilter.automaton" name="Nutch Automaton URL Filter"
               point="org.apache.nutch.filter.URLFilter">
-      <implementation id="AutomatonURLFilter"
-                      class="org.apache.nutch.filter.urlfilter.automaton.AutomatonURLFilter"/>
+      <implementation id="AutomatonURLFilter" class="org.apache.nutch.filter.urlfilter.automaton.AutomatonURLFilter"/>
    </extension>
 
 </plugin>

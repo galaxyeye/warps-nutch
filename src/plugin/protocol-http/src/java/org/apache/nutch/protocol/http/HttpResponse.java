@@ -22,7 +22,6 @@ import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.net.proxy.ProxyEntry;
@@ -38,6 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -161,7 +161,7 @@ public class HttpResponse implements Response {
       // make request
       OutputStream req = socket.getOutputStream();
 
-      StringBuffer reqStr = new StringBuffer("GET ");
+      StringBuilder reqStr = new StringBuilder("GET ");
       if (http.useProxy()) {
         reqStr.append(url.getProtocol() + "://" + host + portString + path);
       } else {
@@ -187,17 +187,12 @@ public class HttpResponse implements Response {
           Http.LOG.error("User-agent is not set!");
         }
       } else {
-        reqStr.append("User-Agent: ");
-        reqStr.append(userAgent);
-        reqStr.append("\r\n");
+        reqStr.append("User-Agent: ").append(userAgent).append("\r\n");
       }
 
-      // if (page.isReadable(GoraWebPage.Field.MODIFIED_TIME.getIndex())) {
-      reqStr.append("If-Modified-Since: "
-          + HttpDateFormat.toString(page.getModifiedTime().toEpochMilli()));
-      reqStr.append("\r\n");
-      // }
-      reqStr.append("\r\n");
+      reqStr.append("If-Modified-Since: ")
+              .append(DateTimeFormatter.RFC_1123_DATE_TIME.format(page.getModifiedTime()))
+              .append("\r\n").append("\r\n");
 
       byte[] reqBytes = reqStr.toString().getBytes();
 

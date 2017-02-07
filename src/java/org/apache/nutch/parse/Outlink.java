@@ -92,8 +92,7 @@ public class Outlink implements Writable {
   }
 
   public String toString() {
-    return "toUrl: " + toUrl + " anchor: " + anchor; // removed "\n". toString,
-                                                     // not printLine... WD.
+    return "<" + toUrl + ", " + anchor + ">";
   }
 
 }

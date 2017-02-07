@@ -83,12 +83,12 @@ public class WebPageConverter {
     return value;
   }
 
-  private static Object convertNamedField(WebPage page, String field) {
+  public static Object convertNamedField(WebPage page, String field) {
     if (field.equals(GoraWebPage.Field.BASE_URL.getName())) {
       return page.getBaseUrl();
     }
     else if (field.equals(GoraWebPage.Field.METADATA.getName())) {
-      return getMetadata(page);
+      return convertMetadata(page);
     }
     else if (field.equals(GoraWebPage.Field.PROTOCOL_STATUS.getName())) {
       return ProtocolStatusUtils.toString(page.getProtocolStatus());
@@ -103,7 +103,7 @@ public class WebPageConverter {
       return page.getSignatureAsString();
     }
     else if (field.equals(GoraWebPage.Field.TITLE.getName())) {
-      return page.getTitle();
+      return page.getPageTitle();
     }
     else if (field.equals(GoraWebPage.Field.TEXT.getName())) {
       return page.getText();
@@ -157,7 +157,7 @@ public class WebPageConverter {
     return filteredFields;
   }
 
-  private static Map<String, Object> getMetadata(WebPage page) {
+  public static Map<String, Object> convertMetadata(WebPage page) {
     Map<CharSequence, ByteBuffer> metadata = page.getMetadata();
     if (MapUtils.isEmpty(metadata)) {
       return Collections.emptyMap();
@@ -165,16 +165,16 @@ public class WebPageConverter {
 
     Map<String, Object> result = Maps.newHashMap();
     for (CharSequence key : metadata.keySet()) {
-      String k = key.toString();
       Metadata.Name name = Metadata.Name.of(key.toString());
-      Object v = name == Metadata.Name.UNKNOWN ? Bytes.toStringBinary(metadata.get(key)) : getNamedMetadata(name, page);
+      String k = name.name().toLowerCase();
+      Object v = name == Metadata.Name.UNKNOWN ? Bytes.toStringBinary(metadata.get(key)) : convertNamedMetadata(name, page);
       result.put(k, v);
     }
 
     return result;
   }
 
-  private static Object getNamedMetadata(Metadata.Name name, WebPage page) {
+  public static Object convertNamedMetadata(Metadata.Name name, WebPage page) {
     switch (name) {
       case IS_SEED:
         return page.isSeed();

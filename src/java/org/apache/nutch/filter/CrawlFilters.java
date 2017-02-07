@@ -23,17 +23,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.parse.Outlink;
-import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.common.ObjectCache;
+import org.apache.nutch.parse.Outlink;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -60,6 +57,7 @@ public class CrawlFilters extends Configured {
    * TODO : check thread safety
    */
   public static CrawlFilters create(Configuration conf) {
+    // SCOPE_OUTLINK -> DEFAULT
     return create(URLNormalizers.SCOPE_OUTLINK, conf);
   }
 
@@ -365,24 +363,8 @@ public class CrawlFilters extends Configured {
 
   @Override
   public String toString() {
-    return toJson();
-  }
-
-  public static void main(String[] args) throws Exception {
-    Configuration conf = ConfigUtils.create();
-    byte[] json = Files.readAllBytes(Paths.get("/tmp/crawl_filters.json"));
-    conf.set(CRAWL_FILTER_RULES, new String(json));
-
-    String url = "http://item.yhd.com/item/12342134134.html";
-
-    CrawlFilters crawlFilters = CrawlFilters.create(conf);
-    System.out.println(crawlFilters);
-
-    boolean detail = crawlFilters.veryLikelyBeDetailUrl("http://item.yhd.com/item/12342134134.html");
-    System.out.println("detail " + detail);
-
-    System.out.println("----------------");
-    RegexURLFilter urlFilter = new RegexURLFilter("+^http://item.yhd.com/item/(.+)$");
-    urlFilter.filter(url);
+    return toJson()
+        + "\nUrl filters : " + urlFilters.toString()
+        + "\nUrl normalizers : " + urlNormalizers.toString();
   }
 }

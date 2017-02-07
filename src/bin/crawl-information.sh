@@ -117,14 +117,15 @@ if [ $NUTCH_RUNTIME_MODE=="DISTRIBUTE" ]; then
     exit -1;
   fi
 
-  if [ -e $SEEDDIR ]; then
-    HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
-    hadoop fs -test -e $HDFS_SEED_DIR
-    (( $?==0 )) && hadoop fs -mkdir -p $HDFS_SEED_DIR
-    hadoop fs -copyFromLocal -f "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
-
-    SEEDDIR=$HDFS_SEED_DIR
-  fi
+# It's done in InjectJob, can be removed later
+#  if [ -e $SEEDDIR ]; then
+#    HDFS_SEED_DIR=/tmp/nutch-$USER/seeds
+#    hadoop fs -test -e $HDFS_SEED_DIR
+#    (( $?==0 )) && hadoop fs -mkdir -p $HDFS_SEED_DIR
+#    hadoop fs -copyFromLocal -f "$SEEDDIR" "$HDFS_BASE_URI$HDFS_SEED_DIR"
+#
+#    SEEDDIR=$HDFS_SEED_DIR
+#  fi
 fi
 
 if [ ! -e "$NUTCH_HOME/logs" ]; then

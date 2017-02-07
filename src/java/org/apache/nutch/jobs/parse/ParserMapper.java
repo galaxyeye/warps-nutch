@@ -2,18 +2,17 @@ package org.apache.nutch.jobs.parse;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.metadata.HttpHeaders;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.metadata.Mark;
-import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.common.Params;
+import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -64,8 +63,9 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
   }
 
   @Override
-  public void map(String reverseUrl, GoraWebPage row, Context context) {
-    WebPage page = WebPage.wrap(row);
+  public void map(String reversedUrl, GoraWebPage row, Context context) {
+    WebPage page = WebPage.wrap(reversedUrl, row, true);
+    String url = page.url();
 
     try {
       getCounter().increase(rows);
@@ -74,8 +74,6 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
         stop("hit limit " + limit + ", finish mapper.");
         return;
       }
-
-      String url = TableUtil.unreverseUrl(reverseUrl);
 
       if (!shouldProcess(url, page)) {
         return;
@@ -97,7 +95,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
       }
       getCounter().updateAffectedRows(url);
 
-      context.write(reverseUrl, page.get());
+      context.write(reversedUrl, page.get());
 
       ++count;
     }

@@ -195,8 +195,8 @@ public class FetchServer extends Application {
     }
 
     try {
-      recyclePort();
       component.stop();
+      recyclePort();
       LOG.info("FetchServer is stopped. Port : {}", port);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot stop nutch server", e);

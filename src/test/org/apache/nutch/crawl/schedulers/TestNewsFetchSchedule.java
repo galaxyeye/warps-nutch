@@ -155,7 +155,6 @@ public class TestNewsFetchSchedule {
     }
     else if ("detail".equalsIgnoreCase(type)) {
       p.setPageCategory(PageCategory.DETAIL);
-      p.setPageCategoryLikelihood(0.9f);
     }
   }
 

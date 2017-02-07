@@ -1,0 +1,5 @@
+# comments start with the pound sign
+sz.sxrb.com
+www.sxrb.com
+yc.sxrb.com
+yq.sxrb.com

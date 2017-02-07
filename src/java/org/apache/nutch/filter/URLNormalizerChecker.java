@@ -40,16 +40,14 @@ public class URLNormalizerChecker {
   private void checkOne(String normalizerName, String scope) throws Exception {
     URLNormalizer normalizer = null;
 
-    ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(
-        URLNormalizer.X_POINT_ID);
+    ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(URLNormalizer.X_POINT_ID);
 
-    if (point == null)
+    if (point == null) {
       throw new RuntimeException(URLNormalizer.X_POINT_ID + " not found.");
+    }
 
     Extension[] extensions = point.getExtensions();
-
-    for (int i = 0; i < extensions.length; i++) {
-      Extension extension = extensions[i];
+    for (Extension extension : extensions) {
       normalizer = (URLNormalizer) extension.getExtensionInstance();
       if (normalizer.getClass().getName().equals(normalizerName)) {
         break;
@@ -58,9 +56,9 @@ public class URLNormalizerChecker {
       }
     }
 
-    if (normalizer == null)
-      throw new RuntimeException("URLNormalizer " + normalizerName
-          + " not found.");
+    if (normalizer == null) {
+      throw new RuntimeException("URLNormalizer " + normalizerName + " not found.");
+    }
 
     System.out.println("Checking URLNormalizer " + normalizerName);
 
@@ -86,7 +84,6 @@ public class URLNormalizerChecker {
   }
 
   public static void main(String[] args) throws Exception {
-
     String usage = "Usage: URLNormalizerChecker [-normalizer <normalizerName>] [-scope <scope>]"
         + "\n\tscope can be one of: default,partition,generate_host_count,fetcher,crawldb,linkdb,inject,outlink";
 

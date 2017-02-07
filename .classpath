@@ -36,12 +36,16 @@
   <classpathentry kind="src" path="src/plugin/scoring-opic/src/test/" />
   <classpathentry kind="src" path="src/plugin/tld/src/java/" />
   <classpathentry kind="src" path="src/plugin/tld/src/test/" />
+  <classpathentry kind="src" path="src/plugin/lib-regex-filter/src/java/" />
+  <classpathentry kind="src" path="src/plugin/lib-regex-filter/src/test/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-automaton/src/java/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-automaton/src/test/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-domain/src/java/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-domain/src/test/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-prefix/src/java/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-prefix/src/test/" />
+  <classpathentry kind="src" path="src/plugin/urlfilter-regex/src/java/" />
+  <classpathentry kind="src" path="src/plugin/urlfilter-regex/src/test/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-suffix/src/java/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-suffix/src/test/" />
   <classpathentry kind="src" path="src/plugin/urlfilter-validator/src/java/" />
@@ -185,7 +189,6 @@
   <classpathentry kind="lib" path="build/lib/leveldbjni-all-1.8.jar" />
   <classpathentry kind="lib" path="build/lib/log4j-1.2.17.jar" />
   <classpathentry kind="lib" path="build/lib/mail-1.4.2.jar" />
-  <classpathentry kind="lib" path="build/lib/mockito-all-1.9.5.jar" />
   <classpathentry kind="lib" path="build/lib/neethi-3.0.1.jar" />
   <classpathentry kind="lib" path="build/lib/nekohtml-1.9.19.jar" />
   <classpathentry kind="lib" path="build/lib/netty-3.6.6.Final.jar" />
@@ -216,7 +219,6 @@
   <classpathentry kind="lib" path="build/lib/spring-expression-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-jdbc-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-orm-4.0.4.RELEASE.jar" />
-  <classpathentry kind="lib" path="build/lib/spring-test-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-tx-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-web-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/stax-api-1.0-2.jar" />
@@ -247,6 +249,7 @@
   <classpathentry kind="lib" path="build/plugins/indexer-solr/indexer-solr.jar" />
   <classpathentry kind="lib" path="build/plugins/lib-http/lib-http.jar" />
   <classpathentry kind="lib" path="build/plugins/lib-nekohtml/nekohtml-1.9.19.jar" />
+  <classpathentry kind="lib" path="build/plugins/lib-regex-filter/lib-regex-filter.jar" />
   <classpathentry kind="lib" path="build/plugins/lib-xml/jaxen-1.1.1.jar" />
   <classpathentry kind="lib" path="build/plugins/lib-xml/jdom-1.1.jar" />
   <classpathentry kind="lib" path="build/plugins/lib-xml/lib-xml.jar" />
@@ -306,6 +309,7 @@
   <classpathentry kind="lib" path="build/plugins/urlfilter-automaton/urlfilter-automaton.jar" />
   <classpathentry kind="lib" path="build/plugins/urlfilter-domain/urlfilter-domain.jar" />
   <classpathentry kind="lib" path="build/plugins/urlfilter-prefix/urlfilter-prefix.jar" />
+  <classpathentry kind="lib" path="build/plugins/urlfilter-regex/urlfilter-regex.jar" />
   <classpathentry kind="lib" path="build/plugins/urlfilter-suffix/urlfilter-suffix.jar" />
   <classpathentry kind="lib" path="build/plugins/urlfilter-validator/urlfilter-validator.jar" />
   <classpathentry kind="lib" path="build/plugins/urlnormalizer-basic/urlnormalizer-basic.jar" />
