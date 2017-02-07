@@ -21,13 +21,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.fetch.FetchUtil;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.persist.gora.WebPageConverter;
-import org.apache.nutch.protocol.*;
 import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.NetUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,37 +54,7 @@ public class SimpleFetcher extends Configured {
   public WebPage fetch(String url, String contentType) {
     LOG.info("Fetching: " + url);
 
-    ProtocolFactory factory = new ProtocolFactory(getConf());
-    Protocol protocol = null;
-    try {
-      protocol = factory.getProtocol(url);
-    } catch (ProtocolNotFound protocolNotFound) {
-      protocolNotFound.printStackTrace();
-      return null;
-    }
-    WebPage page = WebPage.newWebPage();
-
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
-    ProtocolStatus pstatus = protocolOutput.getStatus();
-
-    if (!pstatus.isSuccess()) {
-      LOG.error("Fetch failed with protocol status, "
-          + ProtocolStatusUtils.getName(pstatus.getCode())
-          + " : " + ProtocolStatusUtils.getMessage(pstatus));
-      return null;
-    }
-
-    Content content = protocolOutput.getContent();
-
-    FetchUtil.updateStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
-    FetchUtil.updateContent(page, content);
-    FetchUtil.updateFetchTime(page);
-    FetchUtil.updateMarks(page);
-
-    if (content == null) {
-      LOG.error("No content for " + url);
-      return null;
-    }
+    WebPage page = NetUtil.fetch(url, contentType, getConf());
 
     saveWebPage(page);
 

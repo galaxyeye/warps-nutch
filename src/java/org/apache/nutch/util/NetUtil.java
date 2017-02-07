@@ -3,9 +3,10 @@ package org.apache.nutch.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.crawl.CrawlStatus;
-import org.apache.nutch.jobs.parse.ParserMapper;
-import org.apache.nutch.protocol.*;
+import org.apache.nutch.fetch.FetchUtil;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.ProtocolStatus;
+import org.apache.nutch.protocol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,48 +136,39 @@ public class NetUtil {
     return true;
   }
 
-  public static WebPage getWebPage(String url, String contentType, Configuration conf) throws ProtocolNotFound {
-    LOG.info("fetching: " + url);
+  public static WebPage fetch(String url, String contentType, Configuration conf) {
+    LOG.info("Fetching: " + url);
 
     ProtocolFactory factory = new ProtocolFactory(conf);
-    Protocol protocol = factory.getProtocol(url);
-    WebPage page = WebPage.newWebPage();
-
-    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
-
-    if (!protocolOutput.getStatus().isSuccess()) {
-      LOG.warn("Fetch failed with protocol status: "
-          + ProtocolStatusUtils.getName(protocolOutput.getStatus().getCode())
-          + ": " + ProtocolStatusUtils.getMessage(protocolOutput.getStatus()));
+    Protocol protocol;
+    try {
+      protocol = factory.getProtocol(url);
+    } catch (ProtocolNotFound protocolNotFound) {
+      protocolNotFound.printStackTrace();
       return null;
     }
-    page.setStatus((int)CrawlStatus.STATUS_FETCHED);
+
+    WebPage page = WebPage.newWebPage();
+    ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
+    ProtocolStatus pstatus = protocolOutput.getStatus();
+
+    if (!pstatus.isSuccess()) {
+      LOG.error("Fetch failed with protocol status, "
+              + ProtocolStatusUtils.getName(pstatus.getCode())
+              + " : " + ProtocolStatusUtils.getMessage(pstatus));
+      return null;
+    }
 
     Content content = protocolOutput.getContent();
 
+    FetchUtil.updateStatus(page, CrawlStatus.STATUS_FETCHED, pstatus);
+    FetchUtil.updateContent(page, content);
+    FetchUtil.updateFetchTime(page);
+    FetchUtil.updateMarks(page);
+
     if (content == null) {
-      LOG.warn("No content for " + url);
+      LOG.error("No content for " + url);
       return null;
-    }
-    page.setBaseUrl(url);
-    page.setContent(content.getContent());
-
-    if (contentType != null) {
-      content.setContentType(contentType);      
-    }
-    else {
-      contentType = content.getContentType();
-    }
-
-    if (contentType == null) {
-      LOG.warn("Failed to determine content type!");
-      return null;
-    }
-
-    page.setContentType(contentType);
-
-    if (ParserMapper.isTruncated(url, page)) {
-      LOG.warn("Content is truncated, parse may fail!");
     }
 
     return page;

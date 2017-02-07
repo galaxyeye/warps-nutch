@@ -25,10 +25,11 @@ import org.apache.nutch.metadata.SpellCheckedMetadata;
 import org.apache.nutch.net.protocols.Response;
 import org.apache.nutch.net.proxy.NoProxyException;
 import org.apache.nutch.net.proxy.ProxyEntry;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.protocol.http.api.HttpBase;
 import org.apache.nutch.protocol.http.api.HttpException;
-import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -37,7 +38,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -191,8 +191,16 @@ public class HttpResponse implements Response {
       }
 
       reqStr.append("If-Modified-Since: ")
-              .append(DateTimeFormatter.RFC_1123_DATE_TIME.format(page.getModifiedTime()))
+              .append(DateTimeUtil.formatHttpDateTime(page.getModifiedTime()))
               .append("\r\n").append("\r\n");
+
+//      // if (page.isReadable(WebPage.Field.MODIFIED_TIME.getIndex())) {
+//      reqStr.append("If-Modified-Since: "
+//              + HttpDateFormat.toString(page.getModifiedTime().toEpochMilli()));
+//      reqStr.append("\r\n");
+//      // }
+//      reqStr.append("\r\n");
+
 
       byte[] reqBytes = reqStr.toString().getBytes();
 

@@ -188,6 +188,10 @@ public class DateTimeUtil {
     }
   }
 
+  public static String formatHttpDateTime(Instant time) {
+    return org.apache.http.client.utils.DateUtils.formatDate(Date.from(time));
+  }
+
   public static Instant parseInstant(String text, Instant defaultValue) {
     try {
       // equals to Instant.parse()
