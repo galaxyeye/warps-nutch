@@ -96,7 +96,7 @@ fi
 
 echo "Use configuration directory : $NUTCH_CONF_DIR"
 # ls $NUTCH_CONF_DIR
-find $NUTCH_TMP_DIR/conf -ctime +1 -type d | xargs rm -rf
+find "$NUTCH_TMP_DIR/conf" -ctime +1 -type d | xargs rm -rf
 
 #echo $@
 #exit 0

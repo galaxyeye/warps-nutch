@@ -55,6 +55,7 @@
         <!--<ant dir="protocol-sftp" target="deploy"/>-->
         <ant dir="scoring-link" target="deploy"/>
         <ant dir="scoring-opic" target="deploy"/>
+        <ant dir="scoring-monitor" target="deploy"/>
         <ant dir="tld" target="deploy"/>
         <ant dir="urlfilter-automaton" target="deploy"/>
         <ant dir="urlfilter-domain" target="deploy"/>
@@ -71,53 +72,53 @@
     <!-- Test all of the plugins.                               -->
     <!-- ====================================================== -->
     <target name="test">
-        <!--<ant dir="nutch-extensionpoints" target="test"/>-->
+        <ant dir="nutch-extensionpoints" target="test"/>
 
-        <!--<ant dir="lib-http" target="test"/>-->
-        <!--<ant dir="lib-nekohtml" target="test"/>-->
-        <!--<ant dir="lib-xml" target="test"/>-->
+        <ant dir="lib-http" target="test"/>
+        <ant dir="lib-nekohtml" target="test"/>
+        <ant dir="lib-xml" target="test"/>
 
         <!--<ant dir="index-anchor" target="test"/>-->
         <!--<ant dir="index-basic" target="test"/>-->
         <!--<ant dir="index-more" target="test"/>-->
         <!--<ant dir="index-metadata" target="test"/>-->
         <!--<ant dir="indexer-solr" target="test"/>-->
-        <!--&lt;!&ndash;<ant dir="indexer-elastic" target="test"/>&ndash;&gt;-->
+        <!--<ant dir="indexer-elastic" target="test"/>-->
 
         <!--<ant dir="parse-js" target="test"/>-->
-        <!--<ant dir="parse-html" target="test"/>-->
-        <!--<ant dir="parse-tika" target="test"/>-->
-        <!--&lt;!&ndash;<ant dir="parse-ext" target="test"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<ant dir="parse-swf" target="test"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<ant dir="parse-zip" target="test"/>&ndash;&gt;-->
+        <ant dir="parse-html" target="test"/>
+        <ant dir="parse-tika" target="test"/>
+        <!--<ant dir="parse-ext" target="test"/>-->
+        <!--<ant dir="parse-swf" target="test"/>-->
+        <!--<ant dir="parse-zip" target="test"/>-->
         <!--<ant dir="parse-metatags" target="test"/>-->
 
         <!--<ant dir="protocol-file" target="test"/>-->
         <!--<ant dir="protocol-crowd" target="test"/>-->
         <!--<ant dir="protocol-http" target="test"/>-->
-        <!--&lt;!&ndash;<ant dir="protocol-ftp" target="test"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<ant dir="protocol-httpclient" target="test"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<ant dir="protocol-sftp" target="test"/>&ndash;&gt;-->
+        <!--<ant dir="protocol-ftp" target="test"/>-->
+        <!--<ant dir="protocol-httpclient" target="test"/>-->
+        <!--<ant dir="protocol-sftp" target="test"/>-->
 
         <!--<ant dir="scoring-link" target="test"/>-->
         <!--<ant dir="scoring-opic" target="test"/>-->
         <ant dir="scoring-monitor" target="test"/>
 
-        <!--<ant dir="urlfilter-automaton" target="test"/>-->
-        <!--<ant dir="urlfilter-regex" target="test"/>-->
-        <!--<ant dir="urlfilter-domain" target="test"/>-->
-        <!--<ant dir="urlfilter-prefix" target="test"/>-->
-        <!--<ant dir="urlfilter-suffix" target="test"/>-->
-        <!--<ant dir="urlfilter-validator" target="test"/>-->
+        <ant dir="urlfilter-automaton" target="test"/>
+        <ant dir="urlfilter-regex" target="test"/>
+        <ant dir="urlfilter-domain" target="test"/>
+        <ant dir="urlfilter-prefix" target="test"/>
+        <ant dir="urlfilter-suffix" target="test"/>
+        <ant dir="urlfilter-validator" target="test"/>
 
-        <!--<ant dir="urlnormalizer-basic" target="test"/>-->
-        <!--<ant dir="urlnormalizer-pass" target="test"/>-->
-        <!--<ant dir="urlnormalizer-regex" target="test"/>-->
+        <ant dir="urlnormalizer-basic" target="test"/>
+        <ant dir="urlnormalizer-pass" target="test"/>
+        <ant dir="urlnormalizer-regex" target="test"/>
 
         <!--<ant dir="feed" target="test"/>-->
-        <!--<ant dir="tld" target="test"/>-->
-        <!--<ant dir="language-identifier" target="test"/>-->
-        <!--<ant dir="microformats-reltag" target="test"/>-->
+        <ant dir="tld" target="test"/>
+        <ant dir="language-identifier" target="test"/>
+        <ant dir="microformats-reltag" target="test"/>
     </target>
 
     <!-- ====================================================== -->
@@ -153,6 +154,7 @@
         <!--<ant dir="protocol-sftp" target="clean"/>-->
         <ant dir="scoring-link" target="clean"/>
         <ant dir="scoring-opic" target="clean"/>
+        <ant dir="scoring-monitor" target="clean"/>
         <ant dir="tld" target="clean"/>
         <ant dir="urlfilter-automaton" target="clean"/>
         <ant dir="urlfilter-domain" target="clean"/>

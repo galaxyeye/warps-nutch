@@ -145,7 +145,7 @@ public class IndexJob extends NutchJob implements Tool {
     currentJob.getConfiguration().setClass("mapred.output.key.comparator.class", StringComparator.class, RawComparator.class);
 
     Collection<GoraWebPage.Field> fields = getFields(getConf());
-    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getGenerateBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, String.class, IndexDocument.class, IndexMapper.class, batchIdFilter);
 
     // The data is write to a network sink using IndexerOutputFormat.write
@@ -169,7 +169,7 @@ public class IndexJob extends NutchJob implements Tool {
     currentJob.waitForCompletion(true);
   }
 
-  protected MapFieldValueFilter<String, GoraWebPage> getBatchIdFilter(String batchId) {
+  protected MapFieldValueFilter<String, GoraWebPage> getGenerateBatchIdFilter(String batchId) {
     if (batchId.equals(REINDEX.toString()) || batchId.equals(ALL_BATCH_ID_STR)) {
       return null;
     }

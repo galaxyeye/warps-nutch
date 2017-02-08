@@ -158,7 +158,7 @@ public class FetchJob extends NutchJob implements Tool {
     currentJob.setReduceSpeculativeExecution(false);
 
     Collection<GoraWebPage.Field> fields = getFields(getConf());
-    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getGenerateBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, IntWritable.class,
         FetchEntry.class, FetchMapper.class, FetchEntryPartitioner.class,
         batchIdFilter, false);

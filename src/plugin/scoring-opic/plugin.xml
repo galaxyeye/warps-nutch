@@ -21,7 +21,6 @@
    version="1.0.0"
    provider-name="nutch.org">
 
-
    <runtime>
       <library name="scoring-opic.jar">
          <export name="*"/>

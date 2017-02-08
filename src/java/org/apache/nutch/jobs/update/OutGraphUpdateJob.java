@@ -46,6 +46,7 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
+    FIELDS.add(GoraWebPage.Field.BATCH_ID);
     FIELDS.add(GoraWebPage.Field.OUTLINKS);
     FIELDS.add(GoraWebPage.Field.STATUS);
     FIELDS.add(GoraWebPage.Field.PREV_SIGNATURE);
@@ -53,11 +54,11 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     FIELDS.add(GoraWebPage.Field.MARKERS);
     FIELDS.add(GoraWebPage.Field.METADATA);
     FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
+    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
-    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
     FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
@@ -89,7 +90,7 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
     // currentJob.setCombinerKeyGroupingComparatorClass(UrlOnlyComparator.class);
 
     Collection<GoraWebPage.Field> fields = getFields(currentJob);
-    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getGenerateBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, GraphGroupKey.class, WebGraphWritable.class, OutGraphUpdateMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, OutGraphUpdateReducer.class);
 

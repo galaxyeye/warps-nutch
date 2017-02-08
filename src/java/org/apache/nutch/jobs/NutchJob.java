@@ -111,7 +111,7 @@ public abstract class NutchJob extends Configured {
     return results;
   }
 
-  protected MapFieldValueFilter<String, GoraWebPage> getBatchIdFilter(String batchId) {
+  protected MapFieldValueFilter<String, GoraWebPage> getGenerateBatchIdFilter(String batchId) {
     if (batchId == null || batchId.equals(ALL_BATCH_ID_STR)) {
       return null;
     }

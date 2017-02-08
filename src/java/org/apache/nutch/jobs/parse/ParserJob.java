@@ -132,7 +132,7 @@ public class ParserJob extends NutchJob implements Tool {
   @Override
   protected void doRun(Map<String, Object> args) throws Exception {
     Collection<GoraWebPage.Field> fields = getFields(getConf());
-    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getGenerateBatchIdFilter(batchId);
 
     StorageUtils.initMapperJob(currentJob, fields, String.class, GoraWebPage.class, ParserMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, IdentityPageReducer.class);

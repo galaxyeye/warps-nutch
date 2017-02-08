@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,101 +41,101 @@ import static org.apache.nutch.metadata.Mark.UPDATEOUTG;
 
 class InGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
-  public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateMapper.class);
+    public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateMapper.class);
 
-  public enum Counter { rowsMapped, newRowsMapped, noInLinks, notUpdated, urlFiltered, tooDeep }
+    public enum Counter {rowsMapped, newRowsMapped, noInLinks, notUpdated, urlFiltered, tooDeep}
 
-  private Configuration conf;
-  private Context context;
-  private NutchCounter counter;
-  // Resue local variables for optimization
-  private GraphGroupKey graphGroupKey;
-  private WebGraphWritable webGraphWritable;
+    private Configuration conf;
+    private Context context;
+    private NutchCounter counter;
+    // Resue local variables for optimization
+    private GraphGroupKey graphGroupKey;
+    private WebGraphWritable webGraphWritable;
 
-  @Override
-  public void setup(Context context) throws IOException, InterruptedException {
-    super.setup(context);
+    @Override
+    public void setup(Context context) throws IOException, InterruptedException {
+        super.setup(context);
 
-    conf = context.getConfiguration();
-    this.context = context;
+        conf = context.getConfiguration();
+        this.context = context;
 
-    counter = getCounter();
-    counter.register(Counter.class);
+        counter = getCounter();
+        counter.register(Counter.class);
 
-    String crawlId = conf.get(PARAM_CRAWL_ID);
+        String crawlId = conf.get(PARAM_CRAWL_ID);
 
-    graphGroupKey = new GraphGroupKey();
-    webGraphWritable = new WebGraphWritable(null, IGNORE_SOURCE, conf);
+        graphGroupKey = new GraphGroupKey();
+        webGraphWritable = new WebGraphWritable(null, IGNORE_SOURCE, conf);
 
-    LOG.info(Params.format(
-        "className", this.getClass().getSimpleName(),
-        "crawlId", crawlId
-    ));
-  }
-
-  @Override
-  public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
-    counter.increase(rows);
-
-    WebPage page = WebPage.wrap(reversedUrl, row, true);
-    String url = page.url();
-
-    if (!shouldProcess(url, page)) {
-      return;
+        LOG.info(Params.format(
+                "className", this.getClass().getSimpleName(),
+                "crawlId", crawlId
+        ));
     }
 
-    WebGraph graph = new WebGraph();
-    WebVertex v2 = new WebVertex(url, page);
+    @Override
+    public void map(String reversedUrl, GoraWebPage row, Context context) throws IOException, InterruptedException {
+        counter.increase(rows);
+
+        WebPage page = WebPage.wrap(reversedUrl, row, true);
+        String url = page.url();
+
+        if (!shouldProcess(url, page)) {
+            return;
+        }
+
+        WebGraph graph = new WebGraph();
+        WebVertex v2 = new WebVertex(url, page);
 
     /* A loop in the graph */
-    graph.addEdgeLenient(v2, v2, page.getScore());
+        graph.addEdgeLenient(v2, v2, page.getScore());
 
-    page.getInlinks().entrySet().forEach(l -> graph.addEdgeLenient(new WebVertex(l.getKey()), v2));
-    graph.incomingEdgesOf(v2).forEach(edge -> writeAsSubGraph(edge, graph));
+        page.getInlinks().entrySet().forEach(l -> graph.addEdgeLenient(new WebVertex(l.getKey()), v2));
+        graph.incomingEdgesOf(v2).forEach(edge -> writeAsSubGraph(edge, graph));
 
-    counter.increase(Counter.rowsMapped);
-    counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v2));
-  }
-
-  private boolean shouldProcess(String url, WebPage page) {
-    if (!page.hasMark(UPDATEOUTG)) {
-      counter.increase(Counter.notUpdated);
-      return false;
+        counter.increase(Counter.rowsMapped);
+        counter.increase(Counter.newRowsMapped, graph.inDegreeOf(v2));
     }
 
-    if (page.getInlinks().isEmpty()) {
-      counter.increase(Counter.noInLinks);
-      return false;
+    private boolean shouldProcess(String url, WebPage page) {
+        if (!page.hasMark(UPDATEOUTG)) {
+            counter.increase(Counter.notUpdated);
+            return false;
+        }
+
+        if (page.getInlinks().isEmpty()) {
+            counter.increase(Counter.noInLinks);
+            return false;
+        }
+
+        return true;
     }
 
-    return true;
-  }
+    /**
+     * The following graph shows the in-link graph. Every reduce group contains a center vertex and a batch of edges.
+     * The center vertex has a web page inside, and the edges has in-link information.
+     * <p>
+     * <pre>
+     *       v1
+     *       ^
+     *       |
+     * v2 <- vc -> v3
+     *      / \
+     *     v  v
+     *    v4  v5
+     * </pre>
+     */
+    private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
+        try {
+            WebGraph subGraph = WebGraph.of(edge, graph);
 
-  /**
-   * The following graph shows the in-link graph. Every reduce group contains a center vertex and a batch of edges.
-   * The center vertex has a web page inside, and the edges has in-link information.
-   *
-   * <pre>
-   *       v1
-   *       ^
-   *       |
-   * v2 <- vc -> v3
-   *      / \
-   *     v  v
-   *    v4  v5
-   *</pre>
-   * */
-  private void writeAsSubGraph(WebEdge edge, WebGraph graph) {
-    try {
-      WebGraph subGraph = WebGraph.of(edge, graph);
+            graphGroupKey.reset(TableUtil.reverseUrl(edge.getSourceUrl()), graph.getEdgeWeight(edge));
+            webGraphWritable.reset(subGraph);
 
-      graphGroupKey.reset(TableUtil.reverseUrl(edge.getSourceUrl()), graph.getEdgeWeight(edge));
-      webGraphWritable.reset(subGraph);
-
-      // noinspection unchecked
-      context.write(graphGroupKey, webGraphWritable);
-    } catch (IOException|InterruptedException e) {
-      LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
+            // noinspection unchecked
+            context.write(graphGroupKey, webGraphWritable);
+        } catch (IOException | InterruptedException e) {
+            LOG.error("Failed to write to hdfs. " + StringUtil.stringifyException(e));
+        }
     }
-  }
 }

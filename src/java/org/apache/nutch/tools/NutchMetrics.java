@@ -106,15 +106,16 @@ public class NutchMetrics implements AutoCloseable {
   }
 
   public String getPageReport(String url, WebPage page) {
+    final String pattern = "yyyy-MM-dd HH:mm:ss";
     Duration fetchInterval = Duration.between(page.getPrevFetchTime(), page.getFetchTime());
     String fetchTimeString =
-        DateTimeUtil.format(page.getPrevFetchTime()) + "->" + DateTimeUtil.format(page.getFetchTime())
+        DateTimeUtil.format(page.getPrevFetchTime(), pattern) + "->" + DateTimeUtil.format(page.getFetchTime(), pattern)
             + "," + DurationFormatUtils.formatDuration(fetchInterval.toMillis(), "DdTH:mm:ss");
 
     Params params = Params.of(
         "T", fetchTimeString,
-        "", page.getDepth() + "," + page.getFetchCount(),
-        "PT", DateTimeUtil.format(page.getPublishTime()) + "," + DateTimeUtil.format(page.getRefPublishTime()),
+        "DC", page.getDepth() + "," + page.getFetchCount(),
+        "PT", DateTimeUtil.format(page.getPublishTime(), pattern) + "," + DateTimeUtil.format(page.getRefPublishTime(), pattern),
         "C", page.getRefArticles() + "," + page.getRefChars(),
         "S", df.format(page.getArticleScore()) + "," + df.format(page.getScore()) + "," + df.format(page.getCash()),
         "U", StringUtils.substring(url, 0, 80)

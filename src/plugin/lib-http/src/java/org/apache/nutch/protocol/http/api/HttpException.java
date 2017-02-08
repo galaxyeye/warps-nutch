@@ -36,5 +36,4 @@ public class HttpException extends ProtocolException {
   public HttpException(Throwable cause) {
     super(cause);
   }
-
 }

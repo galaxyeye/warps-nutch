@@ -45,9 +45,14 @@ public class InGraphUpdateJob extends WebGraphUpdateJob {
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
+    FIELDS.add(GoraWebPage.Field.BATCH_ID);
     FIELDS.add(GoraWebPage.Field.INLINKS);
     FIELDS.add(GoraWebPage.Field.MARKERS);
     FIELDS.add(GoraWebPage.Field.METADATA);
+    // For reporter
+    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
+    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
   }
 
   public InGraphUpdateJob() {
@@ -67,11 +72,11 @@ public class InGraphUpdateJob extends WebGraphUpdateJob {
     // Partition by {url}, sort by {url,score} and group by {url}.
     // This ensures that the inlinks are sorted by score when they enter the reducer.
     currentJob.setPartitionerClass(UrlOnlyPartitioner.class);
-    currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
     currentJob.setSortComparatorClass(GraphKeyComparator.class);
+    currentJob.setGroupingComparatorClass(UrlOnlyComparator.class);
 
     Collection<GoraWebPage.Field> fields = getFields(currentJob);
-    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getBatchIdFilter(batchId);
+    MapFieldValueFilter<String, GoraWebPage> batchIdFilter = getGenerateBatchIdFilter(batchId);
     StorageUtils.initMapperJob(currentJob, fields, GraphGroupKey.class, WebGraphWritable.class, InGraphUpdateMapper.class, batchIdFilter);
     StorageUtils.initReducerJob(currentJob, InGraphUpdateReducer.class);
 

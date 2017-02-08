@@ -690,6 +690,7 @@ public class WebPage {
     if (newRefPublishTime.isAfter(latestTime)) {
       setPrevRefPublishTime(latestTime);
       setRefPublishTime(newRefPublishTime);
+      updatePublishTime(newRefPublishTime);
 
       return true;
     }

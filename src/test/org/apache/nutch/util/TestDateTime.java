@@ -8,13 +8,11 @@ import org.junit.Test;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -27,7 +25,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestDateTime {
 
-  private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  final private String pattern = "yyyy-MM-dd HH:mm:ss";
 
   @Test
   public void testDateTimeConvert() {
@@ -49,15 +47,28 @@ public class TestDateTime {
     // Convert back to instant, again, no time zone offset.
     Instant output = time.atZone(ZoneOffset.ofHours(0)).toInstant();
 
-    Timestamp savedTimestamp = Timestamp.from(output);
 
-    time = LocalDateTime.ofInstant(timestamp.toInstant(), ZoneOffset.ofHours(0));
-    String formatted = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(time);
-
-    System.out.println(formatted);
   }
 
   @Test
+  public void testDateTimeFormatter() {
+    LocalDateTime time = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.ofHours(0));
+    String formatted = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(time);
+    System.out.println(formatted);
+
+    time = LocalDateTime.ofInstant(Instant.EPOCH, ZoneOffset.ofHours(0));
+    formatted = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(time);
+    System.out.println(formatted);
+
+    System.out.println(DateTimeUtil.format(0));
+
+    formatted = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()).format(Instant.now());
+    System.out.println(formatted);
+
+    System.out.println(DateTimeUtil.format(Instant.now(), "yyyy-MM-dd HH:mm:ss"));
+  }
+
+    @Test
   public void testDuration() {
     Instant epoch = Instant.EPOCH;
     Instant now = Instant.now();
@@ -82,7 +93,7 @@ public class TestDateTime {
     String dateString = "Sat May 27 12:21:42 CST 2017";
 
     try {
-      Date date = DateUtils.parseDate(dateString, DateTimeUtil.GENERAL_DATE_TIME_FORMATS);
+      Date date = DateUtils.parseDate(dateString, DateTimeUtil.POSSIBLE_DATE_TIME_FORMATS);
       // Date date = DateUtils.parseDate(dateString);
       dateString = DateFormatUtils.format(date, ISO_DATETIME_TIME_ZONE_FORMAT.getPattern(), TimeZone.getTimeZone("PRC"));
       System.out.println(dateString);
@@ -120,35 +131,13 @@ public class TestDateTime {
   public void testIlligalDateFormat() {
     String dateString = "2013-39-08 10:39:36";
     try {
-      Date date = formatter.parse(dateString);
-      dateString = DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
+      TemporalAccessor dateTime = DateTimeFormatter.ofPattern(pattern).parse(dateString);
+      dateString = DateTimeFormatter.ISO_INSTANT.format(dateTime);
       System.out.println(dateString);
-    } catch (ParseException e) {
-      e.printStackTrace();
     }
-  }
-
-  @Test
-  public void testDecimalFormat() {
-    DecimalFormat df = new DecimalFormat("0.0##");
-    System.out.println(df.format(.5678));
-    System.out.println(df.format(6.5));
-    System.out.println(df.format(56.5678));
-    System.out.println(df.format(123456.5678));
-
-    System.out.println(df.format(.0));
-    System.out.println(df.format(6.00));
-    System.out.println(df.format(56.0000));
-    System.out.println(df.format(123456.00001));
-  }
-
-  @Test
-  public void testStringFormat() {
-    System.out.println(String.format("%1$,20d", -3123));
-    System.out.println(String.format("%1$9d", -31));
-    System.out.println(String.format("%1$-9d", -31));
-    System.out.println(String.format("%1$(9d", -31));
-    System.out.println(String.format("%1$#9x", 5689));
+    catch (DateTimeParseException e) {
+      System.out.println(e.toString());
+    }
   }
 
 }

@@ -19,20 +19,20 @@ package org.apache.nutch.scoring;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.nutch.common.ObjectCache;
+import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.common.ObjectCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Creates and caches {@link ScoringFilter} implementing plugins.
@@ -40,6 +40,8 @@ import java.util.stream.Stream;
  * @author Andrzej Bialecki
  */
 public class ScoringFilters extends Configured implements ScoringFilter {
+
+  public static final Logger LOG = LoggerFactory.getLogger(ScoringFilters.class);
 
   private ScoringFilter[] scoringFilters;
 
@@ -74,22 +76,22 @@ public class ScoringFilters extends Configured implements ScoringFilter {
         if (orderedFilters == null) {
           objectCache.setObject(ScoringFilter.class.getName(), filterMap.values().toArray(new ScoringFilter[0]));
         } else {
-          ScoringFilter[] filter = new ScoringFilter[orderedFilters.length];
+          ScoringFilter[] filters = new ScoringFilter[orderedFilters.length];
           for (int i = 0; i < orderedFilters.length; i++) {
-            filter[i] = filterMap.get(orderedFilters[i]);
+            filters[i] = filterMap.get(orderedFilters[i]);
           }
-          objectCache.setObject(ScoringFilter.class.getName(), filter);
+          objectCache.setObject(ScoringFilter.class.getName(), filters);
         }
       } catch (PluginRuntimeException e) {
         throw new RuntimeException(e);
       }
 
       this.scoringFilters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
-    }
-  }
 
-  public List<String> getScoringFilterNames() {
-    return Stream.of(scoringFilters).map(f -> f.getClass().getSimpleName()).collect(Collectors.toList());
+      if (this.scoringFilters.length == 0) {
+        LOG.warn("Failed to found any scoring filters");
+      }
+    }
   }
 
   /** Calculate a sort value for Generate. */

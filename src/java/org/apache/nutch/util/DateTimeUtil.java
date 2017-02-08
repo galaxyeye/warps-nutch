@@ -23,9 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.Year;
-import java.time.YearMonth;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Set;
@@ -53,7 +51,7 @@ public class DateTimeUtil {
 
   // 2016-03-05 20:07:51
   // TODO : What's the difference between HH and hh? Guess : 24 hours VS 12 hours
-  public static String[] GENERAL_DATE_TIME_FORMATS = new String[]{
+  public static String[] POSSIBLE_DATE_TIME_FORMATS = new String[]{
       "yyyy.MM.dd HH:mm:ss",
 
       "yyyy-MM-dd HH:mm:ss",
@@ -95,26 +93,36 @@ public class DateTimeUtil {
       "EEE, dd-MMM-yy HH:mm:ss zzz"
   };
 
-  public static SimpleDateFormat DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
   public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.HHmmss");
 
   public static long[] TIME_FACTOR = {60 * 60 * 1000, 60 * 1000, 1000};
 
   public static String format(long time) {
-    return DateFormat.format(time);
+    return DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(time));
   }
 
   public static String format(Instant time) {
-    return DateFormat.format(time.toEpochMilli());
+    return DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.systemDefault()).format(time);
   }
 
-  public static String format(long time, String format) {
-    return new SimpleDateFormat(format).format(time);
+  public static String format(Instant time, String format) {
+    return DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault()).format(time);
+  }
+
+  public static String format(LocalDateTime localTime) {
+    return DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(localTime);
+  }
+
+  public static String format(LocalDateTime localTime, String format) {
+    return DateTimeFormatter.ofPattern(format).format(localTime);
+  }
+
+  public static String format(long epochMilli, String format) {
+    return format(Instant.ofEpochMilli(epochMilli), format);
   }
 
   public static String now() {
-    return DateFormat.format(System.currentTimeMillis());
+    return format(LocalDateTime.now());
   }
 
   public static String isoInstantFormat(long time) {
@@ -145,39 +153,6 @@ public class DateTimeUtil {
     return (System.currentTimeMillis() - start) / 1000.0;
   }
 
-  /**
-   * Calculate the elapsed time between two times specified in milliseconds.
-   *
-   * @param start The start of the time period
-   * @param end   The end of the time period
-   * @return a string of the form "XhYmZs" when the elapsed time is X hours, Y
-   * minutes and Z seconds or null if start > end.
-   */
-  public static String elapsedTime(long start, long end) {
-    if (start > end) {
-      return null;
-    }
-
-    long[] elapsedTime = new long[TIME_FACTOR.length];
-
-    for (int i = 0; i < TIME_FACTOR.length; i++) {
-      elapsedTime[i] = start > end ? -1 : (end - start) / TIME_FACTOR[i];
-      start += TIME_FACTOR[i] * elapsedTime[i];
-    }
-
-    NumberFormat nf = NumberFormat.getInstance();
-    nf.setMinimumIntegerDigits(2);
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < elapsedTime.length; i++) {
-      if (i > 0) {
-        sb.append(":");
-      }
-      sb.append(nf.format(elapsedTime[i]));
-    }
-
-    return sb.toString();
-  }
-
   public static Instant parseHttpDateTime(String text, Instant defaultValue) {
     try {
       // RFC 2616 defines three different date formats that a conforming client must understand.
@@ -205,7 +180,7 @@ public class DateTimeUtil {
     Date parsedDateTime = null;
 
     try {
-      parsedDateTime = DateUtils.parseDate(dateStr, GENERAL_DATE_TIME_FORMATS);
+      parsedDateTime = DateUtils.parseDate(dateStr, POSSIBLE_DATE_TIME_FORMATS);
     } catch (ParseException ignored) {
     }
 
@@ -251,5 +226,38 @@ public class DateTimeUtil {
     }
 
     return false;
+  }
+
+  /**
+   * Calculate the elapsed time between two times specified in milliseconds.
+   *
+   * @param start The start of the time period
+   * @param end   The end of the time period
+   * @return a string of the form "XhYmZs" when the elapsed time is X hours, Y
+   * minutes and Z seconds or null if start > end.
+   */
+  private static String elapsedTime(long start, long end) {
+    if (start > end) {
+      return null;
+    }
+
+    long[] elapsedTime = new long[TIME_FACTOR.length];
+
+    for (int i = 0; i < TIME_FACTOR.length; i++) {
+      elapsedTime[i] = start > end ? -1 : (end - start) / TIME_FACTOR[i];
+      start += TIME_FACTOR[i] * elapsedTime[i];
+    }
+
+    NumberFormat nf = NumberFormat.getInstance();
+    nf.setMinimumIntegerDigits(2);
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < elapsedTime.length; i++) {
+      if (i > 0) {
+        sb.append(":");
+      }
+      sb.append(nf.format(elapsedTime[i]));
+    }
+
+    return sb.toString();
   }
 }
