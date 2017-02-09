@@ -58,7 +58,7 @@ public class WebPage {
   /**
    * Manual added to keep extracted document fields, this field is non-persistentable
    */
-  private Map<String, Object> programVariables = new HashMap<>();
+  private Map<String, Object> tempVars = new HashMap<>();
 
   /**
    * Initialize a WebPage with the underlying GoraWebPage instance.
@@ -404,16 +404,16 @@ public class WebPage {
     page.setBatchId(value);
   }
 
-  public Map<String, Object> getProgramVariables() {
-    return programVariables;
+  public Map<String, Object> getTempVars() {
+    return tempVars;
   }
 
   public Object getTempVar(String name) {
-    return programVariables.get(name);
+    return tempVars.get(name);
   }
 
   public <T> T getTempVar(String name, T defaultValue) {
-    Object o = programVariables.get(name);
+    Object o = tempVars.get(name);
     return o == null ? defaultValue : (T) o;
   }
 
@@ -422,12 +422,12 @@ public class WebPage {
   }
 
   public String getTempVarAsString(String name, String defaultValue) {
-    Object value = programVariables.get(name);
+    Object value = tempVars.get(name);
     return value == null ? defaultValue : value.toString();
   }
 
   public void setTempVar(String name, Object value) {
-    programVariables.put(name, value);
+    tempVars.put(name, value);
   }
 
   /*******************************************************************************************************/

@@ -61,7 +61,7 @@ public class NetUtil {
 
   /**
    * TODO : use package org.apache.nutch.net.domain
-   * */
+   */
   public static String getTopLevelDomain(String baseUri) {
     if (baseUri == null || baseUri.startsWith("/") || baseUri.startsWith("file://")) {
       return null;
@@ -102,7 +102,7 @@ public class NetUtil {
 
   /**
    * TODO : We may need a better solution to indicate whether it's a master
-   * */
+   */
   public static boolean isMaster(Configuration conf) {
     String masterHostname = conf.get("nutch.master.hostname", "localhost");
     if (masterHostname.equals("localhost") || masterHostname.equals(NetUtil.getHostname())) {
@@ -131,14 +131,17 @@ public class NetUtil {
       String toHost = new URL(destUrl).getHost().toLowerCase();
       String fromHost = new URL(sourceUrl).getHost().toLowerCase();
       return !toHost.equals(fromHost);
-    } catch (MalformedURLException ignored) {}
+    } catch (MalformedURLException ignored) {
+    }
 
     return true;
   }
 
-  public static WebPage fetch(String url, String contentType, Configuration conf) {
-    LOG.info("Fetching: " + url);
+  public static WebPage fetch(String url, Configuration conf) {
+    return fetch(url, null, conf);
+  }
 
+  public static WebPage fetch(String url, String contentType, Configuration conf) {
     ProtocolFactory factory = new ProtocolFactory(conf);
     Protocol protocol;
     try {
@@ -148,7 +151,7 @@ public class NetUtil {
       return null;
     }
 
-    WebPage page = WebPage.newWebPage();
+    WebPage page = WebPage.newWebPage(url);
     ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
     ProtocolStatus pstatus = protocolOutput.getStatus();
 

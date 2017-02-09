@@ -18,7 +18,7 @@ package org.apache.nutch.jobs.update;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.util.StringUtils;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
@@ -28,9 +28,7 @@ import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchMapper;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
-import org.apache.nutch.common.Params;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -40,8 +38,8 @@ import java.io.IOException;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
-import static org.apache.nutch.metadata.Nutch.*;
 import static org.apache.nutch.metadata.Mark.FETCH;
+import static org.apache.nutch.metadata.Nutch.*;
 
 class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKey, WebGraphWritable> {
 
@@ -113,11 +111,7 @@ class OutGraphUpdateMapper extends NutchMapper<String, GoraWebPage, GraphGroupKe
             page.getOutlinks().entrySet().stream().limit(maxOutlinks)
                     .forEach(l -> graph.addEdgeLenient(v1, new WebVertex(l.getKey())).setAnchor(l.getValue()));
 
-            try {
-                scoringFilters.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
-            } catch (ScoringFilterException e) {
-                LOG.warn("Distributing score failed for URL: " + reversedUrl + "\n" + StringUtils.stringifyException(e));
-            }
+            scoringFilters.distributeScoreToOutlinks(url, page, graph, graph.outgoingEdgesOf(v1), graph.outDegreeOf(v1));
 
             counter.increase(Counter.newRowsMapped, graph.outDegreeOf(v1));
         }

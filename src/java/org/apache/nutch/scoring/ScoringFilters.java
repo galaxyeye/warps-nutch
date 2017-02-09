@@ -29,6 +29,7 @@ import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
+import org.apache.nutch.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,49 +97,72 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
   /** Calculate a sort value for Generate. */
   @Override
-  public float generatorSortValue(String url, WebPage row, float initSort) throws ScoringFilterException {
+  public float generatorSortValue(String url, WebPage row, float initSort) {
     for (ScoringFilter filter : scoringFilters) {
-      initSort = filter.generatorSortValue(url, row, initSort);
+      try {
+        initSort = filter.generatorSortValue(url, row, initSort);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
     return initSort;
   }
 
   /** Calculate a new initial score, used when adding newly discovered pages. */
   @Override
-  public void initialScore(String url, WebPage row) throws ScoringFilterException {
+  public void initialScore(String url, WebPage row) {
     for (ScoringFilter filter : scoringFilters) {
-      filter.initialScore(url, row);
+      try {
+        filter.initialScore(url, row);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
   }
 
   /** Calculate a new initial score, used when injecting new pages. */
   @Override
-  public void injectedScore(String url, WebPage row) throws ScoringFilterException {
+  public void injectedScore(String url, WebPage row) {
     for (ScoringFilter filter : scoringFilters) {
-      filter.injectedScore(url, row);
+      try {
+        filter.injectedScore(url, row);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
   }
 
   @Override
   public void distributeScoreToOutlinks(
-      String fromUrl, WebPage row, WebGraph graph, Collection<WebEdge> outLinkEdges, int allCount) throws ScoringFilterException {
+      String fromUrl, WebPage row, WebGraph graph, Collection<WebEdge> outLinkEdges, int allCount) {
     for (ScoringFilter filter : scoringFilters) {
-      filter.distributeScoreToOutlinks(fromUrl, row, graph, outLinkEdges, allCount);
+      try {
+        filter.distributeScoreToOutlinks(fromUrl, row, graph, outLinkEdges, allCount);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
   }
 
   @Override
-  public void updateScore(String url,
-                          WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges) throws ScoringFilterException {
+  public void updateScore(String url, WebPage row, WebGraph graph, Collection<WebEdge> inLinkEdges) {
     for (ScoringFilter filter : scoringFilters) {
-      filter.updateScore(url, row, graph, inLinkEdges);
+      try {
+        filter.updateScore(url, row, graph, inLinkEdges);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
   }
 
   @Override
-  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) throws ScoringFilterException {
+  public float indexerScore(String url, IndexDocument doc, WebPage row, float initScore) {
     for (ScoringFilter filter : scoringFilters) {
-      initScore = filter.indexerScore(url, doc, row, initScore);
+      try {
+        initScore = filter.indexerScore(url, doc, row, initScore);
+      } catch (ScoringFilterException e) {
+        LOG.error(StringUtil.stringifyException(e));
+      }
     }
     return initScore;
   }

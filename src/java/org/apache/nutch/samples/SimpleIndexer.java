@@ -7,9 +7,10 @@ import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilters;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.protocol.ProtocolNotFound;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.util.*;
+import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,7 @@ public class SimpleIndexer {
         return null;
       }
 
-      String reversedUrl = TableUtil.reverseUrl(url);
+      String reversedUrl = page.reversedUrl();
       parser.parse(page);
       doc = indexingFilters.filter(new IndexDocument(reversedUrl), url, page);
       if (indexWriters != null) {
@@ -85,7 +86,7 @@ public class SimpleIndexer {
             .filter(link -> link.length() > Nutch.SHORTEST_VALID_URL_LENGTH)
             .forEach(link -> index(link, contentType, d));
       }
-    } catch (IndexingException |IOException e) {
+    } catch (IndexingException e) {
       LOG.error(e.getMessage());
     }
 
@@ -112,7 +113,7 @@ public class SimpleIndexer {
     }
 
     Configuration conf = ConfigUtils.create();
-    conf.set("plugin.includes", "protocol-(http)|urlfilter-regex|parse-(html|tika)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic");
+    conf.set("plugin.includes", "protocol-(http)|urlfilter-regex|parse-(html|tika)|index-(metadata|basic|anchor|more)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-monitor");
 
     String contentType = null;
     String url = null;

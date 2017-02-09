@@ -26,7 +26,6 @@ import org.apache.hadoop.io.VersionMismatchException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.DateTimeUtil;
@@ -307,12 +306,7 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
       float boost = 1.0f;
       // run scoring indexingFilters
-      try {
-        boost = scoringFilters.indexerScore(url, doc, page, boost);
-      } catch (final ScoringFilterException e) {
-        LOG.warn("Error calculating score " + key + ": " + e);
-        return null;
-      }
+      boost = scoringFilters.indexerScore(url, doc, page, boost);
 
       doc.setWeight(boost);
       // store boost for use by explain and dedup

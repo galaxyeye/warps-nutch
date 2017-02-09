@@ -25,7 +25,6 @@ import org.apache.nutch.jobs.generate.GenerateJob.SelectorEntry;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
@@ -148,12 +147,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
     int priority = page.sniffFetchPriority();
     float initSortScore = calculateInitSortScore(url, page);
-    float sortScore = 0.0f;
-
-    try {
-      // Typically, we use OPIC scoring filter
-      sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
-    } catch (ScoringFilterException ignored) {}
+    float sortScore = scoringFilters.generatorSortValue(url, page, initSortScore);
 
     output(new SelectorEntry(url, priority, sortScore), page, context);
 

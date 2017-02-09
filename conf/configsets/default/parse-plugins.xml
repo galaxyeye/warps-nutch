@@ -42,7 +42,7 @@
 
 	<mimeType name="application/rss+xml">
 	    <plugin id="parse-tika" />
-	    <plugin id="feed" />
+	    <!--<plugin id="feed" />-->
 	</mimeType>
 
 	<mimeType name="application/x-bzip2">
@@ -69,7 +69,7 @@
 
 	<mimeType name="text/xml">
 		<plugin id="parse-tika" />
-		<plugin id="feed" />
+		<!--<plugin id="feed" />-->
 	</mimeType>
 
   <!-- Types for parse-ext plugin: required for unit tests to pass. -->
@@ -89,9 +89,9 @@
 		<alias name="parse-tika" extension-id="org.apache.nutch.parse.tika.TikaParser" />
 		<alias name="parse-ext" extension-id="ExtParser" />
 		<alias name="parse-js" extension-id="JSParser" />
-		<alias name="feed" extension-id="org.apache.nutch.parse.feed.FeedParser" />
+		<!--<alias name="feed" extension-id="org.apache.nutch.parse.feed.FeedParser" />-->
 		<alias name="parse-swf" extension-id="org.apache.nutch.parse.swf.SWFParser" />
 		<alias name="parse-zip" extension-id="org.apache.nutch.parse.zip.ZipParser" />
 	</aliases>
-	
+
 </parse-plugins>

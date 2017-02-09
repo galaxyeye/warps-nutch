@@ -56,7 +56,9 @@ public class SimpleFetcher extends Configured {
 
     WebPage page = NetUtil.fetch(url, contentType, getConf());
 
-    saveWebPage(page);
+    if (page != null) {
+      saveWebPage(page);
+    }
 
     return page;
   }

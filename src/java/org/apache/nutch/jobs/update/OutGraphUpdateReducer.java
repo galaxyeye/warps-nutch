@@ -36,7 +36,6 @@ import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.ConfigUtils;
@@ -252,13 +251,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
         fetchSchedule.initializeSchedule(url, page);
         page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-
-        try {
-            scoringFilters.initialScore(url, page);
-        } catch (ScoringFilterException e) {
-            page.setScore(0.0f);
-            getCounter().increase(NutchCounter.Counter.errors);
-        }
+        scoringFilters.initialScore(url, page);
 
         return page;
     }
@@ -307,12 +300,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         }
 
         /* Update score */
-        try {
-            scoringFilters.updateScore(focus.getUrl(), page, graph, incomingEdges);
-        } catch (ScoringFilterException e) {
-            page.setScore(0.0f);
-            getCounter().increase(NutchCounter.Counter.errors);
-        }
+        scoringFilters.updateScore(focus.getUrl(), page, graph, incomingEdges);
     }
 
     private void updateMarks(WebPage page) {
@@ -364,7 +352,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
                     LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
                     fetchSchedule.forceRefetch(url, page, false);
                 }
-
                 break;
             case CrawlStatus.STATUS_RETRY:
                 fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());

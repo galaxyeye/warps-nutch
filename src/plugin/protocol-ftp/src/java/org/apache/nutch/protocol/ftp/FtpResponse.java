@@ -25,10 +25,10 @@ import org.apache.commons.net.ftp.parser.DefaultFTPFileEntryParserFactory;
 import org.apache.commons.net.ftp.parser.ParserInitializationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
-import org.apache.nutch.net.protocols.HttpDateFormat;
 import org.apache.nutch.net.protocols.Response;
-import org.apache.nutch.protocol.Content;
 import org.apache.nutch.persist.gora.GoraWebPage;
+import org.apache.nutch.protocol.Content;
+import org.apache.nutch.util.DateTimeUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -271,8 +271,7 @@ public class FtpResponse {
             + ((ftp.timeout < ftp.serverTimeout) ? ftp.timeout
                 : ftp.serverTimeout);
         if ((ftp.followTalk) && (Ftp.LOG.isInfoEnabled())) {
-          Ftp.LOG.info("reset renewalTime to "
-              + HttpDateFormat.toString(ftp.renewalTime));
+          Ftp.LOG.info("reset renewalTime to " + DateTimeUtil.formatHttpDateTime(ftp.renewalTime));
         }
       }
 
@@ -319,14 +318,12 @@ public class FtpResponse {
 
     try {
       // first get its possible attributes
-      list = new LinkedList<FTPFile>();
+      list = new LinkedList<>();
       ftp.client.retrieveList(path, list, ftp.maxContentLength, ftp.parser);
 
-      FTPFile ftpFile = (FTPFile) list.get(0);
-      this.headers.set(Response.CONTENT_LENGTH,
-          new Long(ftpFile.getSize()).toString());
-      this.headers.set(Response.LAST_MODIFIED,
-          HttpDateFormat.toString(ftpFile.getTimestamp()));
+      FTPFile ftpFile = list.get(0);
+      this.headers.set(Response.CONTENT_LENGTH, Long.toString(ftpFile.getSize()));
+      this.headers.set(Response.LAST_MODIFIED, DateTimeUtil.formatHttpDateTime(ftpFile.getTimestamp().getTimeInMillis()));
       // don't retrieve the file if not changed.
       if (ftpFile.getTimestamp().getTimeInMillis() <= lastModified) {
         code = 304;
@@ -370,11 +367,9 @@ public class FtpResponse {
       }
 
       FTPFile ftpFile = (FTPFile) list.get(0);
-      this.headers.set(Response.CONTENT_LENGTH,
-          new Long(ftpFile.getSize()).toString());
+      this.headers.set(Response.CONTENT_LENGTH, Long.toString(ftpFile.getSize()));
       // this.headers.put("content-type", "text/html");
-      this.headers.set(Response.LAST_MODIFIED,
-          HttpDateFormat.toString(ftpFile.getTimestamp()));
+      this.headers.set(Response.LAST_MODIFIED, DateTimeUtil.formatHttpDateTime(ftpFile.getTimestamp().getTimeInMillis()));
       this.content = os.toByteArray();
       if (ftpFile.getTimestamp().getTimeInMillis() <= lastModified) {
         code = 304;
@@ -483,7 +478,6 @@ public class FtpResponse {
       }
       this.code = 500; // http Iternal Server Error
     }
-
   }
 
   // generate html page from ftp dir list
@@ -501,9 +495,9 @@ public class FtpResponse {
     }
 
     for (int i = 0; i < list.size(); i++) {
-      FTPFile f = (FTPFile) list.get(i);
+      FTPFile f = list.get(i);
       String name = f.getName();
-      String time = HttpDateFormat.toString(f.getTimestamp());
+      String time = DateTimeUtil.formatHttpDateTime(f.getTimestamp().getTimeInMillis());
       if (f.isDirectory()) {
         // some ftp server LIST "." and "..", we skip them here
         if (name.equals(".") || name.equals(".."))
@@ -523,5 +517,4 @@ public class FtpResponse {
 
     return new String(x).getBytes();
   }
-
 }

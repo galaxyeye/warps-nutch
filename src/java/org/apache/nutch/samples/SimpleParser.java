@@ -31,7 +31,6 @@ import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.protocol.ProtocolNotFound;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
@@ -65,7 +64,6 @@ public class SimpleParser extends Configured {
   private CrawlFilters crawlFilters;
   private Map<String, Object> results = Maps.newHashMap();
 
-  private String url;
   private WebPage page;
   private SimpleFetcher fetcher;
   private ParseResult parseResult;
@@ -81,7 +79,6 @@ public class SimpleParser extends Configured {
   public void parse(String url, String contentType) {
     LOG.info("Parsing: " + url);
 
-    this.url = url;
     page = fetcher.fetch(url, contentType);
     if (page != null) {
       parse(page);
@@ -91,7 +88,7 @@ public class SimpleParser extends Configured {
   public void parse(WebPage page) {
     ParseUtil parseUtil = new ParseUtil(getConf());
     if (page != null && !page.getBaseUrl().isEmpty()) {
-      parseResult = parseUtil.process(url, page);
+      parseResult = parseUtil.process(page.url(), page);
     }
   }
 
@@ -99,7 +96,6 @@ public class SimpleParser extends Configured {
     LOG.info("Extract: " + url);
 
     try {
-      this.url = url;
       page = fetcher.fetch(url, contentType);
       if (page != null) {
         extract(page);
@@ -167,7 +163,7 @@ public class SimpleParser extends Configured {
 
     results.put("content", page.getContent());
 
-    if (ParserMapper.isTruncated(url, page)) {
+    if (ParserMapper.isTruncated(page.url(), page)) {
       results.put("contentStatus", "truncated");
     }
 

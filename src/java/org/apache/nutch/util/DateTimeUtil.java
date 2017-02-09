@@ -17,11 +17,10 @@
 
 package org.apache.nutch.util;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 import java.text.NumberFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -153,14 +152,20 @@ public class DateTimeUtil {
     return (System.currentTimeMillis() - start) / 1000.0;
   }
 
+  /**
+   * RFC 2616 defines three different date formats that a conforming client must understand.
+   * */
   public static Instant parseHttpDateTime(String text, Instant defaultValue) {
     try {
-      // RFC 2616 defines three different date formats that a conforming client must understand.
       Date d = org.apache.http.client.utils.DateUtils.parseDate(text);
       return d.toInstant();
     } catch (Throwable e) {
       return defaultValue;
     }
+  }
+
+  public static String formatHttpDateTime(long time) {
+    return org.apache.http.client.utils.DateUtils.formatDate(new Date(time));
   }
 
   public static String formatHttpDateTime(Instant time) {
@@ -171,20 +176,17 @@ public class DateTimeUtil {
     try {
       // equals to Instant.parse()
       return DateTimeFormatter.ISO_INSTANT.parse(text, Instant::from);
-    } catch (Throwable e) {
-      return defaultValue;
-    }
+    } catch (Throwable ignored) {}
+
+    return defaultValue;
   }
 
-  public static Date tryParseDateTime(String dateStr) {
-    Date parsedDateTime = null;
-
+  public static Instant tryParseDateTime(String dateStr, Instant defaultValue) {
     try {
-      parsedDateTime = DateUtils.parseDate(dateStr, POSSIBLE_DATE_TIME_FORMATS);
-    } catch (ParseException ignored) {
-    }
+      return DateUtils.parseDate(dateStr, POSSIBLE_DATE_TIME_FORMATS).toInstant();
+    } catch (Throwable ignored) {}
 
-    return parsedDateTime;
+    return defaultValue;
   }
 
   public static String constructTimeHistory(String timeHistory, Instant fetchTime, int maxRecords) {

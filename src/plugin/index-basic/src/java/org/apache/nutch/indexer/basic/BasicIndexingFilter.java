@@ -84,7 +84,7 @@ public class BasicIndexingFilter implements IndexingFilter {
   }
 
   private void addDocFields(IndexDocument doc, String url, WebPage page) {
-    page.getProgramVariables().entrySet().stream()
+    page.getTempVars().entrySet().stream()
         .filter(entry -> entry.getValue().toString().length() < MAX_CONTENT_LENGTH)
         .forEach(entry -> doc.add(entry.getKey(), entry.getValue()));
   }

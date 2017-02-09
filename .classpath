@@ -4,6 +4,7 @@
   <classpathentry kind="src" path="src/java/" />
   <classpathentry kind="src" path="src/test/" output="build/test/classes" />
   <classpathentry kind="src" path="src/plugin/indexer-solr/src/java/" />
+  <classpathentry kind="src" path="src/plugin/indexer-solr/src/test/" />
   <classpathentry kind="src" path="src/plugin/index-anchor/src/java/" />
   <classpathentry kind="src" path="src/plugin/index-anchor/src/test/" />
   <classpathentry kind="src" path="src/plugin/index-basic/src/java/" />
@@ -34,6 +35,8 @@
   <classpathentry kind="src" path="src/plugin/scoring-link/src/java/" />
   <classpathentry kind="src" path="src/plugin/scoring-opic/src/java/" />
   <classpathentry kind="src" path="src/plugin/scoring-opic/src/test/" />
+  <classpathentry kind="src" path="src/plugin/scoring-monitor/src/java/" />
+  <classpathentry kind="src" path="src/plugin/scoring-monitor/src/test/" />
   <classpathentry kind="src" path="src/plugin/tld/src/java/" />
   <classpathentry kind="src" path="src/plugin/tld/src/test/" />
   <classpathentry kind="src" path="src/plugin/lib-regex-filter/src/java/" />
@@ -189,6 +192,7 @@
   <classpathentry kind="lib" path="build/lib/leveldbjni-all-1.8.jar" />
   <classpathentry kind="lib" path="build/lib/log4j-1.2.17.jar" />
   <classpathentry kind="lib" path="build/lib/mail-1.4.2.jar" />
+  <classpathentry kind="lib" path="build/lib/mockito-all-1.9.5.jar" />
   <classpathentry kind="lib" path="build/lib/neethi-3.0.1.jar" />
   <classpathentry kind="lib" path="build/lib/nekohtml-1.9.19.jar" />
   <classpathentry kind="lib" path="build/lib/netty-3.6.6.Final.jar" />
@@ -219,6 +223,7 @@
   <classpathentry kind="lib" path="build/lib/spring-expression-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-jdbc-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-orm-4.0.4.RELEASE.jar" />
+  <classpathentry kind="lib" path="build/lib/spring-test-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-tx-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/spring-web-4.0.4.RELEASE.jar" />
   <classpathentry kind="lib" path="build/lib/stax-api-1.0-2.jar" />
@@ -303,6 +308,7 @@
   <classpathentry kind="lib" path="build/plugins/protocol-file/protocol-file.jar" />
   <classpathentry kind="lib" path="build/plugins/protocol-http/protocol-http.jar" />
   <classpathentry kind="lib" path="build/plugins/scoring-link/scoring-link.jar" />
+  <classpathentry kind="lib" path="build/plugins/scoring-monitor/scoring-monitor.jar" />
   <classpathentry kind="lib" path="build/plugins/scoring-opic/scoring-opic.jar" />
   <classpathentry kind="lib" path="build/plugins/tld/tld.jar" />
   <classpathentry kind="lib" path="build/plugins/urlfilter-automaton/automaton-1.11-8.jar" />

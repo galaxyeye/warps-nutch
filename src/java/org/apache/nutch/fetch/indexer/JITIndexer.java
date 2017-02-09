@@ -8,8 +8,8 @@ import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.parse.ParseStatusCodes;
-import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -34,6 +34,7 @@ public class JITIndexer {
   private int batchSize = 2000;
   private int indexThreadCount;
   private int minTextLenght;
+  private int pagesTooShort;
 
   private final Set<IndexThread> activeIndexThreads = new ConcurrentSkipListSet<>();
   private final BlockingQueue<FetchTask> indexTasks = Queues.newLinkedBlockingQueue(batchSize);
@@ -79,13 +80,6 @@ public class JITIndexer {
       return; // filter urls not parsed
     }
 
-    // page content may not stored
-//    ByteBuffer content = page.getContent();
-//    if (minTextLenght > 0 && content.array().length < minTextLenght) {
-//      // TODO : add a counter to report this case
-//      return;
-//    }
-
     indexTasks.add(fetchTask);
   }
 
@@ -97,9 +91,10 @@ public class JITIndexer {
   }
 
   public void cleanup() {
-    indexThreads.stream().forEach(IndexThread::halt);
+    indexThreads.forEach(IndexThread::halt);
 
-    LOG.info("JITIndexer cleanup...");
+    LOG.info("JITIndexer cleanup ...");
+    LOG.info("There are " + pagesTooShort + " short pages are not indexed");
 
     try {
       FetchTask fetchTask = consume();
@@ -155,28 +150,11 @@ public class JITIndexer {
       return null;
     }
 
-    String textContent = doc.getFieldValueAsString("text_content");
-
-    if (textContent == null || textContent.length() < 200) {
+    long textLength = page.sniffTextLength();
+    if (textLength < 200) {
+      ++pagesTooShort;
       return null;
     }
-
-    // Index any page if it has publish time
-//    if (doc.getField("publish_time") != null && textContent.length() > 500) {
-//      return doc;
-//    }
-
-    // doc also contains page category information, but they are not accuracy
-//    int _char = textContent.length();
-//    double _a = page.getOutlinks().size();
-//    if (_a == 0) {
-//      _a = (double)page.getTempVar("outlinks_count");
-//    }
-//
-//    // Index detail page only
-//    if (CrawlFilter.sniffPageCategoryByTextDensity(_char, _a) != CrawlFilter.PageCategory.DETAIL) {
-//      return null;
-//    }
 
     return doc;
   }

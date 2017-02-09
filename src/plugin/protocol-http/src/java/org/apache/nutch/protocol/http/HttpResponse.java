@@ -194,14 +194,6 @@ public class HttpResponse implements Response {
               .append(DateTimeUtil.formatHttpDateTime(page.getModifiedTime()))
               .append("\r\n").append("\r\n");
 
-//      // if (page.isReadable(WebPage.Field.MODIFIED_TIME.getIndex())) {
-//      reqStr.append("If-Modified-Since: "
-//              + HttpDateFormat.toString(page.getModifiedTime().toEpochMilli()));
-//      reqStr.append("\r\n");
-//      // }
-//      reqStr.append("\r\n");
-
-
       byte[] reqBytes = reqStr.toString().getBytes();
 
       req.write(reqBytes);
