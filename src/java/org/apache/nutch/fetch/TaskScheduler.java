@@ -194,11 +194,11 @@ public class TaskScheduler extends Configured {
     boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
-    this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, false);
+    this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, true);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
     this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
-    this.ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
-    this.storingContent = conf.getBoolean("fetcher.store.content", true);
+    this.ignoreExternalLinks = conf.getBoolean(PARAM_IGNORE_EXTERNAL_LINKS, true);
+    this.storingContent = conf.getBoolean(PARAM_FETCH_STORE_CONTENT, false);
 
     this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
 

@@ -103,6 +103,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
     page.setFetchTime(Instant.now());
     page.setFetchInterval(defaultInterval);
     page.setRetriesSinceFetch(0);
+    page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
   }
 
   /**
@@ -186,10 +187,6 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
    * selection process based on scores. The default implementation checks
    * <code>fetchTime</code>, if it is higher than the
    * 
-   * @param curTime
-   *          it returns false, and true otherwise. It will also check that
-   *          fetchTime is not too remote (more than <code>maxInterval</code),
-   *          in which case it lowers the interval and returns true.
    * @param url
    *          URL of the page
    * @param page
@@ -206,16 +203,7 @@ public abstract class AbstractFetchSchedule extends Configured implements FetchS
       return false;
     }
 
-//    long fetchTime = page.getFetchTime();
-//    if (fetchTime - curTime > maxInterval * 1000L) {
-//      if (page.getFetchInterval() > maxInterval) {
-//        page.setFetchInterval(Math.round(maxInterval * 0.9f));
-//      }
-//      page.setFetchTime(curTime);
-//    }
-//    return fetchTime <= curTime;
-
-    // pages are never truly GONE - we have to check them from time to time.
+    // Pages are never truly GONE - we have to check them from time to time.
     // pages with too long fetchInterval are adjusted so that they fit within
     // maximum fetchInterval (batch retention period).
     Instant fetchTime = page.getFetchTime();

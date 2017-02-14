@@ -21,8 +21,6 @@ import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
-import org.apache.nutch.crawl.SignatureComparator;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.graph.GraphGroupKey;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
@@ -30,24 +28,18 @@ import org.apache.nutch.graph.WebVertex;
 import org.apache.nutch.graph.io.WebGraphWritable;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.NutchReducer;
-import org.apache.nutch.metadata.HttpHeaders;
-import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Set;
 
 import static org.apache.nutch.graph.io.WebGraphWritable.OptimizeMode.IGNORE_TARGET;
@@ -67,8 +59,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         pagesPassed, pagesLoaded, pagesCreated, newDetailPages
     }
 
-    private int retryMax;
-    private Duration maxFetchInterval;
     private FetchSchedule fetchSchedule;
     private ScoringFilters scoringFilters;
     private int maxInLinks;
@@ -84,8 +74,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         // getReporter().setLog(LOG_ADDITIVITY);
 
         String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
-        retryMax = conf.getInt(PARAM_FETCH_MAX_RETRY, 3);
-        maxFetchInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
         fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
         scoringFilters = new ScoringFilters(conf);
         maxInLinks = conf.getInt(PARAM_UPDATE_MAX_IN_LINKS, 100);
@@ -103,8 +91,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
                 "className", this.getClass().getSimpleName(),
                 "crawlId", crawlId,
                 "maxLinks", maxInLinks,
-                "retryMax", retryMax,
-                "maxFetchInterval", maxFetchInterval,
                 "fetchSchedule", fetchSchedule.getClass().getSimpleName(),
                 "scoringFilters", scoringFilters.toString()
         ).withLogger(LOG).info();
@@ -161,21 +147,12 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
             return;
         }
 
-        PageExistence pageExistence = page.getTempVar(VAR_PAGE_EXISTENCE, PageExistence.CREATED);
-        if (pageExistence == PageExistence.PASSED) {
-            updateFetchSchedule(url, page);
-            updateStatusCounter(page);
-            getCounter().increase(Counter.pagesPassed);
-        }
-
-        // 1. update depth, 2. update in-links
+        // 1. update depth, 2. update in-links, 3. update score from in-coming pages
         updateGraph(graph);
         updateMarks(page);
 
         context.write(reversedUrl, page.get());
         getCounter().updateAffectedRows(url);
-        // nutchMetrics.reportWebPage(url, page);
-        // nutchMetrics.reportPreformance(url, DateTimeUtil.elapsedTime(reduceStart));
     }
 
     /**
@@ -208,6 +185,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
 
         if (focus.hasWebPage()) {
             focus.getWebPage().setTempVar(VAR_PAGE_EXISTENCE, PageExistence.PASSED);
+            getCounter().increase(Counter.pagesPassed);
         } else {
             focus.setWebPage(loadOrCreateWebPage(url, reversedUrl));
         }
@@ -223,8 +201,8 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
      * 3. the page have not be fetched yet
      */
     private WebPage loadOrCreateWebPage(String url, String reversedUrl) {
-        // TODO : Can we sure datastore.get is a local operation? Or it's a distributed operation?
-        WebPage loadedPage = round <= 1 ? WebPage.newWebPage() : WebPage.wrap(datastore.get(reversedUrl));
+        // TODO : Can we sure datastore.get is a local operation? Or it's a distributed operation? And is there a cache?
+        WebPage loadedPage = round <= 1 ? WebPage.newWebPage(url) : WebPage.wrap(url, datastore.get(reversedUrl), false);
         WebPage page;
 
         // Page is already in the db
@@ -238,7 +216,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
             page.setTempVar(VAR_PAGE_EXISTENCE, PageExistence.CREATED);
 
             getCounter().increase(Counter.pagesCreated);
-            if (CrawlFilter.sniffPageCategory(url).isDetail()) {
+            if (page.getPageCategory().isDetail()) {
                 getCounter().increase(Counter.newDetailPages);
             }
         }
@@ -247,7 +225,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
 
     private WebPage createNewRow(String url) {
-        WebPage page = WebPage.newWebPage();
+        WebPage page = WebPage.newWebPage(url);
 
         fetchSchedule.initializeSchedule(url, page);
         page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
@@ -306,95 +284,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     private void updateMarks(WebPage page) {
         // Clear temporary metadata
         page.putMarkIfNonNull(UPDATEOUTG, page.getMark(PARSE));
-    }
-
-    private void updateFetchSchedule(String url, WebPage page) {
-        byte status = page.getStatus().byteValue();
-
-        switch (status) {
-            case CrawlStatus.STATUS_FETCHED: // successful fetch
-            case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
-            case CrawlStatus.STATUS_REDIR_PERM:
-            case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, not modified
-                int modified = FetchSchedule.STATUS_UNKNOWN;
-                if (status == CrawlStatus.STATUS_NOTMODIFIED) {
-                    modified = FetchSchedule.STATUS_NOTMODIFIED;
-                }
-
-                ByteBuffer prevSig = page.getPrevSignature();
-                ByteBuffer signature = page.getSignature();
-                if (prevSig != null && signature != null) {
-                    if (SignatureComparator.compare(prevSig, signature) != 0) {
-                        modified = FetchSchedule.STATUS_MODIFIED;
-                    } else {
-                        modified = FetchSchedule.STATUS_NOTMODIFIED;
-                    }
-                }
-
-                Instant prevFetchTime = page.getPrevFetchTime();
-                Instant fetchTime = page.getFetchTime();
-
-                Instant prevModifiedTime = page.getPrevModifiedTime();
-                Instant modifiedTime = page.getModifiedTime();
-
-                Instant latestModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
-                if (latestModifiedTime.isAfter(modifiedTime)) {
-                    modifiedTime = latestModifiedTime;
-                    prevModifiedTime = modifiedTime;
-                } else {
-                    LOG.trace("Bad last modified time : {} -> {}", modifiedTime, page.getHeader(HttpHeaders.LAST_MODIFIED, "unknown time"));
-                }
-
-                fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
-
-                Duration fetchInterval = page.getFetchInterval();
-                if (!page.hasMark(Mark.INACTIVE) && fetchInterval.compareTo(maxFetchInterval) > 0) {
-                    LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
-                    fetchSchedule.forceRefetch(url, page, false);
-                }
-                break;
-            case CrawlStatus.STATUS_RETRY:
-                fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-                if (page.getRetriesSinceFetch() < retryMax) {
-                    page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-                } else {
-                    page.setStatus((int) CrawlStatus.STATUS_GONE);
-                }
-                break;
-            case CrawlStatus.STATUS_GONE:
-                fetchSchedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-                break;
-        }
-    }
-
-    private void updateStatusCounter(WebPage page) {
-        byte status = page.getStatus().byteValue();
-
-        switch (status) {
-            case CrawlStatus.STATUS_FETCHED:
-                getCounter().increase(NutchCounter.Counter.stFetched);
-                break;
-            case CrawlStatus.STATUS_REDIR_TEMP:
-                getCounter().increase(NutchCounter.Counter.stRedirTemp);
-                break;
-            case CrawlStatus.STATUS_REDIR_PERM:
-                getCounter().increase(NutchCounter.Counter.stRedirPerm);
-                break;
-            case CrawlStatus.STATUS_NOTMODIFIED:
-                getCounter().increase(NutchCounter.Counter.stNotModified);
-                break;
-            case CrawlStatus.STATUS_RETRY:
-                getCounter().increase(NutchCounter.Counter.stRetry);
-                break;
-            case CrawlStatus.STATUS_UNFETCHED:
-                getCounter().increase(NutchCounter.Counter.stUnfetched);
-                break;
-            case CrawlStatus.STATUS_GONE:
-                getCounter().increase(NutchCounter.Counter.stGone);
-                break;
-            default:
-                break;
-        }
     }
 
     private void updateDepthCounter(int depth, WebPage page) {

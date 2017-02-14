@@ -49,6 +49,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     /** generate */
     GENERATE_TIME("G_GT"),
     DISTANCE("G_D"),
+    MAX_DISTANCE("G_MD"),
 
     /** fetch */
     FETCH_TIME_HISTORY("F_FTH"),
@@ -84,6 +85,7 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
     PREV_REFERRED_PUBLISH_TIME("C_PRPT"),
     PUBLISH_TIME("C_PT"),
     PREV_PUBLISH_TIME("C_PPT"),
+    CONTENT_MODIFIED_TIME("C_CMT"),
 
     META_KEYWORDS("meta_keywords"),
     META_DESCRIPTION("meta_description"),
@@ -112,13 +114,15 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
         case "I_D":
           return IS_DETAIL;
 
-        /** generate */
+        /* generate */
         case "G_GT":
           return GENERATE_TIME;
         case "G_D":
           return DISTANCE;
+        case "G_MD":
+          return MAX_DISTANCE;
 
-        /** fetch */
+        /* fetch */
         case "F_FTH":
           return FETCH_TIME_HISTORY;
         case "F_FC":
@@ -140,17 +144,17 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
         case "P_AOL":
           return OLD_OUT_LINKS;
 
-        /** index */
+        /* index */
         case "ITH":
           return INDEX_TIME_HISTORY;
 
-        /** score */
+        /* score */
         case "S_AS":
           return ARTICLE_SCORE;
         case "S_CASH":
           return CASH_KEY;
 
-        /** content */
+        /* content */
         case "C_OCE":
           return ORIGINAL_CHAR_ENCODING;
         case "C_CEFC":

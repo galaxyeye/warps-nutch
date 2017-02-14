@@ -21,17 +21,16 @@ import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
-import org.apache.nutch.filter.CrawlFilter;
+import org.apache.nutch.common.EncodingDetector;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.filter.CrawlFilters;
+import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.*;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.common.EncodingDetector;
-import org.apache.nutch.common.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
@@ -51,7 +50,6 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -90,7 +88,7 @@ public class HtmlParser implements Parser {
     this.conf = conf;
     this.htmlParseFilters = new ParseFilters(getConf());
     this.parserImpl = getConf().get("parser.html.impl", "neko");
-    this.defaultCharEncoding = getConf().get("parser.character.encoding.default", "windows-1252");
+    this.defaultCharEncoding = getConf().get("parser.character.encoding.default", "utf-8");
     this.domContentUtils = new DOMContentUtils(conf);
     this.cachingPolicy = getConf().get("parser.caching.forbidden.policy", CACHING_FORBIDDEN_CONTENT);
     this.crawlFilters = CrawlFilters.create(conf);
@@ -130,9 +128,8 @@ public class HtmlParser implements Parser {
 
     // Check meta directives
     if (!metaTags.getNoIndex()) { // okay to index
-      // Get input source, again. It's not reusable
-      InputSource input2 = getContentAsInputSource(page, encoding);
-      TextDocument doc = extract(page, input2);
+      // Get input source, again. InputSource is not reusable
+      TextDocument doc = extract(page, getContentAsInputSource(page, encoding));
 
       if (doc != null) {
         page.setPageTitle(doc.getPageTitle());
@@ -140,20 +137,17 @@ public class HtmlParser implements Parser {
         page.setText(domContentUtils.getText(docRoot));
         page.setTextContent(doc.getTextContent());
         page.setHtmlContent(doc.getHtmlContent());
+        page.setPageCategory(PageCategory.valueOf(doc.getPageCategoryAsString()));
+        page.setTextContentLength(doc.getTextContent().length());
+        page.updatePublishTime(doc.getPublishTime());
+        page.updateContentModifiedTime(doc.getModifiedTime());
 
         doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
-
-//      LOG.info("Text content length : " + doc.getTextContent().length()
-//          + ", Html content length : " + doc.getHtmlContent().length() + ", url : " + page.getBaseUrl());
-
-        page.setTextContentLength(doc.getTextContent().length());
-        page.updatePublishTime(DateTimeUtil.parseInstant(doc.getField(DOC_FIELD_PUBLISH_TIME), Instant.EPOCH));
       }
     }
 
-    if (!CrawlFilter.sniffPageCategory(url).isDetail()) {
-      tryGetValidOutlinks(page, url, baseURL);
-    }
+    // if (page.getTextDensity() > 100)
+    tryGetValidOutlinks(page, url, baseURL);
 
     ParseStatus status = getStatus(metaTags);
     ParseResult parseResult = new ParseResult(page.getText(), page.getPageTitle(), outlinks, status);
@@ -222,10 +216,6 @@ public class HtmlParser implements Parser {
 
     page.increaseTotalOutLinkCount(outlinks.size());
     page.setTempVar(VAR_OUTLINKS_COUNT, outlinks.size());
-
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("found " + outlinks.size() + " outlinks in " + url);
-    }
   }
 
   private void setEncoding(WebPage page, String encoding) {
@@ -254,8 +244,7 @@ public class HtmlParser implements Parser {
     }
 
     try {
-      TextDocument doc = new SAXInput(input).getTextDocument();
-      doc.setBaseUrl(page.getBaseUrl());
+      TextDocument doc = new SAXInput(input, page.url()).parse();
 
       ChineseNewsExtractor extractor = new ChineseNewsExtractor();
       extractor.setRegexFieldRules(regexExtractor.getRegexFieldRules());

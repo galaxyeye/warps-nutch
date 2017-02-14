@@ -55,7 +55,8 @@ public abstract class NutchJob extends Configured {
   private int currentJobNum = 0;
 
   protected void setup(Map<String, Object> args) throws Exception {
-    LOG.info("\n\n\n\n------------------------- " + getJobName() + " -------------------------");
+    String jobDescription = getJobName() + " - " + getConf().get(PARAM_NUTCH_CONFIG_ID, "");
+    LOG.info("\n\n\n\n------------------------- " + jobDescription + " -------------------------");
     LOG.info("Job started at " + DateTimeUtil.format(startTime));
     getConf().set(PARAM_NUTCH_JOB_NAME, getJobName());
 
@@ -70,6 +71,9 @@ public abstract class NutchJob extends Configured {
       updateResults();
 
       Params.of(results).withLogger(LOG).info();
+
+      Params.of(NutchUtil.recordJobStatus(currentJob)).withLogger(LOG).info();
+
       LOG.info("Affected rows : " + affectedRows);
     }
     catch (Throwable e) {

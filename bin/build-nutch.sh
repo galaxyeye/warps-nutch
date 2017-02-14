@@ -90,7 +90,9 @@ echo "Nutch version : `cat $NUTCH_SRC_HOME/VERSION`"
 echo "Log file : $BUILD_LOGOUT_PATH"
 
 cp -r $NUTCH_SRC_HOME/$CLUSTER_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/configsets/default/
-[[ -d $ADD_CONFIG_DIR ]] && cp -r $NUTCH_SRC_HOME/$ADD_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/configsets/default/
+if [[ -d $ADD_CONFIG_DIR ]]; then
+  cp -r $NUTCH_SRC_HOME/$ADD_CONFIG_DIR/* $NUTCH_SRC_HOME/conf/configsets/default/
+fi
 
 # TODO : deploy to test environment
 $ANT -Dversion=$VERSION $ANT_TARGET -logfile $BUILD_LOGOUT_PATH -buildfile $BUILD_FILE

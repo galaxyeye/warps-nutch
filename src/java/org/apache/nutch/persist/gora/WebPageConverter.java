@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.persist.gora;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.avro.Schema;
@@ -43,6 +44,10 @@ public class WebPageConverter {
 
   public static Map<String, Object> convert(WebPage page) {
     return convert(page, ALL_FIELDS);
+  }
+
+  public static Map<String, Object> convert(WebPage page, String... fields) {
+    return convert(page, Lists.newArrayList(fields));
   }
 
   public static Map<String, Object> convert(WebPage page, Collection<String> fields) {
@@ -202,8 +207,6 @@ public class WebPageConverter {
         return page.getCash();
       case PAGE_CATEGORY:
         return page.getPageCategory();
-      case PAGE_CATEGORY_LIKELIHOOD:
-        return page.getPageCategoryLikelihood();
       case TEXT_CONTENT_LENGTH:
         return page.getTextContentLength();
       case REFERRER:

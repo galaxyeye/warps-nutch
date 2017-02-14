@@ -40,6 +40,12 @@ public class TestStringUtil {
     String s = "a,b,c,d";
     s = StringUtils.substringAfter(s, ",");
     assertEquals("b,c,d", s);
+
+    s = "a\nb\nc\nd\ne\nf\ng\n";
+    // assume the avarage lenght of a link is 100 characters
+    int pos = StringUtils.indexOf(s, '\n', s.length() / 2);
+    s = s.substring(pos + 1);
+    assertEquals("e\nf\ng\n", s);
   }
 
   @Test

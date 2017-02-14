@@ -92,7 +92,7 @@ public class TestFetcher extends AbstractNutchTest {
     // generate
     long time = System.currentTimeMillis();
     GenerateJob g = new GenerateJob(conf);
-    String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), false, time, false, false);
+    String batchId = g.generate(Long.MAX_VALUE, crawlId, NutchUtil.generateBatchId(), false, false, time, false, false);
 
     // fetch
     time = System.currentTimeMillis();

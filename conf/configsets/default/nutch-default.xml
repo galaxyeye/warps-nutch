@@ -1386,7 +1386,7 @@
     <!-- Nutch service properties -->
     <property>
         <name>nutch.config.id</name>
-        <value></value>
+        <value>common</value>
         <description>In multiple job mode, RAMConfManager would create a configId,
             or the client will pass a configId
         </description>
@@ -1436,11 +1436,6 @@
     </property>
 
     <property>
-        <name>fetcher.debug.urls</name>
-        <value>false</value>
-    </property>
-
-    <property>
         <name>fetcher.fetch.mapper.ignore.unreachable.hosts</name>
         <value>true</value>
     </property>
@@ -1461,27 +1456,9 @@
     </property>
 
     <property>
-        <name>parser.ignore.detail.page.outlinks</name>
-        <value>true</value>
-    </property>
-
-    <property>
         <name>http.proxy.pool.update.period</name>
         <value>10000</value>
         <description>In proxy mode, the proxy pool will be updated from files after this period</description>
-    </property>
-
-    <property>
-        <name>db.score.pagerank.enabled</name>
-        <value>false</value>
-        <description>
-            If enabled, the importance of each page will be heavily affected
-            by the count of pages linked into him,
-            which is well know as the "PageRank".
-
-            Since we are not very interested in the score of each page,
-            we disable this time consuming feature by default
-        </description>
     </property>
 
     <property>

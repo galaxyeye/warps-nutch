@@ -35,6 +35,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.apache.nutch.metadata.Nutch.PARAM_NUTCH_CONFIG_ID;
+
 public class ConfManagerImpl implements ConfManager {
 
   public static final Logger LOG = NutchMaster.LOG;
@@ -141,7 +143,7 @@ public class ConfManagerImpl implements ConfManager {
   private void createHadoopConfig(NutchConfig nutchConfig) {
     Configuration conf = ConfigUtils.create();
 
-    conf.set("nutch.config.id", nutchConfig.getConfigId());
+    conf.set(PARAM_NUTCH_CONFIG_ID, nutchConfig.getConfigId());
 
     configurations.put(nutchConfig.getConfigId(), conf);
 

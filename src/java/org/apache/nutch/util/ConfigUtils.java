@@ -54,7 +54,7 @@ public class ConfigUtils {
   }
 
   /**
-   * Get a unsigned integer, if the configured value is negative, return the default value
+   * Get a unsigned integer, if the configured value is negative or not set, return the default value
    *
    * @param name         The property name
    * @param defaultValue The default value return if the configured value is negative
@@ -64,6 +64,22 @@ public class ConfigUtils {
     Integer value = conf.getInt(name, defaultValue);
     if (value < 0) {
       value = defaultValue;
+    }
+    return value;
+  }
+
+  /**
+   * Get an unsigned integer, if the configured value is not set, return the default value,
+   * if the configured value is negative, returns Integer.MAX_VALUE
+   *
+   * @param name         The property name
+   * @param defaultValue The default value return if the configured value is negative
+   * @return a positive integer
+   */
+  public static Integer getUintOrMax(Configuration conf, String name, Integer defaultValue) {
+    Integer value = conf.getInt(name, defaultValue);
+    if (value < 0) {
+      value = Integer.MAX_VALUE;
     }
     return value;
   }
@@ -146,5 +162,6 @@ public class ConfigUtils {
   private static void addNutchResources(Configuration conf) {
     conf.addResource("nutch-default.xml");
     conf.addResource("nutch-site.xml");
+    conf.addResource("nutch-task.xml");
   }
 }

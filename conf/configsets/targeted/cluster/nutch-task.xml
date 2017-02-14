@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl" ?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+  <!-- persist -->
+  <property>
+    <name>storage.crawl.id</name>
+    <value>targeted</value>
+    <description>Crawl pages from targeted seeds pages only</description>
+  </property>
+
+  <!-- plugin -->
+  <property>
+    <name>plugin.includes</name>
+    <value>protocol-(http|crowd)|urlfilter-(prefix|suffix|regex)|urlnormalizer-(pass|regex|basic)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|scoring-monitor</value>
+    <description>Regular expression naming plugin directory names to
+      include.  Any plugin not matching this expression is excluded.
+      In any case you need at least include the nutch-extensionpoints plugin. By
+      default Nutch includes crawling just HTML and plain text via HTTP,
+      and basic indexing and search plugins. In order to use HTTPS please enable
+      protocol-httpclient, but be aware of possible intermittent problems with the
+      underlying commons-httpclient library.
+    </description>
+  </property>
+
+  <!-- Fetching -->
+
+  <property>
+    <name>db.fetch.schedule.class</name>
+    <value>org.apache.nutch.crawl.schedulers.NewsFetchSchedule</value>
+    <description>The implementation of fetch schedule. NewsFetchSchedule has the following rules :
+    </description>
+  </property>
+
+  <property>
+    <name>fetcher.threads.fetch</name>
+    <value>50</value>
+  </property>
+
+  <property>
+    <name>fetcher.throughput.threshold.pages</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>fetcher.net.bandwidth.m</name>
+    <value>4</value>
+    <description>Hardware bandwidth in Mbytes, if exceed the limit, slows down the task scheduling.</description>
+  </property>
+
+  <property>
+    <name>nutch.master.host</name>
+    <value>master</value>
+    <description>
+      A internet ip, hostname, or domain.
+      All fetch servers register itself using a internet domain so satellites
+      can do tasks from the internet.
+    </description>
+  </property>
+
+  <property>
+    <name>nutch.master.hostname</name>
+    <value>galaxyeye</value>
+    <description>
+      A Intranet access point.
+      All slave nutch update proxy
+      server list and other resource if any from the master nutch server.
+      It must be the host name which is in /etc/hostname since we need to
+      check whether it's the host itself.
+    </description>
+  </property>
+
+  <!-- Fetching -->
+  <property>
+    <name>fetcher.task.timeout</name>
+    <value>10m</value>
+    <description>fetch thread will exit if no any fetch item for fetcher.task.timeout minutes</description>
+  </property>
+
+  <!-- Parsing -->
+
+  <!-- Indexing -->
+
+  <!-- Scoring -->
+
+  <!-- Generate -->
+  <property>
+    <name>generate.max.distance</name>
+    <value>1</value>
+  </property>
+
+  <!-- Indexer -->
+  <property>
+    <name>solr.zookeeper.hosts</name>
+    <value>iZ235p20xpvZ:2181,iZ237ax7rsqZ:2181,iZ23ocq7jaaZ:2181</value>
+    <description>Zookeeper String</description>
+  </property>
+  <property>
+    <name>solr.collection</name>
+    <value>information_0915_integration_test</value>
+    <description>solr collection</description>
+  </property>
+  <property>
+    <name>solr.commit.size</name>
+    <value>250</value>
+    <description>solr collection</description>
+  </property>
+
+</configuration>

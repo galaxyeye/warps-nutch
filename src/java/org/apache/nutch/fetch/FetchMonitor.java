@@ -11,10 +11,7 @@ import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.net.proxy.ProxyUpdateThread;
 import org.apache.nutch.service.NutchMaster;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.DateTimeUtil;
-import org.apache.nutch.util.NetUtil;
-import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +24,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import static org.apache.nutch.metadata.Nutch.*;
 
@@ -57,6 +53,10 @@ public class FetchMonitor {
   private TaskSchedulers taskSchedulers;
   private TaskScheduler taskScheduler;
   private TasksMonitor fetchMonitor;
+
+  /** Index server */
+  private final String indexServer = "master";
+  private final int indexServerPort = 8983;
 
   /** Timing */
   private Duration fetchJobTimeout;
@@ -329,7 +329,7 @@ public class FetchMonitor {
       /*
        * Read local filesystem for control commands
        * */
-      if (checkLocalFileCommandExists("finish " + jobName)) {
+      if (RuntimeUtil.checkLocalFileCommand(commandFile, "finish " + jobName)) {
         handleFinishJobCommand();
         LOG.info("Find finish-job command in " + commandFile + ", exit the job ...");
         halt();
@@ -359,11 +359,8 @@ public class FetchMonitor {
         break;
       }
 
-      /*
-       * TODO : avoid the hard coding
-       * */
-      if (!NetUtil.testHttpNetwork("master", 8983)) {
-        LOG.info("Lost solr, exit the job");
+      if (!NetUtil.testHttpNetwork(indexServer, indexServerPort)) {
+        LOG.info("Lost index server, exit the job");
         break;
       }
     } while (taskScheduler.getActiveFetchThreadCount() > 0);
@@ -396,27 +393,6 @@ public class FetchMonitor {
   }
 
   private void handleFinishJobCommand() { fetchMonitor.clearReadyTasks(); }
-
-  /**
-   * Check local command file
-   * */
-  private boolean checkLocalFileCommandExists(String command) {
-    boolean exist = false;
-
-    Path path = Paths.get(commandFile);
-    if (Files.exists(path)) {
-      try {
-        List<String> lines = Files.readAllLines(path);
-        exist = lines.stream().anyMatch(line -> line.equals(command));
-        lines.remove(command);
-        Files.write(path, lines);
-      } catch (IOException e) {
-        LOG.error(e.toString());
-      }
-    }
-
-    return exist;
-  }
 
   /**
    * Check queues to see if something is hung

@@ -16,17 +16,15 @@
  */
 package org.apache.nutch.persist.local.service.impl;
 
-import java.sql.SQLException;
-import java.util.List;
-
-import javax.annotation.Resource;
-
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.table.TableUtils;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.persist.local.service.ServerInstanceService;
 import org.springframework.stereotype.Service;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.table.TableUtils;
+import javax.annotation.Resource;
+import java.sql.SQLException;
+import java.util.List;
 
 @Service
 public class ServerInstanceServiceImpl implements ServerInstanceService {
@@ -35,12 +33,14 @@ public class ServerInstanceServiceImpl implements ServerInstanceService {
   private Dao<ServerInstance, Long> serverInstanceDao;
 
   @Override
-  public void register(ServerInstance serverInstance) {
+  public ServerInstance register(ServerInstance serverInstance) {
     try {
       serverInstanceDao.createOrUpdate(serverInstance);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
+
+    return serverInstance;
   }
 
   @Override

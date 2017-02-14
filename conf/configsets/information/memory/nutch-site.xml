@@ -175,19 +175,12 @@
   </property>
 
   <property>
-    <name>parser.ignore.detail.page.outlinks</name>
-    <value>true</value>
-  </property>
-
-  <property>
-    <name>db.ignore.external.links</name>
-    <value>false</value>
-    <description>If true, outlinks leading from a page to external hosts will be ignored</description>
-  </property>
-
-  <property>
-    <name>db.ignore.internal.links</name>
-    <value>false</value>
+    <name>db.signature.class</name>
+    <value>org.apache.nutch.crawl.TextMD5Signature</value>
+    <description>TextMD5Signature uses Field.TEXT to calculate signatrue. Signatures
+      created with this implementation will be used for duplicate detection
+      and removal.
+    </description>
   </property>
 
   <property>
@@ -227,12 +220,6 @@
   </property>
 
   <!-- Scoring -->
-  <!-- This is a temporary solution to indicate important links -->
-  <property>
-    <name>db.score.important.links</name>
-    <value>product,item,detail,view,show,good,store,activity</value>
-    <description></description>
-  </property>
 
   <!-- Generate -->
   <property>
@@ -242,11 +229,6 @@
       to select for fetch. The distance is the smallest number of nodes (shortest path)
       of an URL from the original injected URL. (Injected URLs have distance 0).
     </description>
-  </property>
-
-  <property>
-    <name>generator.map.threads.per.task</name>
-    <value>50</value>
   </property>
 
   <property>

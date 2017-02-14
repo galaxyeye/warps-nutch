@@ -49,10 +49,16 @@ public class InGraphUpdateJob extends WebGraphUpdateJob {
     FIELDS.add(GoraWebPage.Field.INLINKS);
     FIELDS.add(GoraWebPage.Field.MARKERS);
     FIELDS.add(GoraWebPage.Field.METADATA);
-    // For reporter
+    FIELDS.add(GoraWebPage.Field.STATUS);
+    FIELDS.add(GoraWebPage.Field.PREV_SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.SIGNATURE);
+    FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
     FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
+    FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
+    FIELDS.add(GoraWebPage.Field.HEADERS);
   }
 
   public InGraphUpdateJob() {

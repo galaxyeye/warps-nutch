@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 import static org.apache.nutch.metadata.Nutch.YES_STRING;
@@ -46,30 +47,33 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   public void setFetchSchedule(String url, WebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
                                Instant fetchTime, Instant modifiedTime, int state) {
-    Duration interval = page.getFetchInterval();
     if (modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       modifiedTime = fetchTime;
     }
 
-    boolean changed = false;
+    Duration interval = Duration.ofDays(365 * 10);
     if (page.isSeed()) {
-      interval = MIN_INTERVAL;
-      changed = true;
-    }
-    else if (page.veryLikeDetailPage(url)) {
-      // Detail pages are fetched only once
-      page.putMark(INACTIVE, YES_STRING);
-      changed = true;
+      interval = adjustSeedFetchInterval(url, page, fetchTime, modifiedTime);
     }
     else {
-      // Discovery seed pages?
+      page.putMark(INACTIVE, YES_STRING);
     }
 
-    if (changed) {
-      updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
+    updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
+  }
+
+  private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Instant modifiedTime) {
+    Instant publishTime = page.getPublishTime();
+    if (publishTime.isAfter(modifiedTime)) {
+      modifiedTime = publishTime;
     }
-    else {
-      super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
+    long days = ChronoUnit.DAYS.between(modifiedTime, fetchTime);
+
+    if (days > 7) {
+      nutchMetrics.reportInactiveSeeds(days + " <- " + url);
+      return Duration.ofHours(1);
     }
+
+    return MIN_INTERVAL;
   }
 }

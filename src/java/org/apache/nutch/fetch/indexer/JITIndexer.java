@@ -34,7 +34,8 @@ public class JITIndexer {
   private int batchSize = 2000;
   private int indexThreadCount;
   private int minTextLenght;
-  private int pagesTooShort;
+  private int totalPages = 0;
+  private int pagesTooShort = 0;
 
   private final Set<IndexThread> activeIndexThreads = new ConcurrentSkipListSet<>();
   private final BlockingQueue<FetchTask> indexTasks = Queues.newLinkedBlockingQueue(batchSize);
@@ -94,7 +95,7 @@ public class JITIndexer {
     indexThreads.forEach(IndexThread::halt);
 
     LOG.info("JITIndexer cleanup ...");
-    LOG.info("There are " + pagesTooShort + " short pages are not indexed");
+    LOG.info("There are " + pagesTooShort + " not indexed short pages out of total " + totalPages + " pages");
 
     try {
       FetchTask fetchTask = consume();
@@ -150,8 +151,9 @@ public class JITIndexer {
       return null;
     }
 
-    long textLength = page.sniffTextLength();
-    if (textLength < 200) {
+    ++totalPages;
+    if (page.sniffTextContentLength() < 400) {
+      // nutchMetrics.reportShortPages();
       ++pagesTooShort;
       return null;
     }

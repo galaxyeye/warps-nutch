@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl" ?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+  <property>
+    <name>nutch.config.id</name>
+    <value>information</value>
+    <description>The name of the current task</description>
+  </property>
+
+  <!-- plugin -->
+  <property>
+    <name>plugin.includes</name>
+    <value>protocol-(http|crowd)|urlfilter-(domain|prefix|suffix|regex)|urlnormalizer-(pass|regex|basic)|parse-(html)|index-(metadata|basic|anchor|more)|indexer-solr|scoring-monitor</value>
+    <description>Regular expression naming plugin directory names to
+      include.  Any plugin not matching this expression is excluded.
+      In any case you need at least include the nutch-extensionpoints plugin. By
+      default Nutch includes crawling just HTML and plain text via HTTP,
+      and basic indexing and search plugins. In order to use HTTPS please enable
+      protocol-httpclient, but be aware of possible intermittent problems with the
+      underlying commons-httpclient library.
+    </description>
+  </property>
+
+  <property>
+    <name>db.fetch.schedule.class</name>
+    <value>org.apache.nutch.crawl.schedulers.AdaptiveNewsFetchSchedule</value>
+    <description>The implementation of fetch schedule. AdaptiveNewsFetchSchedule has the following rules :
+      1. Seed pages are fetched very frequently if it changes
+      2. Detail pages are fetched just once
+      3. Other pages are fetched using AdaptiveFetchSchedule, but with lower priority
+    </description>
+  </property>
+
+  <property>
+    <name>fetcher.threads.fetch</name>
+    <value>10</value>
+  </property>
+
+  <property>
+    <name>fetcher.throughput.threshold.pages</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>nutch.master.host</name>
+    <value>localhost</value>
+  </property>
+
+  <property>
+    <name>nutch.master.hostname</name>
+    <value>localhost</value>
+  </property>
+
+  <!-- Parsing -->
+
+  <!-- Indexing -->
+
+  <!-- Scoring -->
+
+  <!-- Generate -->
+  <property>
+    <name>generate.max.distance</name>
+    <value>3</value>
+  </property>
+
+  <!-- Indexer -->
+
+</configuration>

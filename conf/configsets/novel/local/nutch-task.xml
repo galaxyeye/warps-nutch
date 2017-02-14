@@ -109,7 +109,7 @@
 
     <property>
         <name>fetcher.task.timeout</name>
-        <value>10m</value>
+        <value>10</value>
         <description>fetch thread will exit if no any fetch item for
             fetcher.task.timeout minutes
         </description>
@@ -138,43 +138,12 @@
         <value>utf-8</value>
     </property>
 
-    <property>
-        <name>db.ignore.external.links</name>
-        <value>false</value>
-        <description>If true, outlinks leading from a page to external hosts
-            will be ignored
-        </description>
-    </property>
-
-    <property>
-        <name>db.ignore.internal.links</name>
-        <value>false</value>
-    </property>
-
     <!-- Parsing -->
     <property>
         <name>db.max.anchor.length</name>
         <value>200</value>
         <description>The maximum number of characters permitted in an anchor.
         </description>
-    </property>
-
-    <!-- <property> <name>plugin.includes</name> <value>protocol-(http|crowd)|urlfilter-regex|parse-(html)|index-(basic|anchor)|indexer-solr|urlnormalizer-(pass|regex|basic)|scoring-opic</value>
-        </property> -->
-
-    <!-- Scoring -->
-    <!-- This is a temporary solution to indicate important links -->
-    <property>
-        <name>db.score.important.links</name>
-        <value>product,item,detail,view,show,good,store,activity</value>
-        <description></description>
-    </property>
-
-    <!-- Generate -->
-    <property>
-        <name>generator.map.threads.per.task</name>
-        <value>50</value>
-        <description></description>
     </property>
 
     <!-- Solr Index -->

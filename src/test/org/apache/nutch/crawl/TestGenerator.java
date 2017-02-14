@@ -281,7 +281,7 @@ public class TestGenerator extends AbstractNutchTest {
     // generate batch
     GenerateJob g = new GenerateJob();
     g.setConf(config);
-    String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), false, System.currentTimeMillis(), filter, false);
+    String batchId = g.generate(numResults, "test", NutchUtil.generateBatchId(), false, false, System.currentTimeMillis(), filter, false);
     if (batchId == null)
       throw new RuntimeException("Generator failed");
   }

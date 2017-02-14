@@ -21,13 +21,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.WebPage;
 import org.slf4j.Logger;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.text.DecimalFormat;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 
+import static org.apache.nutch.metadata.Mark.INACTIVE;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 import static org.apache.nutch.metadata.Nutch.YES_STRING;
-import static org.apache.nutch.metadata.Mark.INACTIVE;
 
 /**
  * This class implements an adaptive re-fetch algorithm.
@@ -63,12 +63,12 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
     boolean changed = false;
     if (page.isSeed()) {
       interval = adjustSeedFetchInterval(url, page, fetchTime, modifiedTime, state);
-      // interval = MIN_INTERVAL;
       changed = true;
     }
-    else if (page.veryLikeDetailPage(url)) {
+    else if (page.getPageCategory().isDetail()) {
       // Detail pages are fetched only once, once it's mark
       page.putMark(INACTIVE, YES_STRING);
+      interval = Duration.ofDays(365 * 10);
       changed = true;
     }
     else {
@@ -94,12 +94,23 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     Duration interval = page.getFetchInterval();
-
-    Instant refPublishTime = page.getRefPublishTime();
-    long hours = ChronoUnit.HOURS.between(refPublishTime, fetchTime);
-    if (hours > 360 * 24 * 10) {
-      // Longer than 10 years, it's very likely the refPublishTime is wrong
-      // return super.getFetchInterval(page, fetchTime, modifiedTime, state);
+    Instant publishTime = page.getPublishTime();
+    if (publishTime.isAfter(modifiedTime)) {
+      modifiedTime = publishTime;
+    }
+    long hours = ChronoUnit.HOURS.between(modifiedTime, fetchTime);
+    if (hours > 24 * 365 * 10) {
+      // Longer than 10 years, it's very likely the publishTime/modifiedTime is wrong
+      long refArticles = page.getRefArticles();
+      long refChars = page.getRefChars();
+      if (refArticles == 0 || refChars == 0) {
+        // Re-fetch it at 2 o'clock tomorrow morning
+        LocalDateTime now = LocalDateTime.now();
+        return Duration.between(now.truncatedTo(ChronoUnit.DAYS), now.plusDays(1)).plusHours(2);
+      }
+      else {
+        return super.getFetchInterval(page, fetchTime, modifiedTime, state);
+      }
     }
 
     if (hours <= 24) {
@@ -112,7 +123,6 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
     }
     else {
       // If there is no any updates in 72 hours, check the page at least 1 hour later and increase fetch interval time by time
-      // TODO : fetch it at night
       long inc = (long)(interval.getSeconds() * INC_RATE);
 
       interval = interval.plusSeconds(inc);
@@ -127,7 +137,8 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
         }
       }
       else {
-        nutchMetrics.reportInactiveSeeds(hours + "H, " + url);
+        final DecimalFormat df = new DecimalFormat("0.00");
+        nutchMetrics.reportInactiveSeeds(df.format(hours / 24.0) + "D, Interval : " + interval + ", " + url);
       }
     }
 

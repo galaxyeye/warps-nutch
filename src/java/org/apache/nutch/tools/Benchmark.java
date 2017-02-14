@@ -241,7 +241,7 @@ public class Benchmark extends Configured implements Tool {
     int i;
     for (i = 0; i < depth; i++) { // generate new batch
       start = System.currentTimeMillis();
-      String batchId = generator.generate(topN, crawlId, NutchUtil.generateBatchId(), false, System.currentTimeMillis(), false, false);
+      String batchId = generator.generate(topN, crawlId, NutchUtil.generateBatchId(), false, false, System.currentTimeMillis(), false, false);
       delta = System.currentTimeMillis() - start;
       res.addTiming("generate", i + "", delta);
       if (batchId == null) {

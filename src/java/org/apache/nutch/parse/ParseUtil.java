@@ -25,11 +25,15 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.filter.*;
+import org.apache.nutch.filter.CrawlFilters;
+import org.apache.nutch.filter.URLFilterException;
+import org.apache.nutch.filter.URLFilters;
+import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.jobs.fetch.FetchJob;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
+import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
@@ -37,7 +41,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -45,8 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
-import static org.apache.nutch.metadata.Nutch.PARAM_FETCH_QUEUE_MODE;
-import static org.apache.nutch.metadata.Nutch.YES_STRING;
+import static org.apache.nutch.metadata.Nutch.*;
 
 /**
  * A Utility class containing methods to simply perform parsing utilities such
@@ -71,9 +76,9 @@ public class ParseUtil {
   private final URLNormalizers urlNormalizers;
   private final CrawlFilters crawlFilters;
   private final URLUtil.HostGroupMode hostGroupMode;
-  private final int maxOutlinks;
-  private final Random rand = new Random(System.currentTimeMillis());
+  private final int maxOutLinksPerPage;
   private final boolean ignoreExternalLinks;
+  private final int minAnchorLength;
   private final ParserFactory parserFactory;
   /**
    * Parser timeout set to 30 sec by default. Set -1 to deactivate
@@ -93,9 +98,9 @@ public class ParseUtil {
     urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     crawlFilters = CrawlFilters.create(conf);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    int maxOutlinksPerPage = conf.getInt("db.max.outlinks.per.page", 100);
-    maxOutlinks = (maxOutlinksPerPage < 0) ? Integer.MAX_VALUE : maxOutlinksPerPage;
-    ignoreExternalLinks = conf.getBoolean("db.ignore.external.links", false);
+    maxOutLinksPerPage = ConfigUtils.getUintOrMax(conf, PARAM_MAX_OUTLINKS_PER_PAGE, 100);
+    ignoreExternalLinks = conf.getBoolean(PARAM_IGNORE_EXTERNAL_LINKS, true);
+    minAnchorLength = conf.getInt(PARAM_OUTLINKS_MIN_ANCHOR_LENGTH, 8);
     executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("parse-%d").setDaemon(true).build());
   }
 
@@ -178,7 +183,7 @@ public class ParseUtil {
       if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
         processRedirect(url, page, pstatus);
       } else {
-        processSuccess(url, page, parseResult);
+        parseResult = processSuccess(url, page, parseResult);
       }
     }
 
@@ -202,12 +207,9 @@ public class ParseUtil {
     return res;
   }
 
-  private void processSuccess(String url, WebPage page, ParseResult parseResult) {
+  private ParseResult processSuccess(String url, WebPage page, ParseResult parseResult) {
     page.setText(parseResult.getText());
     page.setPageTitle(parseResult.getPageTitle());
-
-    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
-    page.setPageCategory(pageCategory);
 
     ByteBuffer prevSig = page.getSignature();
     if (prevSig != null) {
@@ -215,21 +217,28 @@ public class ParseUtil {
     }
     page.setSignature(sig.calculate(page));
 
+    // Collect out-links
     // TODO : use no-follow
-    if (page.isSeed() || CrawlFilter.sniffPageCategory(url).isIndex()) {
+    if (page.isSeed() || page.getPageCategory().isIndex()) {
       final String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
       final String oldOutLinks = page.getOldOutLinks();
       Map<CharSequence, CharSequence> outlinks = parseResult.getOutlinks().stream()
-          .filter(l -> validateOutLink(l, sourceHost, oldOutLinks)) // filter out in-valid urls
+          .filter(ol -> validateOutLink(ol, sourceHost, oldOutLinks)) // filter out in-valid urls
           .sorted((l1, l2) -> l2.getAnchor().length() - l1.getAnchor().length()) // longer anchor comes first
-          .limit(maxOutlinks)
+          .limit(maxOutLinksPerPage < 0 ? Integer.MAX_VALUE : maxOutLinksPerPage)
           .collect(Collectors.toMap(Outlink::getToUrl, Outlink::getAnchor, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
       page.setOutlinks(outlinks);
+
+      if (page.getOldOutLinks().length() > (10 * 1000) * 100) {
+        LOG.warn("Too long old out links string, url : " + url);
+      }
       page.putOldOutLinks(outlinks.keySet());
     }
 
     // TODO : Marks should be set in mapper or reducer, not util methods
     page.putMarkIfNonNull(Mark.PARSE, page.getMark(Mark.FETCH));
+
+    return parseResult;
   }
 
   private void processRedirect(String url, WebPage page, ParseStatus pstatus) {
@@ -261,6 +270,10 @@ public class ParseUtil {
 
   private boolean validateOutLink(Outlink link, String sourceHost, String oldOutLinks) {
     if (link.getToUrl().isEmpty() || sourceHost.isEmpty()) {
+      return false;
+    }
+
+    if (link.getAnchor().length() < minAnchorLength) {
       return false;
     }
 

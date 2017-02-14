@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Random;
@@ -67,7 +66,7 @@ public class NutchUtil {
     return jobStates;
   }
 
-  public static Map<String, Object> getJobState(Job job, String... groups) {
+  private static Map<String, Object> getJobState(Job job, String... groups) {
     Map<String, Object> jobState = Maps.newHashMap();
     if (job == null) {
       return jobState;
@@ -89,7 +88,7 @@ public class NutchUtil {
     return jobState;
   }
 
-  public static Map<String, Object> getJobCounters(Job job, String... groups) {
+  private static Map<String, Object> getJobCounters(Job job, String... groups) {
     Map<String, Object> counters = Maps.newHashMap();
     if (job == null) {
       return counters;
@@ -115,16 +114,4 @@ public class NutchUtil {
 
     return counters;
   }
-
-  public static String getDomain(String url, String defaultHost) {
-    String host = null;
-
-    try {
-      // if (queueMode == "byDomain") {}
-      host = URLUtil.getDomainName(url);
-    } catch (MalformedURLException ignored) {}
-
-    return host == null ? defaultHost : host;
-  }
-
 }

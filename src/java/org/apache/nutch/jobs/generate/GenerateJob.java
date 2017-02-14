@@ -58,6 +58,7 @@ public class GenerateJob extends NutchJob implements Tool {
   private static final Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
+    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_TIME);
     FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
     FIELDS.add(GoraWebPage.Field.SCORE);
@@ -92,6 +93,7 @@ public class GenerateJob extends NutchJob implements Tool {
     String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
     String batchId = params.get(ARG_BATCH, NutchUtil.generateBatchId());
     boolean reGenerate = params.getBoolean(ARG_REGENERATE, false);
+    boolean reGenerateSeeds = params.getBoolean(ARG_REGENERATE_SEEDS, false);
     long topN = params.getLong(ARG_TOPN, Long.MAX_VALUE);
     boolean filter = params.getBoolean(ARG_FILTER, true);
     boolean norm = params.getBoolean(ARG_NORMALIZE, true);
@@ -99,12 +101,17 @@ public class GenerateJob extends NutchJob implements Tool {
 
     int round = conf.getInt(PARAM_CRAWL_ROUND, 0);
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
-    String fetchScheduler = conf.get("db.fetch.schedule.class", DefaultFetchSchedule.class.getName());
+    String fetchScheduler = conf.get(PARAM_FETCH_SCHEDULE_CLASS, DefaultFetchSchedule.class.getName());
+    String commandFile = PATH_LOCAL_COMMAND;
+    if (RuntimeUtil.checkLocalFileCommand(commandFile, CMD_FORCE_GENERATE_SEEDS)) {
+      reGenerateSeeds = true;
+    }
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
     conf.setLong(PARAM_GENERATOR_CUR_TIME, pseudoCurrTime);
     conf.setBoolean(PARAM_GENERATE_REGENERATE, reGenerate);
+    conf.setBoolean(PARAM_GENERATE_SEEDS_FORCIBLY, reGenerateSeeds);
     conf.setLong(PARAM_GENERATOR_TOP_N, topN);
     conf.setBoolean(PARAM_GENERATE_FILTER, filter);
     conf.setBoolean(PARAM_GENERATE_NORMALISE, norm);
@@ -119,17 +126,23 @@ public class GenerateJob extends NutchJob implements Tool {
         "batchId", batchId,
         "filter", filter,
         "norm", norm,
-        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "topN", topN,
         "reGenerate", reGenerate,
+        "reGenerateSeeds", reGenerateSeeds,
         "hostGroupMode", hostGroupMode,
         "partitionMode", hostGroupMode,
+        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
         "nutchTmpDir", nutchTmpDir,
+        "commandFile", commandFile,
         "fetchScheduler", fetchScheduler
     ));
 
     Files.write(Paths.get(PATH_LAST_BATCH_ID), (batchId + "\n").getBytes(),
         StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
+    LOG.info("Use command >>>\n"
+            + "echo " + CMD_FORCE_GENERATE_SEEDS + " > " + commandFile
+            + "\n<<< to force generate and re-fetch seeds next round");
   }
 
   @Override
@@ -304,12 +317,20 @@ public class GenerateJob extends NutchJob implements Tool {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    * */
-  public String generate(long topN, String crawlId, String batchId, boolean reGenerate, long pseudoCurrTime, boolean filter, boolean norm) throws Exception {
+  public String generate(long topN,
+                         String crawlId,
+                         String batchId,
+                         boolean reGenerate,
+                         boolean reGenerateSeeds,
+                         long pseudoCurrTime,
+                         boolean filter,
+                         boolean norm) throws Exception {
     run(Params.toArgMap(
         ARG_TOPN, topN,
         ARG_CRAWL, crawlId,
         ARG_BATCH, batchId,
         ARG_REGENERATE, reGenerate,
+        ARG_REGENERATE_SEEDS, reGenerateSeeds,
         ARG_CURTIME, pseudoCurrTime,
         ARG_FILTER, filter,
         ARG_NORMALIZE, norm));
@@ -329,6 +350,7 @@ public class GenerateJob extends NutchJob implements Tool {
 
     long pseudoCurrTime = System.currentTimeMillis();
     boolean reGenerate = false;
+    boolean reGenerateSeeds = false;
     long topN = Long.MAX_VALUE;
     boolean filter = true;
     boolean norm = true;
@@ -341,6 +363,8 @@ public class GenerateJob extends NutchJob implements Tool {
         batchId = args[++i];
       } else if ("-reGen".equals(args[i])) {
         reGenerate = true;
+      } else if ("-reSeeds".equals(args[i])) {
+        reGenerateSeeds = true;
       } else if ("-topN".equals(args[i])) {
         topN = Long.parseLong(args[++i]);
       } else if ("-noFilter".equals(args[i])) {
@@ -357,7 +381,7 @@ public class GenerateJob extends NutchJob implements Tool {
     }
 
     try {
-      return (generate(topN, crawlId, batchId, reGenerate, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
+      return (generate(topN, crawlId, batchId, reGenerate, reGenerateSeeds, pseudoCurrTime, filter, norm) != null) ? 0 : 1;
     } catch (Exception e) {
       LOG.error(StringUtil.stringifyException(e));
       return -1;

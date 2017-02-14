@@ -19,6 +19,7 @@ package org.apache.nutch.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.warps.scent.util.ScentUtils;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -32,9 +33,11 @@ import java.util.stream.IntStream;
 
 public class DateTimeUtil {
 
-  public static final int CURRENT_YEAR = Year.now().getValue();
+  public static final int OLD_DATE_DAYS = 60;
+  public static final LocalDate CURRENT_DATE = LocalDate.now();
+  public static final int CURRENT_YEAR = CURRENT_DATE.getYear();
   public static final String CURRENT_YEAR_STR = String.valueOf(CURRENT_YEAR);
-  public static final int CURRENT_MONTH = YearMonth.now().getMonthValue();
+  public static final int CURRENT_MONTH = CURRENT_DATE.getMonthValue();
   public static final int YEAR_LOWER_BOUND = 1990;
 
   public static Set<String> OLD_YEARS;
@@ -42,54 +45,60 @@ public class DateTimeUtil {
   public static Pattern OLD_MONTH_URL_DATE_PATTERN;
 
   static {
+    // 1 years ago
     OLD_YEARS = IntStream.range(YEAR_LOWER_BOUND, CURRENT_YEAR).mapToObj(String::valueOf).collect(Collectors.toSet());
-    OLD_MONTH = IntStream.range(1, CURRENT_MONTH).mapToObj(m -> String.format("%02d", m)).collect(Collectors.toSet());
+    // 2 month ago
+    OLD_MONTH = IntStream.range(1, CURRENT_MONTH - 1).mapToObj(m -> String.format("%02d", m)).collect(Collectors.toSet());
+    String monthPattern = StringUtils.join(OLD_MONTH, "|");
+    if (CURRENT_MONTH <= 2) {
+      monthPattern = "\\d{2}";
+    }
     // eg : ".+2016[/\.-]?(01|02|03|04|05|06|07|08|09).+"
-    OLD_MONTH_URL_DATE_PATTERN = Pattern.compile(".+" + CURRENT_YEAR_STR + "[/\\.-]?(" + StringUtils.join(OLD_MONTH, "|") + ").+");
+    OLD_MONTH_URL_DATE_PATTERN = Pattern.compile(".+" + CURRENT_YEAR + "[/\\.-]?(" + monthPattern + ").+");
   }
 
   // 2016-03-05 20:07:51
   // TODO : What's the difference between HH and hh? Guess : 24 hours VS 12 hours
   public static String[] POSSIBLE_DATE_TIME_FORMATS = new String[]{
-      "yyyy.MM.dd HH:mm:ss",
+          "yyyy.MM.dd HH:mm:ss",
 
-      "yyyy-MM-dd HH:mm:ss",
-      "yyyy-MM-dd hh:mm:ss",
-      "yyyy-MM-dd HH:mm",
-      "yyyy-MM-dd hh:mm",
-      "yyyy-MM-dd'T'HH:mm:ss'Z'",
+          "yyyy-MM-dd HH:mm:ss",
+          "yyyy-MM-dd hh:mm:ss",
+          "yyyy-MM-dd HH:mm",
+          "yyyy-MM-dd hh:mm",
+          "yyyy-MM-dd'T'HH:mm:ss'Z'",
 
-      "yyyy年MM月dd日",
-      "yyyy年MM月dd日 HH:mm",
-      "yyyy年MM月dd日 hh:mm",
-      "yyyy年MM月dd日 HH:mm:ss",
-      "yyyy年MM月dd日 hh:mm:ss",
+          "yyyy年MM月dd日",
+          "yyyy年MM月dd日 HH:mm",
+          "yyyy年MM月dd日 hh:mm",
+          "yyyy年MM月dd日 HH:mm:ss",
+          "yyyy年MM月dd日 hh:mm:ss",
 
-      "yyyy/MM/dd",
-      "yyyy/MM/dd HH:mm",
-      "yyyy/MM/dd hh:mm",
-      "yyyy/MM/dd HH:mm:ss",
-      "yyyy/MM/dd hh:mm:ss",
-      "yyyy/MM/dd HH:mm:ss.SSS zzz",
-      "yyyy/MM/dd HH:mm:ss.SSS",
-      "yyyy/MM/dd HH:mm:ss zzz",
+          "yyyy/MM/dd",
+          "yyyy/MM/dd HH:mm",
+          "yyyy/MM/dd hh:mm",
+          "yyyy/MM/dd HH:mm:ss",
+          "yyyy/MM/dd hh:mm:ss",
+          "yyyy/MM/dd HH:mm:ss.SSS zzz",
+          "yyyy/MM/dd HH:mm:ss.SSS",
+          "yyyy/MM/dd HH:mm:ss zzz",
 
-      "MMM dd yyyy HH:mm:ss. zzz",
-      "MMM dd yyyy HH:mm:ss zzz",
-      "dd.MM.yyyy HH:mm:ss zzz",
-      "dd MM yyyy HH:mm:ss zzz",
-      "dd.MM.yyyy zzz",
-      "dd.MM.yyyy; HH:mm:ss",
-      "dd.MM.yyyy HH:mm:ss",
+          "MMM dd yyyy HH:mm:ss. zzz",
+          "MMM dd yyyy HH:mm:ss zzz",
+          "dd.MM.yyyy HH:mm:ss zzz",
+          "dd MM yyyy HH:mm:ss zzz",
+          "dd.MM.yyyy zzz",
+          "dd.MM.yyyy; HH:mm:ss",
+          "dd.MM.yyyy HH:mm:ss",
 
-      "EEE MMM dd HH:mm:ss yyyy",
-      "EEE MMM dd HH:mm:ss yyyy zzz",
-      "EEE MMM dd HH:mm:ss zzz yyyy",
-      "EEE, dd MMM yyyy HH:mm:ss zzz",
-      "EEE,dd MMM yyyy HH:mm:ss zzz",
-      "EEE, dd MMM yyyy HH:mm:sszzz",
-      "EEE, dd MMM yyyy HH:mm:ss",
-      "EEE, dd-MMM-yy HH:mm:ss zzz"
+          "EEE MMM dd HH:mm:ss yyyy",
+          "EEE MMM dd HH:mm:ss yyyy zzz",
+          "EEE MMM dd HH:mm:ss zzz yyyy",
+          "EEE, dd MMM yyyy HH:mm:ss zzz",
+          "EEE,dd MMM yyyy HH:mm:ss zzz",
+          "EEE, dd MMM yyyy HH:mm:sszzz",
+          "EEE, dd MMM yyyy HH:mm:ss",
+          "EEE, dd-MMM-yy HH:mm:ss zzz"
   };
 
   public static SimpleDateFormat FilesystemSafeDateFormat = new SimpleDateFormat("MMdd.HHmmss");
@@ -154,7 +163,7 @@ public class DateTimeUtil {
 
   /**
    * RFC 2616 defines three different date formats that a conforming client must understand.
-   * */
+   */
   public static Instant parseHttpDateTime(String text, Instant defaultValue) {
     try {
       Date d = org.apache.http.client.utils.DateUtils.parseDate(text);
@@ -176,7 +185,8 @@ public class DateTimeUtil {
     try {
       // equals to Instant.parse()
       return DateTimeFormatter.ISO_INSTANT.parse(text, Instant::from);
-    } catch (Throwable ignored) {}
+    } catch (Throwable ignored) {
+    }
 
     return defaultValue;
   }
@@ -184,7 +194,8 @@ public class DateTimeUtil {
   public static Instant tryParseDateTime(String dateStr, Instant defaultValue) {
     try {
       return DateUtils.parseDate(dateStr, POSSIBLE_DATE_TIME_FORMATS).toInstant();
-    } catch (Throwable ignored) {}
+    } catch (Throwable ignored) {
+    }
 
     return defaultValue;
   }
@@ -194,8 +205,7 @@ public class DateTimeUtil {
 
     if (timeHistory == null) {
       timeHistory = dateStr;
-    }
-    else {
+    } else {
       String[] fetchTimes = timeHistory.split(",");
       if (fetchTimes.length > maxRecords) {
         String firstFetchTime = fetchTimes[0];
@@ -210,24 +220,28 @@ public class DateTimeUtil {
     return timeHistory;
   }
 
+  public static boolean isOldDate(Instant date, int days) {
+    if (date != null) {
+      ZonedDateTime ldt = date.atZone(ZoneId.systemDefault());
+      if (CURRENT_DATE.toEpochDay() - ldt.toLocalDate().toEpochDay() > days) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * For urls who contains date information, for example
    * http://bond.hexun.com/2011-01-07/126641872.html
    * */
-  public static boolean containsOldDate(String str) {
-    if (str == null) {
+  public static boolean containsOldDate(String dateString, int days) {
+    if (dateString == null) {
       return false;
     }
 
-    if (OLD_YEARS.stream().anyMatch(str::contains)) {
-      return true;
-    }
-
-    if (OLD_MONTH_URL_DATE_PATTERN.asPredicate().test(str)) {
-      return true;
-    }
-
-    return false;
+    Instant dateTime = ScentUtils.sniffDate(dateString);
+    return dateTime != null && isOldDate(dateTime, days);
   }
 
   /**

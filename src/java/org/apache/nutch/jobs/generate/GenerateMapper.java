@@ -52,7 +52,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsUrlFiltered, oldUrlDate,
     tieba, bbs, news, blog,
-    pagesGenerated, pagesTooDeep, pagesFetchLater, pagesNeverFetch, seedsFetchLater
+    pagesGenerated, pagesTooDeep, pagesFetchLater, pagesInactive, seedsFetchLater
   }
 
   private NutchMetrics nutchMetrics;
@@ -73,8 +73,8 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   private int maxDistance;
   private String[] keyRange;
   private boolean reGenerate = false;
+  private boolean reGenerateSeeds = false;
   private boolean ignoreGenerated = true;
-
   private int detailPages = 0;
 
   @Override
@@ -88,6 +88,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     String fetchMode = conf.get(PARAM_FETCH_MODE);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
+    reGenerateSeeds = conf.getBoolean(PARAM_GENERATE_SEEDS_FORCIBLY, false);
     ignoreGenerated = !reGenerate || conf.getBoolean(PARAM_IGNORE_GENERATED, false);
 
     nutchMetrics = NutchMetrics.getInstance(conf);
@@ -122,11 +123,13 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
         "topN", topN,
         "normalise", normalise,
         "maxDistance", maxDistance,
-        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime),
+        "pseudoCurrTime", DateTimeUtil.format(pseudoCurrTime.truncatedTo(ChronoUnit.SECONDS)),
         "fetchSchedule", fetchSchedule.getClass().getName(),
         "scoringFilters", scoringFilters,
         "crawlFilters", crawlFilters,
         "keyRange", keyRange[0] + " - " + keyRange[1],
+        "reGenerate", reGenerate,
+        "reGenerateSeeds", reGenerateSeeds,
         "ignoreGenerated", ignoreGenerated,
         "ignoreUnreachableHosts", ignoreUnreachableHosts,
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
@@ -159,20 +162,30 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
    * Detail pages comes first, but we still need keep chances for pages with other category
    * */
   private float calculateInitSortScore(String url, WebPage page) {
-    boolean raise = page.veryLikeDetailPage(url) && ++detailPages < maxDetailPageCount;
+    boolean raise = (page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url)) && ++detailPages < maxDetailPageCount;
 
     float factor = raise ? 1.0f : 0.0f;
     int depth = page.getDepth();
 
-    return (10000.0f - 100 * depth) + factor * 100000.0f;
+    return (10000.0f - 100 * depth) + factor * 1000000.0f;
   }
 
   /**
    * TODO : We may move some filters to hbase query filters directly
    * */
   private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
+    int depth = page.getDepth();
+
+    if (!checkFetchSchedule(url, page, depth)) {
+      return false;
+    }
+
     if (!checkHost(url)) {
       return false;
+    }
+
+    if (reGenerateSeeds && page.isSeed()) {
+      return true;
     }
 
     if (page.hasMark(Mark.GENERATE)) {
@@ -198,7 +211,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       }
     } // if
 
-    int depth = page.getDepth();
     // Filter on distance
     if (maxDistance > -1 && depth > maxDistance) {
       getCounter().increase(Counter.pagesTooDeep);
@@ -247,7 +259,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       return false;
     }
 
-    return checkFetchSchedule(url, page, depth);
+    return true;
   }
 
   /**
@@ -256,7 +268,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   private boolean checkFetchSchedule(String url, WebPage page, int depth) {
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       if (page.hasMark(Mark.INACTIVE)) {
-        getCounter().increase(Counter.pagesNeverFetch);
+        getCounter().increase(Counter.pagesInactive);
       }
 
       Instant fetchTime = page.getFetchTime();
@@ -314,7 +326,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
     else if (depth == 1) {
       counter = Counter.rowsDepth1;
-      if (page.veryLikeDetailPage(url)) {
+      if ((page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url))) {
         counter = Counter.rowsDetailFromSeed;
       }
     }
@@ -329,7 +341,5 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
 
     getCounter().increase(counter);
-
-    getCounter().updateAffectedRows(url);
   }
 }

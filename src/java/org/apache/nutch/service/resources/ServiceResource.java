@@ -16,16 +16,7 @@
  ******************************************************************************/
 package org.apache.nutch.service.resources;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-
+import com.google.common.collect.Lists;
 import org.apache.nutch.persist.local.model.BrowserInstance;
 import org.apache.nutch.persist.local.model.ServerInstance;
 import org.apache.nutch.persist.local.service.BrowserInstanceService;
@@ -36,7 +27,9 @@ import org.restlet.data.ClientInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * SimpleFetcher Server Resource
@@ -115,8 +108,7 @@ public class ServiceResource extends AbstractResource {
   public ServerInstance register(ServerInstance serverInstance) {
     String ip = Request.getCurrent().getClientInfo().getAddress();
     serverInstance.setIp(ip);
-    serverInstanceService.register(serverInstance);
-    return serverInstance;
+    return serverInstanceService.register(serverInstance);
   }
 
   /**

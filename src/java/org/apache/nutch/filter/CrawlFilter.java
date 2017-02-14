@@ -22,7 +22,6 @@ import com.google.gson.annotations.Expose;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public class CrawlFilter extends Configured {
    */
   public static Pattern[] INDEX_PAGE_URL_PATTERNS = {
       Pattern.compile(".+tieba.baidu.com/.+search.+"),
-      Pattern.compile(".+(index|list|tags|chanel).+"),
+      Pattern.compile(".+(index|list|tags|chanel).+")
   };
 
   public static Pattern SEARCH_PAGE_URL_PATTERN = Pattern.compile(".+(search|query|select).+");
@@ -61,56 +60,6 @@ public class CrawlFilter extends Configured {
    * TODO : use suffix-urlfilter instead
    */
   public static final String[] MEDIA_URL_SUFFIXES = {"js", "css", "jpg", "png", "jpeg", "gif"};
-
-  /**
-   * TODO : need carefully test
-   */
-  public static PageCategory sniffPageCategory(String url, WebPage page) {
-    if (url.isEmpty()) {
-      return PageCategory.UNKNOWN;
-    }
-
-    PageCategory pageCategory = sniffPageCategory(url);
-    if (pageCategory.isDetail()) {
-      return pageCategory;
-    }
-
-    String textContent = page.getTextContent();
-    if (textContent == null) {
-      return pageCategory;
-    }
-
-    int _char = page.sniffTextLength();
-    int _a = page.sniffOutLinkCount();
-
-    if (_char < 100) {
-      if (_a > 30) {
-        pageCategory = PageCategory.INDEX;
-      }
-    } else {
-      return sniffPageCategoryByTextDensity(_char, _a);
-    }
-
-    return pageCategory;
-  }
-
-  /* TODO : use machine learning to calculate the parameters */
-  private static PageCategory sniffPageCategoryByTextDensity(double _char, double _a) {
-    PageCategory pageCategory = PageCategory.UNKNOWN;
-
-    if (_a < 1) {
-      _a = 1;
-    }
-
-    if (_a > 60 && _char / _a < 20) {
-      // 索引页：链接数不少于60个，文本密度小于20
-      pageCategory = PageCategory.INDEX;
-    } else if (_char / _a > 30) {
-      pageCategory = PageCategory.DETAIL;
-    }
-
-    return pageCategory;
-  }
 
   /**
    * A simple regex rule to sniff the possible category of a web page

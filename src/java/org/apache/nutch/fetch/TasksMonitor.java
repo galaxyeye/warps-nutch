@@ -12,14 +12,17 @@ import org.apache.nutch.common.Params;
 import org.apache.nutch.fetch.data.FetchQueue;
 import org.apache.nutch.fetch.data.FetchQueues;
 import org.apache.nutch.fetch.data.FetchTask;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.host.HostDb;
-import org.apache.nutch.persist.gora.Host;
+import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.Host;
 import org.apache.nutch.tools.NutchMetrics;
-import org.apache.nutch.util.*;
+import org.apache.nutch.util.ConfigUtils;
+import org.apache.nutch.util.StringUtil;
+import org.apache.nutch.util.TableUtil;
+import org.apache.nutch.util.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 
@@ -59,7 +62,6 @@ public class TasksMonitor {
   private final Multiset<String> unreachableHostsTracker = TreeMultiset.create();
   private final CrawlFilters crawlFilters;
   private final int maxUrlLength;
-  private final boolean debugUrls;
 
   private final AtomicInteger readyTaskCount = new AtomicInteger(0);
   private final AtomicInteger pendingTaskCount = new AtomicInteger(0);
@@ -102,7 +104,6 @@ public class TasksMonitor {
 
     nutchMetrics = NutchMetrics.getInstance(conf);
     nutchMetrics.loadUnreachableHosts(unreachableHosts);
-    debugUrls = conf.getBoolean("fetcher.debug.urls", false);
 
     DecimalFormat df = new DecimalFormat("###0.0#");
     LOG.info(Params.format(
@@ -114,8 +115,7 @@ public class TasksMonitor {
         "minCrawlDelay(s)", df.format(minCrawlDelay.toMillis() / 1000.0),
         "queuePendingTimeout(m)", queuePendingTimeout.toMinutes(),
         "unreachableHosts", unreachableHosts.size(),
-        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
-        "debugUrls", debugUrls
+        "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath()
     ));
   }
 
@@ -341,6 +341,11 @@ public class TasksMonitor {
       return;
     }
 
+    if (!page.hasMark(Mark.PARSE)) {
+      LOG.warn("Can not stat page without parsing, url : " + url);
+      return;
+    }
+
     String host = URLUtil.getHost(url, EXAMPLE_HOST_NAME, getHostGroupMode());
     if (host == null || host.isEmpty()) {
       return;
@@ -353,7 +358,8 @@ public class TasksMonitor {
 
     ++hostStat.urls;
 
-    PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
+    // PageCategory pageCategory = CrawlFilter.sniffPageCategory(url, page);
+    PageCategory pageCategory = page.getPageCategory();
     if (pageCategory.isIndex()) {
       ++hostStat.indexUrls;
     } else if (pageCategory.isDetail()) {

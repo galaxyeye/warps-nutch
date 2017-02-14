@@ -6,8 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 public class RuntimeUtil {
 
@@ -29,6 +34,27 @@ public class RuntimeUtil {
     }
 
     return false;
+  }
+
+  /**
+   * Check local command file
+   * */
+  public static boolean checkLocalFileCommand(String commandFile, String command) {
+    boolean exist = false;
+
+    Path path = Paths.get(commandFile);
+    if (Files.exists(path)) {
+      try {
+        List<String> lines = Files.readAllLines(path);
+        exist = lines.stream().anyMatch(line -> line.equals(command));
+        lines.remove(command);
+        Files.write(path, lines);
+      } catch (IOException e) {
+        NutchUtil.LOG.error(e.toString());
+      }
+    }
+
+    return exist;
   }
 
   public static void main(String[] args) throws Exception {

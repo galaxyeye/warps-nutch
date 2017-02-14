@@ -31,6 +31,7 @@ import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.URLUtil;
@@ -62,7 +63,7 @@ public class SimpleParser extends Configured {
   public static final Logger LOG = LoggerFactory.getLogger(SimpleParser.class);
 
   private CrawlFilters crawlFilters;
-  private Map<String, Object> results = Maps.newHashMap();
+  private Map<String, Object> results = Maps.newLinkedHashMap();
 
   private WebPage page;
   private SimpleFetcher fetcher;
@@ -98,7 +99,7 @@ public class SimpleParser extends Configured {
     try {
       page = fetcher.fetch(url, contentType);
       if (page != null) {
-        extract(page);
+        extract(url, page);
       }
     } catch (SAXException|IOException|ProcessingException e) {
       LOG.error(e.getMessage());
@@ -115,7 +116,7 @@ public class SimpleParser extends Configured {
     return new InputSource(stream);
   }
 
-  public void extract(WebPage page) throws IOException, SAXException, ProcessingException {
+  public void extract(String url, WebPage page) throws IOException, SAXException, ProcessingException {
     InputSource input = getContentAsInputSource(page);
 
     EncodingDetector encodingDetector = new EncodingDetector(getConf());
@@ -123,7 +124,7 @@ public class SimpleParser extends Configured {
     input.setEncoding(encoding);
 
     input = getContentAsInputSource(page);
-    TextDocument scentDoc = new SAXInput(input).getTextDocument();
+    TextDocument scentDoc = new SAXInput(input, url).parse();
     System.out.println(scentDoc.getTextContent(true, true));
   }
 
@@ -161,8 +162,6 @@ public class SimpleParser extends Configured {
       return results;
     }
 
-    results.put("content", page.getContent());
-
     if (ParserMapper.isTruncated(page.url(), page)) {
       results.put("contentStatus", "truncated");
     }
@@ -171,10 +170,9 @@ public class SimpleParser extends Configured {
     byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
     results.put("Signature", StringUtil.toHexString(signature));
 
-    String metadata = page.get().getMetadata().entrySet().stream()
-        .map(e -> e.getKey() + " : " + e.getValue())
-        .collect(Collectors.joining("\n"));
-    results.put("Metadata", metadata);
+    Map<String, Object> metadata = WebPageConverter.convert(page, "metadata");
+    metadata.remove("old_out_links");
+    results.put("Metadata", WebPageConverter.convert(page, "metadata"));
 
     String validOutlinks = parseResult.getOutlinks().stream()
         .map(Outlink::getToUrl)
@@ -190,6 +188,8 @@ public class SimpleParser extends Configured {
         .map(e -> e.getKey() + " : " + e.getValue())
         .collect(Collectors.joining("\n"));
     results.put("Headers", headerStr);
+
+    results.put("content", page.getTextContent());
 
     return results;
   }

@@ -66,8 +66,8 @@ public class NutchClient {
   /**
    * Register this fetch server instance
    * */
-  public void register(ServerInstance instance) {
-    nutchResource.path("service/register").type(APPLICATION_JSON).post(instance);
+  public ServerInstance register(ServerInstance instance) {
+    return nutchResource.path("service/register").type(APPLICATION_JSON).post(instance.getClass(), instance);
   }
 
   /**

@@ -35,6 +35,7 @@ public class TextMD5Signature extends Signature {
 
   static {
     FIELDS.add(GoraWebPage.Field.TEXT);
+    FIELDS.add(GoraWebPage.Field.METADATA);
   }
 
   Signature fallback = new MD5Signature();
@@ -42,10 +43,12 @@ public class TextMD5Signature extends Signature {
   /**
    * We need calculate signature using a more clean text content, eg, extracted by text-scent
    * */
-  @Deprecated
   @Override
   public byte[] calculate(WebPage page) {
-    CharSequence text = page.getText();
+    CharSequence text = page.getTextContent();
+    if (text == null || text.length() == 0) {
+      text = page.getText();
+    }
 
     if (text == null || text.length() == 0) {
       return fallback.calculate(page);

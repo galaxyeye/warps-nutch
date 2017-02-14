@@ -185,6 +185,11 @@ public class TestAnything {
         "http://bank.cnfol.com/yinhanglicai/20160905/23418323.shtml"
     );
 
+    // longer url comes first
+    urls.stream().sorted((u1, u2) -> u2.length() - u1.length()).forEach(System.out::println);
+
+    urls.stream().map(URLUtil::getHostName).filter(Objects::nonNull).forEach(System.out::println);
+
     for (String url : urls) {
       URL u = new URL(url);
       System.out.println(u.hashCode() + ", " + url.hashCode());

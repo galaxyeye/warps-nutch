@@ -19,7 +19,6 @@ package org.apache.nutch.persist;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.nutch.filter.CrawlFilter;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Mark;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 import static org.apache.nutch.metadata.Metadata.*;
 import static org.apache.nutch.metadata.Metadata.Name.DISTANCE;
 import static org.apache.nutch.metadata.Metadata.Name.PAGE_CATEGORY;
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT_LENGTH;
 
 /**
  * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency
@@ -70,7 +69,7 @@ public class WebPage {
   public WebPage(String url, GoraWebPage page, boolean urlReversed) {
     this.url = urlReversed ? TableUtil.unreverseUrl(url) : url;
     this.reversedUrl = urlReversed ? url : TableUtil.reverseUrlOrEmpty(url);
-    assert(!reversedUrl.startsWith("http"));
+    assert (!reversedUrl.startsWith("http"));
     this.page = page;
   }
 
@@ -96,11 +95,17 @@ public class WebPage {
     return new WebPage(url, page, urlReversed);
   }
 
-  public String url() { return url; }
+  public String url() {
+    return url;
+  }
 
-  public String reversedUrl() { return reversedUrl; }
+  public String reversedUrl() {
+    return reversedUrl;
+  }
 
-  public GoraWebPage get() { return page; }
+  public GoraWebPage get() {
+    return page;
+  }
 
   public boolean isEmpty() {
     return page == null;
@@ -119,7 +124,9 @@ public class WebPage {
     page.setBaseUrl(value);
   }
 
-  public void setBaseUrl(String value) { page.setBaseUrl(u8(value)); }
+  public void setBaseUrl(String value) {
+    page.setBaseUrl(u8(value));
+  }
 
   public Integer getStatus() {
     return page.getStatus();
@@ -216,7 +223,9 @@ public class WebPage {
     page.setContent(value);
   }
 
-  public void setContent(byte[] value) { page.setContent(ByteBuffer.wrap(value)); }
+  public void setContent(byte[] value) {
+    page.setContent(ByteBuffer.wrap(value));
+  }
 
   public void setContent(String value) {
     setContent(value.getBytes());
@@ -278,7 +287,9 @@ public class WebPage {
     if (contentTitle != null && !contentTitle.isEmpty()) putMetadata(Name.CONTENT_TITLE, contentTitle);
   }
 
-  public String getContentTitle() { return getMetadata(Name.CONTENT_TITLE, ""); }
+  public String getContentTitle() {
+    return getMetadata(Name.CONTENT_TITLE, "");
+  }
 
   public String getText() {
     return page.getText() == null ? "" : page.getText().toString();
@@ -292,13 +303,17 @@ public class WebPage {
     if (textContent != null && !textContent.isEmpty()) putMetadata(Name.TEXT_CONTENT, textContent);
   }
 
-  public String getTextContent() { return getMetadata(Name.TEXT_CONTENT, ""); }
+  public String getTextContent() {
+    return getMetadata(Name.TEXT_CONTENT, "");
+  }
 
   public void setHtmlContent(String textContent) {
     if (textContent != null && !textContent.isEmpty()) putMetadata(Name.HTML_CONTENT, textContent);
   }
 
-  public String getHtmlContent() { return getMetadata(Name.HTML_CONTENT, ""); }
+  public String getHtmlContent() {
+    return getMetadata(Name.HTML_CONTENT, "");
+  }
 
   public ParseStatus getParseStatus() {
     return page.getParseStatus();
@@ -308,13 +323,21 @@ public class WebPage {
     page.setParseStatus(value);
   }
 
-  public float getScore() { return page.getScore(); }
+  public float getScore() {
+    return page.getScore();
+  }
 
-  public void setScore(float value) { page.setScore(value); }
+  public void setScore(float value) {
+    page.setScore(value);
+  }
 
-  public float getArticleScore() { return getFloatMetadata(Name.ARTICLE_SCORE, 0.0f); }
+  public float getArticleScore() {
+    return getFloatMetadata(Name.ARTICLE_SCORE, 0.0f);
+  }
 
-  public void setArticleScore(float value) { setFloatMetadata(Name.ARTICLE_SCORE, value); }
+  public void setArticleScore(float value) {
+    setFloatMetadata(Name.ARTICLE_SCORE, value);
+  }
 
   public CharSequence getReprUrl() {
     return page.getReprUrl();
@@ -368,22 +391,42 @@ public class WebPage {
   /**
    * Embedded hyperlinks which direct outside of the current domain.
    */
-  public Map<CharSequence, CharSequence> getOutlinks() { return page.getOutlinks(); }
+  public Map<CharSequence, CharSequence> getOutlinks() {
+    return page.getOutlinks();
+  }
 
   /**
    * Embedded hyperlinks which direct outside of the current domain.   * @param value the value to set.
    */
-  public void setOutlinks(Map<CharSequence, CharSequence> value) { page.setOutlinks(value); }
-
-  public String getOldOutLinks() { return getMetadata(Name.OLD_OUT_LINKS, ""); }
-
-  public void putOldOutLinks(Collection<CharSequence> outLinks) {
-    putMetadata(Name.OLD_OUT_LINKS, getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n"));
+  public void setOutlinks(Map<CharSequence, CharSequence> value) {
+    page.setOutlinks(value);
   }
 
-  public Map<CharSequence, CharSequence> getInlinks() { return page.getInlinks(); }
+  public String getOldOutLinks() {
+    return getMetadata(Name.OLD_OUT_LINKS, "");
+  }
 
-  public void setInlinks(Map<CharSequence, CharSequence> value) { page.setInlinks(value); }
+  /**
+   * Put all extracted, filtered links
+   */
+  public void putOldOutLinks(Collection<CharSequence> outLinks) {
+    String oldLinks = getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n");
+    // assume the avarage lenght of a link is 100 characters
+    // If the old links string is too long, truncate it
+    if (oldLinks.length() > (10 * 1000) * 100) {
+      int pos = StringUtils.indexOf(oldLinks, '\n', oldLinks.length() / 3);
+      oldLinks = oldLinks.substring(pos + 1);
+    }
+    putMetadata(Name.OLD_OUT_LINKS, oldLinks);
+  }
+
+  public Map<CharSequence, CharSequence> getInlinks() {
+    return page.getInlinks();
+  }
+
+  public void setInlinks(Map<CharSequence, CharSequence> value) {
+    page.setInlinks(value);
+  }
 
   public Map<CharSequence, CharSequence> getMarkers() {
     return page.getMarkers();
@@ -450,21 +493,11 @@ public class WebPage {
     return StringUtil.tryParseInt(ds, 0);
   }
 
-  public int sniffTextLength() {
+  public int sniffTextContentLength() {
     int length = getTextContentLength();
     if (length > 10) {
       return length;
     }
-
-    Object obj = getTempVar(DOC_FIELD_TEXT_CONTENT_LENGTH);
-    if (obj != null && obj instanceof Integer) {
-      return ((Integer) obj);
-    }
-
-//    obj = getTempVar(DOC_FIELD_TEXT_CONTENT);
-//    if (obj != null && obj instanceof String) {
-//      return ((String) obj).length();
-//    }
 
     CharSequence text = getTextContent();
     if (text != null) {
@@ -477,25 +510,6 @@ public class WebPage {
     }
 
     return 0;
-  }
-
-  public float getPageCategoryLikelihood() {
-    return getFloatMetadata(Name.PAGE_CATEGORY_LIKELIHOOD, 0f);
-  }
-
-  /**
-   * Reserved
-   * */
-  public void setPageCategoryLikelihood(float likelihood) {
-    setFloatMetadata(Name.PAGE_CATEGORY_LIKELIHOOD, likelihood);
-  }
-
-  public boolean isDetailPage(float threshold) {
-    return getPageCategory().isDetail() && getPageCategoryLikelihood() >= threshold;
-  }
-
-  public boolean veryLikeDetailPage(String url) {
-    return isDetailPage(0.85f) || CrawlFilter.sniffPageCategory(url, this).isDetail();
   }
 
   public void setPageCategory(PageCategory pageCategory) {
@@ -577,7 +591,12 @@ public class WebPage {
 
   public void updatePublishTime(Instant newPublishTime) {
     Instant publishTime = getPublishTime();
-    if (newPublishTime.isAfter(publishTime) && newPublishTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)) {
+    if (publishTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
+      publishTime = Instant.EPOCH;
+    }
+    if (newPublishTime.isAfter(publishTime)
+            && newPublishTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)
+            && newPublishTime.isBefore(Instant.now().plus(1, ChronoUnit.DAYS))) {
       setPrevPublishTime(publishTime);
       setPublishTime(newPublishTime);
     }
@@ -589,6 +608,22 @@ public class WebPage {
 
   public void setPrevPublishTime(Instant publishTime) {
     putMetadata(Name.PREV_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
+  }
+
+  public Instant getContentModifiedTime() {
+    return DateTimeUtil.parseInstant(getMetadata(Name.CONTENT_MODIFIED_TIME), Instant.EPOCH);
+  }
+
+  public void setContentModifiedTime(Instant modifiedTime) {
+    putMetadata(Name.CONTENT_MODIFIED_TIME, DateTimeUtil.isoInstantFormat(modifiedTime));
+  }
+
+  public void updateContentModifiedTime(Instant newModifiedTime) {
+    if (newModifiedTime.isAfter(getContentModifiedTime())
+            && newModifiedTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)
+            && newModifiedTime.isBefore(Instant.now().plus(1, ChronoUnit.DAYS))) {
+      setContentModifiedTime(newModifiedTime);
+    }
   }
 
   public String getReferrer() {
@@ -686,11 +721,16 @@ public class WebPage {
   }
 
   public boolean updateRefPublishTime(Instant newRefPublishTime) {
-    Instant latestTime = getRefPublishTime();
-    if (newRefPublishTime.isAfter(latestTime)) {
-      setPrevRefPublishTime(latestTime);
+    Instant latestRefPublishTime = getRefPublishTime();
+
+    // A fix
+    if (latestRefPublishTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
+      latestRefPublishTime = Instant.EPOCH;
+    }
+
+    if (newRefPublishTime.isAfter(latestRefPublishTime)) {
+      setPrevRefPublishTime(latestRefPublishTime);
       setRefPublishTime(newRefPublishTime);
-      updatePublishTime(newRefPublishTime);
 
       return true;
     }

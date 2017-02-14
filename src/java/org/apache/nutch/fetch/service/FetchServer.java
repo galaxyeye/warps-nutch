@@ -48,15 +48,12 @@ public class FetchServer extends Application {
 
   public static final int DEFAULT_PORT = BASE_PORT;
 
-  private String logLevel = "INFO";
-
-  private int port;
-
-  private Component component;
-
-  private long startTime;
-
   private Configuration conf;
+  private String logLevel = "INFO";
+  private int port;
+  private ServerInstance serverInstance;
+  private Component component;
+  private long startTime;
 
   /**
    * Public constructor which accepts the port we wish to run the server on
@@ -86,19 +83,26 @@ public class FetchServer extends Application {
     NutchClient client = new NutchClient(conf);
     if (client.available()) {
       return client.acquirePort(ServerInstance.Type.FetcherServer);
-    }
-    else {
+    } else {
       LOG.warn("Client is not available");
     }
 
     return -1;
   }
 
-  public void recyclePort() {
+  public void registerServiceInstance() {
+    // We use an Internet ip rather than an Intranet ip
+    NutchClient client = new NutchClient(conf);
+    serverInstance = client.register(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
+  }
+
+  public void unregisterServiceInstance() {
     NutchClient client = new NutchClient(conf);
     if (client.available()) {
       client.recyclePort(ServerInstance.Type.FetcherServer, port);
-      client.unregister(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
+      if (serverInstance != null) {
+        client.unregister(serverInstance);
+      }
     }
     else {
       LOG.warn("Client is not available");
@@ -153,9 +157,7 @@ public class FetchServer extends Application {
     LOG.info("FetchServer is started on port {}", port);
     startTime = System.currentTimeMillis();
 
-    // We use an Internet ip rather than an Intranet ip
-    NutchClient client = new NutchClient(conf);
-    client.register(new ServerInstance(null, port, ServerInstance.Type.FetcherServer));
+    registerServiceInstance();
   }
 
   /**
@@ -196,7 +198,7 @@ public class FetchServer extends Application {
 
     try {
       component.stop();
-      recyclePort();
+      unregisterServiceInstance();
       LOG.info("FetchServer is stopped. Port : {}", port);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot stop nutch server", e);

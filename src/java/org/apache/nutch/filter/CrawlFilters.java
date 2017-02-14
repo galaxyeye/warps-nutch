@@ -274,7 +274,7 @@ public class CrawlFilters extends Configured {
    * http://bond.hexun.com/2011-01-07/126641872.html
    * */
   public boolean containsOldDateString(String url) {
-    return DateTimeUtil.containsOldDate(url);
+    return DateTimeUtil.containsOldDate(url, DateTimeUtil.OLD_DATE_DAYS);
   }
 
   public boolean veryLikelyBeDetailUrl(String url) {
@@ -364,7 +364,7 @@ public class CrawlFilters extends Configured {
   @Override
   public String toString() {
     return toJson()
-        + "\nUrl filters : " + urlFilters.toString()
-        + "\nUrl normalizers : " + urlNormalizers.toString();
+        + "\tUrlFilters : " + urlFilters.toString()
+        + "\tUrlNormalizers : " + urlNormalizers.toString();
   }
 }

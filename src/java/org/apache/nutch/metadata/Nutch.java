@@ -96,6 +96,8 @@ public interface Nutch {
   String ARG_BATCH = "batch";
   /** Re-generate. */
   String ARG_REGENERATE = "reGenerate";
+  /** Re-generate seeds. */
+  String ARG_REGENERATE_SEEDS = "reGenerateSeeds";
   /** Resume previously aborted op. */
   String ARG_RESUME = "resume";
   /** Force processing even if there are locks or inconsistencies. */
@@ -177,10 +179,12 @@ public interface Nutch {
   /**
    * Parameters
    * */
+  String PARAM_NUTCH_CONFIG_ID = "nutch.config.id";
   String PARAM_NUTCH_TMP_DIR = "nutch.tmp.dir";
   String PARAM_NUTCH_OUTPUT_DIR = "nutch.output.dir";
   String PARAM_NUTCH_REPORT_DIR = "nutch.report.dir";
   String PARAM_CRAWL_ID = "storage.crawl.id";
+  String PARAM_FETCH_SCHEDULE_CLASS = "db.fetch.schedule.class";
   String PARAM_FETCH_MODE = "fetcher.fetch.mode";
   String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
   String PARAM_FETCH_QUEUE_RETUNE_INTERVAL = "fetcher.pending.queue.check.time";
@@ -224,6 +228,7 @@ public interface Nutch {
   String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
   String PARAM_GENERATOR_MIN_SCORE = "generate.min.score";
   String PARAM_GENERATE_REGENERATE = "generate.re.generate";
+  String PARAM_GENERATE_SEEDS_FORCIBLY = "generate.seeds.forcibly";
   String PARAM_GENERATE_FILTER = "generate.filter";
   String PARAM_GENERATE_NORMALISE = "generate.normalise";
   // The maximum number of urls in a single fetchlist
@@ -241,7 +246,11 @@ public interface Nutch {
   String PARAM_FETCH_MAX_INTERVAL = "db.fetch.interval.max";
   String PARAM_FETCH_DEFAULT_INTERVAL = "db.fetch.interval.default";
   String PARAM_FETCH_MAX_RETRY = "db.fetch.retry.max";
+  String PARAM_FETCH_STORE_CONTENT = "fetcher.store.content";
 
+  String PARAM_IGNORE_EXTERNAL_LINKS = "db.ignore.external.links";
+  String PARAM_OUTLINKS_MIN_ANCHOR_LENGTH = "db.outlinks.min.anchor.length";
+  String PARAM_MAX_OUTLINKS_PER_PAGE = "db.max.outlinks.per.page";
   String PARAM_UPDATE_MAX_OUT_LINKS = "db.update.max.outlinks";
   String PARAM_UPDATE_MAX_IN_LINKS = "db.update.max.inlinks";
 
@@ -269,6 +278,8 @@ public interface Nutch {
   String GENERATE_COUNT_VALUE_DOMAIN = "domain";
   String GENERATE_COUNT_VALUE_HOST = "host";
   String GENERATE_COUNT_VALUE_IP = "ip";
+
+  String CMD_FORCE_GENERATE_SEEDS = "force-generate-seeds";
 
   /**
    * Master service

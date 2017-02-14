@@ -32,6 +32,7 @@ import org.apache.nutch.util.URLUtil;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -94,7 +95,7 @@ public class SimpleCrawler {
             page = parser.getWebPage();
 
             return page;
-        }).collect(Collectors.toMap(WebPage::url, page -> page));
+        }).filter(Objects::nonNull).collect(Collectors.toMap(WebPage::url, page -> page));
 
             /* Build the web graph */
         // 1. Add all vertices

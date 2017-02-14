@@ -24,24 +24,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.nutch.persist.gora.db.DbQuery;
 import org.apache.nutch.service.model.request.JobConfig;
-import org.apache.nutch.service.model.request.SeedList;
 import org.junit.Test;
 
 import static org.apache.nutch.metadata.Nutch.ARG_SEED_PATH;
 import static org.junit.Assert.assertEquals;
 
 public class TestAPISerialization {
-
-  @Test
-  public void testSeedList() {
-    SeedList seedList = new SeedList();
-    for (int i = 0; i < 3; ++i) {
-      seedList.addSeedUrl("http://www.warpspeed.cn/" + i);
-    }
-
-    Gson gson = new GsonBuilder().create();
-    assertEquals("{\"seedUrls\":[\"http://www.warpspeed.cn/0\",\"http://www.warpspeed.cn/1\",\"http://www.warpspeed.cn/2\"]}", gson.toJson(seedList));
-  }
 
   @Test
   public void testJobConfig() {
@@ -55,13 +43,12 @@ public class TestAPISerialization {
   public void testDbFilter() {
     DbQuery dbQuery = new DbQuery("http://www.warpspeed.cn/0", "http://www.warpspeed.cn/3");
     Gson gson = new GsonBuilder().create();
-    assertEquals("{\"crawlId\":\"\",\"batchId\":\"-all\",\"startKey\":\"http://www.warpspeed.cn/0\",\"endKey\":\"http://www.warpspeed.cn/3\",\"urlFilter\":\".+\",\"start\":0,\"limit\":100,}", gson.toJson(dbQuery));
+    assertEquals("{\"crawlId\":\"\",\"batchId\":\"-all\",\"startUrl\":\"http://www.warpspeed.cn/0\",\"endUrl\":\"http://www.warpspeed.cn/3\",\"urlFilter\":\"+.\",\"start\":0,\"limit\":100,\"fields\":[]}", gson.toJson(dbQuery));
 
-    DbQuery dbQuery2 = gson.fromJson("{\"startKey\":\"http://www.warpspeed.cn/0\",\"endKey\":\"http://www.warpspeed.cn/3\"}", DbQuery.class);
+    DbQuery dbQuery2 = gson.fromJson("{\"startUrl\":\"http://www.warpspeed.cn/0\",\"endUrl\":\"http://www.warpspeed.cn/3\"}", DbQuery.class);
     assertEquals("", dbQuery2.getCrawlId());
     assertEquals("-all", dbQuery2.getBatchId());
     assertEquals("http://www.warpspeed.cn/0", dbQuery2.getStartUrl());
     assertEquals("http://www.warpspeed.cn/3", dbQuery2.getEndUrl());
   }
-
 }

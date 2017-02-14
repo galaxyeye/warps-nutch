@@ -85,6 +85,7 @@ public class NutchMaster extends Application {
   private long startTime;
 
   private AtomicBoolean running = new AtomicBoolean(false);
+  private ServerInstance serverInstance;
 
   /**
    * Public constructor which accepts the port we wish to run the server on as
@@ -235,7 +236,7 @@ public class NutchMaster extends Application {
    */
   public void registerFectchServerInstance(String host, int port, Configuration conf) {
     NutchClient client = new NutchClient(conf, host, DEFAULT_MASTER_PORT);
-    client.register(new ServerInstance(null, port, ServerInstance.Type.NutchServer));
+    serverInstance = client.register(new ServerInstance(null, port, ServerInstance.Type.NutchServer));
   }
 
   /**
@@ -280,8 +281,7 @@ public class NutchMaster extends Application {
 
     LOG.info("Stopping NutchMaster on port {}...", port);
     try {
-      NutchClient client = new NutchClient(conf);
-      client.unregister(new ServerInstance(null, port, ServerInstance.Type.NutchServer));
+      new NutchClient(conf).unregister(serverInstance);
 
       component.stop();
 

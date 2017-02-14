@@ -16,13 +16,13 @@
  */
 package org.apache.nutch.persist.local.service;
 
-import java.util.List;
-
 import org.apache.nutch.persist.local.model.ServerInstance;
+
+import java.util.List;
 
 public interface ServerInstanceService {
 
-  void register(ServerInstance browserInstance);
+  ServerInstance register(ServerInstance browserInstance);
 
   void unregister(Long id);
 
