@@ -20,9 +20,7 @@ package org.apache.nutch.parse.html;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseException;
-import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.parse.Parser;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.junit.Before;
@@ -125,7 +123,7 @@ public class TestHtmlParser {
             boolean success = testPage[2].equals("success");
             WebPage page = getPage(testPage[3], charset);
 
-            String text = page.getText();
+            String text = page.getPageText();
             String title = page.getPageTitle();
             String keywords = page.getMetadata(Metadata.Name.META_KEYWORDS);
 

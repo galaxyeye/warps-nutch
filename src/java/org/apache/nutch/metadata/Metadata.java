@@ -48,47 +48,31 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
 
     /** generate */
     GENERATE_TIME("G_GT"),
-    DISTANCE("G_D"),
     MAX_DISTANCE("G_MD"),
 
     /** fetch */
     FETCH_TIME_HISTORY("F_FTH"),
-    FETCH_COUNT("F_FC"),
-    FETCH_PRIORITY("F_FP"),
 
     REDIRECT_DISCOVERED("RD"),
 
     /** parse */
-    CONTENT_TITLE("P_CT"),
-    TEXT_CONTENT("P_TC"),
-    HTML_CONTENT("P_HC"),
     TOTAL_OUT_LINKS("P_OLC"),
-    OLD_OUT_LINKS("P_AOL"),
 
     /** index */
     INDEX_TIME_HISTORY("ITH"),
 
     /** score */
-    ARTICLE_SCORE("S_AS"),
     CASH_KEY("S_CASH"),
 
     /** content */
     ORIGINAL_CHAR_ENCODING("C_OCE"),
     CHAR_ENCODING_FOR_CONVERSION("C_CEFC"),
-    PAGE_CATEGORY("C_PC"),
-    PAGE_CATEGORY_LIKELIHOOD("C_PCL"),
-    TEXT_CONTENT_LENGTH("C_TCL"),
-    REFERRER("C_R"),
-    REFERRED_ARTICLES("C_RA"),
-    REFERRED_CHARS("C_RC"),
-    REFERRED_PUBLISH_TIME("C_RPT"),
-    PREV_REFERRED_PUBLISH_TIME("C_PRPT"),
-    PUBLISH_TIME("C_PT"),
-    PREV_PUBLISH_TIME("C_PPT"),
-    CONTENT_MODIFIED_TIME("C_CMT"),
 
     META_KEYWORDS("meta_keywords"),
     META_DESCRIPTION("meta_description"),
+
+    /** Custom metadata injected */
+    FETCH_INTERVAL("-fetchInterval"),
 
     /** tmp */
     TMP_PAGE_FROM_SEED("T_PFS"),
@@ -117,40 +101,24 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
         /* generate */
         case "G_GT":
           return GENERATE_TIME;
-        case "G_D":
-          return DISTANCE;
         case "G_MD":
           return MAX_DISTANCE;
 
         /* fetch */
         case "F_FTH":
           return FETCH_TIME_HISTORY;
-        case "F_FC":
-          return FETCH_COUNT;
-        case "F_FP":
-          return FETCH_PRIORITY;
 
         case "RD":
           return REDIRECT_DISCOVERED;
 
-        case "P_CT":
-          return CONTENT_TITLE;
-        case "P_TC":
-          return TEXT_CONTENT;
-        case "P_HC":
-          return HTML_CONTENT;
         case "P_OLC":
           return TOTAL_OUT_LINKS;
-        case "P_AOL":
-          return OLD_OUT_LINKS;
 
         /* index */
         case "ITH":
           return INDEX_TIME_HISTORY;
 
         /* score */
-        case "S_AS":
-          return ARTICLE_SCORE;
         case "S_CASH":
           return CASH_KEY;
 
@@ -159,26 +127,6 @@ public class Metadata implements Writable, DublinCore, HttpHeaders, Nutch {
           return ORIGINAL_CHAR_ENCODING;
         case "C_CEFC":
           return CHAR_ENCODING_FOR_CONVERSION;
-        case "C_PC":
-          return PAGE_CATEGORY;
-        case "C_PCL":
-          return PAGE_CATEGORY_LIKELIHOOD;
-        case "C_TCL":
-          return TEXT_CONTENT_LENGTH;
-        case "C_R":
-          return REFERRER;
-        case "C_RA":
-          return REFERRED_ARTICLES;
-        case "C_RC":
-          return REFERRED_CHARS;
-        case "C_RPT":
-          return REFERRED_PUBLISH_TIME;
-        case "C_PRPT":
-          return PREV_REFERRED_PUBLISH_TIME;
-        case "C_PT":
-          return PUBLISH_TIME;
-        case "C_PPT":
-          return PREV_PUBLISH_TIME;
 
         case "meta_keywords":
           return META_KEYWORDS;

@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -43,22 +44,12 @@ public class ParserJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(ParserJob.class);
 
-  public static final String SKIP_TRUNCATED = "parser.skip.truncated";
-
-  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<GoraWebPage.Field>();
+  private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   private String batchId;
 
   static {
-    FIELDS.add(GoraWebPage.Field.STATUS);
-    FIELDS.add(GoraWebPage.Field.CONTENT);
-    FIELDS.add(GoraWebPage.Field.CONTENT_TYPE);
-    FIELDS.add(GoraWebPage.Field.SIGNATURE);
-    FIELDS.add(GoraWebPage.Field.MARKERS);
-    FIELDS.add(GoraWebPage.Field.PARSE_STATUS);
-    FIELDS.add(GoraWebPage.Field.OUTLINKS);
-    FIELDS.add(GoraWebPage.Field.METADATA);
-    FIELDS.add(GoraWebPage.Field.HEADERS);
+    Collections.addAll(FIELDS, GoraWebPage.Field.values());
   }
 
   public ParserJob() {

@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.persist.gora.db.Db;
 import org.apache.nutch.persist.gora.db.DbIterator;
 import org.apache.nutch.persist.gora.db.DbQuery;
@@ -133,7 +132,10 @@ public class SimpleStorage {
       case "-get":
         WebPage page = storage.get(url);
         if (!page.isEmpty()) {
-          System.out.println(WebPageConverter.convert(page));
+          System.out.println(page.getRepresentation());
+        }
+        else {
+          System.out.println("Page does not exist");
         }
         break;
       case "-remove":

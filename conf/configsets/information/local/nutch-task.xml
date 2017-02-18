@@ -64,9 +64,15 @@
   <!-- Generate -->
   <property>
     <name>generate.max.distance</name>
-    <value>3</value>
+    <value>1</value>
   </property>
 
   <!-- Indexer -->
 
+
+  <!-- Hadoop turning -->
+  <property>
+    <name>mapreduce.job.reduces</name>
+    <value>1</value>
+  </property>
 </configuration>

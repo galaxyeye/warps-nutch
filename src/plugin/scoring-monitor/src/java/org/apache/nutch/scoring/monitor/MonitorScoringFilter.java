@@ -112,14 +112,14 @@ public class MonitorScoringFilter implements ScoringFilter {
     }
 
     float factor2 = 1.2f;
-    float oldArticleScore = page.getArticleScore();
+    float oldArticleScore = page.getContentScore();
     float newArticleScore = calculateArticleScore(page);
     float articleScoreDelta = newArticleScore - oldArticleScore;
 //    if (articleScoreDelta < 0) {
 //      LOG.debug("Nagtive article score, the article might be too old : " + newArticleScore + ", " + url);
 //    }
 
-    page.setArticleScore(newArticleScore);
+    page.setContentScore(newArticleScore);
     page.setScore(page.getScore() + factor1 * inLinkScore + factor2 * articleScoreDelta);
     page.setCash(page.getCash() + factor1 * inLinkScore);
   }
@@ -172,7 +172,7 @@ public class MonitorScoringFilter implements ScoringFilter {
     // Each one thousand chars contributes another 1 base score
     long rc = row.getRefChars();
     // Each day descreases 1 base score
-    long rptd = ChronoUnit.DAYS.between(row.getRefPublishTime(), Instant.now());
+    long rptd = ChronoUnit.DAYS.between(row.getRefContentPublishTime(), Instant.now());
     if (rptd > 30) {
       // Invalid ref publish time, descrease 1 base score
       rptd = 1;

@@ -56,7 +56,7 @@ public interface Nutch {
 
   Utf8 ALL_BATCH_ID = new Utf8(ALL_BATCH_ID_STR);
 
-  int MAX_DISTANCE = 1000000;
+  int DISTANCE_INFINITE = 1000000;
 
   int FETCH_TASK_REMAINDER_NUMBER = 5;
 
@@ -177,94 +177,112 @@ public interface Nutch {
   String UI_CRAWL_ID = "qiwu.ui.crawl.id";
 
   /**
-   * Parameters
+   * Common Parameters
    * */
   String PARAM_NUTCH_CONFIG_ID = "nutch.config.id";
   String PARAM_NUTCH_TMP_DIR = "nutch.tmp.dir";
   String PARAM_NUTCH_OUTPUT_DIR = "nutch.output.dir";
   String PARAM_NUTCH_REPORT_DIR = "nutch.report.dir";
   String PARAM_CRAWL_ID = "storage.crawl.id";
-  String PARAM_FETCH_SCHEDULE_CLASS = "db.fetch.schedule.class";
-  String PARAM_FETCH_MODE = "fetcher.fetch.mode";
-  String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
-  String PARAM_FETCH_QUEUE_RETUNE_INTERVAL = "fetcher.pending.queue.check.time";
-  String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
-  String PARAM_FETCH_REPORT_INTERVAL = "fetcher.report.interval";
-  String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
-  String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
-
   String PARAM_CRAWL_ROUND = "crawl.round";
   String PARAM_BATCH_ID = "nutch.batch.name";
+  String PARAM_NUTCH_JOB_NAME = "nutch.job.name";
+
+  String PARAM_MAPREDUCE_JOB_REDUCES = "mapreduce.job.reduces";
+  String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
+  String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
+
+  String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
+  String PARAM_NUTCH_MASTER_PORT = "nutch.master.port";
+
   String PARAM_PARSE = "parser.parse";
   String PARAM_REPARSE = "parser.reparse";
   String PARAM_REINDEX = "reindex";
   String PARAM_FORCE = "force";
   String PARAM_RESUME = "nutch.job.resume";
   String PARAM_LIMIT = "limit";
-  String PARAM_MAPPER_LIMIT = "nutch.mapper.limit";
-  String PARAM_REDUCER_LIMIT = "nutch.reducer.limit";
 
-  String PARAM_SEED_PATH = "inject.seed.dir";
-  String PARAM_SEED_URLS = "inject.seed.urls";
+  /**
+   * Inject parameters
+   * */
+  String PARAM_INJECT_SEED_PATH = "inject.seed.dir";
+  String PARAM_INJECT_SEED_URLS = "inject.seed.urls";
+  String PARAM_INJECT_UPDATE = "inject.update";
+  String PARAM_INJECT_WATCH = "inject.watch";
 
   /**
    * Fetch parameters
    * */
-  String PARAM_THREADS = "fetcher.threads.fetch";
-
-  /**
-   * Indexing parameters
-   * */
-  String PARAM_INDEX_JUST_IN_TIME = "fetch.index.just.in.time";
-
-  String PARAM_SOLR_SERVER_URL = "solr.server.url";
-  String PARAM_SOLR_ZK = "solr.zookeeper.hosts";
-  String PARAM_SOLR_COLLECTION = "solr.collection";
-
-  /**
-   * Generator parameters
-   * */
-  String PARAM_GENERATE_TIME = "generate.generate.time";
-  String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
-  String PARAM_GENERATOR_MIN_SCORE = "generate.min.score";
-  String PARAM_GENERATE_REGENERATE = "generate.re.generate";
-  String PARAM_GENERATE_SEEDS_FORCIBLY = "generate.seeds.forcibly";
-  String PARAM_GENERATE_FILTER = "generate.filter";
-  String PARAM_GENERATE_NORMALISE = "generate.normalise";
-  // The maximum number of urls in a single fetchlist
-  String PARAM_GENERATOR_MAX_TASKS_PER_HOST = "generate.max.tasks.per.host";
-  String PARAM_GENERATOR_MAX_DISTANCE = "generate.max.distance";
-  String PARAM_GENERATOR_COUNT_MODE = "generate.count.mode";
-  String PARAM_GENERATOR_TOP_N = "generate.topN";
-  String PARAM_GENERATOR_CUR_TIME = "generate.curr.time";
-  String PARAM_GENERATOR_DETAIL_PAGE_RATE = "generate.detail.page.rate";
-  String PARAM_GENERATOR_DELAY = "crawl.gen.delay";
-  String PARAM_GENERATOR_RANDOM_SEED = "generate.partition.seed";
-  String PARAM_IGNORE_GENERATED = "generate.ignore.generated";
-
+  String PARAM_FETCH_THREADS = "fetcher.threads.fetch";
+  String PARAM_FETCH_SCHEDULE_CLASS = "db.fetch.schedule.class";
+  String PARAM_FETCH_MODE = "fetcher.fetch.mode";
+  String PARAM_FETCH_QUEUE_MODE = "fetcher.queue.mode";
+  String PARAM_FETCH_QUEUE_RETUNE_INTERVAL = "fetcher.pending.queue.check.time";
+  String PARAM_FETCH_MAX_THREADS_PER_QUEUE = "fetcher.threads.per.queue";
+  String PARAM_FETCH_REPORT_INTERVAL = "fetcher.report.interval";
+  String PARAM_FETCH_INTERVAL = "fetch.fetch.interval";
   String PARAM_FETCH_MIN_INTERVAL = "db.fetch.interval.min";
   String PARAM_FETCH_MAX_INTERVAL = "db.fetch.interval.max";
   String PARAM_FETCH_DEFAULT_INTERVAL = "db.fetch.interval.default";
   String PARAM_FETCH_MAX_RETRY = "db.fetch.retry.max";
   String PARAM_FETCH_STORE_CONTENT = "fetcher.store.content";
 
-  String PARAM_IGNORE_EXTERNAL_LINKS = "db.ignore.external.links";
-  String PARAM_OUTLINKS_MIN_ANCHOR_LENGTH = "db.outlinks.min.anchor.length";
-  String PARAM_MAX_OUTLINKS_PER_PAGE = "db.max.outlinks.per.page";
-  String PARAM_UPDATE_MAX_OUT_LINKS = "db.update.max.outlinks";
-  String PARAM_UPDATE_MAX_IN_LINKS = "db.update.max.inlinks";
-
-  String PARAM_NUTCH_MASTER_HOST = "nutch.master.host";
-  String PARAM_NUTCH_MASTER_PORT = "nutch.master.port";
+  /**
+   * Generator parameters
+   * */
+  String PARAM_GENERATE_TIME = "generate.generate.time";
+  String PARAM_GENERATE_UPDATE_CRAWLDB = "generate.update.crawldb";
+  String PARAM_GENERATE_MIN_SCORE = "generate.min.score";
+  String PARAM_GENERATE_REGENERATE = "generate.regenerate";
+  String PARAM_GENERATE_REGENERATE_SEEDS = "generate.regenerate.seeds";
+  String PARAM_GENERATE_FILTER = "generate.filter";
+  String PARAM_GENERATE_NORMALISE = "generate.normalise";
+  String PARAM_GENERATE_MAX_TASKS_PER_HOST = "generate.max.tasks.per.host";
+  String PARAM_GENERATE_MAX_DISTANCE = "generate.max.distance";
+  String PARAM_GENERATE_COUNT_MODE = "generate.count.mode";
+  String PARAM_GENERATE_TOP_N = "generate.topN";
+  String PARAM_GENERATE_CUR_TIME = "generate.curr.time";
+  String PARAM_GENERATE_DETAIL_PAGE_RATE = "generate.detail.page.rate";
+  String PARAM_GENERATE_DELAY = "crawl.gen.delay";
+  String PARAM_GENERATE_RANDOM_SEED = "generate.partition.seed";
+  String PARAM_GENERATE_IGNORE_UNREACHABLE_HOSTS = "generate.ignore.unreachable.hosts";
 
   /**
-   * Document fields
+   * Parser parameters
    * */
-  String DOC_FIELD_ARTICLE_TILE = "article_title";
-  String DOC_FIELD_TEXT_CONTENT_LENGTH = "text_content_length";
-  String DOC_FIELD_PAGE_CATEGORY = "page_category";
+  String PARAM_PARSE_MIN_ANCHOR_LENGTH = "parse.outlinks.min.anchor.length";
+  String PARAM_PARSE_OUTLINK_PATTERN = "parse.outlink.pattern";
+  String PARAM_PARSE_MAX_OUTLINKS_PER_PAGE = "db.max.outlinks.per.page";
+  String PARAM_PARSE_IGNORE_EXTERNAL_LINKS = "db.ignore.external.links";
+  String PARAM_PARSE_SKIP_TRUNCATED = "parser.skip.truncated";
+
+  /**
+   * DbUpdater parameters
+   * */
+  String PARAM_UPDATE_MAX_INLINKS = "db.update.max.inlinks";
+
+  /**
+   * Indexing parameters
+   * */
+  String PARAM_INDEX_JIT = "fetch.index.just.in.time";
+  String PARAM_SOLR_SERVER_URL = "solr.server.url";
+  String PARAM_SOLR_ZK = "solr.zookeeper.hosts";
+  String PARAM_SOLR_COLLECTION = "solr.collection";
+
+  /**
+   * Index document fields
+   * */
   String DOC_FIELD_PUBLISH_TIME = "publish_time";
+  String DOC_FIELD_MODIFIED_TIME = "modified_time";
+  String DOC_FIELD_ARTICLE_TILE = "article_title";
+  String DOC_FIELD_PAGE_TITLE = "page_title";
+  String DOC_FIELD_CONTENT_TILE = "article_title";
+  String DOC_FIELD_PAGE_CATEGORY = "page_category";
   String DOC_FIELD_OUTLINKS_COUNT = "outlinks_count";
+  String DOC_FIELD_HTML_CONTENT = "html_content";
+  String DOC_FIELD_TEXT_CONTENT = "text_content";
+  String DOC_FIELD_TEXT_CONTENT_LENGTH = "text_content_length";
+  String DOC_FIELD_HTML_CONTENT_LENGTH = "html_content_length";
 
   /**
    * Temporary variable holders
@@ -294,6 +312,8 @@ public interface Nutch {
   String PATH_NUTCH_REPORT_DIR = PATH_NUTCH_OUTPUT_DIR + "/report";
   String PATH_LOCAL_COMMAND = PATH_NUTCH_TMP_DIR + "/NUTCH_LOCAL_FILE_COMMAND";
   String PATH_LAST_BATCH_ID = PATH_NUTCH_TMP_DIR + "/last-batch-id";
+  String PATH_LAST_GENERATED_ROWS = PATH_NUTCH_TMP_DIR + "/last-generated-rows";
+  String PATH_BANNED_URLS = PATH_NUTCH_TMP_DIR + "/banned_urls";
 
   String FILE_UNREACHABLE_HOSTS = "unreachable-hosts.txt";
 

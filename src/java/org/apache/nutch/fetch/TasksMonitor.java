@@ -128,7 +128,7 @@ public class TasksMonitor {
   }
 
   public synchronized void produce(int jobID, String url, WebPage page) {
-    int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
+    int priority = page.getFetchPriority();
     FetchTask task = FetchTask.create(jobID, priority, url, page, hostGroupMode);
 
     if (task != null) {
@@ -408,7 +408,7 @@ public class TasksMonitor {
     }
 
     // Only the exception occurs for unknownHostEventCount, it's really add to the black list
-    final int unknownHostEventCount = 3;
+    final int unknownHostEventCount = 10;
     if (unreachableHostsTracker.count(host) > unknownHostEventCount) {
       LOG.info("Host unknown: " + host);
       unreachableHosts.add(host);

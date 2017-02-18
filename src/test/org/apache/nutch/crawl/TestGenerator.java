@@ -149,8 +149,8 @@ public class TestGenerator extends AbstractNutchTest {
     datastore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 1);
-    myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 1);
+    myConfiguration.set(Nutch.PARAM_GENERATE_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_HOST);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     ArrayList<WebPage> fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
@@ -159,7 +159,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(1, fetchList.size());
 
     myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
@@ -168,7 +168,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(3, fetchList.size()); // 3 as 2 + 1 skipped (already generated)
 
     myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
@@ -201,8 +201,8 @@ public class TestGenerator extends AbstractNutchTest {
     datastore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 1);
-    myConfiguration.set(Nutch.PARAM_GENERATOR_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_DOMAIN);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 1);
+    myConfiguration.set(Nutch.PARAM_GENERATE_COUNT_MODE, Nutch.GENERATE_COUNT_VALUE_DOMAIN);
 
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
@@ -212,7 +212,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(1, fetchList.size());
 
     myConfiguration = new Configuration(myConfiguration);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 2);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 2);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);
@@ -221,7 +221,7 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(3, fetchList.size()); // 2 + 1 skipped (already generated)
 
     myConfiguration = new Configuration(myConfiguration);
-    myConfiguration.setInt(Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST, 3);
+    myConfiguration.setInt(Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST, 3);
     generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
 
     fetchList = CrawlTestUtil.readContents(datastore, Mark.GENERATE, FIELDS);

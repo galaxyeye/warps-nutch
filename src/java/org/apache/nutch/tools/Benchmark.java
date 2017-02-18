@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.nutch.metadata.Nutch.GENERATE_COUNT_VALUE_HOST;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_COUNT_MODE;
-import static org.apache.nutch.metadata.Nutch.PARAM_GENERATOR_MAX_TASKS_PER_HOST;
+import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_COUNT_MODE;
+import static org.apache.nutch.metadata.Nutch.PARAM_GENERATE_MAX_TASKS_PER_HOST;
 
 public class Benchmark extends Configured implements Tool {
   private static final Logger LOG = LoggerFactory.getLogger(Benchmark.class);
@@ -189,8 +189,8 @@ public class Benchmark extends Configured implements Tool {
       conf.set("plugin.includes", plugins);
     }
 
-    conf.setInt(PARAM_GENERATOR_MAX_TASKS_PER_HOST, maxPerHost);
-    conf.set(PARAM_GENERATOR_COUNT_MODE, GENERATE_COUNT_VALUE_HOST);
+    conf.setInt(PARAM_GENERATE_MAX_TASKS_PER_HOST, maxPerHost);
+    conf.set(PARAM_GENERATE_COUNT_MODE, GENERATE_COUNT_VALUE_HOST);
   }
 
   public BenchmarkResults benchmark(int seeds, int depth, int threads,

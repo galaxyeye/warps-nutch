@@ -7,6 +7,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.warps.scent.document.BlockLabels;
+import org.warps.scent.util.Scent;
 
 import java.io.*;
 import java.util.LinkedHashSet;
@@ -58,7 +59,7 @@ public class RegexExtractor implements Configurable {
    * TODO : load from configuration files
    * */
   private void init() {
-    labeledFieldRules.put("article_title", BlockLabels.TITLE);
+    labeledFieldRules.put(Scent.DOC_FIELD_CONTENT_TITLE, BlockLabels.CONTENT_TITLE);
 
     regexFieldRules.put("author", "(记者：)\\s*([一-龥]+)");
     regexFieldRules.put("director", "(编辑：)\\s*([一-龥]+)");

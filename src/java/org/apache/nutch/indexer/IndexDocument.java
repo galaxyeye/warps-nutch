@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /** A {@link IndexDocument} is the unit of indexing. */
 public class IndexDocument implements Writable, Iterable<Entry<String, IndexField>> {
@@ -203,34 +204,18 @@ public class IndexDocument implements Writable, Iterable<Entry<String, IndexFiel
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("doc {\n");
-    for (Map.Entry<String, IndexField> entry : fields.entrySet()) {
-      sb.append("\t");
-      sb.append(entry.getKey());
-      sb.append(":\t");
-      sb.append(format(entry.getValue()));
-      sb.append("\n");
-    }
-    sb.append("}\n");
-    return sb.toString();
+    String s = fields.entrySet().stream()
+            .map(e -> "\t" + e.getKey() + ":\t" + format(e.getValue()))
+            .collect(Collectors.joining("\n"));
+    return "doc {\n" + s + "}\n";
   }
 
   public String formatAsLine() {
-    StringBuilder sb = new StringBuilder();
-
-    int i = 0;
-    for (Map.Entry<String, IndexField> entry : fields.entrySet()) {
-      if (i++ > 0) {
-        sb.append(", ");
-      }
-
-      sb.append(entry.getKey());
-      sb.append(" : ");
-      sb.append(StringUtils.replaceChars(format(entry.getValue()), "[]", ""));
-    }
-
-    return sb.toString();
+    String s = fields.entrySet().stream()
+            .map(e -> "\t" + e.getKey() + ":\t" + format(e.getValue()))
+            .map(l -> StringUtils.replaceChars(l, "[]", ""))
+            .collect(Collectors.joining(", "));
+    return s;
   }
 
   private String format(Object obj) {

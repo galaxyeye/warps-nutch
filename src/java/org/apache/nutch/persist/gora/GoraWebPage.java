@@ -3,39 +3,56 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.persist.gora;
-
+package org.apache.nutch.persist.gora;  
 @SuppressWarnings("all")
-/** GoraWebPage is the primary data structure in Nutch representing crawl data for a given GoraWebPage at some point in time */
+/** GoraWebPage is the primary data structure in Nutch representing crawl data for a given WebPage at some point in time */
 public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"GoraWebPage\",\"namespace\":\"org.apache.nutch.persist.gora\",\"doc\":\"GoraWebPage is the primary data structure in Nutch representing crawl data for a given GoraWebPage at some point in time\",\"fields\":[{\"name\":\"baseUrl\",\"type\":[\"null\",\"string\"],\"doc\":\"The original associated with this GoraWebPage.\",\"default\":null},{\"name\":\"status\",\"type\":\"int\",\"doc\":\"A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified\",\"default\":0},{\"name\":\"fetchTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when the page was fetched.\",\"default\":0},{\"name\":\"prevFetchTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when the page was last fetched if it was previously fetched which can be used to calculate time delta within a fetching schedule implementation\",\"default\":0},{\"name\":\"fetchInterval\",\"type\":\"int\",\"doc\":\"The default number of seconds between re-fetches of a page. The default is considered as 30 days unless a custom fetch schedle is implemented.\",\"default\":0},{\"name\":\"retriesSinceFetch\",\"type\":\"int\",\"doc\":\"The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.\",\"default\":0},{\"name\":\"modifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.\",\"default\":0},{\"name\":\"prevModifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.\",\"default\":0},{\"name\":\"protocolStatus\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"ProtocolStatus\",\"doc\":\"A nested container representing data captured from web server responses.\",\"fields\":[{\"name\":\"code\",\"type\":\"int\",\"doc\":\"A protocol response code which can be one of SUCCESS - content was retrieved without errors, FAILED - Content was not retrieved. Any further errors may be indicated in args, PROTO_NOT_FOUND - This protocol was not found. Application may attempt to retry later, GONE - Resource is gone, MOVED - Resource has moved permanently. New url should be found in args, TEMP_MOVED - Resource has moved temporarily. New url should be found in args., NOTFOUND - Resource was not found, RETRY - Temporary failure. Application may retry immediately., EXCEPTION - Unspecified exception occured. Further information may be provided in args., ACCESS_DENIED - Access denied - authorization required, but missing/incorrect., ROBOTS_DENIED - Access denied by robots.txt rules., REDIR_EXCEEDED - Too many redirects., NOTFETCHING - Not fetching., NOTMODIFIED - Unchanged since the last fetch., WOULDBLOCK - Request was refused by protocol plugins, because it would block. The expected number of milliseconds to wait before retry may be provided in args., BLOCKED - Thread was blocked http.max.delays times during fetching.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the response code.\",\"default\":[]},{\"name\":\"lastModified\",\"type\":\"long\",\"doc\":\"A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the GoraWebPage itself.\",\"default\":0}]}],\"default\":null},{\"name\":\"content\",\"type\":[\"null\",\"bytes\"],\"doc\":\"The entire raw document content e.g. raw XHTML\",\"default\":null},{\"name\":\"contentType\",\"type\":[\"null\",\"string\"],\"doc\":\"The type of the content contained within the document itself. ContentType is an alias for MimeType. Historically, this parameter was only called MimeType, but since this is actually the value included in the HTTP Content-Type header, it can also include the character set encoding, which makes it more than just a MimeType specification. If MimeType is specified e.g. not None, that value is used. Otherwise, ContentType is used. If neither is given, the DEFAULT_CONTENT_TYPE setting is used.\",\"default\":null},{\"name\":\"prevSignature\",\"type\":[\"null\",\"bytes\"],\"doc\":\"An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.\",\"default\":null},{\"name\":\"signature\",\"type\":[\"null\",\"bytes\"],\"doc\":\"An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.\",\"default\":null},{\"name\":\"title\",\"type\":[\"null\",\"string\"],\"doc\":\"The title of the GoraWebPage.\",\"default\":null},{\"name\":\"text\",\"type\":[\"null\",\"string\"],\"doc\":\"The textual content of the GoraWebPage devoid from native markup.\",\"default\":null},{\"name\":\"parseStatus\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"ParseStatus\",\"doc\":\"A nested container representing parse status data captured from invocation of parsers on fetch of a GoraWebPage\",\"fields\":[{\"name\":\"majorCode\",\"type\":\"int\",\"doc\":\"Major parsing status' including NOTPARSED (Parsing was not performed), SUCCESS (Parsing succeeded), FAILED (General failure. There may be a more specific error message in arguments.)\",\"default\":0},{\"name\":\"minorCode\",\"type\":\"int\",\"doc\":\"Minor parsing status' including SUCCESS_OK - Successful parse devoid of anomalies or issues, SUCCESS_REDIRECT - Parsed content contains a directive to redirect to another URL. The target URL can be retrieved from the arguments., FAILED_EXCEPTION - Parsing failed. An Exception occured which may be retrieved from the arguments., FAILED_TRUNCATED - Parsing failed. Content was truncated, but the parser cannot handle incomplete content., FAILED_INVALID_FORMAT - Parsing failed. Invalid format e.g. the content may be corrupted or of wrong type., FAILED_MISSING_PARTS - Parsing failed. Other related parts of the content are needed to halt parsing. The list of URLs to missing parts may be provided in arguments. The Fetcher may decide to fetch these parts at once, then put them into Content.metadata, and supply them for re-parsing., FAILED_MISING_CONTENT - Parsing failed. There was no content to be parsed - probably caused by errors at protocol stage.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the parse status code.\",\"default\":[]}]}],\"default\":null},{\"name\":\"score\",\"type\":\"float\",\"doc\":\"A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.\",\"default\":0},{\"name\":\"reprUrl\",\"type\":[\"null\",\"string\"],\"doc\":\"In the case where we are given two urls, a source and a destination of a redirect, we should determine and persist the representative url. The logic used to determine this is based largely on Yahoo!'s Slurp Crawler\",\"default\":null},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Header information returned from the web server used to server the content which is subsequently fetched from. This includes keys such as TRANSFER_ENCODING, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_LOCATION, CONTENT_DISPOSITION, CONTENT_MD5, CONTENT_TYPE, LAST_MODIFIED and LOCATION.\",\"default\":{}},{\"name\":\"outlinks\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Embedded hyperlinks which direct outside of the current domain.\",\"default\":{}},{\"name\":\"inlinks\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Embedded hyperlinks which link to pages within the current domain.\",\"default\":{}},{\"name\":\"markers\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.\",\"default\":{}},{\"name\":\"metadata\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"]},\"doc\":\"A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.\",\"default\":{}},{\"name\":\"batchId\",\"type\":[\"null\",\"string\"],\"doc\":\"A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.\",\"default\":null}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"GoraWebPage\",\"namespace\":\"org.apache.nutch.persist.gora\",\"doc\":\"GoraWebPage is the primary data structure in Nutch representing crawl data for a given WebPage at some point in time\",\"fields\":[{\"name\":\"baseUrl\",\"type\":[\"null\",\"string\"],\"doc\":\"The original associated with this WebPage.\",\"default\":null},{\"name\":\"status\",\"type\":\"int\",\"doc\":\"A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified\",\"default\":0},{\"name\":\"distance\",\"type\":\"int\",\"doc\":\"The distance of the WebPage in the web.\",\"default\":-1},{\"name\":\"fetchCount\",\"type\":\"int\",\"doc\":\"The total fetch count of the WebPage.\",\"default\":0},{\"name\":\"fetchPriority\",\"type\":\"int\",\"doc\":\"The priority of the WebPage to fetch.\",\"default\":0},{\"name\":\"fetchTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when the page was fetched.\",\"default\":0},{\"name\":\"prevFetchTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when the page was last fetched if it was previously fetched which can be used to calculate time delta within a fetching schedule implementation\",\"default\":0},{\"name\":\"fetchInterval\",\"type\":\"int\",\"doc\":\"The default number of seconds between re-fetches of a page. The default is considered as 30 days unless a custom fetch schedle is implemented.\",\"default\":0},{\"name\":\"retriesSinceFetch\",\"type\":\"int\",\"doc\":\"The number of retried attempts at fetching the WebPage since it was last successfully fetched.\",\"default\":0},{\"name\":\"modifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.\",\"default\":0},{\"name\":\"prevModifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.\",\"default\":0},{\"name\":\"contentModifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.\",\"default\":0},{\"name\":\"prevContentModifiedTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.\",\"default\":0},{\"name\":\"contentPublishTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.\",\"default\":0},{\"name\":\"prevContentPublishTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.\",\"default\":0},{\"name\":\"refContentPublishTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.\",\"default\":0},{\"name\":\"prevRefContentPublishTime\",\"type\":\"long\",\"doc\":\"The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.\",\"default\":0},{\"name\":\"protocolStatus\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"ProtocolStatus\",\"doc\":\"A nested container representing data captured from web server responses.\",\"fields\":[{\"name\":\"code\",\"type\":\"int\",\"doc\":\"A protocol response code which can be one of SUCCESS - content was retrieved without errors, FAILED - Content was not retrieved. Any further errors may be indicated in args, PROTO_NOT_FOUND - This protocol was not found. Application may attempt to retry later, GONE - Resource is gone, MOVED - Resource has moved permanently. New url should be found in args, TEMP_MOVED - Resource has moved temporarily. New url should be found in args., NOTFOUND - Resource was not found, RETRY - Temporary failure. Application may retry immediately., EXCEPTION - Unspecified exception occured. Further information may be provided in args., ACCESS_DENIED - Access denied - authorization required, but missing/incorrect., ROBOTS_DENIED - Access denied by robots.txt rules., REDIR_EXCEEDED - Too many redirects., NOTFETCHING - Not fetching., NOTMODIFIED - Unchanged since the last fetch., WOULDBLOCK - Request was refused by protocol plugins, because it would block. The expected number of milliseconds to wait before retry may be provided in args., BLOCKED - Thread was blocked http.max.delays times during fetching.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the response code.\",\"default\":[]},{\"name\":\"lastModified\",\"type\":\"long\",\"doc\":\"A server reponse indicating when this page was last modified, this can be unreliable at times hence this is used as a default fall back value for the preferred 'modifiedTime' and 'preModifiedTime' obtained from the WebPage itself.\",\"default\":0}]}],\"default\":null},{\"name\":\"content\",\"type\":[\"null\",\"bytes\"],\"doc\":\"The entire raw document content e.g. raw XHTML\",\"default\":null},{\"name\":\"contentType\",\"type\":[\"null\",\"string\"],\"doc\":\"The type of the content contained within the document itself. ContentType is an alias for MimeType. Historically, this parameter was only called MimeType, but since this is actually the value included in the HTTP Content-Type header, it can also include the character set encoding, which makes it more than just a MimeType specification. If MimeType is specified e.g. not None, that value is used. Otherwise, ContentType is used. If neither is given, the DEFAULT_CONTENT_TYPE setting is used.\",\"default\":null},{\"name\":\"pageCategory\",\"type\":[\"null\",\"string\"],\"doc\":\"The category of the page, INDEX, DETAIL, BBS, BLOG, etc.\",\"default\":null},{\"name\":\"prevSignature\",\"type\":[\"null\",\"bytes\"],\"doc\":\"An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.\",\"default\":null},{\"name\":\"signature\",\"type\":[\"null\",\"bytes\"],\"doc\":\"An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.\",\"default\":null},{\"name\":\"pageTitle\",\"type\":[\"null\",\"string\"],\"doc\":\"The title extracted from page's metadate.\",\"default\":null},{\"name\":\"pageText\",\"type\":[\"null\",\"string\"],\"doc\":\"The text in the WebPage devoid from native markup.\",\"default\":null},{\"name\":\"contentTitle\",\"type\":[\"null\",\"string\"],\"doc\":\"The title of the extracted content in the WebPage.\",\"default\":null},{\"name\":\"contentText\",\"type\":[\"null\",\"string\"],\"doc\":\"The textual content of the extracted content in WebPage devoid from native markup.\",\"default\":null},{\"name\":\"contentTextLength\",\"type\":\"int\",\"doc\":\"The content text length.\",\"default\":0},{\"name\":\"referredArticles\",\"type\":\"int\",\"doc\":\"Total articles out linked from the WebPage.\",\"default\":0},{\"name\":\"referrer\",\"type\":[\"null\",\"string\"],\"doc\":\"The referrer page link of the WebPage.\",\"default\":null},{\"name\":\"referredChars\",\"type\":\"int\",\"doc\":\"Total article chars out linked from the WebPage.\",\"default\":0},{\"name\":\"parseStatus\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"ParseStatus\",\"doc\":\"A nested container representing parse status data captured from invocation of parsers on fetch of a WebPage\",\"fields\":[{\"name\":\"majorCode\",\"type\":\"int\",\"doc\":\"Major parsing status' including NOTPARSED (Parsing was not performed), SUCCESS (Parsing succeeded), FAILED (General failure. There may be a more specific error message in arguments.)\",\"default\":0},{\"name\":\"minorCode\",\"type\":\"int\",\"doc\":\"Minor parsing status' including SUCCESS_OK - Successful parse devoid of anomalies or issues, SUCCESS_REDIRECT - Parsed content contains a directive to redirect to another URL. The target URL can be retrieved from the arguments., FAILED_EXCEPTION - Parsing failed. An Exception occured which may be retrieved from the arguments., FAILED_TRUNCATED - Parsing failed. Content was truncated, but the parser cannot handle incomplete content., FAILED_INVALID_FORMAT - Parsing failed. Invalid format e.g. the content may be corrupted or of wrong type., FAILED_MISSING_PARTS - Parsing failed. Other related parts of the content are needed to complete parsing. The list of URLs to missing parts may be provided in arguments. The Fetcher may decide to fetch these parts at once, then put them into Content.metadata, and supply them for re-parsing., FAILED_MISING_CONTENT - Parsing failed. There was no content to be parsed - probably caused by errors at protocol stage.\",\"default\":0},{\"name\":\"args\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"doc\":\"Optional arguments supplied to compliment and/or justify the parse status code.\",\"default\":[]}]}],\"default\":null},{\"name\":\"contentScore\",\"type\":\"float\",\"doc\":\"A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.\",\"default\":0},{\"name\":\"score\",\"type\":\"float\",\"doc\":\"A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.\",\"default\":0},{\"name\":\"reprUrl\",\"type\":[\"null\",\"string\"],\"doc\":\"In the case where we are given two urls, a source and a destination of a redirect, we should determine and persist the representative url. The logic used to determine this is based largely on Yahoo!'s Slurp Crawler\",\"default\":null},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Header information returned from the web server used to server the content which is subsequently fetched from. This includes keys such as TRANSFER_ENCODING, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_LOCATION, CONTENT_DISPOSITION, CONTENT_MD5, CONTENT_TYPE, LAST_MODIFIED and LOCATION.\",\"default\":{}},{\"name\":\"oldOutlinks\",\"type\":[\"null\",\"string\"],\"doc\":\"All old outlinks from this WebPage.\",\"default\":null},{\"name\":\"outlinks\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Embedded hyperlinks which direct outside of the current domain.\",\"default\":{}},{\"name\":\"inlinks\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Embedded hyperlinks which link to pages within the current domain.\",\"default\":{}},{\"name\":\"markers\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"string\"]},\"doc\":\"Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.\",\"default\":{}},{\"name\":\"metadata\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"]},\"doc\":\"A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.\",\"default\":{}},{\"name\":\"batchId\",\"type\":[\"null\",\"string\"],\"doc\":\"A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.\",\"default\":null}]}");
 
   /** Enum containing all data bean's fields. */
   public static enum Field {
     BASE_URL(0, "baseUrl"),
     STATUS(1, "status"),
-    FETCH_TIME(2, "fetchTime"),
-    PREV_FETCH_TIME(3, "prevFetchTime"),
-    FETCH_INTERVAL(4, "fetchInterval"),
-    RETRIES_SINCE_FETCH(5, "retriesSinceFetch"),
-    MODIFIED_TIME(6, "modifiedTime"),
-    PREV_MODIFIED_TIME(7, "prevModifiedTime"),
-    PROTOCOL_STATUS(8, "protocolStatus"),
-    CONTENT(9, "content"),
-    CONTENT_TYPE(10, "contentType"),
-    PREV_SIGNATURE(11, "prevSignature"),
-    SIGNATURE(12, "signature"),
-    TITLE(13, "title"),
-    TEXT(14, "text"),
-    PARSE_STATUS(15, "parseStatus"),
-    SCORE(16, "score"),
-    REPR_URL(17, "reprUrl"),
-    HEADERS(18, "headers"),
-    OUTLINKS(19, "outlinks"),
-    INLINKS(20, "inlinks"),
-    MARKERS(21, "markers"),
-    METADATA(22, "metadata"),
-    BATCH_ID(23, "batchId"),
+    DISTANCE(2, "distance"),
+    FETCH_COUNT(3, "fetchCount"),
+    FETCH_PRIORITY(4, "fetchPriority"),
+    FETCH_TIME(5, "fetchTime"),
+    PREV_FETCH_TIME(6, "prevFetchTime"),
+    FETCH_INTERVAL(7, "fetchInterval"),
+    RETRIES_SINCE_FETCH(8, "retriesSinceFetch"),
+    MODIFIED_TIME(9, "modifiedTime"),
+    PREV_MODIFIED_TIME(10, "prevModifiedTime"),
+    CONTENT_MODIFIED_TIME(11, "contentModifiedTime"),
+    PREV_CONTENT_MODIFIED_TIME(12, "prevContentModifiedTime"),
+    CONTENT_PUBLISH_TIME(13, "contentPublishTime"),
+    PREV_CONTENT_PUBLISH_TIME(14, "prevContentPublishTime"),
+    REF_CONTENT_PUBLISH_TIME(15, "refContentPublishTime"),
+    PREV_REF_CONTENT_PUBLISH_TIME(16, "prevRefContentPublishTime"),
+    PROTOCOL_STATUS(17, "protocolStatus"),
+    CONTENT(18, "content"),
+    CONTENT_TYPE(19, "contentType"),
+    PAGE_CATEGORY(20, "pageCategory"),
+    PREV_SIGNATURE(21, "prevSignature"),
+    SIGNATURE(22, "signature"),
+    PAGE_TITLE(23, "pageTitle"),
+    PAGE_TEXT(24, "pageText"),
+    CONTENT_TITLE(25, "contentTitle"),
+    CONTENT_TEXT(26, "contentText"),
+    CONTENT_TEXT_LENGTH(27, "contentTextLength"),
+    REFERRED_ARTICLES(28, "referredArticles"),
+    REFERRER(29, "referrer"),
+    REFERRED_CHARS(30, "referredChars"),
+    PARSE_STATUS(31, "parseStatus"),
+    CONTENT_SCORE(32, "contentScore"),
+    SCORE(33, "score"),
+    REPR_URL(34, "reprUrl"),
+    HEADERS(35, "headers"),
+    OLD_OUTLINKS(36, "oldOutlinks"),
+    OUTLINKS(37, "outlinks"),
+    INLINKS(38, "inlinks"),
+    MARKERS(39, "markers"),
+    METADATA(40, "metadata"),
+    BATCH_ID(41, "batchId"),
     ;
     /**
      * Field's index.
@@ -76,23 +93,41 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
   public static final String[] _ALL_FIELDS = {
   "baseUrl",
   "status",
+  "distance",
+  "fetchCount",
+  "fetchPriority",
   "fetchTime",
   "prevFetchTime",
   "fetchInterval",
   "retriesSinceFetch",
   "modifiedTime",
   "prevModifiedTime",
+  "contentModifiedTime",
+  "prevContentModifiedTime",
+  "contentPublishTime",
+  "prevContentPublishTime",
+  "refContentPublishTime",
+  "prevRefContentPublishTime",
   "protocolStatus",
   "content",
   "contentType",
+  "pageCategory",
   "prevSignature",
   "signature",
-  "title",
-  "text",
+  "pageTitle",
+  "pageText",
+  "contentTitle",
+  "contentText",
+  "contentTextLength",
+  "referredArticles",
+  "referrer",
+  "referredChars",
   "parseStatus",
+  "contentScore",
   "score",
   "reprUrl",
   "headers",
+  "oldOutlinks",
   "outlinks",
   "inlinks",
   "markers",
@@ -108,81 +143,134 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     return GoraWebPage._ALL_FIELDS.length;
   }
 
-  /** The original associated with this GoraWebPage. */
+  /** The original associated with this WebPage. */
   private java.lang.CharSequence baseUrl;
-  /** A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified */
+  /** A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified */
   private int status;
+  /** The distance of the WebPage in the web. */
+  private int distance;
+  /** The total fetch count of the WebPage. */
+  private int fetchCount;
+  /** The priority of the WebPage to fetch. */
+  private int fetchPriority;
   /** The system time in milliseconds for when the page was fetched. */
   private long fetchTime;
   /** The system time in milliseconds for when the page was last fetched if it was previously fetched which can be used to calculate time delta within a fetching schedule implementation */
   private long prevFetchTime;
   /** The default number of seconds between re-fetches of a page. The default is considered as 30 days unless a custom fetch schedle is implemented. */
   private int fetchInterval;
-  /** The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched. */
+  /** The number of retried attempts at fetching the WebPage since it was last successfully fetched. */
   private int retriesSinceFetch;
-  /** The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage. */
+  /** The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage. */
   private long modifiedTime;
-  /** The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage. */
+  /** The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage. */
   private long prevModifiedTime;
-  private ProtocolStatus protocolStatus;
+  /** The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage. */
+  private long contentModifiedTime;
+  /** The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage. */
+  private long prevContentModifiedTime;
+  /** The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage. */
+  private long contentPublishTime;
+  /** The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage. */
+  private long prevContentPublishTime;
+  /** The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage. */
+  private long refContentPublishTime;
+  /** The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage. */
+  private long prevRefContentPublishTime;
+  private org.apache.nutch.persist.gora.ProtocolStatus protocolStatus;
   /** The entire raw document content e.g. raw XHTML */
   private java.nio.ByteBuffer content;
   /** The type of the content contained within the document itself. ContentType is an alias for MimeType. Historically, this parameter was only called MimeType, but since this is actually the value included in the HTTP Content-Type header, it can also include the character set encoding, which makes it more than just a MimeType specification. If MimeType is specified e.g. not None, that value is used. Otherwise, ContentType is used. If neither is given, the DEFAULT_CONTENT_TYPE setting is used. */
   private java.lang.CharSequence contentType;
-  /** An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints. */
+  /** The category of the page, INDEX, DETAIL, BBS, BLOG, etc. */
+  private java.lang.CharSequence pageCategory;
+  /** An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints. */
   private java.nio.ByteBuffer prevSignature;
-  /** An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time. */
+  /** An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time. */
   private java.nio.ByteBuffer signature;
-  /** The title of the GoraWebPage. */
-  private java.lang.CharSequence title;
-  /** The textual content of the GoraWebPage devoid from native markup. */
-  private java.lang.CharSequence text;
-  private ParseStatus parseStatus;
-  /** A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics. */
+  /** The title extracted from page's metadate. */
+  private java.lang.CharSequence pageTitle;
+  /** The text in the WebPage devoid from native markup. */
+  private java.lang.CharSequence pageText;
+  /** The title of the extracted content in the WebPage. */
+  private java.lang.CharSequence contentTitle;
+  /** The textual content of the extracted content in WebPage devoid from native markup. */
+  private java.lang.CharSequence contentText;
+  /** The content text length. */
+  private int contentTextLength;
+  /** Total articles out linked from the WebPage. */
+  private int referredArticles;
+  /** The referrer page link of the WebPage. */
+  private java.lang.CharSequence referrer;
+  /** Total article chars out linked from the WebPage. */
+  private int referredChars;
+  private org.apache.nutch.persist.gora.ParseStatus parseStatus;
+  /** A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics. */
+  private float contentScore;
+  /** A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics. */
   private float score;
   /** In the case where we are given two urls, a source and a destination of a redirect, we should determine and persist the representative url. The logic used to determine this is based largely on Yahoo!'s Slurp Crawler */
   private java.lang.CharSequence reprUrl;
   /** Header information returned from the web server used to server the content which is subsequently fetched from. This includes keys such as TRANSFER_ENCODING, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_LOCATION, CONTENT_DISPOSITION, CONTENT_MD5, CONTENT_TYPE, LAST_MODIFIED and LOCATION. */
   private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> headers;
+  /** All old outlinks from this WebPage. */
+  private java.lang.CharSequence oldOutlinks;
   /** Embedded hyperlinks which direct outside of the current domain. */
   private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> outlinks;
   /** Embedded hyperlinks which link to pages within the current domain. */
   private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> inlinks;
-  /** Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage. */
+  /** Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage. */
   private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> markers;
-  /** A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage. */
+  /** A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage. */
   private java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> metadata;
-  /** A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId. */
+  /** A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId. */
   private java.lang.CharSequence batchId;
-
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call. 
   public java.lang.Object get(int field$) {
     switch (field$) {
     case 0: return baseUrl;
     case 1: return status;
-    case 2: return fetchTime;
-    case 3: return prevFetchTime;
-    case 4: return fetchInterval;
-    case 5: return retriesSinceFetch;
-    case 6: return modifiedTime;
-    case 7: return prevModifiedTime;
-    case 8: return protocolStatus;
-    case 9: return content;
-    case 10: return contentType;
-    case 11: return prevSignature;
-    case 12: return signature;
-    case 13: return title;
-    case 14: return text;
-    case 15: return parseStatus;
-    case 16: return score;
-    case 17: return reprUrl;
-    case 18: return headers;
-    case 19: return outlinks;
-    case 20: return inlinks;
-    case 21: return markers;
-    case 22: return metadata;
-    case 23: return batchId;
+    case 2: return distance;
+    case 3: return fetchCount;
+    case 4: return fetchPriority;
+    case 5: return fetchTime;
+    case 6: return prevFetchTime;
+    case 7: return fetchInterval;
+    case 8: return retriesSinceFetch;
+    case 9: return modifiedTime;
+    case 10: return prevModifiedTime;
+    case 11: return contentModifiedTime;
+    case 12: return prevContentModifiedTime;
+    case 13: return contentPublishTime;
+    case 14: return prevContentPublishTime;
+    case 15: return refContentPublishTime;
+    case 16: return prevRefContentPublishTime;
+    case 17: return protocolStatus;
+    case 18: return content;
+    case 19: return contentType;
+    case 20: return pageCategory;
+    case 21: return prevSignature;
+    case 22: return signature;
+    case 23: return pageTitle;
+    case 24: return pageText;
+    case 25: return contentTitle;
+    case 26: return contentText;
+    case 27: return contentTextLength;
+    case 28: return referredArticles;
+    case 29: return referrer;
+    case 30: return referredChars;
+    case 31: return parseStatus;
+    case 32: return contentScore;
+    case 33: return score;
+    case 34: return reprUrl;
+    case 35: return headers;
+    case 36: return oldOutlinks;
+    case 37: return outlinks;
+    case 38: return inlinks;
+    case 39: return markers;
+    case 40: return metadata;
+    case 41: return batchId;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -193,42 +281,60 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     switch (field$) {
     case 0: baseUrl = (java.lang.CharSequence)(value); break;
     case 1: status = (java.lang.Integer)(value); break;
-    case 2: fetchTime = (java.lang.Long)(value); break;
-    case 3: prevFetchTime = (java.lang.Long)(value); break;
-    case 4: fetchInterval = (java.lang.Integer)(value); break;
-    case 5: retriesSinceFetch = (java.lang.Integer)(value); break;
-    case 6: modifiedTime = (java.lang.Long)(value); break;
-    case 7: prevModifiedTime = (java.lang.Long)(value); break;
-    case 8: protocolStatus = (ProtocolStatus)(value); break;
-    case 9: content = (java.nio.ByteBuffer)(value); break;
-    case 10: contentType = (java.lang.CharSequence)(value); break;
-    case 11: prevSignature = (java.nio.ByteBuffer)(value); break;
-    case 12: signature = (java.nio.ByteBuffer)(value); break;
-    case 13: title = (java.lang.CharSequence)(value); break;
-    case 14: text = (java.lang.CharSequence)(value); break;
-    case 15: parseStatus = (ParseStatus)(value); break;
-    case 16: score = (java.lang.Float)(value); break;
-    case 17: reprUrl = (java.lang.CharSequence)(value); break;
-    case 18: headers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
-    case 19: outlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
-    case 20: inlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
-    case 21: markers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
-    case 22: metadata = (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
-    case 23: batchId = (java.lang.CharSequence)(value); break;
+    case 2: distance = (java.lang.Integer)(value); break;
+    case 3: fetchCount = (java.lang.Integer)(value); break;
+    case 4: fetchPriority = (java.lang.Integer)(value); break;
+    case 5: fetchTime = (java.lang.Long)(value); break;
+    case 6: prevFetchTime = (java.lang.Long)(value); break;
+    case 7: fetchInterval = (java.lang.Integer)(value); break;
+    case 8: retriesSinceFetch = (java.lang.Integer)(value); break;
+    case 9: modifiedTime = (java.lang.Long)(value); break;
+    case 10: prevModifiedTime = (java.lang.Long)(value); break;
+    case 11: contentModifiedTime = (java.lang.Long)(value); break;
+    case 12: prevContentModifiedTime = (java.lang.Long)(value); break;
+    case 13: contentPublishTime = (java.lang.Long)(value); break;
+    case 14: prevContentPublishTime = (java.lang.Long)(value); break;
+    case 15: refContentPublishTime = (java.lang.Long)(value); break;
+    case 16: prevRefContentPublishTime = (java.lang.Long)(value); break;
+    case 17: protocolStatus = (org.apache.nutch.persist.gora.ProtocolStatus)(value); break;
+    case 18: content = (java.nio.ByteBuffer)(value); break;
+    case 19: contentType = (java.lang.CharSequence)(value); break;
+    case 20: pageCategory = (java.lang.CharSequence)(value); break;
+    case 21: prevSignature = (java.nio.ByteBuffer)(value); break;
+    case 22: signature = (java.nio.ByteBuffer)(value); break;
+    case 23: pageTitle = (java.lang.CharSequence)(value); break;
+    case 24: pageText = (java.lang.CharSequence)(value); break;
+    case 25: contentTitle = (java.lang.CharSequence)(value); break;
+    case 26: contentText = (java.lang.CharSequence)(value); break;
+    case 27: contentTextLength = (java.lang.Integer)(value); break;
+    case 28: referredArticles = (java.lang.Integer)(value); break;
+    case 29: referrer = (java.lang.CharSequence)(value); break;
+    case 30: referredChars = (java.lang.Integer)(value); break;
+    case 31: parseStatus = (org.apache.nutch.persist.gora.ParseStatus)(value); break;
+    case 32: contentScore = (java.lang.Float)(value); break;
+    case 33: score = (java.lang.Float)(value); break;
+    case 34: reprUrl = (java.lang.CharSequence)(value); break;
+    case 35: headers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 36: oldOutlinks = (java.lang.CharSequence)(value); break;
+    case 37: outlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 38: inlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 39: markers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 40: metadata = (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 41: batchId = (java.lang.CharSequence)(value); break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
 
   /**
    * Gets the value of the 'baseUrl' field.
-   * The original associated with this GoraWebPage.   */
+   * The original associated with this WebPage.   */
   public java.lang.CharSequence getBaseUrl() {
     return baseUrl;
   }
 
   /**
    * Sets the value of the 'baseUrl' field.
-   * The original associated with this GoraWebPage.   * @param value the value to set.
+   * The original associated with this WebPage.   * @param value the value to set.
    */
   public void setBaseUrl(java.lang.CharSequence value) {
     this.baseUrl = value;
@@ -237,7 +343,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
   
   /**
    * Checks the dirty status of the 'baseUrl' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The original associated with this GoraWebPage.   * @param value the value to set.
+   * The original associated with this WebPage.   * @param value the value to set.
    */
   public boolean isBaseUrlDirty() {
     return isDirty(0);
@@ -245,14 +351,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 
   /**
    * Gets the value of the 'status' field.
-   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   */
+   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   */
   public java.lang.Integer getStatus() {
     return status;
   }
 
   /**
    * Sets the value of the 'status' field.
-   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   * @param value the value to set.
+   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   * @param value the value to set.
    */
   public void setStatus(java.lang.Integer value) {
     this.status = value;
@@ -261,10 +367,82 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
   
   /**
    * Checks the dirty status of the 'status' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   * @param value the value to set.
+   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified   * @param value the value to set.
    */
   public boolean isStatusDirty() {
     return isDirty(1);
+  }
+
+  /**
+   * Gets the value of the 'distance' field.
+   * The distance of the WebPage in the web.   */
+  public java.lang.Integer getDistance() {
+    return distance;
+  }
+
+  /**
+   * Sets the value of the 'distance' field.
+   * The distance of the WebPage in the web.   * @param value the value to set.
+   */
+  public void setDistance(java.lang.Integer value) {
+    this.distance = value;
+    setDirty(2);
+  }
+  
+  /**
+   * Checks the dirty status of the 'distance' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The distance of the WebPage in the web.   * @param value the value to set.
+   */
+  public boolean isDistanceDirty() {
+    return isDirty(2);
+  }
+
+  /**
+   * Gets the value of the 'fetchCount' field.
+   * The total fetch count of the WebPage.   */
+  public java.lang.Integer getFetchCount() {
+    return fetchCount;
+  }
+
+  /**
+   * Sets the value of the 'fetchCount' field.
+   * The total fetch count of the WebPage.   * @param value the value to set.
+   */
+  public void setFetchCount(java.lang.Integer value) {
+    this.fetchCount = value;
+    setDirty(3);
+  }
+  
+  /**
+   * Checks the dirty status of the 'fetchCount' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The total fetch count of the WebPage.   * @param value the value to set.
+   */
+  public boolean isFetchCountDirty() {
+    return isDirty(3);
+  }
+
+  /**
+   * Gets the value of the 'fetchPriority' field.
+   * The priority of the WebPage to fetch.   */
+  public java.lang.Integer getFetchPriority() {
+    return fetchPriority;
+  }
+
+  /**
+   * Sets the value of the 'fetchPriority' field.
+   * The priority of the WebPage to fetch.   * @param value the value to set.
+   */
+  public void setFetchPriority(java.lang.Integer value) {
+    this.fetchPriority = value;
+    setDirty(4);
+  }
+  
+  /**
+   * Checks the dirty status of the 'fetchPriority' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The priority of the WebPage to fetch.   * @param value the value to set.
+   */
+  public boolean isFetchPriorityDirty() {
+    return isDirty(4);
   }
 
   /**
@@ -280,7 +458,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setFetchTime(java.lang.Long value) {
     this.fetchTime = value;
-    setDirty(2);
+    setDirty(5);
   }
   
   /**
@@ -288,7 +466,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * The system time in milliseconds for when the page was fetched.   * @param value the value to set.
    */
   public boolean isFetchTimeDirty() {
-    return isDirty(2);
+    return isDirty(5);
   }
 
   /**
@@ -304,7 +482,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setPrevFetchTime(java.lang.Long value) {
     this.prevFetchTime = value;
-    setDirty(3);
+    setDirty(6);
   }
   
   /**
@@ -312,7 +490,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * The system time in milliseconds for when the page was last fetched if it was previously fetched which can be used to calculate time delta within a fetching schedule implementation   * @param value the value to set.
    */
   public boolean isPrevFetchTimeDirty() {
-    return isDirty(3);
+    return isDirty(6);
   }
 
   /**
@@ -328,7 +506,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setFetchInterval(java.lang.Integer value) {
     this.fetchInterval = value;
-    setDirty(4);
+    setDirty(7);
   }
   
   /**
@@ -336,85 +514,229 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * The default number of seconds between re-fetches of a page. The default is considered as 30 days unless a custom fetch schedle is implemented.   * @param value the value to set.
    */
   public boolean isFetchIntervalDirty() {
-    return isDirty(4);
+    return isDirty(7);
   }
 
   /**
    * Gets the value of the 'retriesSinceFetch' field.
-   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.   */
+   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.   */
   public java.lang.Integer getRetriesSinceFetch() {
     return retriesSinceFetch;
   }
 
   /**
    * Sets the value of the 'retriesSinceFetch' field.
-   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.   * @param value the value to set.
+   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.   * @param value the value to set.
    */
   public void setRetriesSinceFetch(java.lang.Integer value) {
     this.retriesSinceFetch = value;
-    setDirty(5);
+    setDirty(8);
   }
   
   /**
    * Checks the dirty status of the 'retriesSinceFetch' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.   * @param value the value to set.
+   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.   * @param value the value to set.
    */
   public boolean isRetriesSinceFetchDirty() {
-    return isDirty(5);
+    return isDirty(8);
   }
 
   /**
    * Gets the value of the 'modifiedTime' field.
-   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.   */
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   */
   public java.lang.Long getModifiedTime() {
     return modifiedTime;
   }
 
   /**
    * Sets the value of the 'modifiedTime' field.
-   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.   * @param value the value to set.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
    */
   public void setModifiedTime(java.lang.Long value) {
     this.modifiedTime = value;
-    setDirty(6);
+    setDirty(9);
   }
   
   /**
    * Checks the dirty status of the 'modifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.   * @param value the value to set.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
    */
   public boolean isModifiedTimeDirty() {
-    return isDirty(6);
+    return isDirty(9);
   }
 
   /**
    * Gets the value of the 'prevModifiedTime' field.
-   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.   */
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   */
   public java.lang.Long getPrevModifiedTime() {
     return prevModifiedTime;
   }
 
   /**
    * Sets the value of the 'prevModifiedTime' field.
-   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.   * @param value the value to set.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
    */
   public void setPrevModifiedTime(java.lang.Long value) {
     this.prevModifiedTime = value;
-    setDirty(7);
+    setDirty(10);
   }
   
   /**
    * Checks the dirty status of the 'prevModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.   * @param value the value to set.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
    */
   public boolean isPrevModifiedTimeDirty() {
-    return isDirty(7);
+    return isDirty(10);
+  }
+
+  /**
+   * Gets the value of the 'contentModifiedTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   */
+  public java.lang.Long getContentModifiedTime() {
+    return contentModifiedTime;
+  }
+
+  /**
+   * Sets the value of the 'contentModifiedTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public void setContentModifiedTime(java.lang.Long value) {
+    this.contentModifiedTime = value;
+    setDirty(11);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public boolean isContentModifiedTimeDirty() {
+    return isDirty(11);
+  }
+
+  /**
+   * Gets the value of the 'prevContentModifiedTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   */
+  public java.lang.Long getPrevContentModifiedTime() {
+    return prevContentModifiedTime;
+  }
+
+  /**
+   * Sets the value of the 'prevContentModifiedTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public void setPrevContentModifiedTime(java.lang.Long value) {
+    this.prevContentModifiedTime = value;
+    setDirty(12);
+  }
+  
+  /**
+   * Checks the dirty status of the 'prevContentModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public boolean isPrevContentModifiedTimeDirty() {
+    return isDirty(12);
+  }
+
+  /**
+   * Gets the value of the 'contentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   */
+  public java.lang.Long getContentPublishTime() {
+    return contentPublishTime;
+  }
+
+  /**
+   * Sets the value of the 'contentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public void setContentPublishTime(java.lang.Long value) {
+    this.contentPublishTime = value;
+    setDirty(13);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public boolean isContentPublishTimeDirty() {
+    return isDirty(13);
+  }
+
+  /**
+   * Gets the value of the 'prevContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   */
+  public java.lang.Long getPrevContentPublishTime() {
+    return prevContentPublishTime;
+  }
+
+  /**
+   * Sets the value of the 'prevContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public void setPrevContentPublishTime(java.lang.Long value) {
+    this.prevContentPublishTime = value;
+    setDirty(14);
+  }
+  
+  /**
+   * Checks the dirty status of the 'prevContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public boolean isPrevContentPublishTimeDirty() {
+    return isDirty(14);
+  }
+
+  /**
+   * Gets the value of the 'refContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   */
+  public java.lang.Long getRefContentPublishTime() {
+    return refContentPublishTime;
+  }
+
+  /**
+   * Sets the value of the 'refContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public void setRefContentPublishTime(java.lang.Long value) {
+    this.refContentPublishTime = value;
+    setDirty(15);
+  }
+  
+  /**
+   * Checks the dirty status of the 'refContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.   * @param value the value to set.
+   */
+  public boolean isRefContentPublishTimeDirty() {
+    return isDirty(15);
+  }
+
+  /**
+   * Gets the value of the 'prevRefContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   */
+  public java.lang.Long getPrevRefContentPublishTime() {
+    return prevRefContentPublishTime;
+  }
+
+  /**
+   * Sets the value of the 'prevRefContentPublishTime' field.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public void setPrevRefContentPublishTime(java.lang.Long value) {
+    this.prevRefContentPublishTime = value;
+    setDirty(16);
+  }
+  
+  /**
+   * Checks the dirty status of the 'prevRefContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.   * @param value the value to set.
+   */
+  public boolean isPrevRefContentPublishTimeDirty() {
+    return isDirty(16);
   }
 
   /**
    * Gets the value of the 'protocolStatus' field.
    */
-  public ProtocolStatus getProtocolStatus() {
+  public org.apache.nutch.persist.gora.ProtocolStatus getProtocolStatus() {
     return protocolStatus;
   }
 
@@ -422,9 +744,9 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * Sets the value of the 'protocolStatus' field.
    * @param value the value to set.
    */
-  public void setProtocolStatus(ProtocolStatus value) {
+  public void setProtocolStatus(org.apache.nutch.persist.gora.ProtocolStatus value) {
     this.protocolStatus = value;
-    setDirty(8);
+    setDirty(17);
   }
   
   /**
@@ -432,7 +754,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * @param value the value to set.
    */
   public boolean isProtocolStatusDirty() {
-    return isDirty(8);
+    return isDirty(17);
   }
 
   /**
@@ -448,7 +770,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setContent(java.nio.ByteBuffer value) {
     this.content = value;
-    setDirty(9);
+    setDirty(18);
   }
   
   /**
@@ -456,7 +778,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * The entire raw document content e.g. raw XHTML   * @param value the value to set.
    */
   public boolean isContentDirty() {
-    return isDirty(9);
+    return isDirty(18);
   }
 
   /**
@@ -472,7 +794,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setContentType(java.lang.CharSequence value) {
     this.contentType = value;
-    setDirty(10);
+    setDirty(19);
   }
   
   /**
@@ -480,109 +802,277 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * The type of the content contained within the document itself. ContentType is an alias for MimeType. Historically, this parameter was only called MimeType, but since this is actually the value included in the HTTP Content-Type header, it can also include the character set encoding, which makes it more than just a MimeType specification. If MimeType is specified e.g. not None, that value is used. Otherwise, ContentType is used. If neither is given, the DEFAULT_CONTENT_TYPE setting is used.   * @param value the value to set.
    */
   public boolean isContentTypeDirty() {
-    return isDirty(10);
+    return isDirty(19);
+  }
+
+  /**
+   * Gets the value of the 'pageCategory' field.
+   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.   */
+  public java.lang.CharSequence getPageCategory() {
+    return pageCategory;
+  }
+
+  /**
+   * Sets the value of the 'pageCategory' field.
+   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.   * @param value the value to set.
+   */
+  public void setPageCategory(java.lang.CharSequence value) {
+    this.pageCategory = value;
+    setDirty(20);
+  }
+  
+  /**
+   * Checks the dirty status of the 'pageCategory' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.   * @param value the value to set.
+   */
+  public boolean isPageCategoryDirty() {
+    return isDirty(20);
   }
 
   /**
    * Gets the value of the 'prevSignature' field.
-   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.   */
+   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.   */
   public java.nio.ByteBuffer getPrevSignature() {
     return prevSignature;
   }
 
   /**
    * Sets the value of the 'prevSignature' field.
-   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.   * @param value the value to set.
+   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.   * @param value the value to set.
    */
   public void setPrevSignature(java.nio.ByteBuffer value) {
     this.prevSignature = value;
-    setDirty(11);
+    setDirty(21);
   }
   
   /**
    * Checks the dirty status of the 'prevSignature' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.   * @param value the value to set.
+   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.   * @param value the value to set.
    */
   public boolean isPrevSignatureDirty() {
-    return isDirty(11);
+    return isDirty(21);
   }
 
   /**
    * Gets the value of the 'signature' field.
-   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.   */
+   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.   */
   public java.nio.ByteBuffer getSignature() {
     return signature;
   }
 
   /**
    * Sets the value of the 'signature' field.
-   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.   * @param value the value to set.
+   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.   * @param value the value to set.
    */
   public void setSignature(java.nio.ByteBuffer value) {
     this.signature = value;
-    setDirty(12);
+    setDirty(22);
   }
   
   /**
    * Checks the dirty status of the 'signature' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.   * @param value the value to set.
+   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.   * @param value the value to set.
    */
   public boolean isSignatureDirty() {
-    return isDirty(12);
+    return isDirty(22);
   }
 
   /**
-   * Gets the value of the 'title' field.
-   * The title of the GoraWebPage.   */
-  public java.lang.CharSequence getTitle() {
-    return title;
+   * Gets the value of the 'pageTitle' field.
+   * The title extracted from page's metadate.   */
+  public java.lang.CharSequence getPageTitle() {
+    return pageTitle;
   }
 
   /**
-   * Sets the value of the 'title' field.
-   * The title of the GoraWebPage.   * @param value the value to set.
+   * Sets the value of the 'pageTitle' field.
+   * The title extracted from page's metadate.   * @param value the value to set.
    */
-  public void setTitle(java.lang.CharSequence value) {
-    this.title = value;
-    setDirty(13);
+  public void setPageTitle(java.lang.CharSequence value) {
+    this.pageTitle = value;
+    setDirty(23);
   }
   
   /**
-   * Checks the dirty status of the 'title' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The title of the GoraWebPage.   * @param value the value to set.
+   * Checks the dirty status of the 'pageTitle' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The title extracted from page's metadate.   * @param value the value to set.
    */
-  public boolean isTitleDirty() {
-    return isDirty(13);
+  public boolean isPageTitleDirty() {
+    return isDirty(23);
   }
 
   /**
-   * Gets the value of the 'text' field.
-   * The textual content of the GoraWebPage devoid from native markup.   */
-  public java.lang.CharSequence getText() {
-    return text;
+   * Gets the value of the 'pageText' field.
+   * The text in the WebPage devoid from native markup.   */
+  public java.lang.CharSequence getPageText() {
+    return pageText;
   }
 
   /**
-   * Sets the value of the 'text' field.
-   * The textual content of the GoraWebPage devoid from native markup.   * @param value the value to set.
+   * Sets the value of the 'pageText' field.
+   * The text in the WebPage devoid from native markup.   * @param value the value to set.
    */
-  public void setText(java.lang.CharSequence value) {
-    this.text = value;
-    setDirty(14);
+  public void setPageText(java.lang.CharSequence value) {
+    this.pageText = value;
+    setDirty(24);
   }
   
   /**
-   * Checks the dirty status of the 'text' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * The textual content of the GoraWebPage devoid from native markup.   * @param value the value to set.
+   * Checks the dirty status of the 'pageText' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The text in the WebPage devoid from native markup.   * @param value the value to set.
    */
-  public boolean isTextDirty() {
-    return isDirty(14);
+  public boolean isPageTextDirty() {
+    return isDirty(24);
+  }
+
+  /**
+   * Gets the value of the 'contentTitle' field.
+   * The title of the extracted content in the WebPage.   */
+  public java.lang.CharSequence getContentTitle() {
+    return contentTitle;
+  }
+
+  /**
+   * Sets the value of the 'contentTitle' field.
+   * The title of the extracted content in the WebPage.   * @param value the value to set.
+   */
+  public void setContentTitle(java.lang.CharSequence value) {
+    this.contentTitle = value;
+    setDirty(25);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentTitle' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The title of the extracted content in the WebPage.   * @param value the value to set.
+   */
+  public boolean isContentTitleDirty() {
+    return isDirty(25);
+  }
+
+  /**
+   * Gets the value of the 'contentText' field.
+   * The textual content of the extracted content in WebPage devoid from native markup.   */
+  public java.lang.CharSequence getContentText() {
+    return contentText;
+  }
+
+  /**
+   * Sets the value of the 'contentText' field.
+   * The textual content of the extracted content in WebPage devoid from native markup.   * @param value the value to set.
+   */
+  public void setContentText(java.lang.CharSequence value) {
+    this.contentText = value;
+    setDirty(26);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentText' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The textual content of the extracted content in WebPage devoid from native markup.   * @param value the value to set.
+   */
+  public boolean isContentTextDirty() {
+    return isDirty(26);
+  }
+
+  /**
+   * Gets the value of the 'contentTextLength' field.
+   * The content text length.   */
+  public java.lang.Integer getContentTextLength() {
+    return contentTextLength;
+  }
+
+  /**
+   * Sets the value of the 'contentTextLength' field.
+   * The content text length.   * @param value the value to set.
+   */
+  public void setContentTextLength(java.lang.Integer value) {
+    this.contentTextLength = value;
+    setDirty(27);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentTextLength' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The content text length.   * @param value the value to set.
+   */
+  public boolean isContentTextLengthDirty() {
+    return isDirty(27);
+  }
+
+  /**
+   * Gets the value of the 'referredArticles' field.
+   * Total articles out linked from the WebPage.   */
+  public java.lang.Integer getReferredArticles() {
+    return referredArticles;
+  }
+
+  /**
+   * Sets the value of the 'referredArticles' field.
+   * Total articles out linked from the WebPage.   * @param value the value to set.
+   */
+  public void setReferredArticles(java.lang.Integer value) {
+    this.referredArticles = value;
+    setDirty(28);
+  }
+  
+  /**
+   * Checks the dirty status of the 'referredArticles' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * Total articles out linked from the WebPage.   * @param value the value to set.
+   */
+  public boolean isReferredArticlesDirty() {
+    return isDirty(28);
+  }
+
+  /**
+   * Gets the value of the 'referrer' field.
+   * The referrer page link of the WebPage.   */
+  public java.lang.CharSequence getReferrer() {
+    return referrer;
+  }
+
+  /**
+   * Sets the value of the 'referrer' field.
+   * The referrer page link of the WebPage.   * @param value the value to set.
+   */
+  public void setReferrer(java.lang.CharSequence value) {
+    this.referrer = value;
+    setDirty(29);
+  }
+  
+  /**
+   * Checks the dirty status of the 'referrer' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * The referrer page link of the WebPage.   * @param value the value to set.
+   */
+  public boolean isReferrerDirty() {
+    return isDirty(29);
+  }
+
+  /**
+   * Gets the value of the 'referredChars' field.
+   * Total article chars out linked from the WebPage.   */
+  public java.lang.Integer getReferredChars() {
+    return referredChars;
+  }
+
+  /**
+   * Sets the value of the 'referredChars' field.
+   * Total article chars out linked from the WebPage.   * @param value the value to set.
+   */
+  public void setReferredChars(java.lang.Integer value) {
+    this.referredChars = value;
+    setDirty(30);
+  }
+  
+  /**
+   * Checks the dirty status of the 'referredChars' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * Total article chars out linked from the WebPage.   * @param value the value to set.
+   */
+  public boolean isReferredCharsDirty() {
+    return isDirty(30);
   }
 
   /**
    * Gets the value of the 'parseStatus' field.
    */
-  public ParseStatus getParseStatus() {
+  public org.apache.nutch.persist.gora.ParseStatus getParseStatus() {
     return parseStatus;
   }
 
@@ -590,9 +1080,9 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * Sets the value of the 'parseStatus' field.
    * @param value the value to set.
    */
-  public void setParseStatus(ParseStatus value) {
+  public void setParseStatus(org.apache.nutch.persist.gora.ParseStatus value) {
     this.parseStatus = value;
-    setDirty(15);
+    setDirty(31);
   }
   
   /**
@@ -600,31 +1090,55 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * @param value the value to set.
    */
   public boolean isParseStatusDirty() {
-    return isDirty(15);
+    return isDirty(31);
+  }
+
+  /**
+   * Gets the value of the 'contentScore' field.
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.   */
+  public java.lang.Float getContentScore() {
+    return contentScore;
+  }
+
+  /**
+   * Sets the value of the 'contentScore' field.
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.   * @param value the value to set.
+   */
+  public void setContentScore(java.lang.Float value) {
+    this.contentScore = value;
+    setDirty(32);
+  }
+  
+  /**
+   * Checks the dirty status of the 'contentScore' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.   * @param value the value to set.
+   */
+  public boolean isContentScoreDirty() {
+    return isDirty(32);
   }
 
   /**
    * Gets the value of the 'score' field.
-   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.   */
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.   */
   public java.lang.Float getScore() {
     return score;
   }
 
   /**
    * Sets the value of the 'score' field.
-   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.   * @param value the value to set.
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.   * @param value the value to set.
    */
   public void setScore(java.lang.Float value) {
     this.score = value;
-    setDirty(16);
+    setDirty(33);
   }
   
   /**
    * Checks the dirty status of the 'score' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.   * @param value the value to set.
+   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.   * @param value the value to set.
    */
   public boolean isScoreDirty() {
-    return isDirty(16);
+    return isDirty(33);
   }
 
   /**
@@ -640,7 +1154,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setReprUrl(java.lang.CharSequence value) {
     this.reprUrl = value;
-    setDirty(17);
+    setDirty(34);
   }
   
   /**
@@ -648,7 +1162,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * In the case where we are given two urls, a source and a destination of a redirect, we should determine and persist the representative url. The logic used to determine this is based largely on Yahoo!'s Slurp Crawler   * @param value the value to set.
    */
   public boolean isReprUrlDirty() {
-    return isDirty(17);
+    return isDirty(34);
   }
 
   /**
@@ -664,7 +1178,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setHeaders(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
     this.headers = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
-    setDirty(18);
+    setDirty(35);
   }
   
   /**
@@ -672,7 +1186,31 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * Header information returned from the web server used to server the content which is subsequently fetched from. This includes keys such as TRANSFER_ENCODING, CONTENT_ENCODING, CONTENT_LANGUAGE, CONTENT_LENGTH, CONTENT_LOCATION, CONTENT_DISPOSITION, CONTENT_MD5, CONTENT_TYPE, LAST_MODIFIED and LOCATION.   * @param value the value to set.
    */
   public boolean isHeadersDirty() {
-    return isDirty(18);
+    return isDirty(35);
+  }
+
+  /**
+   * Gets the value of the 'oldOutlinks' field.
+   * All old outlinks from this WebPage.   */
+  public java.lang.CharSequence getOldOutlinks() {
+    return oldOutlinks;
+  }
+
+  /**
+   * Sets the value of the 'oldOutlinks' field.
+   * All old outlinks from this WebPage.   * @param value the value to set.
+   */
+  public void setOldOutlinks(java.lang.CharSequence value) {
+    this.oldOutlinks = value;
+    setDirty(36);
+  }
+  
+  /**
+   * Checks the dirty status of the 'oldOutlinks' field. A field is dirty if it represents a change that has not yet been written to the database.
+   * All old outlinks from this WebPage.   * @param value the value to set.
+   */
+  public boolean isOldOutlinksDirty() {
+    return isDirty(36);
   }
 
   /**
@@ -688,7 +1226,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setOutlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
     this.outlinks = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
-    setDirty(19);
+    setDirty(37);
   }
   
   /**
@@ -696,7 +1234,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * Embedded hyperlinks which direct outside of the current domain.   * @param value the value to set.
    */
   public boolean isOutlinksDirty() {
-    return isDirty(19);
+    return isDirty(37);
   }
 
   /**
@@ -712,7 +1250,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    */
   public void setInlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
     this.inlinks = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
-    setDirty(20);
+    setDirty(38);
   }
   
   /**
@@ -720,94 +1258,94 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
    * Embedded hyperlinks which link to pages within the current domain.   * @param value the value to set.
    */
   public boolean isInlinksDirty() {
-    return isDirty(20);
+    return isDirty(38);
   }
 
   /**
    * Gets the value of the 'markers' field.
-   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.   */
+   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.   */
   public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getMarkers() {
     return markers;
   }
 
   /**
    * Sets the value of the 'markers' field.
-   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.   * @param value the value to set.
+   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.   * @param value the value to set.
    */
   public void setMarkers(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
     this.markers = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
-    setDirty(21);
+    setDirty(39);
   }
   
   /**
    * Checks the dirty status of the 'markers' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.   * @param value the value to set.
+   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.   * @param value the value to set.
    */
   public boolean isMarkersDirty() {
-    return isDirty(21);
+    return isDirty(39);
   }
 
   /**
    * Gets the value of the 'metadata' field.
-   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.   */
+   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.   */
   public java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> getMetadata() {
     return metadata;
   }
 
   /**
    * Sets the value of the 'metadata' field.
-   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.   * @param value the value to set.
+   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.   * @param value the value to set.
    */
   public void setMetadata(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
     this.metadata = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
-    setDirty(22);
+    setDirty(40);
   }
   
   /**
    * Checks the dirty status of the 'metadata' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.   * @param value the value to set.
+   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.   * @param value the value to set.
    */
   public boolean isMetadataDirty() {
-    return isDirty(22);
+    return isDirty(40);
   }
 
   /**
    * Gets the value of the 'batchId' field.
-   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   */
+   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   */
   public java.lang.CharSequence getBatchId() {
     return batchId;
   }
 
   /**
    * Sets the value of the 'batchId' field.
-   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   * @param value the value to set.
+   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   * @param value the value to set.
    */
   public void setBatchId(java.lang.CharSequence value) {
     this.batchId = value;
-    setDirty(23);
+    setDirty(41);
   }
   
   /**
    * Checks the dirty status of the 'batchId' field. A field is dirty if it represents a change that has not yet been written to the database.
-   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   * @param value the value to set.
+   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.   * @param value the value to set.
    */
   public boolean isBatchIdDirty() {
-    return isDirty(23);
+    return isDirty(41);
   }
 
   /** Creates a new GoraWebPage RecordBuilder */
-  public static GoraWebPage.Builder newBuilder() {
-    return new GoraWebPage.Builder();
+  public static org.apache.nutch.persist.gora.GoraWebPage.Builder newBuilder() {
+    return new org.apache.nutch.persist.gora.GoraWebPage.Builder();
   }
   
   /** Creates a new GoraWebPage RecordBuilder by copying an existing Builder */
-  public static GoraWebPage.Builder newBuilder(GoraWebPage.Builder other) {
-    return new GoraWebPage.Builder(other);
+  public static org.apache.nutch.persist.gora.GoraWebPage.Builder newBuilder(org.apache.nutch.persist.gora.GoraWebPage.Builder other) {
+    return new org.apache.nutch.persist.gora.GoraWebPage.Builder(other);
   }
   
   /** Creates a new GoraWebPage RecordBuilder by copying an existing GoraWebPage instance */
-  public static GoraWebPage.Builder newBuilder(GoraWebPage other) {
-    return new GoraWebPage.Builder(other);
+  public static org.apache.nutch.persist.gora.GoraWebPage.Builder newBuilder(org.apache.nutch.persist.gora.GoraWebPage other) {
+    return new org.apache.nutch.persist.gora.GoraWebPage.Builder(other);
   }
   
   private static java.nio.ByteBuffer deepCopyToReadOnlyBuffer(
@@ -841,23 +1379,41 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 
     private java.lang.CharSequence baseUrl;
     private int status;
+    private int distance;
+    private int fetchCount;
+    private int fetchPriority;
     private long fetchTime;
     private long prevFetchTime;
     private int fetchInterval;
     private int retriesSinceFetch;
     private long modifiedTime;
     private long prevModifiedTime;
-    private ProtocolStatus protocolStatus;
+    private long contentModifiedTime;
+    private long prevContentModifiedTime;
+    private long contentPublishTime;
+    private long prevContentPublishTime;
+    private long refContentPublishTime;
+    private long prevRefContentPublishTime;
+    private org.apache.nutch.persist.gora.ProtocolStatus protocolStatus;
     private java.nio.ByteBuffer content;
     private java.lang.CharSequence contentType;
+    private java.lang.CharSequence pageCategory;
     private java.nio.ByteBuffer prevSignature;
     private java.nio.ByteBuffer signature;
-    private java.lang.CharSequence title;
-    private java.lang.CharSequence text;
-    private ParseStatus parseStatus;
+    private java.lang.CharSequence pageTitle;
+    private java.lang.CharSequence pageText;
+    private java.lang.CharSequence contentTitle;
+    private java.lang.CharSequence contentText;
+    private int contentTextLength;
+    private int referredArticles;
+    private java.lang.CharSequence referrer;
+    private int referredChars;
+    private org.apache.nutch.persist.gora.ParseStatus parseStatus;
+    private float contentScore;
     private float score;
     private java.lang.CharSequence reprUrl;
     private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> headers;
+    private java.lang.CharSequence oldOutlinks;
     private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> outlinks;
     private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> inlinks;
     private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> markers;
@@ -866,17 +1422,17 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 
     /** Creates a new Builder */
     private Builder() {
-      super(GoraWebPage.SCHEMA$);
+      super(org.apache.nutch.persist.gora.GoraWebPage.SCHEMA$);
     }
     
     /** Creates a Builder by copying an existing Builder */
-    private Builder(GoraWebPage.Builder other) {
+    private Builder(org.apache.nutch.persist.gora.GoraWebPage.Builder other) {
       super(other);
     }
     
     /** Creates a Builder by copying an existing GoraWebPage instance */
-    private Builder(GoraWebPage other) {
-            super(GoraWebPage.SCHEMA$);
+    private Builder(org.apache.nutch.persist.gora.GoraWebPage other) {
+            super(org.apache.nutch.persist.gora.GoraWebPage.SCHEMA$);
       if (isValidValue(fields()[0], other.baseUrl)) {
         this.baseUrl = (java.lang.CharSequence) data().deepCopy(fields()[0].schema(), other.baseUrl);
         fieldSetFlags()[0] = true;
@@ -885,93 +1441,165 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
         this.status = (java.lang.Integer) data().deepCopy(fields()[1].schema(), other.status);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.fetchTime)) {
-        this.fetchTime = (java.lang.Long) data().deepCopy(fields()[2].schema(), other.fetchTime);
+      if (isValidValue(fields()[2], other.distance)) {
+        this.distance = (java.lang.Integer) data().deepCopy(fields()[2].schema(), other.distance);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.prevFetchTime)) {
-        this.prevFetchTime = (java.lang.Long) data().deepCopy(fields()[3].schema(), other.prevFetchTime);
+      if (isValidValue(fields()[3], other.fetchCount)) {
+        this.fetchCount = (java.lang.Integer) data().deepCopy(fields()[3].schema(), other.fetchCount);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.fetchInterval)) {
-        this.fetchInterval = (java.lang.Integer) data().deepCopy(fields()[4].schema(), other.fetchInterval);
+      if (isValidValue(fields()[4], other.fetchPriority)) {
+        this.fetchPriority = (java.lang.Integer) data().deepCopy(fields()[4].schema(), other.fetchPriority);
         fieldSetFlags()[4] = true;
       }
-      if (isValidValue(fields()[5], other.retriesSinceFetch)) {
-        this.retriesSinceFetch = (java.lang.Integer) data().deepCopy(fields()[5].schema(), other.retriesSinceFetch);
+      if (isValidValue(fields()[5], other.fetchTime)) {
+        this.fetchTime = (java.lang.Long) data().deepCopy(fields()[5].schema(), other.fetchTime);
         fieldSetFlags()[5] = true;
       }
-      if (isValidValue(fields()[6], other.modifiedTime)) {
-        this.modifiedTime = (java.lang.Long) data().deepCopy(fields()[6].schema(), other.modifiedTime);
+      if (isValidValue(fields()[6], other.prevFetchTime)) {
+        this.prevFetchTime = (java.lang.Long) data().deepCopy(fields()[6].schema(), other.prevFetchTime);
         fieldSetFlags()[6] = true;
       }
-      if (isValidValue(fields()[7], other.prevModifiedTime)) {
-        this.prevModifiedTime = (java.lang.Long) data().deepCopy(fields()[7].schema(), other.prevModifiedTime);
+      if (isValidValue(fields()[7], other.fetchInterval)) {
+        this.fetchInterval = (java.lang.Integer) data().deepCopy(fields()[7].schema(), other.fetchInterval);
         fieldSetFlags()[7] = true;
       }
-      if (isValidValue(fields()[8], other.protocolStatus)) {
-        this.protocolStatus = (ProtocolStatus) data().deepCopy(fields()[8].schema(), other.protocolStatus);
+      if (isValidValue(fields()[8], other.retriesSinceFetch)) {
+        this.retriesSinceFetch = (java.lang.Integer) data().deepCopy(fields()[8].schema(), other.retriesSinceFetch);
         fieldSetFlags()[8] = true;
       }
-      if (isValidValue(fields()[9], other.content)) {
-        this.content = (java.nio.ByteBuffer) data().deepCopy(fields()[9].schema(), other.content);
+      if (isValidValue(fields()[9], other.modifiedTime)) {
+        this.modifiedTime = (java.lang.Long) data().deepCopy(fields()[9].schema(), other.modifiedTime);
         fieldSetFlags()[9] = true;
       }
-      if (isValidValue(fields()[10], other.contentType)) {
-        this.contentType = (java.lang.CharSequence) data().deepCopy(fields()[10].schema(), other.contentType);
+      if (isValidValue(fields()[10], other.prevModifiedTime)) {
+        this.prevModifiedTime = (java.lang.Long) data().deepCopy(fields()[10].schema(), other.prevModifiedTime);
         fieldSetFlags()[10] = true;
       }
-      if (isValidValue(fields()[11], other.prevSignature)) {
-        this.prevSignature = (java.nio.ByteBuffer) data().deepCopy(fields()[11].schema(), other.prevSignature);
+      if (isValidValue(fields()[11], other.contentModifiedTime)) {
+        this.contentModifiedTime = (java.lang.Long) data().deepCopy(fields()[11].schema(), other.contentModifiedTime);
         fieldSetFlags()[11] = true;
       }
-      if (isValidValue(fields()[12], other.signature)) {
-        this.signature = (java.nio.ByteBuffer) data().deepCopy(fields()[12].schema(), other.signature);
+      if (isValidValue(fields()[12], other.prevContentModifiedTime)) {
+        this.prevContentModifiedTime = (java.lang.Long) data().deepCopy(fields()[12].schema(), other.prevContentModifiedTime);
         fieldSetFlags()[12] = true;
       }
-      if (isValidValue(fields()[13], other.title)) {
-        this.title = (java.lang.CharSequence) data().deepCopy(fields()[13].schema(), other.title);
+      if (isValidValue(fields()[13], other.contentPublishTime)) {
+        this.contentPublishTime = (java.lang.Long) data().deepCopy(fields()[13].schema(), other.contentPublishTime);
         fieldSetFlags()[13] = true;
       }
-      if (isValidValue(fields()[14], other.text)) {
-        this.text = (java.lang.CharSequence) data().deepCopy(fields()[14].schema(), other.text);
+      if (isValidValue(fields()[14], other.prevContentPublishTime)) {
+        this.prevContentPublishTime = (java.lang.Long) data().deepCopy(fields()[14].schema(), other.prevContentPublishTime);
         fieldSetFlags()[14] = true;
       }
-      if (isValidValue(fields()[15], other.parseStatus)) {
-        this.parseStatus = (ParseStatus) data().deepCopy(fields()[15].schema(), other.parseStatus);
+      if (isValidValue(fields()[15], other.refContentPublishTime)) {
+        this.refContentPublishTime = (java.lang.Long) data().deepCopy(fields()[15].schema(), other.refContentPublishTime);
         fieldSetFlags()[15] = true;
       }
-      if (isValidValue(fields()[16], other.score)) {
-        this.score = (java.lang.Float) data().deepCopy(fields()[16].schema(), other.score);
+      if (isValidValue(fields()[16], other.prevRefContentPublishTime)) {
+        this.prevRefContentPublishTime = (java.lang.Long) data().deepCopy(fields()[16].schema(), other.prevRefContentPublishTime);
         fieldSetFlags()[16] = true;
       }
-      if (isValidValue(fields()[17], other.reprUrl)) {
-        this.reprUrl = (java.lang.CharSequence) data().deepCopy(fields()[17].schema(), other.reprUrl);
+      if (isValidValue(fields()[17], other.protocolStatus)) {
+        this.protocolStatus = (org.apache.nutch.persist.gora.ProtocolStatus) data().deepCopy(fields()[17].schema(), other.protocolStatus);
         fieldSetFlags()[17] = true;
       }
-      if (isValidValue(fields()[18], other.headers)) {
-        this.headers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[18].schema(), other.headers);
+      if (isValidValue(fields()[18], other.content)) {
+        this.content = (java.nio.ByteBuffer) data().deepCopy(fields()[18].schema(), other.content);
         fieldSetFlags()[18] = true;
       }
-      if (isValidValue(fields()[19], other.outlinks)) {
-        this.outlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[19].schema(), other.outlinks);
+      if (isValidValue(fields()[19], other.contentType)) {
+        this.contentType = (java.lang.CharSequence) data().deepCopy(fields()[19].schema(), other.contentType);
         fieldSetFlags()[19] = true;
       }
-      if (isValidValue(fields()[20], other.inlinks)) {
-        this.inlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[20].schema(), other.inlinks);
+      if (isValidValue(fields()[20], other.pageCategory)) {
+        this.pageCategory = (java.lang.CharSequence) data().deepCopy(fields()[20].schema(), other.pageCategory);
         fieldSetFlags()[20] = true;
       }
-      if (isValidValue(fields()[21], other.markers)) {
-        this.markers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[21].schema(), other.markers);
+      if (isValidValue(fields()[21], other.prevSignature)) {
+        this.prevSignature = (java.nio.ByteBuffer) data().deepCopy(fields()[21].schema(), other.prevSignature);
         fieldSetFlags()[21] = true;
       }
-      if (isValidValue(fields()[22], other.metadata)) {
-        this.metadata = (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>) data().deepCopy(fields()[22].schema(), other.metadata);
+      if (isValidValue(fields()[22], other.signature)) {
+        this.signature = (java.nio.ByteBuffer) data().deepCopy(fields()[22].schema(), other.signature);
         fieldSetFlags()[22] = true;
       }
-      if (isValidValue(fields()[23], other.batchId)) {
-        this.batchId = (java.lang.CharSequence) data().deepCopy(fields()[23].schema(), other.batchId);
+      if (isValidValue(fields()[23], other.pageTitle)) {
+        this.pageTitle = (java.lang.CharSequence) data().deepCopy(fields()[23].schema(), other.pageTitle);
         fieldSetFlags()[23] = true;
+      }
+      if (isValidValue(fields()[24], other.pageText)) {
+        this.pageText = (java.lang.CharSequence) data().deepCopy(fields()[24].schema(), other.pageText);
+        fieldSetFlags()[24] = true;
+      }
+      if (isValidValue(fields()[25], other.contentTitle)) {
+        this.contentTitle = (java.lang.CharSequence) data().deepCopy(fields()[25].schema(), other.contentTitle);
+        fieldSetFlags()[25] = true;
+      }
+      if (isValidValue(fields()[26], other.contentText)) {
+        this.contentText = (java.lang.CharSequence) data().deepCopy(fields()[26].schema(), other.contentText);
+        fieldSetFlags()[26] = true;
+      }
+      if (isValidValue(fields()[27], other.contentTextLength)) {
+        this.contentTextLength = (java.lang.Integer) data().deepCopy(fields()[27].schema(), other.contentTextLength);
+        fieldSetFlags()[27] = true;
+      }
+      if (isValidValue(fields()[28], other.referredArticles)) {
+        this.referredArticles = (java.lang.Integer) data().deepCopy(fields()[28].schema(), other.referredArticles);
+        fieldSetFlags()[28] = true;
+      }
+      if (isValidValue(fields()[29], other.referrer)) {
+        this.referrer = (java.lang.CharSequence) data().deepCopy(fields()[29].schema(), other.referrer);
+        fieldSetFlags()[29] = true;
+      }
+      if (isValidValue(fields()[30], other.referredChars)) {
+        this.referredChars = (java.lang.Integer) data().deepCopy(fields()[30].schema(), other.referredChars);
+        fieldSetFlags()[30] = true;
+      }
+      if (isValidValue(fields()[31], other.parseStatus)) {
+        this.parseStatus = (org.apache.nutch.persist.gora.ParseStatus) data().deepCopy(fields()[31].schema(), other.parseStatus);
+        fieldSetFlags()[31] = true;
+      }
+      if (isValidValue(fields()[32], other.contentScore)) {
+        this.contentScore = (java.lang.Float) data().deepCopy(fields()[32].schema(), other.contentScore);
+        fieldSetFlags()[32] = true;
+      }
+      if (isValidValue(fields()[33], other.score)) {
+        this.score = (java.lang.Float) data().deepCopy(fields()[33].schema(), other.score);
+        fieldSetFlags()[33] = true;
+      }
+      if (isValidValue(fields()[34], other.reprUrl)) {
+        this.reprUrl = (java.lang.CharSequence) data().deepCopy(fields()[34].schema(), other.reprUrl);
+        fieldSetFlags()[34] = true;
+      }
+      if (isValidValue(fields()[35], other.headers)) {
+        this.headers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[35].schema(), other.headers);
+        fieldSetFlags()[35] = true;
+      }
+      if (isValidValue(fields()[36], other.oldOutlinks)) {
+        this.oldOutlinks = (java.lang.CharSequence) data().deepCopy(fields()[36].schema(), other.oldOutlinks);
+        fieldSetFlags()[36] = true;
+      }
+      if (isValidValue(fields()[37], other.outlinks)) {
+        this.outlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[37].schema(), other.outlinks);
+        fieldSetFlags()[37] = true;
+      }
+      if (isValidValue(fields()[38], other.inlinks)) {
+        this.inlinks = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[38].schema(), other.inlinks);
+        fieldSetFlags()[38] = true;
+      }
+      if (isValidValue(fields()[39], other.markers)) {
+        this.markers = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[39].schema(), other.markers);
+        fieldSetFlags()[39] = true;
+      }
+      if (isValidValue(fields()[40], other.metadata)) {
+        this.metadata = (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>) data().deepCopy(fields()[40].schema(), other.metadata);
+        fieldSetFlags()[40] = true;
+      }
+      if (isValidValue(fields()[41], other.batchId)) {
+        this.batchId = (java.lang.CharSequence) data().deepCopy(fields()[41].schema(), other.batchId);
+        fieldSetFlags()[41] = true;
       }
     }
 
@@ -981,7 +1609,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'baseUrl' field */
-    public GoraWebPage.Builder setBaseUrl(java.lang.CharSequence value) {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setBaseUrl(java.lang.CharSequence value) {
       validate(fields()[0], value);
       this.baseUrl = value;
       fieldSetFlags()[0] = true;
@@ -994,7 +1622,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Clears the value of the 'baseUrl' field */
-    public GoraWebPage.Builder clearBaseUrl() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearBaseUrl() {
       baseUrl = null;
       fieldSetFlags()[0] = false;
       return this;
@@ -1006,7 +1634,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'status' field */
-    public GoraWebPage.Builder setStatus(int value) {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setStatus(int value) {
       validate(fields()[1], value);
       this.status = value;
       fieldSetFlags()[1] = true;
@@ -1019,8 +1647,80 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Clears the value of the 'status' field */
-    public GoraWebPage.Builder clearStatus() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearStatus() {
       fieldSetFlags()[1] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'distance' field */
+    public java.lang.Integer getDistance() {
+      return distance;
+    }
+    
+    /** Sets the value of the 'distance' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setDistance(int value) {
+      validate(fields()[2], value);
+      this.distance = value;
+      fieldSetFlags()[2] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'distance' field has been set */
+    public boolean hasDistance() {
+      return fieldSetFlags()[2];
+    }
+    
+    /** Clears the value of the 'distance' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearDistance() {
+      fieldSetFlags()[2] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'fetchCount' field */
+    public java.lang.Integer getFetchCount() {
+      return fetchCount;
+    }
+    
+    /** Sets the value of the 'fetchCount' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setFetchCount(int value) {
+      validate(fields()[3], value);
+      this.fetchCount = value;
+      fieldSetFlags()[3] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'fetchCount' field has been set */
+    public boolean hasFetchCount() {
+      return fieldSetFlags()[3];
+    }
+    
+    /** Clears the value of the 'fetchCount' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearFetchCount() {
+      fieldSetFlags()[3] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'fetchPriority' field */
+    public java.lang.Integer getFetchPriority() {
+      return fetchPriority;
+    }
+    
+    /** Sets the value of the 'fetchPriority' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setFetchPriority(int value) {
+      validate(fields()[4], value);
+      this.fetchPriority = value;
+      fieldSetFlags()[4] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'fetchPriority' field has been set */
+    public boolean hasFetchPriority() {
+      return fieldSetFlags()[4];
+    }
+    
+    /** Clears the value of the 'fetchPriority' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearFetchPriority() {
+      fieldSetFlags()[4] = false;
       return this;
     }
     
@@ -1030,21 +1730,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'fetchTime' field */
-    public GoraWebPage.Builder setFetchTime(long value) {
-      validate(fields()[2], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setFetchTime(long value) {
+      validate(fields()[5], value);
       this.fetchTime = value;
-      fieldSetFlags()[2] = true;
+      fieldSetFlags()[5] = true;
       return this; 
     }
     
     /** Checks whether the 'fetchTime' field has been set */
     public boolean hasFetchTime() {
-      return fieldSetFlags()[2];
+      return fieldSetFlags()[5];
     }
     
     /** Clears the value of the 'fetchTime' field */
-    public GoraWebPage.Builder clearFetchTime() {
-      fieldSetFlags()[2] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearFetchTime() {
+      fieldSetFlags()[5] = false;
       return this;
     }
     
@@ -1054,21 +1754,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'prevFetchTime' field */
-    public GoraWebPage.Builder setPrevFetchTime(long value) {
-      validate(fields()[3], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevFetchTime(long value) {
+      validate(fields()[6], value);
       this.prevFetchTime = value;
-      fieldSetFlags()[3] = true;
+      fieldSetFlags()[6] = true;
       return this; 
     }
     
     /** Checks whether the 'prevFetchTime' field has been set */
     public boolean hasPrevFetchTime() {
-      return fieldSetFlags()[3];
+      return fieldSetFlags()[6];
     }
     
     /** Clears the value of the 'prevFetchTime' field */
-    public GoraWebPage.Builder clearPrevFetchTime() {
-      fieldSetFlags()[3] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevFetchTime() {
+      fieldSetFlags()[6] = false;
       return this;
     }
     
@@ -1078,21 +1778,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'fetchInterval' field */
-    public GoraWebPage.Builder setFetchInterval(int value) {
-      validate(fields()[4], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setFetchInterval(int value) {
+      validate(fields()[7], value);
       this.fetchInterval = value;
-      fieldSetFlags()[4] = true;
+      fieldSetFlags()[7] = true;
       return this; 
     }
     
     /** Checks whether the 'fetchInterval' field has been set */
     public boolean hasFetchInterval() {
-      return fieldSetFlags()[4];
+      return fieldSetFlags()[7];
     }
     
     /** Clears the value of the 'fetchInterval' field */
-    public GoraWebPage.Builder clearFetchInterval() {
-      fieldSetFlags()[4] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearFetchInterval() {
+      fieldSetFlags()[7] = false;
       return this;
     }
     
@@ -1102,21 +1802,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'retriesSinceFetch' field */
-    public GoraWebPage.Builder setRetriesSinceFetch(int value) {
-      validate(fields()[5], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setRetriesSinceFetch(int value) {
+      validate(fields()[8], value);
       this.retriesSinceFetch = value;
-      fieldSetFlags()[5] = true;
+      fieldSetFlags()[8] = true;
       return this; 
     }
     
     /** Checks whether the 'retriesSinceFetch' field has been set */
     public boolean hasRetriesSinceFetch() {
-      return fieldSetFlags()[5];
+      return fieldSetFlags()[8];
     }
     
     /** Clears the value of the 'retriesSinceFetch' field */
-    public GoraWebPage.Builder clearRetriesSinceFetch() {
-      fieldSetFlags()[5] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearRetriesSinceFetch() {
+      fieldSetFlags()[8] = false;
       return this;
     }
     
@@ -1126,21 +1826,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'modifiedTime' field */
-    public GoraWebPage.Builder setModifiedTime(long value) {
-      validate(fields()[6], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setModifiedTime(long value) {
+      validate(fields()[9], value);
       this.modifiedTime = value;
-      fieldSetFlags()[6] = true;
+      fieldSetFlags()[9] = true;
       return this; 
     }
     
     /** Checks whether the 'modifiedTime' field has been set */
     public boolean hasModifiedTime() {
-      return fieldSetFlags()[6];
+      return fieldSetFlags()[9];
     }
     
     /** Clears the value of the 'modifiedTime' field */
-    public GoraWebPage.Builder clearModifiedTime() {
-      fieldSetFlags()[6] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearModifiedTime() {
+      fieldSetFlags()[9] = false;
       return this;
     }
     
@@ -1150,46 +1850,190 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'prevModifiedTime' field */
-    public GoraWebPage.Builder setPrevModifiedTime(long value) {
-      validate(fields()[7], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevModifiedTime(long value) {
+      validate(fields()[10], value);
       this.prevModifiedTime = value;
-      fieldSetFlags()[7] = true;
+      fieldSetFlags()[10] = true;
       return this; 
     }
     
     /** Checks whether the 'prevModifiedTime' field has been set */
     public boolean hasPrevModifiedTime() {
-      return fieldSetFlags()[7];
+      return fieldSetFlags()[10];
     }
     
     /** Clears the value of the 'prevModifiedTime' field */
-    public GoraWebPage.Builder clearPrevModifiedTime() {
-      fieldSetFlags()[7] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevModifiedTime() {
+      fieldSetFlags()[10] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentModifiedTime' field */
+    public java.lang.Long getContentModifiedTime() {
+      return contentModifiedTime;
+    }
+    
+    /** Sets the value of the 'contentModifiedTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentModifiedTime(long value) {
+      validate(fields()[11], value);
+      this.contentModifiedTime = value;
+      fieldSetFlags()[11] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentModifiedTime' field has been set */
+    public boolean hasContentModifiedTime() {
+      return fieldSetFlags()[11];
+    }
+    
+    /** Clears the value of the 'contentModifiedTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentModifiedTime() {
+      fieldSetFlags()[11] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'prevContentModifiedTime' field */
+    public java.lang.Long getPrevContentModifiedTime() {
+      return prevContentModifiedTime;
+    }
+    
+    /** Sets the value of the 'prevContentModifiedTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevContentModifiedTime(long value) {
+      validate(fields()[12], value);
+      this.prevContentModifiedTime = value;
+      fieldSetFlags()[12] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'prevContentModifiedTime' field has been set */
+    public boolean hasPrevContentModifiedTime() {
+      return fieldSetFlags()[12];
+    }
+    
+    /** Clears the value of the 'prevContentModifiedTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevContentModifiedTime() {
+      fieldSetFlags()[12] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentPublishTime' field */
+    public java.lang.Long getContentPublishTime() {
+      return contentPublishTime;
+    }
+    
+    /** Sets the value of the 'contentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentPublishTime(long value) {
+      validate(fields()[13], value);
+      this.contentPublishTime = value;
+      fieldSetFlags()[13] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentPublishTime' field has been set */
+    public boolean hasContentPublishTime() {
+      return fieldSetFlags()[13];
+    }
+    
+    /** Clears the value of the 'contentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentPublishTime() {
+      fieldSetFlags()[13] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'prevContentPublishTime' field */
+    public java.lang.Long getPrevContentPublishTime() {
+      return prevContentPublishTime;
+    }
+    
+    /** Sets the value of the 'prevContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevContentPublishTime(long value) {
+      validate(fields()[14], value);
+      this.prevContentPublishTime = value;
+      fieldSetFlags()[14] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'prevContentPublishTime' field has been set */
+    public boolean hasPrevContentPublishTime() {
+      return fieldSetFlags()[14];
+    }
+    
+    /** Clears the value of the 'prevContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevContentPublishTime() {
+      fieldSetFlags()[14] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'refContentPublishTime' field */
+    public java.lang.Long getRefContentPublishTime() {
+      return refContentPublishTime;
+    }
+    
+    /** Sets the value of the 'refContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setRefContentPublishTime(long value) {
+      validate(fields()[15], value);
+      this.refContentPublishTime = value;
+      fieldSetFlags()[15] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'refContentPublishTime' field has been set */
+    public boolean hasRefContentPublishTime() {
+      return fieldSetFlags()[15];
+    }
+    
+    /** Clears the value of the 'refContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearRefContentPublishTime() {
+      fieldSetFlags()[15] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'prevRefContentPublishTime' field */
+    public java.lang.Long getPrevRefContentPublishTime() {
+      return prevRefContentPublishTime;
+    }
+    
+    /** Sets the value of the 'prevRefContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevRefContentPublishTime(long value) {
+      validate(fields()[16], value);
+      this.prevRefContentPublishTime = value;
+      fieldSetFlags()[16] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'prevRefContentPublishTime' field has been set */
+    public boolean hasPrevRefContentPublishTime() {
+      return fieldSetFlags()[16];
+    }
+    
+    /** Clears the value of the 'prevRefContentPublishTime' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevRefContentPublishTime() {
+      fieldSetFlags()[16] = false;
       return this;
     }
     
     /** Gets the value of the 'protocolStatus' field */
-    public ProtocolStatus getProtocolStatus() {
+    public org.apache.nutch.persist.gora.ProtocolStatus getProtocolStatus() {
       return protocolStatus;
     }
     
     /** Sets the value of the 'protocolStatus' field */
-    public GoraWebPage.Builder setProtocolStatus(ProtocolStatus value) {
-      validate(fields()[8], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setProtocolStatus(org.apache.nutch.persist.gora.ProtocolStatus value) {
+      validate(fields()[17], value);
       this.protocolStatus = value;
-      fieldSetFlags()[8] = true;
+      fieldSetFlags()[17] = true;
       return this; 
     }
     
     /** Checks whether the 'protocolStatus' field has been set */
     public boolean hasProtocolStatus() {
-      return fieldSetFlags()[8];
+      return fieldSetFlags()[17];
     }
     
     /** Clears the value of the 'protocolStatus' field */
-    public GoraWebPage.Builder clearProtocolStatus() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearProtocolStatus() {
       protocolStatus = null;
-      fieldSetFlags()[8] = false;
+      fieldSetFlags()[17] = false;
       return this;
     }
     
@@ -1199,22 +2043,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'content' field */
-    public GoraWebPage.Builder setContent(java.nio.ByteBuffer value) {
-      validate(fields()[9], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContent(java.nio.ByteBuffer value) {
+      validate(fields()[18], value);
       this.content = value;
-      fieldSetFlags()[9] = true;
+      fieldSetFlags()[18] = true;
       return this; 
     }
     
     /** Checks whether the 'content' field has been set */
     public boolean hasContent() {
-      return fieldSetFlags()[9];
+      return fieldSetFlags()[18];
     }
     
     /** Clears the value of the 'content' field */
-    public GoraWebPage.Builder clearContent() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContent() {
       content = null;
-      fieldSetFlags()[9] = false;
+      fieldSetFlags()[18] = false;
       return this;
     }
     
@@ -1224,22 +2068,47 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'contentType' field */
-    public GoraWebPage.Builder setContentType(java.lang.CharSequence value) {
-      validate(fields()[10], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentType(java.lang.CharSequence value) {
+      validate(fields()[19], value);
       this.contentType = value;
-      fieldSetFlags()[10] = true;
+      fieldSetFlags()[19] = true;
       return this; 
     }
     
     /** Checks whether the 'contentType' field has been set */
     public boolean hasContentType() {
-      return fieldSetFlags()[10];
+      return fieldSetFlags()[19];
     }
     
     /** Clears the value of the 'contentType' field */
-    public GoraWebPage.Builder clearContentType() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentType() {
       contentType = null;
-      fieldSetFlags()[10] = false;
+      fieldSetFlags()[19] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'pageCategory' field */
+    public java.lang.CharSequence getPageCategory() {
+      return pageCategory;
+    }
+    
+    /** Sets the value of the 'pageCategory' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPageCategory(java.lang.CharSequence value) {
+      validate(fields()[20], value);
+      this.pageCategory = value;
+      fieldSetFlags()[20] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'pageCategory' field has been set */
+    public boolean hasPageCategory() {
+      return fieldSetFlags()[20];
+    }
+    
+    /** Clears the value of the 'pageCategory' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPageCategory() {
+      pageCategory = null;
+      fieldSetFlags()[20] = false;
       return this;
     }
     
@@ -1249,22 +2118,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'prevSignature' field */
-    public GoraWebPage.Builder setPrevSignature(java.nio.ByteBuffer value) {
-      validate(fields()[11], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPrevSignature(java.nio.ByteBuffer value) {
+      validate(fields()[21], value);
       this.prevSignature = value;
-      fieldSetFlags()[11] = true;
+      fieldSetFlags()[21] = true;
       return this; 
     }
     
     /** Checks whether the 'prevSignature' field has been set */
     public boolean hasPrevSignature() {
-      return fieldSetFlags()[11];
+      return fieldSetFlags()[21];
     }
     
     /** Clears the value of the 'prevSignature' field */
-    public GoraWebPage.Builder clearPrevSignature() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPrevSignature() {
       prevSignature = null;
-      fieldSetFlags()[11] = false;
+      fieldSetFlags()[21] = false;
       return this;
     }
     
@@ -1274,97 +2143,268 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'signature' field */
-    public GoraWebPage.Builder setSignature(java.nio.ByteBuffer value) {
-      validate(fields()[12], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setSignature(java.nio.ByteBuffer value) {
+      validate(fields()[22], value);
       this.signature = value;
-      fieldSetFlags()[12] = true;
+      fieldSetFlags()[22] = true;
       return this; 
     }
     
     /** Checks whether the 'signature' field has been set */
     public boolean hasSignature() {
-      return fieldSetFlags()[12];
+      return fieldSetFlags()[22];
     }
     
     /** Clears the value of the 'signature' field */
-    public GoraWebPage.Builder clearSignature() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearSignature() {
       signature = null;
-      fieldSetFlags()[12] = false;
+      fieldSetFlags()[22] = false;
       return this;
     }
     
-    /** Gets the value of the 'title' field */
-    public java.lang.CharSequence getTitle() {
-      return title;
+    /** Gets the value of the 'pageTitle' field */
+    public java.lang.CharSequence getPageTitle() {
+      return pageTitle;
     }
     
-    /** Sets the value of the 'title' field */
-    public GoraWebPage.Builder setTitle(java.lang.CharSequence value) {
-      validate(fields()[13], value);
-      this.title = value;
-      fieldSetFlags()[13] = true;
+    /** Sets the value of the 'pageTitle' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPageTitle(java.lang.CharSequence value) {
+      validate(fields()[23], value);
+      this.pageTitle = value;
+      fieldSetFlags()[23] = true;
       return this; 
     }
     
-    /** Checks whether the 'title' field has been set */
-    public boolean hasTitle() {
-      return fieldSetFlags()[13];
+    /** Checks whether the 'pageTitle' field has been set */
+    public boolean hasPageTitle() {
+      return fieldSetFlags()[23];
     }
     
-    /** Clears the value of the 'title' field */
-    public GoraWebPage.Builder clearTitle() {
-      title = null;
-      fieldSetFlags()[13] = false;
+    /** Clears the value of the 'pageTitle' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPageTitle() {
+      pageTitle = null;
+      fieldSetFlags()[23] = false;
       return this;
     }
     
-    /** Gets the value of the 'text' field */
-    public java.lang.CharSequence getText() {
-      return text;
+    /** Gets the value of the 'pageText' field */
+    public java.lang.CharSequence getPageText() {
+      return pageText;
     }
     
-    /** Sets the value of the 'text' field */
-    public GoraWebPage.Builder setText(java.lang.CharSequence value) {
-      validate(fields()[14], value);
-      this.text = value;
-      fieldSetFlags()[14] = true;
+    /** Sets the value of the 'pageText' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setPageText(java.lang.CharSequence value) {
+      validate(fields()[24], value);
+      this.pageText = value;
+      fieldSetFlags()[24] = true;
       return this; 
     }
     
-    /** Checks whether the 'text' field has been set */
-    public boolean hasText() {
-      return fieldSetFlags()[14];
+    /** Checks whether the 'pageText' field has been set */
+    public boolean hasPageText() {
+      return fieldSetFlags()[24];
     }
     
-    /** Clears the value of the 'text' field */
-    public GoraWebPage.Builder clearText() {
-      text = null;
-      fieldSetFlags()[14] = false;
+    /** Clears the value of the 'pageText' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearPageText() {
+      pageText = null;
+      fieldSetFlags()[24] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentTitle' field */
+    public java.lang.CharSequence getContentTitle() {
+      return contentTitle;
+    }
+    
+    /** Sets the value of the 'contentTitle' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentTitle(java.lang.CharSequence value) {
+      validate(fields()[25], value);
+      this.contentTitle = value;
+      fieldSetFlags()[25] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentTitle' field has been set */
+    public boolean hasContentTitle() {
+      return fieldSetFlags()[25];
+    }
+    
+    /** Clears the value of the 'contentTitle' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentTitle() {
+      contentTitle = null;
+      fieldSetFlags()[25] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentText' field */
+    public java.lang.CharSequence getContentText() {
+      return contentText;
+    }
+    
+    /** Sets the value of the 'contentText' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentText(java.lang.CharSequence value) {
+      validate(fields()[26], value);
+      this.contentText = value;
+      fieldSetFlags()[26] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentText' field has been set */
+    public boolean hasContentText() {
+      return fieldSetFlags()[26];
+    }
+    
+    /** Clears the value of the 'contentText' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentText() {
+      contentText = null;
+      fieldSetFlags()[26] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentTextLength' field */
+    public java.lang.Integer getContentTextLength() {
+      return contentTextLength;
+    }
+    
+    /** Sets the value of the 'contentTextLength' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentTextLength(int value) {
+      validate(fields()[27], value);
+      this.contentTextLength = value;
+      fieldSetFlags()[27] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentTextLength' field has been set */
+    public boolean hasContentTextLength() {
+      return fieldSetFlags()[27];
+    }
+    
+    /** Clears the value of the 'contentTextLength' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentTextLength() {
+      fieldSetFlags()[27] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'referredArticles' field */
+    public java.lang.Integer getReferredArticles() {
+      return referredArticles;
+    }
+    
+    /** Sets the value of the 'referredArticles' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setReferredArticles(int value) {
+      validate(fields()[28], value);
+      this.referredArticles = value;
+      fieldSetFlags()[28] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'referredArticles' field has been set */
+    public boolean hasReferredArticles() {
+      return fieldSetFlags()[28];
+    }
+    
+    /** Clears the value of the 'referredArticles' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearReferredArticles() {
+      fieldSetFlags()[28] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'referrer' field */
+    public java.lang.CharSequence getReferrer() {
+      return referrer;
+    }
+    
+    /** Sets the value of the 'referrer' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setReferrer(java.lang.CharSequence value) {
+      validate(fields()[29], value);
+      this.referrer = value;
+      fieldSetFlags()[29] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'referrer' field has been set */
+    public boolean hasReferrer() {
+      return fieldSetFlags()[29];
+    }
+    
+    /** Clears the value of the 'referrer' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearReferrer() {
+      referrer = null;
+      fieldSetFlags()[29] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'referredChars' field */
+    public java.lang.Integer getReferredChars() {
+      return referredChars;
+    }
+    
+    /** Sets the value of the 'referredChars' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setReferredChars(int value) {
+      validate(fields()[30], value);
+      this.referredChars = value;
+      fieldSetFlags()[30] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'referredChars' field has been set */
+    public boolean hasReferredChars() {
+      return fieldSetFlags()[30];
+    }
+    
+    /** Clears the value of the 'referredChars' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearReferredChars() {
+      fieldSetFlags()[30] = false;
       return this;
     }
     
     /** Gets the value of the 'parseStatus' field */
-    public ParseStatus getParseStatus() {
+    public org.apache.nutch.persist.gora.ParseStatus getParseStatus() {
       return parseStatus;
     }
     
     /** Sets the value of the 'parseStatus' field */
-    public GoraWebPage.Builder setParseStatus(ParseStatus value) {
-      validate(fields()[15], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setParseStatus(org.apache.nutch.persist.gora.ParseStatus value) {
+      validate(fields()[31], value);
       this.parseStatus = value;
-      fieldSetFlags()[15] = true;
+      fieldSetFlags()[31] = true;
       return this; 
     }
     
     /** Checks whether the 'parseStatus' field has been set */
     public boolean hasParseStatus() {
-      return fieldSetFlags()[15];
+      return fieldSetFlags()[31];
     }
     
     /** Clears the value of the 'parseStatus' field */
-    public GoraWebPage.Builder clearParseStatus() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearParseStatus() {
       parseStatus = null;
-      fieldSetFlags()[15] = false;
+      fieldSetFlags()[31] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'contentScore' field */
+    public java.lang.Float getContentScore() {
+      return contentScore;
+    }
+    
+    /** Sets the value of the 'contentScore' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setContentScore(float value) {
+      validate(fields()[32], value);
+      this.contentScore = value;
+      fieldSetFlags()[32] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'contentScore' field has been set */
+    public boolean hasContentScore() {
+      return fieldSetFlags()[32];
+    }
+    
+    /** Clears the value of the 'contentScore' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearContentScore() {
+      fieldSetFlags()[32] = false;
       return this;
     }
     
@@ -1374,21 +2414,21 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'score' field */
-    public GoraWebPage.Builder setScore(float value) {
-      validate(fields()[16], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setScore(float value) {
+      validate(fields()[33], value);
       this.score = value;
-      fieldSetFlags()[16] = true;
+      fieldSetFlags()[33] = true;
       return this; 
     }
     
     /** Checks whether the 'score' field has been set */
     public boolean hasScore() {
-      return fieldSetFlags()[16];
+      return fieldSetFlags()[33];
     }
     
     /** Clears the value of the 'score' field */
-    public GoraWebPage.Builder clearScore() {
-      fieldSetFlags()[16] = false;
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearScore() {
+      fieldSetFlags()[33] = false;
       return this;
     }
     
@@ -1398,22 +2438,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'reprUrl' field */
-    public GoraWebPage.Builder setReprUrl(java.lang.CharSequence value) {
-      validate(fields()[17], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setReprUrl(java.lang.CharSequence value) {
+      validate(fields()[34], value);
       this.reprUrl = value;
-      fieldSetFlags()[17] = true;
+      fieldSetFlags()[34] = true;
       return this; 
     }
     
     /** Checks whether the 'reprUrl' field has been set */
     public boolean hasReprUrl() {
-      return fieldSetFlags()[17];
+      return fieldSetFlags()[34];
     }
     
     /** Clears the value of the 'reprUrl' field */
-    public GoraWebPage.Builder clearReprUrl() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearReprUrl() {
       reprUrl = null;
-      fieldSetFlags()[17] = false;
+      fieldSetFlags()[34] = false;
       return this;
     }
     
@@ -1423,22 +2463,47 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'headers' field */
-    public GoraWebPage.Builder setHeaders(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
-      validate(fields()[18], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setHeaders(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+      validate(fields()[35], value);
       this.headers = value;
-      fieldSetFlags()[18] = true;
+      fieldSetFlags()[35] = true;
       return this; 
     }
     
     /** Checks whether the 'headers' field has been set */
     public boolean hasHeaders() {
-      return fieldSetFlags()[18];
+      return fieldSetFlags()[35];
     }
     
     /** Clears the value of the 'headers' field */
-    public GoraWebPage.Builder clearHeaders() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearHeaders() {
       headers = null;
-      fieldSetFlags()[18] = false;
+      fieldSetFlags()[35] = false;
+      return this;
+    }
+    
+    /** Gets the value of the 'oldOutlinks' field */
+    public java.lang.CharSequence getOldOutlinks() {
+      return oldOutlinks;
+    }
+    
+    /** Sets the value of the 'oldOutlinks' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setOldOutlinks(java.lang.CharSequence value) {
+      validate(fields()[36], value);
+      this.oldOutlinks = value;
+      fieldSetFlags()[36] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'oldOutlinks' field has been set */
+    public boolean hasOldOutlinks() {
+      return fieldSetFlags()[36];
+    }
+    
+    /** Clears the value of the 'oldOutlinks' field */
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearOldOutlinks() {
+      oldOutlinks = null;
+      fieldSetFlags()[36] = false;
       return this;
     }
     
@@ -1448,22 +2513,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'outlinks' field */
-    public GoraWebPage.Builder setOutlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
-      validate(fields()[19], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setOutlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+      validate(fields()[37], value);
       this.outlinks = value;
-      fieldSetFlags()[19] = true;
+      fieldSetFlags()[37] = true;
       return this; 
     }
     
     /** Checks whether the 'outlinks' field has been set */
     public boolean hasOutlinks() {
-      return fieldSetFlags()[19];
+      return fieldSetFlags()[37];
     }
     
     /** Clears the value of the 'outlinks' field */
-    public GoraWebPage.Builder clearOutlinks() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearOutlinks() {
       outlinks = null;
-      fieldSetFlags()[19] = false;
+      fieldSetFlags()[37] = false;
       return this;
     }
     
@@ -1473,22 +2538,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'inlinks' field */
-    public GoraWebPage.Builder setInlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
-      validate(fields()[20], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setInlinks(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+      validate(fields()[38], value);
       this.inlinks = value;
-      fieldSetFlags()[20] = true;
+      fieldSetFlags()[38] = true;
       return this; 
     }
     
     /** Checks whether the 'inlinks' field has been set */
     public boolean hasInlinks() {
-      return fieldSetFlags()[20];
+      return fieldSetFlags()[38];
     }
     
     /** Clears the value of the 'inlinks' field */
-    public GoraWebPage.Builder clearInlinks() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearInlinks() {
       inlinks = null;
-      fieldSetFlags()[20] = false;
+      fieldSetFlags()[38] = false;
       return this;
     }
     
@@ -1498,22 +2563,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'markers' field */
-    public GoraWebPage.Builder setMarkers(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
-      validate(fields()[21], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setMarkers(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+      validate(fields()[39], value);
       this.markers = value;
-      fieldSetFlags()[21] = true;
+      fieldSetFlags()[39] = true;
       return this; 
     }
     
     /** Checks whether the 'markers' field has been set */
     public boolean hasMarkers() {
-      return fieldSetFlags()[21];
+      return fieldSetFlags()[39];
     }
     
     /** Clears the value of the 'markers' field */
-    public GoraWebPage.Builder clearMarkers() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearMarkers() {
       markers = null;
-      fieldSetFlags()[21] = false;
+      fieldSetFlags()[39] = false;
       return this;
     }
     
@@ -1523,22 +2588,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'metadata' field */
-    public GoraWebPage.Builder setMetadata(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
-      validate(fields()[22], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setMetadata(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
+      validate(fields()[40], value);
       this.metadata = value;
-      fieldSetFlags()[22] = true;
+      fieldSetFlags()[40] = true;
       return this; 
     }
     
     /** Checks whether the 'metadata' field has been set */
     public boolean hasMetadata() {
-      return fieldSetFlags()[22];
+      return fieldSetFlags()[40];
     }
     
     /** Clears the value of the 'metadata' field */
-    public GoraWebPage.Builder clearMetadata() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearMetadata() {
       metadata = null;
-      fieldSetFlags()[22] = false;
+      fieldSetFlags()[40] = false;
       return this;
     }
     
@@ -1548,22 +2613,22 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
     }
     
     /** Sets the value of the 'batchId' field */
-    public GoraWebPage.Builder setBatchId(java.lang.CharSequence value) {
-      validate(fields()[23], value);
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder setBatchId(java.lang.CharSequence value) {
+      validate(fields()[41], value);
       this.batchId = value;
-      fieldSetFlags()[23] = true;
+      fieldSetFlags()[41] = true;
       return this; 
     }
     
     /** Checks whether the 'batchId' field has been set */
     public boolean hasBatchId() {
-      return fieldSetFlags()[23];
+      return fieldSetFlags()[41];
     }
     
     /** Clears the value of the 'batchId' field */
-    public GoraWebPage.Builder clearBatchId() {
+    public org.apache.nutch.persist.gora.GoraWebPage.Builder clearBatchId() {
       batchId = null;
-      fieldSetFlags()[23] = false;
+      fieldSetFlags()[41] = false;
       return this;
     }
     
@@ -1573,28 +2638,46 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
         GoraWebPage record = new GoraWebPage();
         record.baseUrl = fieldSetFlags()[0] ? this.baseUrl : (java.lang.CharSequence) defaultValue(fields()[0]);
         record.status = fieldSetFlags()[1] ? this.status : (java.lang.Integer) defaultValue(fields()[1]);
-        record.fetchTime = fieldSetFlags()[2] ? this.fetchTime : (java.lang.Long) defaultValue(fields()[2]);
-        record.prevFetchTime = fieldSetFlags()[3] ? this.prevFetchTime : (java.lang.Long) defaultValue(fields()[3]);
-        record.fetchInterval = fieldSetFlags()[4] ? this.fetchInterval : (java.lang.Integer) defaultValue(fields()[4]);
-        record.retriesSinceFetch = fieldSetFlags()[5] ? this.retriesSinceFetch : (java.lang.Integer) defaultValue(fields()[5]);
-        record.modifiedTime = fieldSetFlags()[6] ? this.modifiedTime : (java.lang.Long) defaultValue(fields()[6]);
-        record.prevModifiedTime = fieldSetFlags()[7] ? this.prevModifiedTime : (java.lang.Long) defaultValue(fields()[7]);
-        record.protocolStatus = fieldSetFlags()[8] ? this.protocolStatus : (ProtocolStatus) defaultValue(fields()[8]);
-        record.content = fieldSetFlags()[9] ? this.content : (java.nio.ByteBuffer) defaultValue(fields()[9]);
-        record.contentType = fieldSetFlags()[10] ? this.contentType : (java.lang.CharSequence) defaultValue(fields()[10]);
-        record.prevSignature = fieldSetFlags()[11] ? this.prevSignature : (java.nio.ByteBuffer) defaultValue(fields()[11]);
-        record.signature = fieldSetFlags()[12] ? this.signature : (java.nio.ByteBuffer) defaultValue(fields()[12]);
-        record.title = fieldSetFlags()[13] ? this.title : (java.lang.CharSequence) defaultValue(fields()[13]);
-        record.text = fieldSetFlags()[14] ? this.text : (java.lang.CharSequence) defaultValue(fields()[14]);
-        record.parseStatus = fieldSetFlags()[15] ? this.parseStatus : (ParseStatus) defaultValue(fields()[15]);
-        record.score = fieldSetFlags()[16] ? this.score : (java.lang.Float) defaultValue(fields()[16]);
-        record.reprUrl = fieldSetFlags()[17] ? this.reprUrl : (java.lang.CharSequence) defaultValue(fields()[17]);
-        record.headers = fieldSetFlags()[18] ? this.headers : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[18]));
-        record.outlinks = fieldSetFlags()[19] ? this.outlinks : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[19]));
-        record.inlinks = fieldSetFlags()[20] ? this.inlinks : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[20]));
-        record.markers = fieldSetFlags()[21] ? this.markers : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[21]));
-        record.metadata = fieldSetFlags()[22] ? this.metadata : (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[22]));
-        record.batchId = fieldSetFlags()[23] ? this.batchId : (java.lang.CharSequence) defaultValue(fields()[23]);
+        record.distance = fieldSetFlags()[2] ? this.distance : (java.lang.Integer) defaultValue(fields()[2]);
+        record.fetchCount = fieldSetFlags()[3] ? this.fetchCount : (java.lang.Integer) defaultValue(fields()[3]);
+        record.fetchPriority = fieldSetFlags()[4] ? this.fetchPriority : (java.lang.Integer) defaultValue(fields()[4]);
+        record.fetchTime = fieldSetFlags()[5] ? this.fetchTime : (java.lang.Long) defaultValue(fields()[5]);
+        record.prevFetchTime = fieldSetFlags()[6] ? this.prevFetchTime : (java.lang.Long) defaultValue(fields()[6]);
+        record.fetchInterval = fieldSetFlags()[7] ? this.fetchInterval : (java.lang.Integer) defaultValue(fields()[7]);
+        record.retriesSinceFetch = fieldSetFlags()[8] ? this.retriesSinceFetch : (java.lang.Integer) defaultValue(fields()[8]);
+        record.modifiedTime = fieldSetFlags()[9] ? this.modifiedTime : (java.lang.Long) defaultValue(fields()[9]);
+        record.prevModifiedTime = fieldSetFlags()[10] ? this.prevModifiedTime : (java.lang.Long) defaultValue(fields()[10]);
+        record.contentModifiedTime = fieldSetFlags()[11] ? this.contentModifiedTime : (java.lang.Long) defaultValue(fields()[11]);
+        record.prevContentModifiedTime = fieldSetFlags()[12] ? this.prevContentModifiedTime : (java.lang.Long) defaultValue(fields()[12]);
+        record.contentPublishTime = fieldSetFlags()[13] ? this.contentPublishTime : (java.lang.Long) defaultValue(fields()[13]);
+        record.prevContentPublishTime = fieldSetFlags()[14] ? this.prevContentPublishTime : (java.lang.Long) defaultValue(fields()[14]);
+        record.refContentPublishTime = fieldSetFlags()[15] ? this.refContentPublishTime : (java.lang.Long) defaultValue(fields()[15]);
+        record.prevRefContentPublishTime = fieldSetFlags()[16] ? this.prevRefContentPublishTime : (java.lang.Long) defaultValue(fields()[16]);
+        record.protocolStatus = fieldSetFlags()[17] ? this.protocolStatus : (org.apache.nutch.persist.gora.ProtocolStatus) defaultValue(fields()[17]);
+        record.content = fieldSetFlags()[18] ? this.content : (java.nio.ByteBuffer) defaultValue(fields()[18]);
+        record.contentType = fieldSetFlags()[19] ? this.contentType : (java.lang.CharSequence) defaultValue(fields()[19]);
+        record.pageCategory = fieldSetFlags()[20] ? this.pageCategory : (java.lang.CharSequence) defaultValue(fields()[20]);
+        record.prevSignature = fieldSetFlags()[21] ? this.prevSignature : (java.nio.ByteBuffer) defaultValue(fields()[21]);
+        record.signature = fieldSetFlags()[22] ? this.signature : (java.nio.ByteBuffer) defaultValue(fields()[22]);
+        record.pageTitle = fieldSetFlags()[23] ? this.pageTitle : (java.lang.CharSequence) defaultValue(fields()[23]);
+        record.pageText = fieldSetFlags()[24] ? this.pageText : (java.lang.CharSequence) defaultValue(fields()[24]);
+        record.contentTitle = fieldSetFlags()[25] ? this.contentTitle : (java.lang.CharSequence) defaultValue(fields()[25]);
+        record.contentText = fieldSetFlags()[26] ? this.contentText : (java.lang.CharSequence) defaultValue(fields()[26]);
+        record.contentTextLength = fieldSetFlags()[27] ? this.contentTextLength : (java.lang.Integer) defaultValue(fields()[27]);
+        record.referredArticles = fieldSetFlags()[28] ? this.referredArticles : (java.lang.Integer) defaultValue(fields()[28]);
+        record.referrer = fieldSetFlags()[29] ? this.referrer : (java.lang.CharSequence) defaultValue(fields()[29]);
+        record.referredChars = fieldSetFlags()[30] ? this.referredChars : (java.lang.Integer) defaultValue(fields()[30]);
+        record.parseStatus = fieldSetFlags()[31] ? this.parseStatus : (org.apache.nutch.persist.gora.ParseStatus) defaultValue(fields()[31]);
+        record.contentScore = fieldSetFlags()[32] ? this.contentScore : (java.lang.Float) defaultValue(fields()[32]);
+        record.score = fieldSetFlags()[33] ? this.score : (java.lang.Float) defaultValue(fields()[33]);
+        record.reprUrl = fieldSetFlags()[34] ? this.reprUrl : (java.lang.CharSequence) defaultValue(fields()[34]);
+        record.headers = fieldSetFlags()[35] ? this.headers : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[35]));
+        record.oldOutlinks = fieldSetFlags()[36] ? this.oldOutlinks : (java.lang.CharSequence) defaultValue(fields()[36]);
+        record.outlinks = fieldSetFlags()[37] ? this.outlinks : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[37]));
+        record.inlinks = fieldSetFlags()[38] ? this.inlinks : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[38]));
+        record.markers = fieldSetFlags()[39] ? this.markers : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[39]));
+        record.metadata = fieldSetFlags()[40] ? this.metadata : (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[40]));
+        record.batchId = fieldSetFlags()[41] ? this.batchId : (java.lang.CharSequence) defaultValue(fields()[41]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
@@ -1618,14 +2701,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
   
 	  		  /**
 	   * Gets the value of the 'baseUrl' field.
-	   * The original associated with this GoraWebPage.	   */
+	   * The original associated with this WebPage.	   */
 	  public java.lang.CharSequence getBaseUrl() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'baseUrl' field.
-	   * The original associated with this GoraWebPage.	   * @param value the value to set.
+	   * The original associated with this WebPage.	   * @param value the value to set.
 	   */
 	  public void setBaseUrl(java.lang.CharSequence value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1633,7 +2716,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'baseUrl' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The original associated with this GoraWebPage.	   * @param value the value to set.
+	   * The original associated with this WebPage.	   * @param value the value to set.
 	   */
 	  public boolean isBaseUrlDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -1641,14 +2724,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'status' field.
-	   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   */
+	   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   */
 	  public java.lang.Integer getStatus() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'status' field.
-	   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   * @param value the value to set.
+	   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   * @param value the value to set.
 	   */
 	  public void setStatus(java.lang.Integer value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1656,9 +2739,78 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'status' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * A crawl status associated with the GoraWebPage, can be of value STATUS_UNFETCHED - GoraWebPage was not fetched yet, STATUS_FETCHED - GoraWebPage was successfully fetched, STATUS_GONE - GoraWebPage no longer exists, STATUS_REDIR_TEMP - GoraWebPage temporarily redirects to other page, STATUS_REDIR_PERM - GoraWebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   * @param value the value to set.
+	   * A crawl status associated with the WebPage, can be of value STATUS_UNFETCHED - WebPage was not fetched yet, STATUS_FETCHED - WebPage was successfully fetched, STATUS_GONE - WebPage no longer exists, STATUS_REDIR_TEMP - WebPage temporarily redirects to other page, STATUS_REDIR_PERM - WebPage permanently redirects to other page, STATUS_RETRY - Fetching unsuccessful, needs to be retried e.g. transient errors and STATUS_NOTMODIFIED - fetching successful - page is not modified	   * @param value the value to set.
 	   */
 	  public boolean isStatusDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'distance' field.
+	   * The distance of the WebPage in the web.	   */
+	  public java.lang.Integer getDistance() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'distance' field.
+	   * The distance of the WebPage in the web.	   * @param value the value to set.
+	   */
+	  public void setDistance(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'distance' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The distance of the WebPage in the web.	   * @param value the value to set.
+	   */
+	  public boolean isDistanceDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'fetchCount' field.
+	   * The total fetch count of the WebPage.	   */
+	  public java.lang.Integer getFetchCount() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'fetchCount' field.
+	   * The total fetch count of the WebPage.	   * @param value the value to set.
+	   */
+	  public void setFetchCount(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'fetchCount' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The total fetch count of the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isFetchCountDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'fetchPriority' field.
+	   * The priority of the WebPage to fetch.	   */
+	  public java.lang.Integer getFetchPriority() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'fetchPriority' field.
+	   * The priority of the WebPage to fetch.	   * @param value the value to set.
+	   */
+	  public void setFetchPriority(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'fetchPriority' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The priority of the WebPage to fetch.	   * @param value the value to set.
+	   */
+	  public boolean isFetchPriorityDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	
@@ -1733,14 +2885,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'retriesSinceFetch' field.
-	   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.	   */
+	   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.	   */
 	  public java.lang.Integer getRetriesSinceFetch() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'retriesSinceFetch' field.
-	   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.	   * @param value the value to set.
+	   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.	   * @param value the value to set.
 	   */
 	  public void setRetriesSinceFetch(java.lang.Integer value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1748,7 +2900,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'retriesSinceFetch' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The number of retried attempts at fetching the GoraWebPage since it was last successfully fetched.	   * @param value the value to set.
+	   * The number of retried attempts at fetching the WebPage since it was last successfully fetched.	   * @param value the value to set.
 	   */
 	  public boolean isRetriesSinceFetchDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -1756,14 +2908,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'modifiedTime' field.
-	   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.	   */
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   */
 	  public java.lang.Long getModifiedTime() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'modifiedTime' field.
-	   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.	   * @param value the value to set.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
 	   */
 	  public void setModifiedTime(java.lang.Long value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1771,7 +2923,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'modifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The system time in milliseconds for when this GoraWebPage was modified by the GoraWebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the GoraWebPage.	   * @param value the value to set.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
 	   */
 	  public boolean isModifiedTimeDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -1779,14 +2931,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'prevModifiedTime' field.
-	   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.	   */
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   */
 	  public java.lang.Long getPrevModifiedTime() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'prevModifiedTime' field.
-	   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.	   * @param value the value to set.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
 	   */
 	  public void setPrevModifiedTime(java.lang.Long value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1794,16 +2946,154 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'prevModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The system time in milliseconds for when this GoraWebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a GoraWebPage.	   * @param value the value to set.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
 	   */
 	  public boolean isPrevModifiedTimeDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	
 				  /**
+	   * Gets the value of the 'contentModifiedTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   */
+	  public java.lang.Long getContentModifiedTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentModifiedTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public void setContentModifiedTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isContentModifiedTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'prevContentModifiedTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   */
+	  public java.lang.Long getPrevContentModifiedTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'prevContentModifiedTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public void setPrevContentModifiedTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'prevContentModifiedTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isPrevContentModifiedTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'contentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   */
+	  public java.lang.Long getContentPublishTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public void setContentPublishTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isContentPublishTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'prevContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   */
+	  public java.lang.Long getPrevContentPublishTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'prevContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public void setPrevContentPublishTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'prevContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isPrevContentPublishTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'refContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   */
+	  public java.lang.Long getRefContentPublishTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'refContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public void setRefContentPublishTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'refContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isRefContentPublishTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'prevRefContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   */
+	  public java.lang.Long getPrevRefContentPublishTime() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'prevRefContentPublishTime' field.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public void setPrevRefContentPublishTime(java.lang.Long value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'prevRefContentPublishTime' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isPrevRefContentPublishTimeDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
 	   * Gets the value of the 'protocolStatus' field.
 		   */
-	  public ProtocolStatus getProtocolStatus() {
+	  public org.apache.nutch.persist.gora.ProtocolStatus getProtocolStatus() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
@@ -1811,7 +3101,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	   * Sets the value of the 'protocolStatus' field.
 		   * @param value the value to set.
 	   */
-	  public void setProtocolStatus(ProtocolStatus value) {
+	  public void setProtocolStatus(org.apache.nutch.persist.gora.ProtocolStatus value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
 	  }
 	  
@@ -1870,15 +3160,38 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  }
 	
 				  /**
+	   * Gets the value of the 'pageCategory' field.
+	   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.	   */
+	  public java.lang.CharSequence getPageCategory() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'pageCategory' field.
+	   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.	   * @param value the value to set.
+	   */
+	  public void setPageCategory(java.lang.CharSequence value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'pageCategory' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The category of the page, INDEX, DETAIL, BBS, BLOG, etc.	   * @param value the value to set.
+	   */
+	  public boolean isPageCategoryDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
 	   * Gets the value of the 'prevSignature' field.
-	   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.	   */
+	   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.	   */
 	  public java.nio.ByteBuffer getPrevSignature() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'prevSignature' field.
-	   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.	   * @param value the value to set.
+	   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.	   * @param value the value to set.
 	   */
 	  public void setPrevSignature(java.nio.ByteBuffer value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1886,7 +3199,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'prevSignature' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * An implementation of a GoraWebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify GoraWebPage deltas based on page fingerprints.	   * @param value the value to set.
+	   * An implementation of a WebPage's previous signature from which it can be identified and referenced at any point in time. This can be used to uniquely identify WebPage deltas based on page fingerprints.	   * @param value the value to set.
 	   */
 	  public boolean isPrevSignatureDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -1894,14 +3207,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'signature' field.
-	   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.	   */
+	   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.	   */
 	  public java.nio.ByteBuffer getSignature() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'signature' field.
-	   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.	   * @param value the value to set.
+	   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.	   * @param value the value to set.
 	   */
 	  public void setSignature(java.nio.ByteBuffer value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -1909,62 +3222,200 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'signature' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * An implementation of a GoraWebPage's signature from which it can be identified and referenced at any point in time. This is essentially the GoraWebPage's fingerprint represnting its state for any point in time.	   * @param value the value to set.
+	   * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time. This is essentially the WebPage's fingerprint represnting its state for any point in time.	   * @param value the value to set.
 	   */
 	  public boolean isSignatureDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	
 				  /**
-	   * Gets the value of the 'title' field.
-	   * The title of the GoraWebPage.	   */
-	  public java.lang.CharSequence getTitle() {
+	   * Gets the value of the 'pageTitle' field.
+	   * The title extracted from page's metadate.	   */
+	  public java.lang.CharSequence getPageTitle() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
-	   * Sets the value of the 'title' field.
-	   * The title of the GoraWebPage.	   * @param value the value to set.
+	   * Sets the value of the 'pageTitle' field.
+	   * The title extracted from page's metadate.	   * @param value the value to set.
 	   */
-	  public void setTitle(java.lang.CharSequence value) {
+	  public void setPageTitle(java.lang.CharSequence value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
 	  }
 	  
 	  /**
-	   * Checks the dirty status of the 'title' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The title of the GoraWebPage.	   * @param value the value to set.
+	   * Checks the dirty status of the 'pageTitle' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The title extracted from page's metadate.	   * @param value the value to set.
 	   */
-	  public boolean isTitleDirty() {
+	  public boolean isPageTitleDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	
 				  /**
-	   * Gets the value of the 'text' field.
-	   * The textual content of the GoraWebPage devoid from native markup.	   */
-	  public java.lang.CharSequence getText() {
+	   * Gets the value of the 'pageText' field.
+	   * The text in the WebPage devoid from native markup.	   */
+	  public java.lang.CharSequence getPageText() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
-	   * Sets the value of the 'text' field.
-	   * The textual content of the GoraWebPage devoid from native markup.	   * @param value the value to set.
+	   * Sets the value of the 'pageText' field.
+	   * The text in the WebPage devoid from native markup.	   * @param value the value to set.
 	   */
-	  public void setText(java.lang.CharSequence value) {
+	  public void setPageText(java.lang.CharSequence value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
 	  }
 	  
 	  /**
-	   * Checks the dirty status of the 'text' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * The textual content of the GoraWebPage devoid from native markup.	   * @param value the value to set.
+	   * Checks the dirty status of the 'pageText' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The text in the WebPage devoid from native markup.	   * @param value the value to set.
 	   */
-	  public boolean isTextDirty() {
+	  public boolean isPageTextDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'contentTitle' field.
+	   * The title of the extracted content in the WebPage.	   */
+	  public java.lang.CharSequence getContentTitle() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentTitle' field.
+	   * The title of the extracted content in the WebPage.	   * @param value the value to set.
+	   */
+	  public void setContentTitle(java.lang.CharSequence value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentTitle' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The title of the extracted content in the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isContentTitleDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'contentText' field.
+	   * The textual content of the extracted content in WebPage devoid from native markup.	   */
+	  public java.lang.CharSequence getContentText() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentText' field.
+	   * The textual content of the extracted content in WebPage devoid from native markup.	   * @param value the value to set.
+	   */
+	  public void setContentText(java.lang.CharSequence value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentText' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The textual content of the extracted content in WebPage devoid from native markup.	   * @param value the value to set.
+	   */
+	  public boolean isContentTextDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'contentTextLength' field.
+	   * The content text length.	   */
+	  public java.lang.Integer getContentTextLength() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentTextLength' field.
+	   * The content text length.	   * @param value the value to set.
+	   */
+	  public void setContentTextLength(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentTextLength' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The content text length.	   * @param value the value to set.
+	   */
+	  public boolean isContentTextLengthDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'referredArticles' field.
+	   * Total articles out linked from the WebPage.	   */
+	  public java.lang.Integer getReferredArticles() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'referredArticles' field.
+	   * Total articles out linked from the WebPage.	   * @param value the value to set.
+	   */
+	  public void setReferredArticles(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'referredArticles' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * Total articles out linked from the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isReferredArticlesDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'referrer' field.
+	   * The referrer page link of the WebPage.	   */
+	  public java.lang.CharSequence getReferrer() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'referrer' field.
+	   * The referrer page link of the WebPage.	   * @param value the value to set.
+	   */
+	  public void setReferrer(java.lang.CharSequence value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'referrer' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * The referrer page link of the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isReferrerDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
+	   * Gets the value of the 'referredChars' field.
+	   * Total article chars out linked from the WebPage.	   */
+	  public java.lang.Integer getReferredChars() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'referredChars' field.
+	   * Total article chars out linked from the WebPage.	   * @param value the value to set.
+	   */
+	  public void setReferredChars(java.lang.Integer value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'referredChars' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * Total article chars out linked from the WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isReferredCharsDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	
 				  /**
 	   * Gets the value of the 'parseStatus' field.
 		   */
-	  public ParseStatus getParseStatus() {
+	  public org.apache.nutch.persist.gora.ParseStatus getParseStatus() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
@@ -1972,7 +3423,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	   * Sets the value of the 'parseStatus' field.
 		   * @param value the value to set.
 	   */
-	  public void setParseStatus(ParseStatus value) {
+	  public void setParseStatus(org.apache.nutch.persist.gora.ParseStatus value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
 	  }
 	  
@@ -1985,15 +3436,38 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  }
 	
 				  /**
+	   * Gets the value of the 'contentScore' field.
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.	   */
+	  public java.lang.Float getContentScore() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'contentScore' field.
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.	   * @param value the value to set.
+	   */
+	  public void setContentScore(java.lang.Float value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'contentScore' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.	   * @param value the value to set.
+	   */
+	  public boolean isContentScoreDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
 	   * Gets the value of the 'score' field.
-	   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.	   */
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.	   */
 	  public java.lang.Float getScore() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'score' field.
-	   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.	   * @param value the value to set.
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.	   * @param value the value to set.
 	   */
 	  public void setScore(java.lang.Float value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -2001,7 +3475,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'score' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * A score used to determine a GoraWebPage's relevance within the web graph it is part of. This score may change over time based on graph characteristics.	   * @param value the value to set.
+	   * A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.	   * @param value the value to set.
 	   */
 	  public boolean isScoreDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -2054,6 +3528,29 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  }
 	
 				  /**
+	   * Gets the value of the 'oldOutlinks' field.
+	   * All old outlinks from this WebPage.	   */
+	  public java.lang.CharSequence getOldOutlinks() {
+	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
+	  }
+	
+	  /**
+	   * Sets the value of the 'oldOutlinks' field.
+	   * All old outlinks from this WebPage.	   * @param value the value to set.
+	   */
+	  public void setOldOutlinks(java.lang.CharSequence value) {
+	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
+	  }
+	  
+	  /**
+	   * Checks the dirty status of the 'oldOutlinks' field. A field is dirty if it represents a change that has not yet been written to the database.
+	   * All old outlinks from this WebPage.	   * @param value the value to set.
+	   */
+	  public boolean isOldOutlinksDirty() {
+	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
+	  }
+	
+				  /**
 	   * Gets the value of the 'outlinks' field.
 	   * Embedded hyperlinks which direct outside of the current domain.	   */
 	  public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getOutlinks() {
@@ -2101,14 +3598,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'markers' field.
-	   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.	   */
+	   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.	   */
 	  public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getMarkers() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'markers' field.
-	   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.	   * @param value the value to set.
+	   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.	   * @param value the value to set.
 	   */
 	  public void setMarkers(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -2116,7 +3613,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'markers' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * Markers flags which represent user and machine decisions which have affected influenced a GoraWebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a GoraWebPage on a job-by-job basis and thier values indicative of what actions should be associated with a GoraWebPage.	   * @param value the value to set.
+	   * Markers flags which represent user and machine decisions which have affected influenced a WebPage's current state. Markers can be system specific and user machine driven in nature. They are assigned to a WebPage on a job-by-job basis and thier values indicative of what actions should be associated with a WebPage.	   * @param value the value to set.
 	   */
 	  public boolean isMarkersDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -2124,14 +3621,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'metadata' field.
-	   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.	   */
+	   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.	   */
 	  public java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> getMetadata() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'metadata' field.
-	   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.	   * @param value the value to set.
+	   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.	   * @param value the value to set.
 	   */
 	  public void setMetadata(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -2139,7 +3636,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'metadata' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * A multi-valued metadata container used for storing everything from structured GoraWebPage characterists, to ad-hoc extraction and metadata augmentation for any given GoraWebPage.	   * @param value the value to set.
+	   * A multi-valued metadata container used for storing everything from structured WebPage characterists, to ad-hoc extraction and metadata augmentation for any given WebPage.	   * @param value the value to set.
 	   */
 	  public boolean isMetadataDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
@@ -2147,14 +3644,14 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	
 				  /**
 	   * Gets the value of the 'batchId' field.
-	   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   */
+	   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   */
 	  public java.lang.CharSequence getBatchId() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
 	  /**
 	   * Sets the value of the 'batchId' field.
-	   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   * @param value the value to set.
+	   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   * @param value the value to set.
 	   */
 	  public void setBatchId(java.lang.CharSequence value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
@@ -2162,7 +3659,7 @@ public class GoraWebPage extends org.apache.gora.persistency.impl.PersistentBase
 	  
 	  /**
 	   * Checks the dirty status of the 'batchId' field. A field is dirty if it represents a change that has not yet been written to the database.
-	   * A batchId that this GoraWebPage is assigned to. GoraWebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   * @param value the value to set.
+	   * A batchId that this WebPage is assigned to. WebPage's are fetched in batches, called fetchlists. Pages are partitioned but can always be associated and fetched alongside pages of similar value (within a crawl cycle) based on batchId.	   * @param value the value to set.
 	   */
 	  public boolean isBatchIdDirty() {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");

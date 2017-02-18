@@ -41,6 +41,8 @@
         <dependency org="org.apache.commons" name="commons-compress" rev="1.9" conf="*->default" />
         <dependency org="org.apache.commons" name="commons-jexl" rev="2.1.1" />
         <dependency org="com.tdunning" name="t-digest" rev="3.1" />
+        <!-- Command line parser -->
+        <dependency org="com.beust" name="jcommander" rev="1.60" />
 
         <dependency org="com.google.guava" name="guava" rev="12.0.1"/>
         <dependency org="com.google.code.crawler-commons" name="crawler-commons" rev="0.5"/>

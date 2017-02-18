@@ -80,7 +80,7 @@ public class TestMSWordParser {
     page.setContentType(mtype);
 
     parseResult = new ParseUtil(conf).parse("file:" + urlString, page);
-    return parseResult.getText();
+    return parseResult.getPageText();
   }
 
   @Test

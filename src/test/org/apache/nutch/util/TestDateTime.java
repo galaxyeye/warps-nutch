@@ -29,6 +29,8 @@ public class TestDateTime {
 
     @Test
     public void testDateTimeConvert() {
+        ZoneId zoneId = ZoneId.systemDefault();
+
         // ParseResult string into local date. LocalDateTime has no timezone component
         LocalDateTime time = LocalDateTime.parse("2014-04-16T13:00:00");
 
@@ -46,6 +48,10 @@ public class TestDateTime {
 
         // Convert back to instant, again, no time zone offset.
         Instant output = time.atZone(ZoneOffset.ofHours(0)).toInstant();
+        System.out.println(output);
+
+        LocalDateTime ldt = LocalDateTime.ofInstant(Instant.now().truncatedTo(ChronoUnit.MINUTES), zoneId);
+        System.out.println(ldt);
     }
 
     @Test
@@ -87,6 +93,8 @@ public class TestDateTime {
 
         Duration durationToMidnight = Duration.between(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS), LocalDateTime.now());
         System.out.println(durationToMidnight.plusDays(1));
+
+        assertEquals(Duration.ofSeconds(1), DateTimeUtil.parseDuration("PT1S", Duration.ZERO));
     }
 
     @Test
@@ -128,7 +136,7 @@ public class TestDateTime {
                 "http://www.bjnews.com.cn/finance/2017/02/10/432945.html"
         };
         for (String url : validUrls) {
-            System.out.println(DateTimeUtil.format(ScentUtils.sniffDate(url).toInstant()));
+            System.out.println(DateTimeUtil.format(ScentUtils.sniffDate(url)));
             assertFalse(url, DateTimeUtil.containsOldDate(url, DateTimeUtil.OLD_DATE_DAYS));
         }
 

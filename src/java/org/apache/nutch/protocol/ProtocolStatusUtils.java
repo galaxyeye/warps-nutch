@@ -16,13 +16,13 @@
  ******************************************************************************/
 package org.apache.nutch.protocol;
 
-import java.net.URL;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.avro.util.Utf8;
 import org.apache.nutch.persist.gora.ProtocolStatus;
 import org.apache.nutch.util.TableUtil;
+
+import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
 
 public class ProtocolStatusUtils implements ProtocolStatusCodes {
   // Useful static instances for status codes that don't usually require any
@@ -80,6 +80,10 @@ public class ProtocolStatusUtils implements ProtocolStatusCodes {
     pstatus.setCode(code);
     pstatus.setLastModified(0L);
     return pstatus;
+  }
+
+  public static boolean isSuccess(ProtocolStatus status) {
+    return status.getCode() == SUCCESS;
   }
 
   public static ProtocolStatus makeStatus(int code, String message) {

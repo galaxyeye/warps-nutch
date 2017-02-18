@@ -22,7 +22,7 @@ import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.nutch.persist.gora.WebPageConverter;
+import org.apache.nutch.persist.WebPageConverter;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.persist.StorageUtils;
 import org.apache.nutch.persist.WebPage;
@@ -63,11 +63,12 @@ public class Db {
       return WebPage.newWebPage();
     }
 
-    return WebPage.wrap(store.get(reversedUrl));
+    return WebPage.wrap(url, reversedUrl, store.get(reversedUrl));
   }
 
   public Map<String, Object> get(String url, Set<String> fields) {
-    WebPage page = WebPage.wrap(store.get(TableUtil.reverseUrlOrEmpty(url)));
+    String reversedUrl = TableUtil.reverseUrlOrEmpty(url);
+    WebPage page = WebPage.wrap(url, reversedUrl, store.get(reversedUrl));
 
     Params.of(
         "crawlId", conf.get(PARAM_CRAWL_ID),

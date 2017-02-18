@@ -130,7 +130,7 @@ public class URLPartitioner implements Configurable {
 
     @Override
     public int getPartition(IntWritable intWritable, FetchEntry fetchEntry, int numReduces) {
-      String key = fetchEntry.getKey();
+      String key = fetchEntry.getReservedUrl();
       String url = TableUtil.unreverseUrl(key);
       return partitioner.getPartition(url, numReduces);
     }

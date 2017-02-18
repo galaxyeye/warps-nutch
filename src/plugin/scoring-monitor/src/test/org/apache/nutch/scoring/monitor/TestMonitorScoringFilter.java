@@ -17,7 +17,6 @@
 package org.apache.nutch.scoring.monitor;
 
 import com.google.common.collect.Lists;
-import org.apache.directory.api.util.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
@@ -29,7 +28,6 @@ import org.apache.nutch.graph.WebVertex;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.metadata.SpellCheckedMetadata;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.protocol.Content;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.util.ConfigUtils;
@@ -166,11 +164,11 @@ public class TestMonitorScoringFilter {
         // Re-publish the article
         Instant publishTime = now.minus(30 - round * 2, ChronoUnit.HOURS);
         page.setModifiedTime(publishTime);
-        page.updatePublishTime(publishTime);
+        page.updateContentPublishTime(publishTime);
 
         page.setOutlinks(linkGraph.get(page.url()).stream().collect(Collectors.toMap(l -> l, l -> "")));
 
-        assertEquals(publishTime, page.getPublishTime());
+        assertEquals(publishTime, page.getContentPublishTime());
 
         return page;
       }).collect(Collectors.toMap(WebPage::url, page -> page));
@@ -230,7 +228,7 @@ public class TestMonitorScoringFilter {
                 WebPage p2 = edge.getTargetWebPage();
 
                 // Update by out-links
-                p1.updateRefPublishTime(p2.getPublishTime());
+                p1.updateRefContentPublishTime(p2.getContentPublishTime());
                 p1.increaseRefChars(1000 * round);
                 p1.increaseRefArticles(1);
               });
@@ -239,8 +237,8 @@ public class TestMonitorScoringFilter {
       graph.vertexSet().stream()
               .filter(WebVertex::hasWebPage)
 //              .filter(v -> v.getUrl().contains("a.com"))
-              .map(v -> WebPageConverter.convert(v.getWebPage()).toString().replaceAll(", ", "\n"))
-              .filter(Strings::isNotEmpty)
+              .map(WebVertex::getWebPage)
+              .map(WebPage::toString)
               .forEach(NutchUtil.LOG::info);
     }
   }

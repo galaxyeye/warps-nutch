@@ -89,9 +89,7 @@ public class ScoringFilters extends Configured implements ScoringFilter {
 
       this.scoringFilters = (ScoringFilter[]) objectCache.getObject(ScoringFilter.class.getName());
 
-      if (this.scoringFilters.length == 0) {
-        LOG.warn("Failed to found any scoring filters");
-      }
+      LOG.info("Active scoring filters : " + toString());
     }
   }
 

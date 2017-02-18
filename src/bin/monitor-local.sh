@@ -76,7 +76,7 @@ do
   batchId=`date +%s`-$RANDOM
 
   echo "Generating : "
-  __bin_nutch generate -c="$CONF_DIR" -D crawl.round=$a -batchId $batchId -topN 1000 -crawlId "$CRAWL_ID"
+  __bin_nutch generate -c="$CONF_DIR" -D crawl.round=$a -batchId $batchId -reGen -topN 1000 -crawlId "$CRAWL_ID"
 
   echo "Fetching : "
   __bin_nutch fetch -c="$CONF_DIR" -D crawl.round=$a $batchId -crawlId "$CRAWL_ID" -threads 10 -crawlId "$CRAWL_ID" -fetchMode native -index -solrUrl $SOLR_URL

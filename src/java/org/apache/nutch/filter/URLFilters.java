@@ -17,7 +17,6 @@
 
 package org.apache.nutch.filter;
 
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.common.ObjectCache;
 import org.apache.nutch.plugin.Extension;
@@ -27,10 +26,9 @@ import org.apache.nutch.plugin.PluginRuntimeException;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /** Creates and caches {@link URLFilter} implementing plugins. */
 public class URLFilters {
@@ -38,14 +36,12 @@ public class URLFilters {
   public Logger LOG = URLFilter.LOG;
 
   public static final String URLFILTER_ORDER = "urlfilter.order";
-  public static ArrayList<URLFilter> EMPTY_URLFILTER_LIST = new ArrayList<>();
-
-  private ArrayList<URLFilter> urlFilters;
+  private URLFilter[] urlFilters;
 
   public URLFilters(Configuration conf) {
     String order = conf.get(URLFILTER_ORDER);
     ObjectCache objectCache = ObjectCache.get(conf);
-    this.urlFilters = objectCache.getObject(URLFilter.class.getName(), EMPTY_URLFILTER_LIST);
+    this.urlFilters = (URLFilter[]) objectCache.getObject(URLFilter.class.getName());
 
     if (this.urlFilters == null) {
       String[] orderedFilters = null;
@@ -55,36 +51,35 @@ public class URLFilters {
 
       try {
         ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(URLFilter.X_POINT_ID);
-        if (point == null) {
+        if (point == null)
           throw new RuntimeException(URLFilter.X_POINT_ID + " not found.");
-        }
         Extension[] extensions = point.getExtensions();
-        Map<String, URLFilter> filterMap = new HashMap<>();
-        for (Extension extension : extensions) {
+        Map<String, URLFilter> filterMap = new HashMap<String, URLFilter>();
+        for (int i = 0; i < extensions.length; i++) {
+          Extension extension = extensions[i];
           URLFilter filter = (URLFilter) extension.getExtensionInstance();
           if (!filterMap.containsKey(filter.getClass().getName())) {
-            filter.setConf(conf);
             filterMap.put(filter.getClass().getName(), filter);
           }
         } // for
 
         if (orderedFilters == null) {
-          objectCache.setObject(URLFilter.class.getName(), Lists.newArrayList(filterMap.values()));
+          objectCache.setObject(URLFilter.class.getName(), filterMap.values().toArray(new URLFilter[0]));
         } else {
-          ArrayList<URLFilter> filters = new ArrayList<>();
-          for (String orderedFilter : orderedFilters) {
-            URLFilter filter = filterMap.get(orderedFilter);
+          ArrayList<URLFilter> filters = new ArrayList<URLFilter>();
+          for (int i = 0; i < orderedFilters.length; i++) {
+            URLFilter filter = filterMap.get(orderedFilters[i]);
             if (filter != null) {
               filters.add(filter);
             }
           }
-          objectCache.setObject(URLFilter.class.getName(), filters);
+          objectCache.setObject(URLFilter.class.getName(), filters.toArray(new URLFilter[filters.size()]));
         }
       } catch (PluginRuntimeException e) {
         throw new RuntimeException(e);
       }
 
-      this.urlFilters = objectCache.getObject(URLFilter.class.getName(), EMPTY_URLFILTER_LIST);
+      this.urlFilters = (URLFilter[]) objectCache.getObject(URLFilter.class.getName());
 
       LOG.info("Active urls filters : " + toString());
     }
@@ -92,17 +87,20 @@ public class URLFilters {
 
   /** Run all defined urlFilters. Assume logical AND. */
   public String filter(String urlString) throws URLFilterException {
-    for (int i = 0; i < this.urlFilters.size(); i++) {
+    for (int i = 0; i < this.urlFilters.length; i++) {
       if (urlString == null) {
         return null;
       }
-      urlString = this.urlFilters.get(i).filter(urlString);
+      urlString = this.urlFilters[i].filter(urlString);
+
     }
     return urlString;
   }
 
   @Override
   public String toString() {
-    return urlFilters.stream().map(f -> f.getClass().getSimpleName()).collect(Collectors.joining(", "));
+    StringBuilder sb = new StringBuilder();
+    Arrays.stream(this.urlFilters).forEach(f -> sb.append(f.getClass().getSimpleName()).append(", "));
+    return sb.toString();
   }
 }

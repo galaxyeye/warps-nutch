@@ -18,22 +18,23 @@
 package org.apache.nutch.parse;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.ObjectCache;
+import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.common.ObjectCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 /** Creates and caches {@link ParseFilter} implementing plugins. */
 public class ParseFilters {
+
+  public static final Logger LOG = LoggerFactory.getLogger(ParseFilters.class);
 
   private ParseFilter[] parseFilters;
 
@@ -52,10 +53,9 @@ public class ParseFilters {
       if (order != null && !order.trim().equals("")) {
         orderedFilters = order.split("\\s+");
       }
-      HashMap<String, ParseFilter> filterMap = new HashMap<String, ParseFilter>();
+      HashMap<String, ParseFilter> filterMap = new HashMap<>();
       try {
-        ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(
-            ParseFilter.X_POINT_ID);
+        ExtensionPoint point = PluginRepository.get(conf).getExtensionPoint(ParseFilter.X_POINT_ID);
         if (point == null)
           throw new RuntimeException(ParseFilter.X_POINT_ID + " not found.");
         Extension[] extensions = point.getExtensions();
@@ -91,6 +91,8 @@ public class ParseFilters {
 
       this.parseFilters = (ParseFilter[]) objectCache.getObject(ParseFilter.class.getName());
     }
+
+    LOG.info("Active parse filters : " + toString());
   }
 
   /** Run all defined filters. */
@@ -118,5 +120,12 @@ public class ParseFilters {
       }
     }
     return fields;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    Arrays.stream(this.parseFilters).forEach(parseFilter -> sb.append(parseFilter.getClass().getSimpleName()).append(", "));
+    return sb.toString();
   }
 }

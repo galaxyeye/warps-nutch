@@ -70,9 +70,11 @@ public abstract class NutchJob extends Configured {
       updateStatus();
       updateResults();
 
+      Params.of(status).withLogger(LOG).info();
+
       Params.of(results).withLogger(LOG).info();
 
-      Params.of(NutchUtil.recordJobStatus(currentJob)).withLogger(LOG).info();
+      // Params.of(NutchUtil.getJobStatus(currentJob)).withLogger(LOG).info();
 
       LOG.info("Affected rows : " + affectedRows);
     }
@@ -184,15 +186,12 @@ public abstract class NutchJob extends Configured {
       }
 
       synchronized (status) {
-        status.putAll(NutchUtil.recordJobStatus(currentJob));
+        status.putAll(NutchUtil.getJobStatus(currentJob));
       }
 
-      long totalPages = getCounterValue(STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name());
-      affectedRows = totalPages;
+      affectedRows = getCounterValue(STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name());
     } catch (Throwable e) {
       LOG.warn(e.toString());
-
-      return;
     }
   }
 

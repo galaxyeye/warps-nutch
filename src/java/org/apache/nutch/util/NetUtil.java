@@ -155,7 +155,7 @@ public class NetUtil {
     ProtocolOutput protocolOutput = protocol.getProtocolOutput(url, page);
     ProtocolStatus pstatus = protocolOutput.getStatus();
 
-    if (!pstatus.isSuccess()) {
+    if (!ProtocolStatusUtils.isSuccess(pstatus)) {
       LOG.error("Fetch failed with protocol status, "
               + ProtocolStatusUtils.getName(pstatus.getCode())
               + " : " + ProtocolStatusUtils.getMessage(pstatus));

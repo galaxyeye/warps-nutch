@@ -91,8 +91,8 @@ public class TestNewsFetchSchedule {
     for (int i = 0; i < totalRounds; i++) {
       if (lastModified.plus(update).isBefore(curTime)) {
         if (i < changeBefore) {
-          // TableUtil.updateRefPublishTime(p, curTime.minus(2, ChronoUnit.DAYS));
-          p.updateRefPublishTime(curTime);
+          // TableUtil.updateRefContentPublishTime(p, curTime.minus(2, ChronoUnit.DAYS));
+          p.updateRefContentPublishTime(curTime);
           p.increaseRefArticles(1);
           p.increaseRefChars(2500);
           updateScore(p);

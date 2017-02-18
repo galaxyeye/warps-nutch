@@ -3,7 +3,7 @@
  * 
  * DO NOT EDIT DIRECTLY
  */
-package org.apache.nutch.persist.gora;
+package org.apache.nutch.persist.gora;  
 @SuppressWarnings("all")
 /** A nested container representing data captured from web server responses. */
 public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
@@ -166,18 +166,18 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
   }
 
   /** Creates a new ProtocolStatus RecordBuilder */
-  public static ProtocolStatus.Builder newBuilder() {
-    return new ProtocolStatus.Builder();
+  public static org.apache.nutch.persist.gora.ProtocolStatus.Builder newBuilder() {
+    return new org.apache.nutch.persist.gora.ProtocolStatus.Builder();
   }
   
   /** Creates a new ProtocolStatus RecordBuilder by copying an existing Builder */
-  public static ProtocolStatus.Builder newBuilder(ProtocolStatus.Builder other) {
-    return new ProtocolStatus.Builder(other);
+  public static org.apache.nutch.persist.gora.ProtocolStatus.Builder newBuilder(org.apache.nutch.persist.gora.ProtocolStatus.Builder other) {
+    return new org.apache.nutch.persist.gora.ProtocolStatus.Builder(other);
   }
   
   /** Creates a new ProtocolStatus RecordBuilder by copying an existing ProtocolStatus instance */
-  public static ProtocolStatus.Builder newBuilder(ProtocolStatus other) {
-    return new ProtocolStatus.Builder(other);
+  public static org.apache.nutch.persist.gora.ProtocolStatus.Builder newBuilder(org.apache.nutch.persist.gora.ProtocolStatus other) {
+    return new org.apache.nutch.persist.gora.ProtocolStatus.Builder(other);
   }
   
   private static java.nio.ByteBuffer deepCopyToReadOnlyBuffer(
@@ -215,17 +215,17 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 
     /** Creates a new Builder */
     private Builder() {
-      super(ProtocolStatus.SCHEMA$);
+      super(org.apache.nutch.persist.gora.ProtocolStatus.SCHEMA$);
     }
     
     /** Creates a Builder by copying an existing Builder */
-    private Builder(ProtocolStatus.Builder other) {
+    private Builder(org.apache.nutch.persist.gora.ProtocolStatus.Builder other) {
       super(other);
     }
     
     /** Creates a Builder by copying an existing ProtocolStatus instance */
-    private Builder(ProtocolStatus other) {
-            super(ProtocolStatus.SCHEMA$);
+    private Builder(org.apache.nutch.persist.gora.ProtocolStatus other) {
+            super(org.apache.nutch.persist.gora.ProtocolStatus.SCHEMA$);
       if (isValidValue(fields()[0], other.code)) {
         this.code = (java.lang.Integer) data().deepCopy(fields()[0].schema(), other.code);
         fieldSetFlags()[0] = true;
@@ -246,7 +246,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'code' field */
-    public ProtocolStatus.Builder setCode(int value) {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder setCode(int value) {
       validate(fields()[0], value);
       this.code = value;
       fieldSetFlags()[0] = true;
@@ -259,7 +259,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'code' field */
-    public ProtocolStatus.Builder clearCode() {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder clearCode() {
       fieldSetFlags()[0] = false;
       return this;
     }
@@ -270,7 +270,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'args' field */
-    public ProtocolStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder setArgs(java.util.List<java.lang.CharSequence> value) {
       validate(fields()[1], value);
       this.args = value;
       fieldSetFlags()[1] = true;
@@ -283,7 +283,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'args' field */
-    public ProtocolStatus.Builder clearArgs() {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder clearArgs() {
       args = null;
       fieldSetFlags()[1] = false;
       return this;
@@ -295,7 +295,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Sets the value of the 'lastModified' field */
-    public ProtocolStatus.Builder setLastModified(long value) {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder setLastModified(long value) {
       validate(fields()[2], value);
       this.lastModified = value;
       fieldSetFlags()[2] = true;
@@ -308,7 +308,7 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
     }
     
     /** Clears the value of the 'lastModified' field */
-    public ProtocolStatus.Builder clearLastModified() {
+    public org.apache.nutch.persist.gora.ProtocolStatus.Builder clearLastModified() {
       fieldSetFlags()[2] = false;
       return this;
     }
@@ -333,17 +333,6 @@ public class ProtocolStatus extends org.apache.gora.persistency.impl.PersistentB
 
   public ProtocolStatus newInstance(){
     return newBuilder().build();
-  }
-
-  // TODO NUTCH-1709 Generated classes o.a.n.persist.Host and
-  // o.a.n.persist.ProtocolStatus contain methods not defined in source .avsc
-  /**
-   * A convenience method which returns a successful {@link ProtocolStatus}.
-   * 
-   * @return the {@link ProtocolStatus} value for 200 (success).
-   */
-  public boolean isSuccess() {
-    return code == org.apache.nutch.protocol.ProtocolStatusUtils.SUCCESS;
   }
 
   private static final Tombstone TOMBSTONE = new Tombstone();

@@ -16,12 +16,14 @@
  ******************************************************************************/
 package org.apache.nutch.graph;
 
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.persist.WebPage;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class WebEdge extends DefaultWeightedEdge {
 
   private String anchor = "";
+  private Metadata metadata = new Metadata();
 
   public WebEdge() {}
 
@@ -33,6 +35,16 @@ public class WebEdge extends DefaultWeightedEdge {
     }
     this.anchor = anchor.toString();
   }
+
+  public void addMetadata(String k, String v) { metadata.add(k, v); }
+
+  public String getMetadata(String k) { return metadata.get(k); }
+
+  public boolean hasMetadata(String k) { return getMetadata(k) != null; }
+
+  public Metadata getMetadata() { return metadata; }
+
+  public void setMetadata(Metadata metadata) { this.metadata = metadata; }
 
   public boolean isLoop() { return getSource().equals(getTarget()); }
 

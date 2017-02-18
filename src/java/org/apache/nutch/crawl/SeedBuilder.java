@@ -10,11 +10,9 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -42,15 +40,15 @@ public class SeedBuilder implements Parameterized {
   /** Custom page score */
   private float customPageScore;
   /** Custom fetch interval in second */
-  private int customFetchIntervalSec = -1;
+  private Duration customFetchInterval = Duration.ofSeconds(-1);
   /** Fetch interval in second */
-  private int fetchIntervalSec;
+  private Duration fetchInterval;
   private float scoreInjected;
   private Instant currentTime;
 
   public SeedBuilder(Configuration conf) {
     scoreFilters = new ScoringFilters(conf);
-    fetchIntervalSec = getFetchIntervalSec();
+    fetchInterval = getFetchInterval();
     scoreInjected = conf.getFloat("db.score.injected", Float.MAX_VALUE);
     currentTime = Instant.now();
   }
@@ -59,44 +57,31 @@ public class SeedBuilder implements Parameterized {
   public Params getParams() {
     return Params.of(
         "className", this.getClass().getSimpleName(),
-        "fetchIntervalSec", fetchIntervalSec,
+        "fetchInterval", fetchInterval,
         "scoreInjected", scoreInjected,
         "injectTime", DateTimeUtil.format(currentTime)
     );
   }
 
   public WebPage buildWebPage(String urlLine) {
-    WebPage page = WebPage.newWebPage();
-
       /* Ignore line that start with # */
     if (urlLine.length() < SHORTEST_VALID_URL_LENGTH || urlLine.startsWith("#")) {
       return null;
     }
 
     String url = StringUtils.substringBefore(urlLine, "\t");
+    WebPage page = WebPage.newWebPage(url);
 
-    Map<String, String> metadata = buildMetadata(urlLine);
+    if (!page.hasLegalUrl()) {
+      LOG.warn("Ignore illegal formatted url : " + url);
+      return null;
+    }
+
     // Add metadata to page
-    page.putAllMetadata(metadata);
+    page.putAllMetadata(buildMetadata(urlLine));
 
-    String reversedUrl = null;
-    try {
-      reversedUrl = TableUtil.reverseUrl(url);
-      page.setFetchTime(currentTime);
-      page.setFetchInterval(fetchIntervalSec);
-    }
-    catch (MalformedURLException e) {
-      LOG.warn("Ignore illegal formatted url : " + url);
-    }
-
-    if (reversedUrl == null) {
-      LOG.warn("Ignore illegal formatted url : " + url);
-      return page;
-    }
-
-    // TODO : Check the difference between hbase.url and page.baseUrl
-    page.setTempVar("url", url);
-    page.setTempVar("reversedUrl", reversedUrl);
+    page.setFetchTime(currentTime);
+    page.setFetchInterval(fetchInterval);
 
     if (customPageScore != -1f) {
       page.setScore(customPageScore);
@@ -116,12 +101,12 @@ public class SeedBuilder implements Parameterized {
     return page;
   }
 
-  public int getFetchIntervalSec() {
+  public Duration getFetchInterval() {
     // Crawl seed pages as soon as possible
-    int fetchInterval = (int)Duration.ofMinutes(1).getSeconds();
+    fetchInterval = Duration.ofMinutes(1);
 
-    if (customFetchIntervalSec != -1) {
-      fetchInterval = customFetchIntervalSec;
+    if (customFetchInterval.getSeconds() != -1) {
+      fetchInterval = customFetchInterval;
     }
 
     return fetchInterval;
@@ -149,7 +134,8 @@ public class SeedBuilder implements Parameterized {
           customPageScore = StringUtil.tryParseFloat(value, -1f);
         }
         else if (name.equals(NutchFetchIntervalMDName)) {
-          customFetchIntervalSec = StringUtil.tryParseInt(value, fetchIntervalSec);
+          long duration = StringUtil.tryParseLong(value, fetchInterval.getSeconds());
+          customFetchInterval = Duration.ofSeconds(duration);
         }
         else {
           metadata.put(name, value);

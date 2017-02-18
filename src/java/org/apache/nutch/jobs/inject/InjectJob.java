@@ -16,6 +16,8 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.inject;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.google.common.io.Files;
 import org.apache.gora.mapreduce.GoraOutputFormat;
 import org.apache.gora.store.DataStore;
@@ -46,6 +48,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.nutch.metadata.Nutch.*;
@@ -66,45 +70,6 @@ public class InjectJob extends NutchJob implements Tool {
 
   public static final Logger LOG = LoggerFactory.getLogger(InjectJob.class);
 
-  public static class UrlMapper extends Mapper<LongWritable, Text, String, GoraWebPage> {
-    private Configuration conf;
-
-    private SeedBuilder seedBuiler;
-
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-      conf = context.getConfiguration();
-
-      seedBuiler = new SeedBuilder(conf);
-
-      String crawlId = conf.get(PARAM_CRAWL_ID);
-
-      Params.of(
-          "className", this.getClass().getSimpleName(),
-          "crawlId", crawlId
-      ).merge(seedBuiler.getParams()).withLogger(LOG).info();
-    }
-
-    protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
-      if (line == null || line.toString().isEmpty()) {
-        return;
-      }
-
-      String urlLine = line.toString().trim();
-      if (urlLine.startsWith("#")) {
-        return;
-      }
-
-      WebPage row = seedBuiler.buildWebPage(urlLine);
-      String reversedUrl = row.getTempVarAsString("reversedUrl");
-
-      if (reversedUrl != null) {
-        context.write(reversedUrl, row.get());
-        context.getCounter(Nutch.STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
-      }
-    }
-  }
-
   public InjectJob() {
   }
 
@@ -119,9 +84,9 @@ public class InjectJob extends NutchJob implements Tool {
     Params params = new Params(args);
     Configuration conf = getConf();
 
-    String crawlId = params.get(ARG_CRAWL, conf.get(PARAM_CRAWL_ID));
-    String seedPath = params.getString(ARG_SEED_PATH);
-    String seedUrls = params.get(ARG_SEED_URLS, "");
+    String crawlId = params.get(PARAM_CRAWL_ID, conf.get(PARAM_CRAWL_ID));
+    String seedPath = params.getString(PARAM_INJECT_SEED_PATH);
+    String seedUrls = params.get(PARAM_INJECT_SEED_URLS, "");
 
     // Seed urls have higher priority
     if (!seedUrls.isEmpty()) {
@@ -139,7 +104,7 @@ public class InjectJob extends NutchJob implements Tool {
     }
 
     conf.set(PARAM_CRAWL_ID, crawlId);
-    conf.set(PARAM_SEED_PATH, seedPath);
+    conf.set(PARAM_INJECT_SEED_PATH, seedPath);
 
     LOG.info(Params.format(
         "className", this.getClass().getSimpleName(),
@@ -154,13 +119,7 @@ public class InjectJob extends NutchJob implements Tool {
   protected void doRun(Map<String, Object> args) throws Exception {
     Configuration conf = getConf();
 
-    String seedPath = conf.get(PARAM_SEED_PATH);
-
-    // TODO : local file system does not support directory while hdfs file system does
-//    if (!input.getFileSystem(conf).isFile(input)) {
-//      LOG.warn("Seed dir does not exit!!!");
-//      return;
-//    }
+    String seedPath = conf.get(PARAM_INJECT_SEED_PATH);
 
     FileInputFormat.addInputPath(currentJob, new Path(seedPath));
     currentJob.setMapperClass(UrlMapper.class);
@@ -186,44 +145,96 @@ public class InjectJob extends NutchJob implements Tool {
 
   public void inject(Path path, String crawlId) throws Exception {
     run(Params.toArgMap(
-        ARG_CRAWL, crawlId,
-        ARG_SEED_PATH, path.toString()
+            PARAM_CRAWL_ID, crawlId,
+            PARAM_INJECT_SEED_PATH, path.toString()
     ));
   }
 
   public void inject(String seedDir, String crawlId) throws Exception {
     run(Params.toArgMap(
-        ARG_SEED_PATH, seedDir,
-        ARG_CRAWL, crawlId
+            PARAM_CRAWL_ID, seedDir,
+            PARAM_INJECT_SEED_PATH, crawlId
     ));
   }
 
-  private void printUsage() {
-    System.err.println("Usage: InjectJob <seedDir> [-crawlId <id>]");
+  static class UrlMapper extends Mapper<LongWritable, Text, String, GoraWebPage> {
+    private Configuration conf;
+    private SeedBuilder seedBuiler;
+
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+      conf = context.getConfiguration();
+
+      seedBuiler = new SeedBuilder(conf);
+
+      String crawlId = conf.get(PARAM_CRAWL_ID);
+
+      Params.of(
+              "className", this.getClass().getSimpleName(),
+              "crawlId", crawlId
+      ).merge(seedBuiler.getParams()).withLogger(InjectJob.LOG).info();
+    }
+
+    protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
+      if (line == null || line.toString().isEmpty()) {
+        return;
+      }
+
+      String urlLine = line.toString().trim();
+      if (urlLine.startsWith("#")) {
+        return;
+      }
+
+      WebPage row = seedBuiler.buildWebPage(urlLine);
+
+      if (row != null) {
+        context.write(row.reversedUrl(), row.get());
+        context.getCounter(Nutch.STAT_RUNTIME_STATUS, NutchCounter.Counter.totalPages.name()).increment(1);
+      }
+    }
+  }
+
+  private class Options {
+    @Parameter(required = true, description = "Seed file path or seed url")
+    List<String> uris = new ArrayList<>();
+    @Parameter(names = {"-update", "-u"}, description = "Update if already exists")
+    boolean update = false;
+    @Parameter(names = {"-watch", "-w"}, description = "Watch the health for the seed")
+    boolean watch = false;
+    @Parameter(names = {"-outLinkPattern", "-p"}, description = "Out link patthen")
+    String outLinkPattern = ".+";
+    @Parameter(names = {"-fetchInterval", "-i"}, description = "Fetch intervel")
+    String fetchInterval = null;
+    @Parameter(names = {"-minAnchorLen", "-l"}, description = "Shortest anchors for links to follow")
+    Integer minAnchorLen = 8;
+    @Parameter(names = "-crawlId", description = "Crawl id, (default : \"storage.crawl.id\")")
+    String crawlId = null;
+    @Parameter(names = {"-help", "-h"}, help = true)
+    boolean help;
   }
 
   @Override
   public int run(String[] args) throws Exception {
+    Options opt = new Options();
+    JCommander jc = new JCommander(opt, args);
+
     if (args.length < 1) {
-      printUsage();
+      jc.usage();
       return -1;
     }
 
-    Configuration conf = getConf();
-
-    String crawlId = conf.get(PARAM_CRAWL_ID, "");
-
-    for (int i = 1; i < args.length; i++) {
-      if ("-crawlId".equals(args[i])) {
-        crawlId = args[++i];
-      } else {
-        System.err.println("Unrecognized arg " + args[i]);
-        return -1;
-      }
-    }
-
+    String url = opt.uris.get(0);
     try {
-      inject(args[0], crawlId);
+      run(Params.toArgMap(
+              PARAM_INJECT_SEED_PATH, url,
+              PARAM_CRAWL_ID, opt.crawlId,
+              PARAM_INJECT_UPDATE, opt.update,
+              PARAM_INJECT_WATCH, opt.watch,
+              PARAM_PARSE_OUTLINK_PATTERN, opt.outLinkPattern,
+              PARAM_PARSE_MIN_ANCHOR_LENGTH, opt.minAnchorLen,
+              PARAM_FETCH_INTERVAL, opt.fetchInterval
+      ));
+
       return 0;
     } catch (Exception e) {
       LOG.error("InjectJob: " + StringUtil.stringifyException(e));
@@ -232,7 +243,7 @@ public class InjectJob extends NutchJob implements Tool {
   }
 
   public static void main(String[] args) throws Exception {
-    int res = ToolRunner.run(ConfigUtils.create(), new InjectJob(), args);
-    System.exit(res);
+     int res = ToolRunner.run(ConfigUtils.create(), new InjectJob(), args);
+     System.exit(res);
   }
 }

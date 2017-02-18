@@ -24,8 +24,6 @@ import org.apache.nutch.parse.*;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
-import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.MimeUtil;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
@@ -36,9 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -226,31 +221,4 @@ public class TikaParser implements org.apache.nutch.parse.Parser {
     return FIELDS;
   }
 
-  // main class used for debuggin
-  public static void main(String[] args) throws Exception {
-    String name = args[0];
-    String url = "file:" + name;
-    File file = new File(name);
-    byte[] bytes = new byte[(int) file.length()];
-    @SuppressWarnings("resource")
-    DataInputStream in = new DataInputStream(new FileInputStream(file));
-    in.readFully(bytes);
-    Configuration conf = ConfigUtils.create();
-    // TikaParser parser = new TikaParser();
-    // parser.setConf(conf);
-    WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(url);
-    page.setContent(bytes);
-    MimeUtil mimeutil = new MimeUtil(conf);
-    String mtype = mimeutil.getMimeType(file);
-    page.setContentType(mtype);
-    // ParseResult parseResult = parser.getParse(url, page);
-
-    ParseResult parseResult = new ParseUtil(conf).parse(url, page);
-
-    System.out.println("content type: " + mtype);
-    System.out.println("title: " + parseResult.getPageTitle());
-    System.out.println("text: " + parseResult.getText());
-    System.out.println("outlinks: " + StringUtils.join(parseResult.getOutlinks(), ","));
-  }
 }

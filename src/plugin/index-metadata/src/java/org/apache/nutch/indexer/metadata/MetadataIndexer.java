@@ -26,7 +26,6 @@ import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.URLUtil;
-import org.jetbrains.annotations.Contract;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -112,8 +111,8 @@ public class MetadataIndexer implements IndexingFilter {
 
       String domain = URLUtil.getDomainName(u);
 
-      doc.add("domain", domain);
       doc.add("url", url);
+      doc.add("domain", domain);
       doc.addIfNotNull("site_name", siteNames.getSiteName(domain));
       doc.addIfNotNull("resource_category", resourceCategory.getCategory(url));
       doc.addIfNotNull("host", u.getHost());
@@ -149,13 +148,10 @@ public class MetadataIndexer implements IndexingFilter {
       // return doc;
     }
 
-    // doc.add("encoding", page.getTempVarAsString("encoding", ""));
-
     // get content type
     doc.add("content_type", contentType);
   }
 
-  @Contract("null, _, _ -> null")
   private IndexDocument addPageMetadata(IndexDocument doc, String url, WebPage page) {
     if (doc == null || parseFieldnames.isEmpty()) {
       return doc;

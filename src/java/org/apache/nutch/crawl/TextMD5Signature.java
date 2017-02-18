@@ -31,30 +31,32 @@ import java.util.HashSet;
  */
 public class TextMD5Signature extends Signature {
 
+  public static int GOOD_CONTENT_TEXT_LENGTH = 2000;
+
   private final static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(GoraWebPage.Field.TEXT);
-    FIELDS.add(GoraWebPage.Field.METADATA);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TEXT);
+    FIELDS.add(GoraWebPage.Field.PAGE_TEXT);
   }
 
-  Signature fallback = new MD5Signature();
+  private Signature fallback = new MD5Signature();
 
   /**
    * We need calculate signature using a more clean text content, eg, extracted by text-scent
    * */
   @Override
   public byte[] calculate(WebPage page) {
-    CharSequence text = page.getTextContent();
-    if (text == null || text.length() == 0) {
-      text = page.getText();
+    String text = page.getContentText();
+    if (text.isEmpty() || text.length() < GOOD_CONTENT_TEXT_LENGTH) {
+      text = page.getPageText();
     }
 
-    if (text == null || text.length() == 0) {
+    if (text.isEmpty()) {
       return fallback.calculate(page);
     }
 
-    return MD5Hash.digest(text.toString()).getDigest();
+    return MD5Hash.digest(text).getDigest();
   }
 
   @Override

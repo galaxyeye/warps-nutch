@@ -26,7 +26,6 @@ import org.apache.nutch.protocol.ProtocolException;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.MimeUtil;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.DataInputStream;
@@ -77,7 +76,7 @@ public class TestPdfParser {
 
       parseResult = new ParseUtil(conf).parse(urlString, page);
 
-      int index = parseResult.getText().indexOf(expectedText);
+      int index = parseResult.getPageText().indexOf(expectedText);
       assertTrue(index > 0);
     }
   }

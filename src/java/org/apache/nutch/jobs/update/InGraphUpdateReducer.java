@@ -59,288 +59,299 @@ import static org.apache.nutch.metadata.Nutch.*;
 
 class InGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable, String, GoraWebPage> {
 
-    public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
+  public static final Logger LOG = LoggerFactory.getLogger(InGraphUpdateReducer.class);
 
-    public enum Counter {pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, totalUpdates, badModTime}
+  public enum Counter {pagesPassed, pagesLoaded, pagesNotExist, pagesUpdated, totalUpdates, badModTime}
 
-    private DataStore<String, GoraWebPage> datastore;
-    private NutchMetrics nutchMetrics;
-    private FetchSchedule fetchSchedule;
-    private int retryMax;
-    private Duration maxFetchInterval;
+  private DataStore<String, GoraWebPage> datastore;
+  private NutchMetrics nutchMetrics;
+  private FetchSchedule fetchSchedule;
+  private int retryMax;
+  private Duration maxFetchInterval;
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-        super.setup(context);
+  @Override
+  protected void setup(Context context) throws IOException, InterruptedException {
+    super.setup(context);
 
-        getCounter().register(Counter.class);
-        // getReporter().setLog(LOG_ADDITIVITY);
+    getCounter().register(Counter.class);
+    // getReporter().setLog(LOG_ADDITIVITY);
 
-        String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
-        nutchMetrics = NutchMetrics.getInstance(conf);
-        fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
-        retryMax = conf.getInt(PARAM_FETCH_MAX_RETRY, 3);
-        maxFetchInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
+    String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
+    nutchMetrics = NutchMetrics.getInstance(conf);
+    fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
+    retryMax = conf.getInt(PARAM_FETCH_MAX_RETRY, 3);
+    maxFetchInterval = ConfigUtils.getDuration(conf, PARAM_FETCH_MAX_INTERVAL, Duration.ofDays(90));
 
-        try {
-            datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
-        } catch (ClassNotFoundException e) {
-            throw new IOException(e);
-        }
-
-        Params.of(
-                "className", this.getClass().getSimpleName(),
-                "crawlId", crawlId,
-                "retryMax", retryMax,
-                "maxFetchInterval", maxFetchInterval,
-                "fetchSchedule", fetchSchedule.getClass().getSimpleName()
-        ).withLogger(LOG).info();
+    try {
+      datastore = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
+    } catch (ClassNotFoundException e) {
+      throw new IOException(e);
     }
 
-    @Override
-    protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> values, Context context) {
-        try {
-            doReduce(key, values, context);
-        } catch (Throwable e) {
-            LOG.error(StringUtil.stringifyException(e));
-        }
+    Params.of(
+            "className", this.getClass().getSimpleName(),
+            "crawlId", crawlId,
+            "retryMax", retryMax,
+            "maxFetchInterval", maxFetchInterval,
+            "fetchSchedule", fetchSchedule.getClass().getSimpleName()
+    ).withLogger(LOG).info();
+  }
+
+  @Override
+  protected void reduce(GraphGroupKey key, Iterable<WebGraphWritable> values, Context context) {
+    try {
+      doReduce(key, values, context);
+    } catch (Throwable e) {
+      LOG.error(StringUtil.stringifyException(e));
+    }
+  }
+
+  private void doReduce(GraphGroupKey key, Iterable<WebGraphWritable> subGraphs, Context context)
+          throws IOException, InterruptedException {
+    getCounter().increase(rows);
+
+    String reversedUrl = key.getReversedUrl();
+    String url = TableUtil.unreverseUrl(reversedUrl);
+
+    WebGraph graph = buildGraph(url, reversedUrl, subGraphs);
+    WebPage page = graph.getFocus().getWebPage();
+
+    if (page == null) {
+      getCounter().increase(pagesNotExist);
+      return;
     }
 
-    private void doReduce(GraphGroupKey key, Iterable<WebGraphWritable> subGraphs, Context context)
-            throws IOException, InterruptedException {
-        getCounter().increase(rows);
+    updateGraph(graph);
+    if (page.hasMark(FETCH)) {
+      updateFetchSchedule(url, page);
+      updateStatusCounter(page);
+    }
+    updateMetadata(page);
+    updateMarks(page);
 
-        String reversedUrl = key.getReversedUrl();
-        String url = TableUtil.unreverseUrl(reversedUrl);
+    context.write(reversedUrl, page.get());
+    getCounter().updateAffectedRows(url);
 
-        WebGraph graph = buildGraph(url, reversedUrl, subGraphs);
-        WebPage page = graph.getFocus().getWebPage();
+    nutchMetrics.reportWebPage(url, page);
+  }
 
-        if (page == null) {
-            getCounter().increase(pagesNotExist);
-            return;
+  /**
+   * The graph should be like this:
+   * <pre>
+   *       v1
+   *       ^
+   *       |
+   * v2 <- vc -> v3
+   *      / \
+   *     v  v
+   *    v4  v5
+   * </pre>
+   */
+  private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
+    WebGraph graph = new WebGraph();
+
+    WebVertex focus = new WebVertex(url);
+    for (WebGraphWritable graphWritable : subGraphs) {
+      assert (graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
+
+      WebGraph subGraph = graphWritable.get();
+      subGraph.edgeSet().forEach(edge -> {
+        if (edge.isLoop()) {
+          focus.setWebPage(edge.getTargetWebPage());
         }
-
-        updateGraph(graph);
-        if (page.hasMark(FETCH)) {
-            updateFetchSchedule(url, page);
-            updateStatusCounter(page);
-        }
-        updateMetadata(page);
-        updateMarks(page);
-
-        context.write(reversedUrl, page.get());
-        getCounter().updateAffectedRows(url);
-        nutchMetrics.reportWebPage(url, page);
+        graph.addEdgeLenient(focus, edge.getTarget(), subGraph.getEdgeWeight(edge));
+      });
     }
 
-    /**
-     * The graph should be like this:
-     * <pre>
-     *       v1
-     *       ^
-     *       |
-     * v2 <- vc -> v3
-     *      / \
-     *     v  v
-     *    v4  v5
-     * </pre>
-     */
-    private WebGraph buildGraph(String url, String reversedUrl, Iterable<WebGraphWritable> subGraphs) {
-        WebGraph graph = new WebGraph();
+    if (!focus.hasWebPage()) {
+      WebPage page = WebPage.wrap(reversedUrl, datastore.get(reversedUrl), true);
 
-        WebVertex focus = new WebVertex(url);
-        for (WebGraphWritable graphWritable : subGraphs) {
-            assert (graphWritable.getOptimizeMode().equals(IGNORE_SOURCE));
-
-            WebGraph subGraph = graphWritable.get();
-            subGraph.edgeSet().forEach(edge -> {
-                if (edge.isLoop()) {
-                    focus.setWebPage(edge.getTargetWebPage());
-                }
-                graph.addEdgeLenient(focus, edge.getTarget(), subGraph.getEdgeWeight(edge));
-            });
-        }
-
-        if (!focus.hasWebPage()) {
-            WebPage page = WebPage.wrap(reversedUrl, datastore.get(reversedUrl), true);
-
-            // Page is already in the db
-            if (!page.isEmpty()) {
-                focus.setWebPage(page);
-                getCounter().increase(Counter.pagesLoaded);
-            }
-        } else {
-            getCounter().increase(Counter.pagesPassed);
-        }
-
-        graph.setFocus(focus);
-
-        return graph;
+      // Page is already in the db
+      if (!page.isEmpty()) {
+        focus.setWebPage(page);
+        getCounter().increase(Counter.pagesLoaded);
+      }
+    } else {
+      getCounter().increase(Counter.pagesPassed);
     }
 
-    private boolean updateGraph(WebGraph graph) {
-        WebVertex focus = graph.getFocus();
-        WebPage page = focus.getWebPage();
+    graph.setFocus(focus);
 
-        int totalUpdates = 0;
-        for (WebEdge outgoingEdge : graph.outgoingEdgesOf(focus)) {
-            if (outgoingEdge.isLoop()) {
-                continue;
-            }
+    return graph;
+  }
 
-            /* Update out-link page */
-            String targetUrl = outgoingEdge.getTargetUrl();
-            WebPage targetPage = outgoingEdge.getTargetWebPage();
-            if (targetPage.getPageCategory().isDetail()) {
-                page.updateRefPublishTime(targetPage.getPublishTime());
-                page.increaseRefChars(targetPage.sniffTextContentLength());
-                page.increaseRefArticles(1);
-                ++totalUpdates;
-            }
+  private boolean updateGraph(WebGraph graph) {
+    WebVertex focus = graph.getFocus();
+    WebPage page = focus.getWebPage();
+
+    int totalUpdates = 0;
+    for (WebEdge outgoingEdge : graph.outgoingEdgesOf(focus)) {
+      if (outgoingEdge.isLoop()) {
+        continue;
+      }
+
+      /* Update out-link page */
+      WebPage outgoingPage = outgoingEdge.getTargetWebPage();
+
+      if (page.hasMetadata("-watch")) {
+        nutchMetrics.reportWebPage(outgoingPage.url(), outgoingPage, true);
+      }
+
+      if (outgoingPage.getPageCategory().isDetail()) {
+        page.updateRefContentPublishTime(outgoingPage.getContentPublishTime());
+        page.increaseRefChars(outgoingPage.getContentTextLength());
+        page.increaseRefArticles(1);
+        ++totalUpdates;
+      }
+    }
+
+    if (totalUpdates > 0) {
+      getCounter().increase(Counter.pagesUpdated);
+      getCounter().increase(Counter.totalUpdates, totalUpdates);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private void updateMetadata(WebPage page) {
+    // Clear temporary metadata
+    page.clearMetadata(REDIRECT_DISCOVERED);
+    page.clearMetadata(GENERATE_TIME);
+  }
+
+  private void updateMarks(WebPage page) {
+    page.putMarkIfNonNull(UPDATEING, page.getMark(UPDATEOUTG));
+    page.removeMark(INJECT);
+    page.removeMark(GENERATE);
+    page.removeMark(FETCH);
+    page.removeMark(PARSE);
+    page.removeMark(INDEX);
+    page.removeMark(UPDATEOUTG);
+  }
+
+  private void updateFetchSchedule(String url, WebPage page) {
+    byte status = page.getStatus().byteValue();
+
+    switch (status) {
+      case CrawlStatus.STATUS_FETCHED: // successful fetch
+      case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
+      case CrawlStatus.STATUS_REDIR_PERM:
+      case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, not modified
+        int modified = FetchSchedule.STATUS_UNKNOWN;
+        if (status == CrawlStatus.STATUS_NOTMODIFIED) {
+          modified = FetchSchedule.STATUS_NOTMODIFIED;
         }
 
-        if (totalUpdates > 0) {
-            getCounter().increase(Counter.pagesUpdated);
-            getCounter().increase(Counter.totalUpdates, totalUpdates);
-
-            return true;
+        ByteBuffer prevSig = page.getPrevSignature();
+        ByteBuffer signature = page.getSignature();
+        if (prevSig != null && signature != null) {
+          if (SignatureComparator.compare(prevSig, signature) != 0) {
+            modified = FetchSchedule.STATUS_MODIFIED;
+          } else {
+            modified = FetchSchedule.STATUS_NOTMODIFIED;
+          }
         }
 
-        return false;
-    }
+        Instant prevFetchTime = page.getPrevFetchTime();
+        Instant fetchTime = page.getFetchTime();
 
-    private void updateMetadata(WebPage page) {
-        // Clear temporary metadata
-        page.clearMetadata(REDIRECT_DISCOVERED);
-        page.clearMetadata(GENERATE_TIME);
-    }
-
-    private void updateMarks(WebPage page) {
-        page.putMarkIfNonNull(UPDATEING, page.getMark(UPDATEOUTG));
-        page.removeMark(INJECT);
-        page.removeMark(GENERATE);
-        page.removeMark(FETCH);
-        page.removeMark(PARSE);
-        page.removeMark(INDEX);
-    }
-
-    private void updateFetchSchedule(String url, WebPage page) {
-        byte status = page.getStatus().byteValue();
-
-        switch (status) {
-            case CrawlStatus.STATUS_FETCHED: // successful fetch
-            case CrawlStatus.STATUS_REDIR_TEMP: // successful fetch, redirected
-            case CrawlStatus.STATUS_REDIR_PERM:
-            case CrawlStatus.STATUS_NOTMODIFIED: // successful fetch, not modified
-                int modified = FetchSchedule.STATUS_UNKNOWN;
-                if (status == CrawlStatus.STATUS_NOTMODIFIED) {
-                    modified = FetchSchedule.STATUS_NOTMODIFIED;
-                }
-
-                ByteBuffer prevSig = page.getPrevSignature();
-                ByteBuffer signature = page.getSignature();
-                if (prevSig != null && signature != null) {
-                    if (SignatureComparator.compare(prevSig, signature) != 0) {
-                        modified = FetchSchedule.STATUS_MODIFIED;
-                    } else {
-                        modified = FetchSchedule.STATUS_NOTMODIFIED;
-                    }
-                }
-
-                Instant prevFetchTime = page.getPrevFetchTime();
-                Instant fetchTime = page.getFetchTime();
-
-                Instant prevModifiedTime = page.getPrevModifiedTime();
-                Instant modifiedTime = page.getModifiedTime();
-                Instant newModifiedTime = getModifiedTime(page);
-                if (newModifiedTime.isAfter(modifiedTime)) {
-                    prevModifiedTime = modifiedTime;
-                    modifiedTime = newModifiedTime;
-                }
-
-                fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
-
-                Duration fetchInterval = page.getFetchInterval();
-                if (!page.hasMark(Mark.INACTIVE) && fetchInterval.compareTo(maxFetchInterval) > 0) {
-                    LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
-                    fetchSchedule.forceRefetch(url, page, false);
-                }
-
-                if(modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
-                    getCounter().increase(Counter.badModTime);
-                    nutchMetrics.reportBadModifiedTime(Params.of(
-                            "PFT", prevFetchTime, "FT", fetchTime,
-                            "PMT", prevModifiedTime, "MT", modifiedTime,
-                            "HMT", page.getHeader(HttpHeaders.LAST_MODIFIED, Instant.EPOCH.toString()),
-                            "U", url
-                    ).formatAsLine());
-                }
-
-                break;
-            case CrawlStatus.STATUS_RETRY:
-                fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-                if (page.getRetriesSinceFetch() < retryMax) {
-                    page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
-                } else {
-                    page.setStatus((int) CrawlStatus.STATUS_GONE);
-                }
-                break;
-            case CrawlStatus.STATUS_GONE:
-                fetchSchedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
-                break;
-        }
-    }
-
-    private Instant getModifiedTime(WebPage page) {
+        Instant prevModifiedTime = page.getPrevModifiedTime();
         Instant modifiedTime = page.getModifiedTime();
-        Instant headerModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
-        Instant contentModifiedTime = page.getContentModifiedTime();
-
-        // A fix
-        if (modifiedTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
-            LOG.warn("Invalid modified time " + DateTimeUtil.isoInstantFormat(modifiedTime) + ", url : " + page.url());
-            modifiedTime = Instant.EPOCH;
+        Instant newModifiedTime = getModifiedTime(page);
+        if (newModifiedTime.isAfter(modifiedTime)) {
+          prevModifiedTime = modifiedTime;
+          modifiedTime = newModifiedTime;
         }
 
-        if (headerModifiedTime.isAfter(modifiedTime)) {
-            modifiedTime = headerModifiedTime;
+        fetchSchedule.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, modified);
+
+        Duration fetchInterval = page.getFetchInterval();
+        if (!page.hasMark(Mark.INACTIVE) && fetchInterval.compareTo(maxFetchInterval) > 0) {
+          LOG.info("Force refetch page " + url + ", fetch interval : " + fetchInterval);
+          fetchSchedule.forceRefetch(url, page, false);
         }
 
-        if (contentModifiedTime.isAfter(modifiedTime)) {
-            modifiedTime = contentModifiedTime;
+        if (modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
+          getCounter().increase(Counter.badModTime);
+          nutchMetrics.reportBadModifiedTime(Params.of(
+                  "PFT", prevFetchTime, "FT", fetchTime,
+                  "PMT", prevModifiedTime, "MT", modifiedTime,
+                  "HMT", page.getHeader(HttpHeaders.LAST_MODIFIED, Instant.EPOCH.toString()),
+                  "U", url
+          ).formatAsLine());
         }
 
-        return modifiedTime;
+        break;
+      case CrawlStatus.STATUS_RETRY:
+        fetchSchedule.setPageRetrySchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
+        if (page.getRetriesSinceFetch() < retryMax) {
+          page.setStatus((int) CrawlStatus.STATUS_UNFETCHED);
+        } else {
+          page.setStatus((int) CrawlStatus.STATUS_GONE);
+        }
+        break;
+      case CrawlStatus.STATUS_GONE:
+        fetchSchedule.setPageGoneSchedule(url, page, Instant.EPOCH, page.getPrevModifiedTime(), page.getFetchTime());
+        break;
+    }
+  }
+
+  private Instant getModifiedTime(WebPage page) {
+    Instant modifiedTime = page.getModifiedTime();
+    Instant headerModifiedTime = page.getHeaderLastModifiedTime(modifiedTime);
+    Instant contentModifiedTime = page.getContentModifiedTime();
+
+    // A fix
+    if (modifiedTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
+      LOG.warn("Invalid modified time " + DateTimeUtil.isoInstantFormat(modifiedTime) + ", url : " + page.url());
+      modifiedTime = Instant.EPOCH;
     }
 
-    private void updateStatusCounter(WebPage page) {
-        byte status = page.getStatus().byteValue();
-
-        switch (status) {
-            case CrawlStatus.STATUS_FETCHED:
-                getCounter().increase(NutchCounter.Counter.stFetched);
-                break;
-            case CrawlStatus.STATUS_REDIR_TEMP:
-                getCounter().increase(NutchCounter.Counter.stRedirTemp);
-                break;
-            case CrawlStatus.STATUS_REDIR_PERM:
-                getCounter().increase(NutchCounter.Counter.stRedirPerm);
-                break;
-            case CrawlStatus.STATUS_NOTMODIFIED:
-                getCounter().increase(NutchCounter.Counter.stNotModified);
-                break;
-            case CrawlStatus.STATUS_RETRY:
-                getCounter().increase(NutchCounter.Counter.stRetry);
-                break;
-            case CrawlStatus.STATUS_UNFETCHED:
-                getCounter().increase(NutchCounter.Counter.stUnfetched);
-                break;
-            case CrawlStatus.STATUS_GONE:
-                getCounter().increase(NutchCounter.Counter.stGone);
-                break;
-            default:
-                break;
-        }
+    if (headerModifiedTime.isAfter(modifiedTime)) {
+      modifiedTime = headerModifiedTime;
     }
+
+    if (contentModifiedTime.isAfter(modifiedTime)) {
+      modifiedTime = contentModifiedTime;
+    }
+
+    Instant contentPublishTime = page.getContentPublishTime();
+    if (contentPublishTime.isAfter(modifiedTime)) {
+      modifiedTime = contentPublishTime;
+    }
+
+    return modifiedTime;
+  }
+
+  private void updateStatusCounter(WebPage page) {
+    byte status = page.getStatus().byteValue();
+
+    switch (status) {
+      case CrawlStatus.STATUS_FETCHED:
+        getCounter().increase(NutchCounter.Counter.stFetched);
+        break;
+      case CrawlStatus.STATUS_REDIR_TEMP:
+        getCounter().increase(NutchCounter.Counter.stRedirTemp);
+        break;
+      case CrawlStatus.STATUS_REDIR_PERM:
+        getCounter().increase(NutchCounter.Counter.stRedirPerm);
+        break;
+      case CrawlStatus.STATUS_NOTMODIFIED:
+        getCounter().increase(NutchCounter.Counter.stNotModified);
+        break;
+      case CrawlStatus.STATUS_RETRY:
+        getCounter().increase(NutchCounter.Counter.stRetry);
+        break;
+      case CrawlStatus.STATUS_UNFETCHED:
+        getCounter().increase(NutchCounter.Counter.stUnfetched);
+        break;
+      case CrawlStatus.STATUS_GONE:
+        getCounter().increase(NutchCounter.Counter.stGone);
+        break;
+      default:
+        break;
+    }
+  }
 }

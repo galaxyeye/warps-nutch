@@ -50,7 +50,7 @@ public class ParserMapper extends NutchMapper<String, GoraWebPage, String, GoraW
     reparse = conf.getBoolean(PARAM_REPARSE, false);
     force = conf.getBoolean(PARAM_FORCE, false);
     limit = conf.getInt(PARAM_LIMIT, -1);
-    skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
+    skipTruncated = conf.getBoolean(PARAM_PARSE_SKIP_TRUNCATED, true);
 
     LOG.info(Params.format(
         "batchId", batchId,

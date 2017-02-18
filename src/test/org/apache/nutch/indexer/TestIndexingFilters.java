@@ -55,7 +55,7 @@ public class TestIndexingFilters {
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText("text");
+    page.setPageText("text");
     page.setPageTitle("title");
 
     String url = "http://www.example.com/";
@@ -76,7 +76,7 @@ public class TestIndexingFilters {
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText("text");
+    page.setPageText("text");
     page.setPageTitle("title");
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
 
@@ -102,7 +102,7 @@ public class TestIndexingFilters {
 
     IndexingFilters filters1 = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText("text");
+    page.setPageText("text");
     page.setPageTitle("title");
 
     IndexDocument fdoc1 = filters1.filter(new IndexDocument(key), url, page);
@@ -143,7 +143,7 @@ public class TestIndexingFilters {
 
     IndexingFilters filters = new IndexingFilters(conf);
     WebPage page = WebPage.newWebPage();
-    page.setText("text");
+    page.setPageText("text");
     page.setPageTitle("title");
     IndexDocument doc = filters.filter(null, "http://www.example.com/", page);
 

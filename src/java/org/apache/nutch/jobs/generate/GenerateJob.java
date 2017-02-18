@@ -21,6 +21,7 @@ import org.apache.gora.mapreduce.GoraMapper;
 import org.apache.gora.query.Query;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
@@ -43,10 +44,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.nutch.crawl.URLPartitioner.PARTITION_MODE_KEY;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -58,13 +56,10 @@ public class GenerateJob extends NutchJob implements Tool {
   private static final Set<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(GoraWebPage.Field.SCORE);
-    FIELDS.add(GoraWebPage.Field.STATUS);
-    FIELDS.add(GoraWebPage.Field.MARKERS);
-    FIELDS.add(GoraWebPage.Field.METADATA);
+    Collections.addAll(FIELDS, GoraWebPage.Field.values());
+    FIELDS.remove(GoraWebPage.Field.CONTENT);
+    FIELDS.remove(GoraWebPage.Field.PAGE_TEXT);
+    FIELDS.remove(GoraWebPage.Field.CONTENT_TEXT);
   }
 
   public GenerateJob() {
@@ -103,20 +98,20 @@ public class GenerateJob extends NutchJob implements Tool {
     String nutchTmpDir = conf.get(PARAM_NUTCH_TMP_DIR, PATH_NUTCH_TMP_DIR);
     String fetchScheduler = conf.get(PARAM_FETCH_SCHEDULE_CLASS, DefaultFetchSchedule.class.getName());
     String commandFile = PATH_LOCAL_COMMAND;
-    if (RuntimeUtil.checkLocalFileCommand(commandFile, CMD_FORCE_GENERATE_SEEDS)) {
-      reGenerateSeeds = true;
+    if (!reGenerateSeeds) {
+      reGenerateSeeds = RuntimeUtil.hasLocalFileCommand(commandFile, CMD_FORCE_GENERATE_SEEDS);
     }
 
     conf.set(PARAM_CRAWL_ID, crawlId);
     conf.set(PARAM_BATCH_ID, batchId);
-    conf.setLong(PARAM_GENERATOR_CUR_TIME, pseudoCurrTime);
+    conf.setLong(PARAM_GENERATE_CUR_TIME, pseudoCurrTime);
     conf.setBoolean(PARAM_GENERATE_REGENERATE, reGenerate);
-    conf.setBoolean(PARAM_GENERATE_SEEDS_FORCIBLY, reGenerateSeeds);
-    conf.setLong(PARAM_GENERATOR_TOP_N, topN);
+    conf.setBoolean(PARAM_GENERATE_REGENERATE_SEEDS, reGenerateSeeds);
+    conf.setLong(PARAM_GENERATE_TOP_N, topN);
     conf.setBoolean(PARAM_GENERATE_FILTER, filter);
     conf.setBoolean(PARAM_GENERATE_NORMALISE, norm);
 
-    URLUtil.HostGroupMode hostGroupMode = conf.getEnum(PARAM_GENERATOR_COUNT_MODE, URLUtil.HostGroupMode.BY_HOST);
+    URLUtil.HostGroupMode hostGroupMode = conf.getEnum(PARAM_GENERATE_COUNT_MODE, URLUtil.HostGroupMode.BY_HOST);
     conf.setEnum(PARTITION_MODE_KEY, hostGroupMode);
 
     LOG.info(Params.format(
@@ -143,6 +138,16 @@ public class GenerateJob extends NutchJob implements Tool {
     LOG.info("Use command >>>\n"
             + "echo " + CMD_FORCE_GENERATE_SEEDS + " > " + commandFile
             + "\n<<< to force generate and re-fetch seeds next round");
+
+    if (HadoopFSUtil.isDistributedFS(conf)) {
+      LOG.info("Running under hadoop distributed file system, copy banned url file to HDFS");
+
+      if (Files.exists(Paths.get(PATH_BANNED_URLS))) {
+        FileSystem fs = FileSystem.get(conf);
+        org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(PATH_BANNED_URLS);
+        fs.copyFromLocalFile(path, path);
+      }
+    }
   }
 
   @Override

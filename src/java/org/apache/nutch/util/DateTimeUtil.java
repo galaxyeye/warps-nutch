@@ -129,10 +129,6 @@ public class DateTimeUtil {
     return format(Instant.ofEpochMilli(epochMilli), format);
   }
 
-  public static String now() {
-    return format(LocalDateTime.now());
-  }
-
   public static String isoInstantFormat(long time) {
     return DateTimeFormatter.ISO_INSTANT.format(new Date(time).toInstant());
   }
@@ -147,6 +143,10 @@ public class DateTimeUtil {
 
   public static String now(String format) {
     return format(System.currentTimeMillis(), format);
+  }
+
+  public static String now() {
+    return format(LocalDateTime.now());
   }
 
   public static String elapsedTime(long start) {
@@ -187,6 +187,15 @@ public class DateTimeUtil {
       return DateTimeFormatter.ISO_INSTANT.parse(text, Instant::from);
     } catch (Throwable ignored) {
     }
+
+    return defaultValue;
+  }
+
+  public static Duration parseDuration(String durationStr, Duration defaultValue) {
+    try {
+      return Duration.parse(durationStr);
+    }
+    catch (Throwable ignored) {}
 
     return defaultValue;
   }

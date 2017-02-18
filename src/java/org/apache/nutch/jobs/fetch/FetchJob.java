@@ -40,6 +40,7 @@ import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -58,21 +59,18 @@ public class FetchJob extends NutchJob implements Tool {
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(GoraWebPage.Field.MARKERS);
-    FIELDS.add(GoraWebPage.Field.REPR_URL);
-    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.METADATA);
+    Collections.addAll(FIELDS, GoraWebPage.Field.values());
+    FIELDS.remove(GoraWebPage.Field.CONTENT);
+    FIELDS.remove(GoraWebPage.Field.PAGE_TEXT);
+    FIELDS.remove(GoraWebPage.Field.CONTENT_TEXT);
   }
 
   private int numTasks = 2;
   private String batchId = Nutch.ALL_BATCH_ID_STR;
 
-  public FetchJob() {
-  }
+  public FetchJob() {}
 
-  public FetchJob(Configuration conf) {
-    setConf(conf);
-  }
+  public FetchJob(Configuration conf) { setConf(conf); }
 
   /**
    * The field list affects which field to reads, but does not affect which field to to write
@@ -83,7 +81,7 @@ public class FetchJob extends NutchJob implements Tool {
       fields.addAll(ParserJob.getFields(getConf()));
     }
 
-    if (getConf().getBoolean(PARAM_INDEX_JUST_IN_TIME, false)) {
+    if (getConf().getBoolean(PARAM_INDEX_JIT, false)) {
       fields.addAll(IndexJob.getFields(conf));
     }
 
@@ -110,7 +108,6 @@ public class FetchJob extends NutchJob implements Tool {
     int limit = params.getInt(ARG_LIMIT, -1);
     numTasks = params.getInt(ARG_NUMTASKS, conf.getInt(PARAM_MAPREDUCE_JOB_REDUCES, 2));
     boolean index = params.getBoolean(ARG_INDEX, false);
-    boolean update = params.getBoolean(ARG_UPDATE, false);
 
     /* Solr */
     String solrUrl = params.get(ARG_SOLR_URL, conf.get(PARAM_SOLR_SERVER_URL));
@@ -124,12 +121,12 @@ public class FetchJob extends NutchJob implements Tool {
     conf.setEnum(PARAM_FETCH_MODE, fetchMode);
     ConfigUtils.setIfNotEmpty(conf, PARAM_BATCH_ID, batchId);
 
-    conf.setInt(PARAM_THREADS, threads);
+    conf.setInt(PARAM_FETCH_THREADS, threads);
     conf.setBoolean(PARAM_RESUME, resume);
     conf.setInt(PARAM_MAPPER_LIMIT, limit);
     conf.setInt(PARAM_MAPREDUCE_JOB_REDUCES, numTasks);
 
-    conf.setBoolean(PARAM_INDEX_JUST_IN_TIME, index);
+    conf.setBoolean(PARAM_INDEX_JIT, index);
     ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_SERVER_URL, solrUrl);
     ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_ZK, zkHostString);
     ConfigUtils.setIfNotEmpty(conf, PARAM_SOLR_COLLECTION, solrCollection);
@@ -144,7 +141,6 @@ public class FetchJob extends NutchJob implements Tool {
         "threads", threads,
         "resume", resume,
         "limit", limit,
-        "update", update,
         "index", index,
         "solrUrl", solrUrl,
         "zkHostString", zkHostString,

@@ -6,6 +6,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.nutch.graph.WebEdge;
 import org.apache.nutch.graph.WebGraph;
+import org.apache.nutch.metadata.Metadata;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -80,6 +81,7 @@ public class WebGraphWritable implements Writable {
 
       if (optimizeMode != IGNORE_EDGE) {
         Text.writeString(output, edge.getAnchor());
+        IOUtils.serialize(conf, output, edge.getMetadata(), Metadata.class);
         output.writeDouble(graph.getEdgeWeight(edge));
       }
 
@@ -100,6 +102,7 @@ public class WebGraphWritable implements Writable {
     int edgeSize = input.readInt();
 
     String anchor = "";
+    Metadata metadata = new Metadata();
     double weight = 0;
 
     for (int i = 0; i < edgeSize; ++i) {
@@ -107,6 +110,7 @@ public class WebGraphWritable implements Writable {
 
       if (optimizeMode != IGNORE_EDGE) {
         anchor = Text.readString(input);
+        metadata = IOUtils.deserialize(conf, input, null, Metadata.class);
         weight = input.readDouble();
       }
 
@@ -121,7 +125,9 @@ public class WebGraphWritable implements Writable {
         if (isLoop) source = target;
       }
 
-      graph.addEdgeLenient(source.get(), target.get(), weight).setAnchor(anchor);
+      WebEdge edge = graph.addEdgeLenient(source.get(), target.get(), weight);
+      edge.setAnchor(anchor);
+      edge.setMetadata(metadata);
     }
   }
 }

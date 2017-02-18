@@ -33,33 +33,33 @@ import java.io.IOException;
  * */
 public class FetchEntry extends Configured implements Writable {
 
-  private String key;
+  private String reservedUrl;
   private WebPage page;
 
   public FetchEntry() {
     super(null);
   }
 
-  public FetchEntry(Configuration conf, String key, WebPage page) {
+  public FetchEntry(Configuration conf, String reservedUrl, WebPage page) {
     super(conf);
-    this.key = key;
+    this.reservedUrl = reservedUrl;
     this.page = page;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    key = Text.readString(in);
-    page = WebPage.wrap(IOUtils.deserialize(getConf(), in, null, GoraWebPage.class));
+    reservedUrl = Text.readString(in);
+    page = WebPage.wrap(reservedUrl, IOUtils.deserialize(getConf(), in, null, GoraWebPage.class), true);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    Text.writeString(out, key);
+    Text.writeString(out, reservedUrl);
     IOUtils.serialize(getConf(), out, page.get(), GoraWebPage.class);
   }
 
-  public String getKey() {
-    return key;
+  public String getReservedUrl() {
+    return reservedUrl;
   }
 
   public WebPage getWebPage() {
@@ -68,6 +68,6 @@ public class FetchEntry extends Configured implements Writable {
 
   @Override
   public String toString() {
-    return "FetchEntry [key=" + key + ", page=" + page + "]";
+    return "<" + reservedUrl + ", " + page + ">";
   }
 }

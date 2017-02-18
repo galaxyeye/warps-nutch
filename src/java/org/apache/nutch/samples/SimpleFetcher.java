@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.util.ConfigUtils;
 import org.apache.nutch.util.NetUtil;
 import org.apache.nutch.util.URLUtil;
@@ -96,8 +95,6 @@ public class SimpleFetcher extends Configured {
 
     SimpleFetcher fetcher = new SimpleFetcher(ConfigUtils.create());
     WebPage page = fetcher.fetch(url, contentType);
-    System.out.println(page.getText());
-
-    System.out.println(WebPageConverter.convert(page));
+    System.out.println(page);
   }
 }

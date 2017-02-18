@@ -125,7 +125,7 @@ public class FeederThread extends Thread implements Comparable<FeederThread> {
 
         while (feedCapacity > 0 && currentIter.hasNext()) {
           FetchEntry entry = currentIter.next();
-          final String url = TableUtil.unreverseUrl(entry.getKey());
+          final String url = TableUtil.unreverseUrl(entry.getReservedUrl());
           tasksMonitor.produce(context.getJobId(), url, entry.getWebPage());
           feedCapacity--;
           feededCount++;

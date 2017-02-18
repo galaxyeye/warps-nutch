@@ -54,7 +54,11 @@ http://gora.apache.org/current/gora-hbase.html
     <class table="webpage" keyClass="java.lang.String" name="org.apache.nutch.persist.gora.GoraWebPage">
         <!-- fetch fields                                       -->
         <field name="baseUrl" family="f" qualifier="bas" />
+        <field name="batchId" family="f" qualifier="bid" />
         <field name="status" family="f" qualifier="st" />
+        <field name="distance" family="f" qualifier="dis" />
+        <field name="fetchCount" family="f" qualifier="fc" />
+        <field name="fetchPriority" family="f" qualifier="fp" />
         <field name="prevFetchTime" family="f" qualifier="pts" />
         <field name="fetchTime" family="f" qualifier="ts" />
         <field name="fetchInterval" family="f" qualifier="fi" />
@@ -65,20 +69,36 @@ http://gora.apache.org/current/gora-hbase.html
         <field name="protocolStatus" family="f" qualifier="prot" />
         <field name="modifiedTime" family="f" qualifier="mod" />
         <field name="prevModifiedTime" family="f" qualifier="pmod" />
-        <field name="batchId" family="f" qualifier="bid" />
 
         <!-- parse fields                                       -->
-        <field name="title" family="p" qualifier="t" />
-        <field name="text" family="p" qualifier="c" />
-        <field name="parseStatus" family="p" qualifier="st" />
-        <field name="signature" family="p" qualifier="sig" />
-        <field name="prevSignature" family="p" qualifier="psig" />
+        <field name="parseStatus" family="p" qualifier="ps" />
+        <field name="pageTitle" family="p" qualifier="pt" />
+        <field name="pageText" family="p" qualifier="ptx" />
+        <field name="contentTitle" family="p" qualifier="ct" />
+        <field name="contentText" family="p" qualifier="ctx" />
+        <field name="pageCategory" family="p" qualifier="pc" />
+        <field name="contentModifiedTime" family="p" qualifier="cmt" />
+        <field name="prevContentModifiedTime" family="p" qualifier="pcmt" />
+        <field name="contentPublishTime" family="p" qualifier="cpt" />
+        <field name="prevContentPublishTime" family="p" qualifier="pcpt" />
+        <field name="refContentPublishTime" family="p" qualifier="rcpt" />
+        <field name="prevRefContentPublishTime" family="p" qualifier="prcpt" />
+        <field name="prevSignature" family="p" qualifier="psg" />
+        <field name="signature" family="p" qualifier="sg" />
+        <field name="contentTextLength" family="p" qualifier="ctl" />
+        <field name="referrer" family="p" qualifier="r" />
+        <field name="referredArticles" family="p" qualifier="ra" />
+        <field name="referredChars" family="p" qualifier="rc" />
+        <field name="oldOutlinks" family="p" qualifier="oo" />
 
         <!-- score fields                                       -->
         <field name="score" family="s" qualifier="s" />
-        <field name="headers" family="h" />
+        <field name="contentScore" family="s" qualifier="cs" />
         <field name="inlinks" family="il" />
         <field name="outlinks" family="ol" />
+
+        <!-- other fields                                       -->
+        <field name="headers" family="h" />
         <field name="metadata" family="mtdt" />
         <field name="markers" family="mk" />
     </class>

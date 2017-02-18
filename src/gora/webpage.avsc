@@ -20,6 +20,24 @@
       "default": 0
     },
     {
+      "name": "distance",
+      "type": "int",
+      "doc": "The distance of the WebPage in the web.",
+      "default": -1
+    },
+    {
+      "name": "fetchCount",
+      "type": "int",
+      "doc": "The total fetch count of the WebPage.",
+      "default": 0
+    },
+    {
+      "name": "fetchPriority",
+      "type": "int",
+      "doc": "The priority of the WebPage to fetch.",
+      "default": 0
+    },
+    {
       "name": "fetchTime",
       "type": "long",
       "doc": "The system time in milliseconds for when the page was fetched.",
@@ -51,6 +69,42 @@
     },
     {
       "name": "prevModifiedTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.",
+      "default": 0
+    },
+    {
+      "name": "contentModifiedTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.",
+      "default": 0
+    },
+    {
+      "name": "prevContentModifiedTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.",
+      "default": 0
+    },
+    {
+      "name": "contentPublishTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.",
+      "default": 0
+    },
+    {
+      "name": "prevContentPublishTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.",
+      "default": 0
+    },
+    {
+      "name": "refContentPublishTime",
+      "type": "long",
+      "doc": "The system time in milliseconds for when this WebPage was modified by the WebPage author, if this is not available we default to the server for this information. This is important to understand the changing nature of the WebPage.",
+      "default": 0
+    },
+    {
+      "name": "prevRefContentPublishTime",
       "type": "long",
       "doc": "The system time in milliseconds for when this WebPage was previously modified by the author, if this is not available then we default to the server for this information. This is important to understand the changing nature of a WebPage.",
       "default": 0
@@ -112,6 +166,15 @@
       "default": null
     },
     {
+      "name": "pageCategory",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "The category of the page, INDEX, DETAIL, BBS, BLOG, etc.",
+      "default": null
+    },
+    {
       "name": "prevSignature",
       "type": [
         "null",
@@ -130,22 +193,67 @@
       "default": null
     },
     {
-      "name": "title",
+      "name": "pageTitle",
       "type": [
         "null",
         "string"
       ],
-      "doc": "The title of the WebPage.",
+      "doc": "The title extracted from page's metadate.",
       "default": null
     },
     {
-      "name": "text",
+      "name": "pageText",
       "type": [
         "null",
         "string"
       ],
-      "doc": "The textual content of the WebPage devoid from native markup.",
+      "doc": "The text in the WebPage devoid from native markup.",
       "default": null
+    },
+    {
+      "name": "contentTitle",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "The title of the extracted content in the WebPage.",
+      "default": null
+    },
+    {
+      "name": "contentText",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "The textual content of the extracted content in WebPage devoid from native markup.",
+      "default": null
+    },
+    {
+      "name": "contentTextLength",
+      "type": "int",
+      "doc": "The content text length.",
+      "default": 0
+    },
+    {
+      "name": "referredArticles",
+      "type": "int",
+      "doc": "Total articles out linked from the WebPage.",
+      "default": 0
+    },
+    {
+      "name": "referrer",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "The referrer page link of the WebPage.",
+      "default": null
+    },
+    {
+      "name": "referredChars",
+      "type": "int",
+      "doc": "Total article chars out linked from the WebPage.",
+      "default": 0
     },
     {
       "name": "parseStatus",
@@ -186,6 +294,12 @@
       "default": null
     },
     {
+      "name": "contentScore",
+      "type": "float",
+      "doc": "A score used to determine a WebPage's relevance within the web webGraph it is part of, calculated by extracted content. This score may change over time based on webGraph characteristics.",
+      "default": 0
+    },
+    {
       "name": "score",
       "type": "float",
       "doc": "A score used to determine a WebPage's relevance within the web webGraph it is part of. This score may change over time based on webGraph characteristics.",
@@ -213,6 +327,15 @@
       "default": {
         
       }
+    },
+    {
+      "name": "oldOutlinks",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "All old outlinks from this WebPage.",
+      "default": null
     },
     {
       "name": "outlinks",

@@ -207,7 +207,7 @@ do
   batchId=`date +%s`-$RANDOM
 
   echo "Generating a new fetchlist"
-  generate_args=(${commonOptions[@]}  "-D crawl.round=$a" -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID" -batchId $batchId)
+  generate_args=(${commonOptions[@]}  "-D crawl.round=$a" -batchId $batchId -reGen -topN $sizeFetchlist -adddays $addDays -crawlId "$CRAWL_ID")
   echo "$bin/nutch generate ${generate_args[@]}"
   $bin/nutch generate "${generate_args[@]}"
   RETCODE=$?

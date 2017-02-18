@@ -25,7 +25,7 @@ import org.apache.nutch.filter.URLFilterException;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.persist.gora.WebPageConverter;
+import org.apache.nutch.persist.WebPageConverter;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +87,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
 //      return false;
 //    }
 
-    WebPage page = WebPage.wrap(result.get());
+    WebPage page = WebPage.wrap(url, result.get(), false);
     Utf8 mark = page.getMark(Mark.UPDATEOUTG);
     return batchId == null || shouldProcess(mark, batchId);
   }
@@ -133,7 +133,7 @@ public class DbIterator extends UnmodifiableIterator<Map<String, Object>> {
       return null;
     }
 
-    page = WebPage.wrap(GoraWebPage.newBuilder(result.get()).build());
+    page = WebPage.wrap(skey, result.get(), true);
 
     try {
       skipNonRelevant();

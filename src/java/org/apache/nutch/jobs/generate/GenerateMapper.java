@@ -16,6 +16,9 @@
  ******************************************************************************/
 package org.apache.nutch.jobs.generate;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.FetchSchedule;
 import org.apache.nutch.crawl.FetchScheduleFactory;
@@ -28,16 +31,24 @@ import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.tools.NutchMetrics;
 import org.apache.nutch.util.DateTimeUtil;
+import org.apache.nutch.util.HadoopFSUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.nutch.jobs.NutchCounter.Counter.rows;
 import static org.apache.nutch.metadata.Nutch.*;
@@ -46,8 +57,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   public static final Logger LOG = GenerateJob.LOG;
 
   private enum Counter {
-    malformedUrl,
-    rowsAddedAsSeed, rowsIsSeed, rowsInjected, rowsDetailFromSeed,
+    malformedUrl, seeds, rowsDetail, rowsBanned,
     rowsDepth0, rowsDepth1, rowsDepth2, rowsDepth3, rowsDepthN,
     rowsBeforeStart, rowsNotInRange, rowsHostUnreachable,
     rowsNormalisedToNull, rowsUrlFiltered, oldUrlDate,
@@ -57,7 +67,9 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
 
   private NutchMetrics nutchMetrics;
   private final Set<String> unreachableHosts = new HashSet<>();
+  private final Set<String> bannedUrls = new HashSet<>();
 
+  private Configuration conf;
   private String batchId;
   private URLUtil.HostGroupMode hostGroupMode;
   private boolean filter;
@@ -74,7 +86,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
   private String[] keyRange;
   private boolean reGenerate = false;
   private boolean reGenerateSeeds = false;
-  private boolean ignoreGenerated = true;
   private int detailPages = 0;
 
   @Override
@@ -82,30 +93,31 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     super.setup(context);
 
     getCounter().register(Counter.class);
+    conf = context.getConfiguration();
 
     String crawlId = conf.get(PARAM_CRAWL_ID);
     batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
     String fetchMode = conf.get(PARAM_FETCH_MODE);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     reGenerate = conf.getBoolean(PARAM_GENERATE_REGENERATE, false);
-    reGenerateSeeds = conf.getBoolean(PARAM_GENERATE_SEEDS_FORCIBLY, false);
-    ignoreGenerated = !reGenerate || conf.getBoolean(PARAM_IGNORE_GENERATED, false);
+    reGenerateSeeds = conf.getBoolean(PARAM_GENERATE_REGENERATE_SEEDS, false);
 
     nutchMetrics = NutchMetrics.getInstance(conf);
-    boolean ignoreUnreachableHosts = conf.getBoolean("generator.ignore.unreachable.hosts", true);
+    boolean ignoreUnreachableHosts = conf.getBoolean(PARAM_GENERATE_IGNORE_UNREACHABLE_HOSTS, true);
     if (ignoreUnreachableHosts) {
       nutchMetrics.loadUnreachableHosts(unreachableHosts);
     }
+    bannedUrls.addAll(loadBannedUrl());
 
     filter = conf.getBoolean(PARAM_GENERATE_FILTER, true);
     urlFilters = filter ? new URLFilters(conf) : null;
     normalise = conf.getBoolean(PARAM_GENERATE_NORMALISE, true);
     urlNormalizers = normalise ? new URLNormalizers(conf, URLNormalizers.SCOPE_GENERATE_HOST_COUNT) : null;
 
-    maxDistance = conf.getInt(PARAM_GENERATOR_MAX_DISTANCE, -1);
-    pseudoCurrTime = Instant.ofEpochMilli(conf.getLong(PARAM_GENERATOR_CUR_TIME, startTime));
-    long topN = conf.getLong(PARAM_GENERATOR_TOP_N, 10000);
-    detailPageRate = conf.getFloat(PARAM_GENERATOR_DETAIL_PAGE_RATE, 0.80f);
+    maxDistance = conf.getInt(PARAM_GENERATE_MAX_DISTANCE, -1);
+    pseudoCurrTime = Instant.ofEpochMilli(conf.getLong(PARAM_GENERATE_CUR_TIME, startTime));
+    long topN = conf.getLong(PARAM_GENERATE_TOP_N, 10000);
+    detailPageRate = conf.getFloat(PARAM_GENERATE_DETAIL_PAGE_RATE, 0.80f);
     maxDetailPageCount = Math.round(topN * detailPageRate);
 
     fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
@@ -130,7 +142,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
         "keyRange", keyRange[0] + " - " + keyRange[1],
         "reGenerate", reGenerate,
         "reGenerateSeeds", reGenerateSeeds,
-        "ignoreGenerated", ignoreGenerated,
         "ignoreUnreachableHosts", ignoreUnreachableHosts,
         "unreachableHostsPath", nutchMetrics.getUnreachableHostsPath(),
         "unreachableHosts", unreachableHosts.size()
@@ -157,30 +168,16 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     updateStatus(url, page);
   }
 
-  /*
-   * Raise detail page's priority so them can be fetched sooner
-   * Detail pages comes first, but we still need keep chances for pages with other category
-   * */
-  private float calculateInitSortScore(String url, WebPage page) {
-    boolean raise = (page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url)) && ++detailPages < maxDetailPageCount;
-
-    float factor = raise ? 1.0f : 0.0f;
-    int depth = page.getDepth();
-
-    return (10000.0f - 100 * depth) + factor * 1000000.0f;
-  }
-
   /**
    * TODO : We may move some filters to hbase query filters directly
    * */
   private boolean shouldFetch(String url, String reversedUrl, WebPage page) {
-    int depth = page.getDepth();
-
-    if (!checkFetchSchedule(url, page, depth)) {
+    if (!checkHost(url)) {
       return false;
     }
 
-    if (!checkHost(url)) {
+    if (bannedUrls.contains(url)) {
+      getCounter().increase(Counter.rowsBanned);
       return false;
     }
 
@@ -200,7 +197,7 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
        * 1. Restart a crawl with ignoreGenerated set to be false
        * 2. Resume a FetchJob with resume set to be true
        * */
-      if (ignoreGenerated) {
+      if (!reGenerate) {
         // LOG.debug("Skipping {}; already generated", url);
         long generateTime = page.getGenerateTime();
 
@@ -211,13 +208,13 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       }
     } // if
 
+    int distance = page.getDistance();
     // Filter on distance
-    if (maxDistance > -1 && depth > maxDistance) {
+    if (maxDistance > -1 && distance > maxDistance) {
       getCounter().increase(Counter.pagesTooDeep);
       return false;
     }
 
-    // TODO : CrawlFilter may be move to be a plugin
     // TODO : Url range filtering should be applied to HBase query filter
     // key before start key
     if (!CrawlFilter.keyGreaterEqual(reversedUrl, keyRange[0])) {
@@ -259,13 +256,13 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
       return false;
     }
 
-    return true;
+    return checkFetchSchedule(url, page, distance);
   }
 
   /**
    * Fetch schedule, timing filter
    * */
-  private boolean checkFetchSchedule(String url, WebPage page, int depth) {
+  private boolean checkFetchSchedule(String url, WebPage page, int distance) {
     if (!fetchSchedule.shouldFetch(url, page, pseudoCurrTime)) {
       if (page.hasMark(Mark.INACTIVE)) {
         getCounter().increase(Counter.pagesInactive);
@@ -277,9 +274,9 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
         getCounter().increase(Counter.pagesFetchLater);
       }
 
-      if (depth == 0) {
+      if (distance == 0) {
         getCounter().increase(Counter.seedsFetchLater);
-        nutchMetrics.debugFetchLaterSeeds(nutchMetrics.getPageReport(url, page));
+        nutchMetrics.debugFetchLaterSeeds(url, page);
       }
 
       return false;
@@ -305,17 +302,59 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     return true;
   }
 
+  /*
+   * Raise detail page's priority so them can be fetched sooner
+   * Detail pages comes first, but we still need keep chances for pages with other category
+   * */
+  private float calculateInitSortScore(String url, WebPage page) {
+    boolean isDetail = page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url);
+    boolean raise = isDetail && ++detailPages < maxDetailPageCount;
+
+    float factor = raise ? 1.0f : 0.0f;
+    int depth = page.getDepth();
+
+    return (10000.0f - 100 * depth) + factor * 1000000.0f;
+  }
+
+  private List<String> loadBannedUrl() {
+    List<String> urls = new ArrayList<>();
+
+    boolean isDistributedFs = HadoopFSUtil.isDistributedFS(conf);
+    try {
+      if (isDistributedFs) {
+        org.apache.hadoop.fs.Path hdfsPath = new org.apache.hadoop.fs.Path(PATH_BANNED_URLS);
+        urls = IOUtils.readLines(FileSystem.get(conf).open(hdfsPath), Charset.defaultCharset());
+      }
+      else {
+        urls = Files.readAllLines(Paths.get(PATH_BANNED_URLS));
+      }
+
+      LOG.info("Total " + urls.size() + " urls are banned");
+      if (!urls.isEmpty()) {
+        LOG.info("Banned urls : " + urls.stream().limit(10).collect(Collectors.joining(", ")));
+      }
+    }
+    catch (NoSuchFileException e) {
+      LOG.info("No banned urls");
+    }
+    catch (IOException e) {
+      LOG.info("Failed to load url black list, isDistributedFs : " + isDistributedFs + ", " + e);
+    }
+
+    return urls;
+  }
+
   private void output(SelectorEntry entry, WebPage page, Context context) throws IOException, InterruptedException {
     context.write(entry, page.get());
   }
 
   private void updateStatus(String url, WebPage page) throws IOException, InterruptedException {
     if (page.isSeed()) {
-      getCounter().increase(Counter.rowsIsSeed);
+      getCounter().increase(Counter.seeds);
     }
 
-    if (page.hasMark(Mark.INJECT)) {
-      getCounter().increase(Counter.rowsInjected);
+    if ((page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url))) {
+      getCounter().increase(Counter.rowsDetail);
     }
 
     int depth = page.getDepth();
@@ -326,9 +365,6 @@ public class GenerateMapper extends NutchMapper<String, GoraWebPage, SelectorEnt
     }
     else if (depth == 1) {
       counter = Counter.rowsDepth1;
-      if ((page.getPageCategory().isDetail() || crawlFilters.veryLikelyBeDetailUrl(url))) {
-        counter = Counter.rowsDetailFromSeed;
-      }
     }
     else if (depth == 2) {
       counter = Counter.rowsDepth2;

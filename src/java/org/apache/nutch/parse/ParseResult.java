@@ -22,27 +22,25 @@ import java.util.ArrayList;
 
 public class ParseResult {
 
-  private String text = "";
   private String pageTitle = "";
+  private String pageText = "";
   private ArrayList<Outlink> outlinks = new ArrayList<>();
   private ParseStatus parseStatus;
 
   public ParseResult() {
   }
 
-  public ParseResult(String text, String pageTitle, ArrayList<Outlink> outlinks, ParseStatus parseStatus) {
-    this.text = text;
+  public ParseResult(String pageText, String pageTitle, ArrayList<Outlink> outlinks, ParseStatus parseStatus) {
     this.pageTitle = pageTitle;
+    this.pageText = pageText;
     this.outlinks = outlinks;
     this.parseStatus = parseStatus;
   }
 
-  public String getText() {
-    return text;
-  }
+  public String getPageText() { return pageText; }
 
-  public void setText(String text) {
-    this.text = text;
+  public void setPageText(String pageText) {
+    this.pageText = pageText;
   }
 
   public String getPageTitle() { return pageTitle; }

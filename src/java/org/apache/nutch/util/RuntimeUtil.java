@@ -39,7 +39,7 @@ public class RuntimeUtil {
   /**
    * Check local command file
    * */
-  public static boolean checkLocalFileCommand(String commandFile, String command) {
+  public static boolean hasLocalFileCommand(String commandFile, String command) {
     boolean exist = false;
 
     Path path = Paths.get(commandFile);

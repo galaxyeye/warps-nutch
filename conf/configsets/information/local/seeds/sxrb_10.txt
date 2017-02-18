@@ -6,5 +6,5 @@ http://sz.sxrb.com/sxxww/dspd/szpd/qcjt/
 http://sz.sxrb.com/sxxww/dspd/szpd/wsjk/
 http://sz.sxrb.com/sxxww/dspd/szpd/wyss/
 http://sz.sxrb.com/sxxww/dspd/szpd/zjaq/
-http://www.sxrb.com/sxxww/
+http://www.sxrb.com/sxxww/	-watch=true -fetchInterval=PT1S
 http://www.sxrb.com/sxxww/xwpd/

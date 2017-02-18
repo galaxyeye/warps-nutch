@@ -19,7 +19,6 @@ import org.apache.nutch.filter.URLFilters;
 import org.apache.nutch.filter.URLNormalizers;
 import org.apache.nutch.jobs.NutchCounter;
 import org.apache.nutch.jobs.fetch.FetchJob;
-import org.apache.nutch.jobs.parse.ParserJob;
 import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.parse.ParseUtil;
@@ -50,9 +49,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
+import static org.apache.nutch.metadata.Mark.*;
 import static org.apache.nutch.metadata.Metadata.Name.REDIRECT_DISCOVERED;
 import static org.apache.nutch.metadata.Nutch.*;
-import static org.apache.nutch.metadata.Mark.*;
 
 public class TaskScheduler extends Configured {
 
@@ -79,6 +78,7 @@ public class TaskScheduler extends Configured {
     pagesTho, mbTho,
     rowsRedirect,
     seeds,
+    indexedPages, notIndexedPages,
     pagesDepth0, pagesDepth1, pagesDepth2, pagesDepth3, pagesDepthN, pagesDepthUp,
     pagesPeresist
   }
@@ -104,7 +104,6 @@ public class TaskScheduler extends Configured {
   // Handle redirect
   private final URLFilters urlFilters;
   private final URLNormalizers normalizers;
-  private final boolean ignoreExternalLinks;
 
   // Parser setting
   private final boolean storingContent;
@@ -191,13 +190,12 @@ public class TaskScheduler extends Configured {
     this.seedBuiler = new SeedBuilder(conf);
 
     // Index manager
-    boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JUST_IN_TIME, false);
+    boolean indexJIT = conf.getBoolean(Nutch.PARAM_INDEX_JIT, false);
     this.jitIndexer = indexJIT ? new JITIndexer(conf) : null;
 
     this.parse = indexJIT || conf.getBoolean(PARAM_PARSE, true);
     this.parseUtil = parse ? new ParseUtil(getConf()) : null;
-    this.skipTruncated = getConf().getBoolean(ParserJob.SKIP_TRUNCATED, true);
-    this.ignoreExternalLinks = conf.getBoolean(PARAM_IGNORE_EXTERNAL_LINKS, true);
+    this.skipTruncated = getConf().getBoolean(PARAM_PARSE_SKIP_TRUNCATED, true);
     this.storingContent = conf.getBoolean(PARAM_FETCH_STORE_CONTENT, false);
 
     this.outputDir = ConfigUtils.getPath(conf, PARAM_NUTCH_OUTPUT_DIR, Paths.get(PATH_NUTCH_OUTPUT_DIR));
@@ -217,7 +215,6 @@ public class TaskScheduler extends Configured {
         "skipTruncated", skipTruncated,
         "parse", parse,
         "storingContent", storingContent,
-        "ignoreExternalLinks", ignoreExternalLinks,
 
         "indexJIT", indexJIT(),
         "outputDir", outputDir
@@ -488,6 +485,9 @@ public class TaskScheduler extends Configured {
     counter.setValue(Counter.pagesTho, Math.round(pagesThrouRate));
     counter.setValue(Counter.mbTho, Math.round(bytesThrouRate / 1000));
 
+    counter.setValue(Counter.indexedPages, jitIndexer.getIndexedPages());
+    counter.setValue(Counter.notIndexedPages, jitIndexer.getIngoredPages());
+
     String statusString = getStatusString(pagesThrouRate, bytesThrouRate, readyFetchItems, pendingFetchItems);
 
     /* Status string shows in yarn admin ui */
@@ -705,10 +705,6 @@ public class TaskScheduler extends Configured {
       return;
     }
 
-    if (ignoreExternalLinks && NetUtil.isExternalLink(url, newUrl)) {
-      return;
-    }
-
     page.getOutlinks().put(new Utf8(newUrl), new Utf8());
     page.putMetadata(REDIRECT_DISCOVERED, YES_STRING);
 
@@ -776,6 +772,7 @@ public class TaskScheduler extends Configured {
     output(reversedUrl, page);
     counter.increase(Counter.pagesPeresist);
     counter.increase(NutchCounter.Counter.outlinks, page.sniffOutLinkCount());
+
     updateStatus(url, page);
   }
 

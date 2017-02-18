@@ -55,18 +55,18 @@ public class NutchUtil {
         jobConfig.getConfId(), jobConfig.getType(), String.valueOf(hashCode));
   }
 
-  public static Map<String, Object> recordJobStatus(Job job) {
+  public static Map<String, Object> getJobStatus(Job job) {
     Map<String, Object> jobStates = Maps.newHashMap();
     if (job == null) {
       return jobStates;
     }
 
-    jobStates.putAll(getJobState(job, ArrayUtils.EMPTY_STRING_ARRAY));
+    jobStates.putAll(getGroupedJobState(job, Nutch.STAT_RUNTIME_STATUS));
 
     return jobStates;
   }
 
-  private static Map<String, Object> getJobState(Job job, String... groups) {
+  private static Map<String, Object> getGroupedJobState(Job job, String... groups) {
     Map<String, Object> jobState = Maps.newHashMap();
     if (job == null) {
       return jobState;
@@ -83,7 +83,7 @@ public class NutchUtil {
     jobState.put("jobName", job.getJobName());
     jobState.put("jobID", job.getJobID());
 
-    jobState.put(Nutch.STAT_COUNTERS, getJobCounters(job, groups));
+    jobState.putAll(getJobCounters(job, groups));
 
     return jobState;
   }

@@ -35,7 +35,7 @@ import java.util.HashMap;
  * A collection of methods for extracting content from DOM trees.
  * 
  * This class holds a few utility methods for pulling content out of DOM nodes,
- * such as getOutlinks, getText, etc.
+ * such as getOutlinks, getContentText, etc.
  * 
  */
 public class DOMContentUtils {
@@ -112,7 +112,7 @@ public class DOMContentUtils {
 
   /**
    * This is a convinience method, equivalent to
-   * {@link #getText(StringBuffer,Node,boolean) getText(sb, node, false)}.
+   * {@link #getText(StringBuffer,Node,boolean) getContentText(sb, node, false)}.
    * 
    */
   public void getText(StringBuffer sb, Node node) {

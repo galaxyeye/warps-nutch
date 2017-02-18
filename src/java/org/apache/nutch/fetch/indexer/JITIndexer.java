@@ -8,6 +8,7 @@ import org.apache.nutch.fetch.data.FetchTask;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexWriters;
 import org.apache.nutch.parse.ParseStatusCodes;
+import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.util.StringUtil;
@@ -20,6 +21,9 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.apache.nutch.metadata.Nutch.DOC_FIELD_TEXT_CONTENT;
 
 /**
  * Created by vincent on 16-8-23.
@@ -34,8 +38,8 @@ public class JITIndexer {
   private int batchSize = 2000;
   private int indexThreadCount;
   private int minTextLenght;
-  private int totalPages = 0;
-  private int pagesTooShort = 0;
+  private AtomicInteger indexedPages = new AtomicInteger(0);
+  private AtomicInteger ignoredPages = new AtomicInteger(0);
 
   private final Set<IndexThread> activeIndexThreads = new ConcurrentSkipListSet<>();
   private final BlockingQueue<FetchTask> indexTasks = Queues.newLinkedBlockingQueue(batchSize);
@@ -48,7 +52,7 @@ public class JITIndexer {
 
     this.batchSize = conf.getInt("indexer.index.batch.size", this.batchSize);
     this.indexThreadCount = conf.getInt("indexer.index.thread.count", 1);
-    this.minTextLenght = conf.getInt("indexer.minimal.text.length", 200);
+    this.minTextLenght = conf.getInt("indexer.minimal.text.length", 300);
 
     indexWriters = new IndexWriters(conf);
     indexWriters.open(conf);
@@ -62,12 +66,22 @@ public class JITIndexer {
     activeIndexThreads.remove(indexThread);
   }
 
-  public int getIndexThreadCount() { return indexThreadCount; }
+  public int getIndexThreadCount() {
+    return indexThreadCount;
+  }
+
+  public int getIndexedPages() {
+    return indexedPages.get();
+  }
+
+  public int getIngoredPages() {
+    return ignoredPages.get();
+  }
 
   /**
    * Add fetch item to index indexTasks
    * Thread safe
-   * */
+   */
   public void produce(FetchTask fetchTask) {
     WebPage page = fetchTask.getPage();
     if (page == null) {
@@ -75,10 +89,8 @@ public class JITIndexer {
       return;
     }
 
-    ParseStatus pstatus = page.getParseStatus();
-    if (pstatus == null || !isParseSuccess(pstatus) || pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
-      // getCounter().increase(IndexMapper.Counter.unmatchStatus);
-      return; // filter urls not parsed
+    if (!shouldProduce(page)) {
+      return;
     }
 
     indexTasks.add(fetchTask);
@@ -86,7 +98,7 @@ public class JITIndexer {
 
   /**
    * Thread safe
-   * */
+   */
   public FetchTask consume() {
     return indexTasks.poll();
   }
@@ -95,11 +107,11 @@ public class JITIndexer {
     indexThreads.forEach(IndexThread::halt);
 
     LOG.info("JITIndexer cleanup ...");
-    LOG.info("There are " + pagesTooShort + " not indexed short pages out of total " + totalPages + " pages");
+    LOG.info("There are " + ignoredPages + " not indexed short pages out of total " + indexedPages + " pages");
 
     try {
       FetchTask fetchTask = consume();
-      while(fetchTask != null) {
+      while (fetchTask != null) {
         index(fetchTask);
         fetchTask = consume();
       }
@@ -107,11 +119,9 @@ public class JITIndexer {
       synchronized (indexWriters) {
         indexWriters.commit();
       }
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       LOG.error(e.toString());
-    }
-    finally {
+    } finally {
       synchronized (indexWriters) {
         indexWriters.close();
       }
@@ -120,7 +130,7 @@ public class JITIndexer {
 
   /**
    * Thread safe
-   * */
+   */
   public void index(FetchTask fetchTask) {
     try {
       if (fetchTask == null) {
@@ -133,39 +143,40 @@ public class JITIndexer {
       WebPage page = fetchTask.getPage();
 
       IndexDocument doc = new IndexDocument.Builder(conf).build(reverseUrl, page);
-      doc = filter(doc, page);
       if (doc != null) {
         synchronized (indexWriters) {
           indexWriters.write(doc);
           page.putIndexTimeHistory(Instant.now());
         }
+        indexedPages.incrementAndGet();
       } // if
-    }
-    catch (Throwable e) {
+    } catch (Throwable e) {
       LOG.error("Failed to index a page " + StringUtil.stringifyException(e));
     }
   }
 
-  private IndexDocument filter(IndexDocument doc, WebPage page) {
-    if (doc == null || page == null) {
-      return null;
-    }
-
-    ++totalPages;
-    if (page.sniffTextContentLength() < 400) {
-      // nutchMetrics.reportShortPages();
-      ++pagesTooShort;
-      return null;
-    }
-
-    return doc;
-  }
-
-  private static boolean isParseSuccess(ParseStatus status) {
-    if (status == null) {
+  private boolean shouldIndex(IndexDocument doc) {
+    String textContent = doc.getFieldValueAsString(DOC_FIELD_TEXT_CONTENT);
+    if (textContent == null || textContent.length() < minTextLenght) {
+      LOG.warn("Invalid text content to index, url : " + doc.getUrl());
       return false;
     }
 
-    return status.getMajorCode() == ParseStatusCodes.SUCCESS;
+    return true;
+  }
+
+  private boolean shouldProduce(WebPage page) {
+    ParseStatus status = page.getParseStatus();
+
+    if (!ParseStatusUtils.isSuccess(status) || status.getMajorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
+      return false;
+    }
+
+    if (page.getContentText().length() < minTextLenght) {
+      ignoredPages.incrementAndGet();
+      return false;
+    }
+
+    return true;
   }
 }

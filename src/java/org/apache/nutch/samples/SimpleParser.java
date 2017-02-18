@@ -17,24 +17,19 @@
 
 package org.apache.nutch.samples;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.google.common.collect.Maps;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.nutch.common.EncodingDetector;
-import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.filter.CrawlFilters;
 import org.apache.nutch.filter.URLFilterException;
-import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.ParseResult;
 import org.apache.nutch.parse.ParseUtil;
 import org.apache.nutch.persist.WebPage;
-import org.apache.nutch.persist.gora.WebPageConverter;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.util.StringUtil;
-import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.warps.scent.document.TextDocument;
@@ -47,9 +42,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -75,25 +69,28 @@ public class SimpleParser extends Configured {
     fetcher = new SimpleFetcher(conf);
   }
 
-  public void parse(String url) { parse(url, null); }
+  public WebPage parse(String url) { return parse(url, null); }
 
-  public void parse(String url, String contentType) {
+  public WebPage parse(String url, String contentType) {
     LOG.info("Parsing: " + url);
 
     page = fetcher.fetch(url, contentType);
     if (page != null) {
       parse(page);
     }
+
+    return page;
   }
 
-  public void parse(WebPage page) {
+  public WebPage parse(WebPage page) {
     ParseUtil parseUtil = new ParseUtil(getConf());
     if (page != null && !page.getBaseUrl().isEmpty()) {
       parseResult = parseUtil.process(page.url(), page);
     }
+    return page;
   }
 
-  public void extract(String url, String contentType) {
+  public WebPage extract(String url, String contentType) {
     LOG.info("Extract: " + url);
 
     try {
@@ -104,6 +101,8 @@ public class SimpleParser extends Configured {
     } catch (SAXException|IOException|ProcessingException e) {
       LOG.error(e.getMessage());
     }
+
+    return page;
   }
 
   private InputSource getContentAsInputSource(WebPage page) {
@@ -124,7 +123,7 @@ public class SimpleParser extends Configured {
     input.setEncoding(encoding);
 
     input = getContentAsInputSource(page);
-    TextDocument scentDoc = new SAXInput(input, url).parse();
+    TextDocument scentDoc = new SAXInput().parse(url, input);
     System.out.println(scentDoc.getTextContent(true, true));
   }
 
@@ -142,79 +141,47 @@ public class SimpleParser extends Configured {
     return results;
   }
 
-  private void saveWebPage(WebPage page) {
-    try {
-      Path path = Paths.get("/tmp/nutch/web/" + DigestUtils.md5Hex(page.getBaseUrl()));
-
-      if (!Files.exists(path)) {
-        FileUtils.forceMkdir(path.getParent().toFile());
-        Files.createFile(path);
-      }
-      Files.write(path, page.getContent().array());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   private Map<String, Object> processResult() throws MalformedURLException, URLFilterException {
     if (parseResult == null) {
       LOG.error("Problem with parseResult - check log");
       return results;
     }
 
-    if (ParserMapper.isTruncated(page.url(), page)) {
-      results.put("contentStatus", "truncated");
-    }
-
-    // Calculate the signature
-    byte[] signature = SignatureFactory.getSignature(getConf()).calculate(page);
-    results.put("Signature", StringUtil.toHexString(signature));
-
-    Map<String, Object> metadata = WebPageConverter.convert(page, "metadata");
-    metadata.remove("old_out_links");
-    results.put("Metadata", WebPageConverter.convert(page, "metadata"));
-
-    String validOutlinks = parseResult.getOutlinks().stream()
-        .map(Outlink::getToUrl)
-        .filter(l -> crawlFilters.normalizeAndValidateUrl(l)).sorted().distinct().collect(Collectors.joining("\n"));
-    results.put("Outlinks", validOutlinks);
-
     String discardedOutlinks = parseResult.getOutlinks().stream()
         .map(Outlink::getToUrl)
         .filter(l -> !crawlFilters.normalizeAndValidateUrl(l)).sorted().distinct().collect(Collectors.joining("\n"));
     results.put("DiscardOutlinks", discardedOutlinks);
 
-    String headerStr = page.getHeaders().entrySet().stream()
-        .map(e -> e.getKey() + " : " + e.getValue())
-        .collect(Collectors.joining("\n"));
-    results.put("Headers", headerStr);
-
-    results.put("content", page.getTextContent());
-
     return results;
   }
 
+  private static class Options {
+    @Parameter(required = true, description = "Url to parse")
+    List<String> url = new ArrayList<>();
+    @Parameter(names = {"-dumpText", "-t"}, description = "dumpText")
+    boolean dumpText = false;
+    @Parameter(names = {"-dumpContent", "-c"}, description = "dumpContent")
+    boolean dumpContent = false;
+    @Parameter(names = {"-dumpHeaders", "-h"}, description = "dumpHeaders")
+    boolean dumpHeaders = false;
+    @Parameter(names = {"-dumpLinks", "-l"}, description = "dumpLinks")
+    boolean dumpLinks = false;
+  }
+
   public static void main(String[] args) throws Exception {
+    Options opt = new Options();
+    JCommander jc = new JCommander(opt, args);
+
     if (args.length < 1) {
-      System.out.println("Usage : SimpleParser [-forceAs contentType] url");
+      jc.usage();
       System.exit(0);
-    }
-
-    String contentType = null;
-    String url = null;
-
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].equals("-forceAs")) {
-        contentType = args[++i];
-      } else {
-        url = URLUtil.toASCII(args[i]);
-      }
     }
 
     SimpleParser parser = new SimpleParser(ConfigUtils.create());
     // parser.parseResult(url, contentType);
-    parser.parse(url, contentType);
+    WebPage page = parser.parse(opt.url.get(0));
 
     System.out.println(parser.getResult());
+    System.out.println(page.getRepresentation(opt.dumpText, opt.dumpContent, opt.dumpHeaders, opt.dumpLinks));
   }
 }

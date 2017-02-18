@@ -70,10 +70,10 @@ public class GenerateReducer extends NutchReducer<SelectorEntry, GoraWebPage, St
     batchId = conf.get(PARAM_BATCH_ID, ALL_BATCH_ID_STR);
 
     // Generate top N links only
-    limit = conf.getLong(PARAM_GENERATOR_TOP_N, 100000);
+    limit = conf.getLong(PARAM_GENERATE_TOP_N, 100000);
     limit /= context.getNumReduceTasks();
 
-    maxCountPerHost = conf.getLong(PARAM_GENERATOR_MAX_TASKS_PER_HOST, 10000);
+    maxCountPerHost = conf.getLong(PARAM_GENERATE_MAX_TASKS_PER_HOST, 10000);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
     nutchMetrics = NutchMetrics.getInstance(conf);
 

@@ -19,13 +19,18 @@ package org.apache.nutch.crawl.schedulers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.util.DateTimeUtil;
 import org.slf4j.Logger;
 
 import java.text.DecimalFormat;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static org.apache.nutch.metadata.Mark.INACTIVE;
+import static org.apache.nutch.metadata.Mark.SEMI_INACTIVE;
+import static org.apache.nutch.metadata.Metadata.Name.FETCH_INTERVAL;
 import static org.apache.nutch.metadata.Nutch.TCP_IP_STANDARDIZED_TIME;
 import static org.apache.nutch.metadata.Nutch.YES_STRING;
 
@@ -55,32 +60,33 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
   public void setFetchSchedule(String url, WebPage page,
                                Instant prevFetchTime, Instant prevModifiedTime,
                                Instant fetchTime, Instant modifiedTime, int state) {
-    Duration interval = page.getFetchInterval();
     if (modifiedTime.isBefore(TCP_IP_STANDARDIZED_TIME)) {
       modifiedTime = fetchTime;
     }
 
-    boolean changed = false;
-    if (page.isSeed()) {
+    Duration interval;
+    if (page.hasMetadata(FETCH_INTERVAL)) {
+      interval = DateTimeUtil.parseDuration(page.getMetadata(FETCH_INTERVAL), Duration.ofHours(1));
+    }
+    else if (page.isSeed()) {
       interval = adjustSeedFetchInterval(url, page, fetchTime, modifiedTime, state);
-      changed = true;
     }
     else if (page.getPageCategory().isDetail()) {
       // Detail pages are fetched only once, once it's mark
-      page.putMark(INACTIVE, YES_STRING);
       interval = Duration.ofDays(365 * 10);
-      changed = true;
+      page.putMark(INACTIVE, YES_STRING);
+    }
+    else if (modifiedTime.isAfter(prevModifiedTime)) {
+      super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
+      return;
     }
     else {
-      // Discovery seed pages?
+      LocalDateTime now = LocalDateTime.now();
+      interval = Duration.between(now.truncatedTo(ChronoUnit.DAYS), now.plusDays(1)).plusHours(2);
+      page.putMark(SEMI_INACTIVE, YES_STRING);
     }
 
-    if (changed) {
-      updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
-    }
-    else {
-      super.setFetchSchedule(url, page, prevFetchTime, prevModifiedTime, fetchTime, modifiedTime, state);
-    }
+    updateRefetchTime(page, interval, fetchTime, prevModifiedTime, modifiedTime);
   }
 
   /**
@@ -94,19 +100,15 @@ public class AdaptiveNewsFetchSchedule extends AdaptiveFetchSchedule {
     }
 
     Duration interval = page.getFetchInterval();
-    Instant publishTime = page.getPublishTime();
-    if (publishTime.isAfter(modifiedTime)) {
-      modifiedTime = publishTime;
-    }
     long hours = ChronoUnit.HOURS.between(modifiedTime, fetchTime);
     if (hours > 24 * 365 * 10) {
       // Longer than 10 years, it's very likely the publishTime/modifiedTime is wrong
       long refArticles = page.getRefArticles();
       long refChars = page.getRefChars();
       if (refArticles == 0 || refChars == 0) {
-        // Re-fetch it at 2 o'clock tomorrow morning
+        // Re-fetch it at 3 o'clock tomorrow morning
         LocalDateTime now = LocalDateTime.now();
-        return Duration.between(now.truncatedTo(ChronoUnit.DAYS), now.plusDays(1)).plusHours(2);
+        return Duration.between(now.truncatedTo(ChronoUnit.DAYS), now.plusDays(1)).plusHours(3);
       }
       else {
         return super.getFetchInterval(page, fetchTime, modifiedTime, state);

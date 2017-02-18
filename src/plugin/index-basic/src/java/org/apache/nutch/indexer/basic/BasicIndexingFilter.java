@@ -18,18 +18,15 @@
 package org.apache.nutch.indexer.basic;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.indexer.IndexingException;
 import org.apache.nutch.indexer.IndexingFilter;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
-import org.apache.nutch.common.Params;
 
 import java.util.Collection;
 import java.util.HashSet;
-
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_OUTLINKS_COUNT;
-import static org.apache.nutch.metadata.Nutch.DOC_FIELD_PAGE_CATEGORY;
 
 // import org.apache.solr.common.util.DateUtil;
 
@@ -50,8 +47,8 @@ public class BasicIndexingFilter implements IndexingFilter {
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(GoraWebPage.Field.TITLE);
-    FIELDS.add(GoraWebPage.Field.TEXT);
+    FIELDS.add(GoraWebPage.Field.PAGE_TITLE);
+    FIELDS.add(GoraWebPage.Field.CONTENT_TEXT);
     FIELDS.add(GoraWebPage.Field.CONTENT);
   }
 
@@ -71,26 +68,15 @@ public class BasicIndexingFilter implements IndexingFilter {
    * @return filtered NutchDocument
    * */
   public IndexDocument filter(IndexDocument doc, String url, WebPage page) throws IndexingException {
-
-    addDocFields(doc, url, page);
-
-    addPageCategory(doc, url, page);
-
-    doc.add(DOC_FIELD_OUTLINKS_COUNT, page.getOutlinks().size());
-
     doc.addIfAbsent("id", doc.getKey());
-
+    addDocFields(doc, url, page);
     return doc;
   }
 
   private void addDocFields(IndexDocument doc, String url, WebPage page) {
     page.getTempVars().entrySet().stream()
-        .filter(entry -> entry.getValue().toString().length() < MAX_CONTENT_LENGTH)
+        .filter(e -> e.getValue() != null && e.getValue().toString().length() < MAX_CONTENT_LENGTH)
         .forEach(entry -> doc.add(entry.getKey(), entry.getValue()));
-  }
-
-  private void addPageCategory(IndexDocument doc, String url, WebPage page) {
-    doc.add(DOC_FIELD_PAGE_CATEGORY, page.getPageCategory());
   }
 
   /**
@@ -121,5 +107,4 @@ public class BasicIndexingFilter implements IndexingFilter {
   public Collection<GoraWebPage.Field> getFields() {
     return FIELDS;
   }
-
 }

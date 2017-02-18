@@ -19,37 +19,43 @@ package org.apache.nutch.persist;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.filter.PageCategory;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.metadata.Metadata;
+import org.apache.nutch.metadata.Nutch;
+import org.apache.nutch.parse.ParseStatusUtils;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
 import org.apache.nutch.persist.gora.ProtocolStatus;
+import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.util.DateTimeUtil;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
-import org.jetbrains.annotations.Contract;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.nutch.metadata.Metadata.*;
-import static org.apache.nutch.metadata.Metadata.Name.DISTANCE;
-import static org.apache.nutch.metadata.Metadata.Name.PAGE_CATEGORY;
 
 /**
  * TODO : re-design the table schema to avoid hiding fields in metadata field and to improve efficiency
  * */
 public class WebPage {
 
+  private static ZoneId zoneId = ZoneId.systemDefault();
   private String url = "";
   private String reversedUrl = "";
   private GoraWebPage page;
@@ -73,6 +79,13 @@ public class WebPage {
     this.page = page;
   }
 
+  public WebPage(String url, String reversedUrl, GoraWebPage page) {
+    this.url = url;
+    assert (!reversedUrl.startsWith("http"));
+    this.reversedUrl = reversedUrl;
+    this.page = page;
+  }
+
   public static WebPage newWebPage() {
     return new WebPage(GoraWebPage.newBuilder().build());
   }
@@ -87,8 +100,8 @@ public class WebPage {
     return page;
   }
 
-  public static WebPage wrap(GoraWebPage page) {
-    return new WebPage(page);
+  public static WebPage wrap(String url, String reversedUrl, GoraWebPage page) {
+    return new WebPage(url, reversedUrl, page);
   }
 
   public static WebPage wrap(String url, GoraWebPage page, boolean urlReversed) {
@@ -96,11 +109,15 @@ public class WebPage {
   }
 
   public String url() {
-    return url;
+    return url != null ? url : "";
   }
 
   public String reversedUrl() {
-    return reversedUrl;
+    return reversedUrl != null ? reversedUrl : "";
+  }
+
+  public boolean hasLegalUrl() {
+    return url != null && !url.isEmpty() && reversedUrl != null && !reversedUrl.isEmpty();
   }
 
   public GoraWebPage get() {
@@ -243,7 +260,7 @@ public class WebPage {
     return page.getPrevSignature();
   }
 
-  public String setPrevSignatureAsString() {
+  public String getPrevSignatureAsString() {
     ByteBuffer sig = getPrevSignature();
     if (sig == null) {
       sig = ByteBuffer.wrap("".getBytes());
@@ -259,9 +276,7 @@ public class WebPage {
    * An implementation of a WebPage's signature from which it can be identified and referenced at any point in time.
    * This is essentially the WebPage's fingerprint represnting its state for any point in time.
    */
-  public ByteBuffer getSignature() {
-    return page.getSignature();
-  }
+  public ByteBuffer getSignature() { return page.getSignature(); }
 
   public String getSignatureAsString() {
     ByteBuffer sig = getSignature();
@@ -276,48 +291,46 @@ public class WebPage {
   }
 
   public String getPageTitle() {
-    return page.getTitle() == null ? "" : page.getTitle().toString();
+    return page.getPageTitle() == null ? "" : page.getPageTitle().toString();
   }
 
-  public void setPageTitle(String value) {
-    if (value != null) page.setTitle(u8(value));
-  }
-
-  public void setContentTitle(String contentTitle) {
-    if (contentTitle != null && !contentTitle.isEmpty()) putMetadata(Name.CONTENT_TITLE, contentTitle);
+  public void setPageTitle(String pageTitle) {
+    if (pageTitle != null) page.setPageTitle(u8(pageTitle));
   }
 
   public String getContentTitle() {
-    return getMetadata(Name.CONTENT_TITLE, "");
+    return page.getContentTitle() == null ? "" : page.getContentTitle().toString();
   }
 
-  public String getText() {
-    return page.getText() == null ? "" : page.getText().toString();
+  public void setContentTitle(String contentTitle) {
+    if (contentTitle != null) {
+      page.setContentTitle(u8(contentTitle));
+    }
   }
 
-  public void setText(String value) {
-    if (value != null && !value.isEmpty()) page.setText(u8(value));
+  public String getPageText() {
+    return page.getPageText() == null ? "" : page.getPageText().toString();
   }
 
-  public void setTextContent(String textContent) {
-    if (textContent != null && !textContent.isEmpty()) putMetadata(Name.TEXT_CONTENT, textContent);
+  public void setPageText(String value) {
+    if (value != null && !value.isEmpty()) page.setPageText(u8(value));
   }
 
-  public String getTextContent() {
-    return getMetadata(Name.TEXT_CONTENT, "");
+  public void setContentText(String textContent) {
+    if (textContent != null && !textContent.isEmpty()) page.setContentText(u8(textContent));
   }
 
-  public void setHtmlContent(String textContent) {
-    if (textContent != null && !textContent.isEmpty()) putMetadata(Name.HTML_CONTENT, textContent);
+  public String getContentText() { return page.getContentText() == null ? "" : page.getContentText().toString(); }
+
+  public void setContentTextLength(int length) {
+    page.setContentTextLength(length);
   }
 
-  public String getHtmlContent() {
-    return getMetadata(Name.HTML_CONTENT, "");
+  public int getContentTextLength() {
+    return page.getContentTextLength();
   }
 
-  public ParseStatus getParseStatus() {
-    return page.getParseStatus();
-  }
+  public ParseStatus getParseStatus() { return page.getParseStatus(); }
 
   public void setParseStatus(ParseStatus value) {
     page.setParseStatus(value);
@@ -331,12 +344,12 @@ public class WebPage {
     page.setScore(value);
   }
 
-  public float getArticleScore() {
-    return getFloatMetadata(Name.ARTICLE_SCORE, 0.0f);
+  public float getContentScore() {
+    return page.getContentScore() == null ? 0.0f : page.getContentScore();
   }
 
-  public void setArticleScore(float value) {
-    setFloatMetadata(Name.ARTICLE_SCORE, value);
+  public void setContentScore(float score) {
+    page.setContentScore(score);
   }
 
   public CharSequence getReprUrl() {
@@ -402,22 +415,27 @@ public class WebPage {
     page.setOutlinks(value);
   }
 
-  public String getOldOutLinks() {
-    return getMetadata(Name.OLD_OUT_LINKS, "");
+  public String getAllOutLinks() {
+    return page.getOldOutlinks() == null ? "" : page.getOldOutlinks().toString();
+  }
+
+  public void setAllOutLinks(String value) {
+    page.setOldOutlinks(value);
   }
 
   /**
    * Put all extracted, filtered links
    */
-  public void putOldOutLinks(Collection<CharSequence> outLinks) {
-    String oldLinks = getOldOutLinks() + "\n" + StringUtils.join(outLinks, "\n");
+  public void addToAllOutLinks(Collection<CharSequence> outLinks) {
+    String allLinks = getAllOutLinks() + "\n" + StringUtils.join(outLinks, "\n");
     // assume the avarage lenght of a link is 100 characters
     // If the old links string is too long, truncate it
-    if (oldLinks.length() > (10 * 1000) * 100) {
-      int pos = StringUtils.indexOf(oldLinks, '\n', oldLinks.length() / 3);
-      oldLinks = oldLinks.substring(pos + 1);
+    if (allLinks.length() > (10 * 1000) * 100) {
+      int pos = StringUtils.indexOf(allLinks, '\n', allLinks.length() / 3);
+      allLinks = allLinks.substring(pos + 1);
     }
-    putMetadata(Name.OLD_OUT_LINKS, oldLinks);
+
+    setAllOutLinks(allLinks);
   }
 
   public Map<CharSequence, CharSequence> getInlinks() {
@@ -484,59 +502,35 @@ public class WebPage {
     return hasMetadata(Name.IS_SEED);
   }
 
-  public void setTextContentLength(int length) {
-    putMetadata(Name.TEXT_CONTENT_LENGTH, String.valueOf(length));
-  }
-
-  public int getTextContentLength() {
-    String ds = getMetadata(Name.TEXT_CONTENT_LENGTH);
-    return StringUtil.tryParseInt(ds, 0);
-  }
-
-  public int sniffTextContentLength() {
-    int length = getTextContentLength();
-    if (length > 10) {
-      return length;
-    }
-
-    CharSequence text = getTextContent();
-    if (text != null) {
-      return text.length();
-    }
-
-    text = page.getText();
-    if (text != null) {
-      return text.length();
-    }
-
-    return 0;
-  }
-
   public void setPageCategory(PageCategory pageCategory) {
-    putMetadata(PAGE_CATEGORY, pageCategory.name());
+    page.setPageCategory(pageCategory.name());
   }
 
   public PageCategory getPageCategory() {
     try {
-      return PageCategory.valueOf(getMetadata(PAGE_CATEGORY));
-    } catch (Throwable e) {
-      return PageCategory.UNKNOWN;
+      if (page.getPageCategory() != null) {
+        return PageCategory.valueOf(page.getPageCategory().toString());
+      }
+    } catch (Throwable ignored) {
     }
+
+    return PageCategory.UNKNOWN;
   }
 
-  public int getDepth() { return getDistance(); }
+  public int getDepth() {
+    return getDistance();
+  }
 
   public void setDepth(int newDepth) {
     setDistance(newDepth);
   }
 
   public int getDistance() {
-    String ds = getMetadata(DISTANCE);
-    return StringUtil.tryParseInt(ds, MAX_DISTANCE);
+    return page.getDistance() < 0 ? Nutch.DISTANCE_INFINITE : page.getDistance();
   }
 
   public void setDistance(int newDistance) {
-    putMetadata(DISTANCE, String.valueOf(newDistance));
+    page.setDistance(newDistance);
   }
 
   public void updateDistance(int newDistance) {
@@ -546,8 +540,16 @@ public class WebPage {
     }
   }
 
+  public void setFetchPriority(int priority) {
+    page.setFetchPriority(priority);
+  }
+
+  public int getFetchPriority() {
+    return page.getFetchPriority() > 0 ? page.getFetchPriority() : FETCH_PRIORITY_DEFAULT;
+  }
+
   public int sniffFetchPriority() {
-    int priority = getFetchPriority(FETCH_PRIORITY_DEFAULT);
+    int priority = getFetchPriority();
 
     int depth = getDepth();
     if (depth < FETCH_PRIORITY_DEPTH_BASE) {
@@ -555,15 +557,6 @@ public class WebPage {
     }
 
     return priority;
-  }
-
-  public void setFetchPriority(int priority) {
-    putMetadata(Name.FETCH_PRIORITY, String.valueOf(priority));
-  }
-
-  public int getFetchPriority(int defaultPriority) {
-    String s = getMetadata(Name.FETCH_PRIORITY);
-    return StringUtil.tryParseInt(s, defaultPriority);
   }
 
   public void setGenerateTime(long generateTime) {
@@ -583,83 +576,114 @@ public class WebPage {
     setFloatMetadata(Name.CASH_KEY, cash);
   }
 
-  public Instant getPublishTime() { return DateTimeUtil.parseInstant(getMetadata(Name.PUBLISH_TIME), Instant.EPOCH); }
-
-  public void setPublishTime(Instant publishTime) {
-    putMetadata(Name.PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
+  public Instant getContentPublishTime() {
+    return Instant.ofEpochMilli(page.getContentPublishTime());
   }
 
-  public void updatePublishTime(Instant newPublishTime) {
-    Instant publishTime = getPublishTime();
-    if (publishTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
-      publishTime = Instant.EPOCH;
-    }
-    if (newPublishTime.isAfter(publishTime)
-            && newPublishTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)
-            && newPublishTime.isBefore(Instant.now().plus(1, ChronoUnit.DAYS))) {
-      setPrevPublishTime(publishTime);
-      setPublishTime(newPublishTime);
+  public void setContentPublishTime(Instant publishTime) {
+    page.setContentPublishTime(publishTime.toEpochMilli());
+  }
+
+  public void updateContentPublishTime(Instant newPublishTime) {
+    Instant publishTime = getContentPublishTime();
+    if (newPublishTime.isAfter(publishTime) && newPublishTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)) {
+      setPrevContentPublishTime(publishTime);
+      setContentPublishTime(newPublishTime);
     }
   }
 
-  public Instant getPrevPublishTime() {
-    return DateTimeUtil.parseInstant(getMetadata(Name.PREV_PUBLISH_TIME), Instant.EPOCH);
+  public boolean updateRefContentPublishTime(Instant newRefPublishTime) {
+    Instant latestRefPublishTime = getRefContentPublishTime();
+    if (newRefPublishTime.isAfter(latestRefPublishTime)) {
+      setPrevRefContentPublishTime(latestRefPublishTime);
+      setRefContentPublishTime(newRefPublishTime);
+
+      return true;
+    }
+
+    return false;
   }
 
-  public void setPrevPublishTime(Instant publishTime) {
-    putMetadata(Name.PREV_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
+  public Instant getPrevContentPublishTime() {
+    return Instant.ofEpochMilli(page.getPrevContentPublishTime());
+  }
+
+  public void setPrevContentPublishTime(Instant publishTime) {
+    page.setContentPublishTime(publishTime.toEpochMilli());
+  }
+
+  public Instant getRefContentPublishTime() {
+    return Instant.ofEpochMilli(page.getRefContentPublishTime());
+  }
+
+  public void setRefContentPublishTime(Instant publishTime) {
+    page.setRefContentPublishTime(publishTime.toEpochMilli());
+  }
+
+  public Instant getPrevRefContentPublishTime() {
+    return Instant.ofEpochMilli(page.getPrevRefContentPublishTime());
+  }
+
+  public void setPrevRefContentPublishTime(Instant publishTime) {
+    page.setPrevRefContentPublishTime(publishTime.toEpochMilli());
   }
 
   public Instant getContentModifiedTime() {
-    return DateTimeUtil.parseInstant(getMetadata(Name.CONTENT_MODIFIED_TIME), Instant.EPOCH);
+    return Instant.ofEpochMilli(page.getContentModifiedTime());
   }
 
   public void setContentModifiedTime(Instant modifiedTime) {
-    putMetadata(Name.CONTENT_MODIFIED_TIME, DateTimeUtil.isoInstantFormat(modifiedTime));
+    page.setContentPublishTime(modifiedTime.toEpochMilli());
+  }
+
+  public Instant getPrevContentModifiedTime() {
+    return Instant.ofEpochMilli(page.getPrevContentModifiedTime());
+  }
+
+  public void setPrevContentModifiedTime(Instant modifiedTime) {
+    page.setPrevContentModifiedTime(modifiedTime.toEpochMilli());
   }
 
   public void updateContentModifiedTime(Instant newModifiedTime) {
-    if (newModifiedTime.isAfter(getContentModifiedTime())
-            && newModifiedTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)
-            && newModifiedTime.isBefore(Instant.now().plus(1, ChronoUnit.DAYS))) {
+    if (newModifiedTime.isAfter(getContentModifiedTime()) && newModifiedTime.isAfter(MIN_ARTICLE_PUBLISH_TIME)) {
       setContentModifiedTime(newModifiedTime);
     }
   }
 
   public String getReferrer() {
-    return getMetadata(Name.REFERRER);
+    return page.getReferrer() == null ? "" : page.getReferrer().toString();
   }
 
   public void setReferrer(String referrer) {
-    putMetadata(Name.REFERRER, referrer);
+    if (referrer != null && referrer.length() > Nutch.SHORTEST_VALID_URL_LENGTH) {
+      page.setReferrer(referrer);
+    }
   }
 
   public int getFetchCount() {
-    String referredPages = getMetadata(Name.FETCH_COUNT);
-    return StringUtil.tryParseInt(referredPages, 0);
+    return page.getFetchCount();
   }
 
   public void setFetchCount(int count) {
-    putMetadata(Name.FETCH_COUNT, String.valueOf(count));
+    page.setFetchCount(count);
   }
 
   public void increaseFetchCount() {
     int count = getFetchCount();
-    putMetadata(Name.FETCH_COUNT, String.valueOf(count + 1));
+    setFetchCount(count + 1);
   }
 
-  public long getRefArticles() {
-    String refPages = getMetadata(Name.REFERRED_ARTICLES);
-    return StringUtil.tryParseLong(refPages, 0);
+  public int getRefArticles() {
+    return page.getReferredArticles();
   }
 
-  public void setRefArticles(long count) {
-    putMetadata(Name.REFERRED_ARTICLES, String.valueOf(count));
+  public void setRefArticles(int count) {
+    page.setReferredArticles(count);
   }
 
-  public void increaseRefArticles(long count) {
-    long oldCount = getRefArticles();
-    putMetadata(Name.REFERRED_ARTICLES, String.valueOf(oldCount + count));
+  public void increaseRefArticles(int count) {
+    int oldCount = getRefArticles();
+    setRefArticles(oldCount + count);
   }
 
   public long getTotalOutLinks() {
@@ -688,54 +712,17 @@ public class WebPage {
     return _a;
   }
 
-  public long getRefChars() {
-    String referredPages = getMetadata(Name.REFERRED_CHARS);
-    return StringUtil.tryParseLong(referredPages, 0);
+  public int getRefChars() {
+    return page.getReferredChars();
   }
 
-  public void setRefChars(long count) {
-    putMetadata(Name.REFERRED_CHARS, String.valueOf(count));
+  public void setRefChars(int count) {
+    page.setReferredChars(count);
   }
 
-  public void increaseRefChars(long count) {
-    long oldCount = getRefChars();
+  public void increaseRefChars(int count) {
+    int oldCount = getRefChars();
     setRefChars(oldCount + count);
-  }
-
-  public Instant getRefPublishTime() {
-    String time = getMetadata(Name.REFERRED_PUBLISH_TIME);
-    return DateTimeUtil.parseInstant(time, Instant.EPOCH);
-  }
-
-  public void setRefPublishTime(Instant publishTime) {
-    putMetadata(Name.REFERRED_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
-  }
-
-  public Instant getPrevRefPublishTime() {
-    String time = getMetadata(Name.PREV_REFERRED_PUBLISH_TIME);
-    return DateTimeUtil.parseInstant(time, Instant.EPOCH);
-  }
-
-  public void setPrevRefPublishTime(Instant publishTime) {
-    putMetadata(Name.PREV_REFERRED_PUBLISH_TIME, DateTimeUtil.isoInstantFormat(publishTime));
-  }
-
-  public boolean updateRefPublishTime(Instant newRefPublishTime) {
-    Instant latestRefPublishTime = getRefPublishTime();
-
-    // A fix
-    if (latestRefPublishTime.isAfter(Instant.now().plus(1, ChronoUnit.DAYS))) {
-      latestRefPublishTime = Instant.EPOCH;
-    }
-
-    if (newRefPublishTime.isAfter(latestRefPublishTime)) {
-      setPrevRefPublishTime(latestRefPublishTime);
-      setRefPublishTime(newRefPublishTime);
-
-      return true;
-    }
-
-    return false;
   }
 
   public Instant getHeaderLastModifiedTime(Instant defaultValue) {
@@ -778,9 +765,6 @@ public class WebPage {
     return s == null ? defaultValue : s;
   }
 
-  /**
-   * TODO : consider hbase's record history feature
-   */
   public void putIndexTimeHistory(Instant indexTime) {
     String indexTimeHistory = getMetadata(Name.INDEX_TIME_HISTORY);
     indexTimeHistory = DateTimeUtil.constructTimeHistory(indexTimeHistory, indexTime, 10);
@@ -802,7 +786,9 @@ public class WebPage {
     return firstIndexTime == null ? defaultValue : firstIndexTime;
   }
 
-  public Utf8 getMark(Mark mark) { return (Utf8) page.getMarkers().get(wrapKey(mark)); }
+  public Utf8 getMark(Mark mark) {
+    return (Utf8) page.getMarkers().get(wrapKey(mark));
+  }
 
   public boolean hasMark(Mark mark) {
     return getMark(mark) != null;
@@ -914,18 +900,18 @@ public class WebPage {
   // The markers are on the input anyway.
   public void clearTmpMetadata() {
     getMetadata().keySet().stream()
-        .filter(key -> key.toString().startsWith(Metadata.META_TMP))
-        .forEach(this::clearMetadata);
+            .filter(key -> key.toString().startsWith(Metadata.META_TMP))
+            .forEach(this::clearMetadata);
   }
 
   public Map<String, String> getMetadataAsString() {
     return page.getMetadata().entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Bytes.toString(e.getValue().array())));
+            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Bytes.toString(e.getValue().array())));
   }
 
   public Map<String, String> getMetadataAsStringBinary() {
     return page.getMetadata().entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Bytes.toStringBinary(e.getValue())));
+            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> Bytes.toStringBinary(e.getValue())));
   }
 
   public float getFloatMetadata(Name name, float defaultValue) {
@@ -949,7 +935,6 @@ public class WebPage {
     page.getMetadata().put(u8(key), ByteBuffer.wrap(Bytes.toBytes(value)));
   }
 
-  @Contract("_ -> !null")
   public static Utf8 wrapKey(String key) {
     return u8(key);
   }
@@ -962,12 +947,13 @@ public class WebPage {
     return u8(mark.value());
   }
 
-  @Contract("_ -> !null")
   public static Utf8 wrapValue(String value) {
     return u8(value);
   }
 
-  /** What's the difference between String and Utf8? */
+  /**
+   * What's the difference between String and Utf8?
+   */
   private static Utf8 u8(String value) {
     if (value == null) {
       return null;
@@ -979,6 +965,103 @@ public class WebPage {
     return map.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
   }
 
+  public String getRepresentation() {
+    return getRepresentation(true, true, true, true);
+  }
+
+  public String getRepresentation(boolean dumpText, boolean dumpContent, boolean dumpHeaders, boolean dumpLinks) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("key:\t" + reversedUrl() + "\n");
+    sb.append("baseUrl:\t" + getBaseUrl() + "\n");
+    sb.append("status:\t" + getStatus() + " (" + CrawlStatus.getName(getStatus().byteValue()) + ")\n");
+    sb.append("depth:\t" + getDepth() + "\n");
+    sb.append("pageCategory:\t" + getPageCategory() + "\n");
+    sb.append("fetchCount:\t" + getFetchCount() + "\n");
+    sb.append("fetchPriority:\t" + getFetchPriority() + "\n");
+    sb.append("fetchInterval:\t" + getFetchInterval() + "\n");
+    sb.append("retriesSinceFetch:\t" + getRetriesSinceFetch() + "\n");
+
+    sb.append("prevFetchTime:\t" + formatAsLocalDateTime(getPrevFetchTime()) + "\n");
+    sb.append("fetchTime:\t" + formatAsLocalDateTime(getFetchTime()) + "\n");
+    sb.append("prevModifiedTime:\t" + formatAsLocalDateTime(getPrevModifiedTime()) + "\n");
+    sb.append("modifiedTime:\t" + formatAsLocalDateTime(getModifiedTime()) + "\n");
+    sb.append("prevContentModifiedTime:\t" + formatAsLocalDateTime(getPrevContentModifiedTime(), ChronoUnit.MILLIS) + "\n");
+    sb.append("contentModifiedTime:\t" + formatAsLocalDateTime(getContentModifiedTime(), ChronoUnit.MILLIS) + "\n");
+    sb.append("prevContentPublishTime:\t" + formatAsLocalDateTime(getPrevContentPublishTime(), ChronoUnit.MILLIS) + "\n");
+    sb.append("contentPublishTime:\t" + formatAsLocalDateTime(getContentPublishTime(), ChronoUnit.MILLIS) + "\n");
+
+    sb.append("pageTitle:\t" + getPageTitle() + "\n");
+    sb.append("contentTitle:\t" + getContentTitle() + "\n");
+
+    sb.append("protocolStatus:\t" + ProtocolStatusUtils.toString(getProtocolStatus()) + "\n");
+    sb.append("prevSignature:\t" + getPrevSignatureAsString() + "\n");
+    sb.append("signature:\t" + getSignatureAsString() + "\n");
+    sb.append("parseStatus:\t" + ParseStatusUtils.toString(getParseStatus()) + "\n");
+    sb.append("score:\t" + getScore() + "\n");
+    sb.append("contentScore:\t" + getContentScore() + "\n");
+
+    Map<CharSequence, CharSequence> markers = getMarkers();
+    if (markers != null) {
+      for (Map.Entry<CharSequence, CharSequence> entry : markers.entrySet()) {
+        sb.append("marker " + entry.getKey().toString() + " : \t" + entry.getValue() + "\n");
+      }
+    }
+    sb.append("reprUrl:\t" + getReprUrl() + "\n");
+    CharSequence batchId = getBatchId();
+    if (batchId != null) {
+      sb.append("batchId:\t" + batchId.toString() + "\n");
+    }
+
+    getMetadata().entrySet().forEach(e -> sb.append("metadata " + e.getKey() + ":\t" + Bytes.toString(e.getValue().array()) + "\n"));
+
+    if (dumpLinks) {
+      getOutlinks().entrySet().forEach(e -> sb.append("outlink:\t" + e.getKey() + "\t" + e.getValue() + "\n"));
+      sb.append("Total " + getOutlinks().size() + " outlinks\n");
+      getInlinks().entrySet().forEach(e -> sb.append("inlink:\t" + e.getKey() + "\t" + e.getValue() + "\n"));
+      sb.append("Total " + getInlinks().size() + " inlinks\n");
+      Stream.of(getAllOutLinks().split("\n")).filter(StringUtils::isNotBlank).forEach(l -> sb.append("allOutlink:\t" + l + "\n"));
+      sb.append("Total " + StringUtils.countMatches(getAllOutLinks(), "\n") + " (all) outlinks\n");
+    }
+
+    if (dumpHeaders) {
+      Map<CharSequence, CharSequence> headers = getHeaders();
+      if (headers != null) {
+        for (Map.Entry<CharSequence, CharSequence> e : headers.entrySet()) {
+          sb.append("header:\t" + e.getKey() + "\t" + e.getValue() + "\n");
+        }
+      }
+    }
+    ByteBuffer content = getContent();
+    if (content != null && dumpContent) {
+      sb.append("contentType:\t" + getContentType() + "\n");
+      sb.append("content:start:\n");
+      sb.append(Bytes.toString(content.array()));
+      sb.append("\ncontent:end:\n");
+    }
+
+    if (dumpText) {
+      sb.append("contentText:start:\n");
+      sb.append(getContentText());
+      sb.append("\ncontentText:end:\n");
+
+      sb.append("pageText:start:\n");
+      sb.append(getPageText());
+      sb.append("\npageText:end:\n");
+    }
+
+    return sb.toString();
+  }
+  
+  private String formatAsLocalDateTime(Instant instant, TemporalUnit temporalUnit) {
+    return LocalDateTime.ofInstant(instant.truncatedTo(temporalUnit), zoneId).toString();
+  }
+  
+  private String formatAsLocalDateTime(Instant instant) {
+    return formatAsLocalDateTime(instant, ChronoUnit.SECONDS);
+  }
+
   @Override
-  public String toString() { return page.toString(); }
+  public String toString() {
+    return getRepresentation(false, false, false, false);
+  }
 }

@@ -18,7 +18,7 @@ package org.apache.nutch.metadata;
 
 public enum Mark {
   INJECT("inj"), GENERATE("gn"), FETCH("fth"), PARSE("prs"), UPDATEOUTG("updo"),
-  UPDATEING("updi"), INDEX("idx"), INACTIVE("iat");
+  UPDATEING("updi"), INDEX("idx"), INACTIVE("iat"), SEMI_INACTIVE("siat");
 
   private String value;
   Mark(String value) {this.value = value; }

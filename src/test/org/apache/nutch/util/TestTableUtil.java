@@ -42,6 +42,7 @@ public class TestTableUtil {
   @Test
   public void testReverseUrl() throws Exception {
     System.out.println(TableUtil.reverseUrl("http://sz.sxrb.com/sxxww/dspd/szpd/wsjk"));
+    System.out.println(TableUtil.reverseUrl("http://sz.sxrb.com/sxxww/"));
 
     assertReverse(urlString1, reversedUrlString1);
     assertReverse(urlString2, reversedUrlString2);
@@ -55,6 +56,8 @@ public class TestTableUtil {
 
   @Test
   public void testUnreverseUrl() throws Exception {
+    System.out.println(TableUtil.unreverseUrl("com.sxrb.www:http/sxxww/zthj/xmtdt/6619357.shtml"));
+
     assertUnreverse(reversedUrlString1, urlString1);
     assertUnreverse(reversedUrlString2, urlString2);
     assertUnreverse(reversedUrlString3, urlString3);

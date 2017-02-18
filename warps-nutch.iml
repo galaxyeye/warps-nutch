@@ -107,6 +107,7 @@
     <libelement value="jar://$MODULE_DIR$/build/lib/jaxb-impl-2.2.3-1.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/jcl-over-slf4j-1.7.7.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/jcodings-1.0.8.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/jcommander-1.60.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/jdom-1.1.3.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/jersey-client-1.9.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/jersey-core-1.9.jar!/" />
@@ -134,7 +135,7 @@
     <libelement value="jar://$MODULE_DIR$/build/lib/leveldbjni-all-1.8.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/log4j-1.2.17.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/mail-1.4.2.jar!/" />
-    <libelement value="file://build/lib/mockito-all-1.9.5.jar" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/neethi-3.0.1.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/nekohtml-1.9.19.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/netty-3.6.6.Final.jar!/" />
@@ -165,7 +166,7 @@
     <libelement value="jar://$MODULE_DIR$/build/lib/spring-expression-4.0.4.RELEASE.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/spring-jdbc-4.0.4.RELEASE.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/spring-orm-4.0.4.RELEASE.jar!/" />
-    <libelement value="file://build/lib/spring-test-4.0.4.RELEASE.jar" />
+    <libelement value="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/spring-tx-4.0.4.RELEASE.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/spring-web-4.0.4.RELEASE.jar!/" />
     <libelement value="jar://$MODULE_DIR$/build/lib/stax-api-1.0-2.jar!/" />
@@ -386,8 +387,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-pass/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/plugin/urlnormalizer-regex/src/test" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/conf" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/bin" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -1346,6 +1345,15 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="jcommander-1.60.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/lib/jcommander-1.60.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="jdom-1.1.3.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/build/lib/jdom-1.1.3.jar!/" />
@@ -1591,7 +1599,7 @@
     <orderEntry type="module-library">
       <library name="mockito-all-1.9.5.jar">
         <CLASSES>
-          <root url="file://build/lib/mockito-all-1.9.5.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/mockito-all-1.9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -1870,7 +1878,7 @@
     <orderEntry type="module-library">
       <library name="spring-test-4.0.4.RELEASE.jar">
         <CLASSES>
-          <root url="file://build/lib/spring-test-4.0.4.RELEASE.jar" />
+          <root url="jar://$MODULE_DIR$/build/lib/spring-test-4.0.4.RELEASE.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

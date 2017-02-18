@@ -49,10 +49,10 @@ public class WebVertexWritable implements Writable {
 
     WebPage page;
     if (hasWebPage.get()) {
-      page = WebPage.wrap(IOUtils.deserialize(conf, input, null, GoraWebPage.class));
+      page = WebPage.wrap(url, IOUtils.deserialize(conf, input, null, GoraWebPage.class), false);
     }
     else {
-      page = WebPage.newWebPage();
+      page = WebPage.newWebPage(url);
     }
     this.vertex = new WebVertex(url, page);
   }

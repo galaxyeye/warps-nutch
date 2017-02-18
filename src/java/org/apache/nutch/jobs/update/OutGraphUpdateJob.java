@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -46,20 +47,10 @@ public class OutGraphUpdateJob extends WebGraphUpdateJob {
   private static final Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
   static {
-    FIELDS.add(GoraWebPage.Field.BATCH_ID);
-    FIELDS.add(GoraWebPage.Field.OUTLINKS);
-    FIELDS.add(GoraWebPage.Field.STATUS);
-    FIELDS.add(GoraWebPage.Field.PREV_SIGNATURE);
-    FIELDS.add(GoraWebPage.Field.SIGNATURE);
-    FIELDS.add(GoraWebPage.Field.MARKERS);
-    FIELDS.add(GoraWebPage.Field.METADATA);
-    FIELDS.add(GoraWebPage.Field.RETRIES_SINCE_FETCH);
-    FIELDS.add(GoraWebPage.Field.PREV_FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.FETCH_TIME);
-    FIELDS.add(GoraWebPage.Field.FETCH_INTERVAL);
-    FIELDS.add(GoraWebPage.Field.PREV_MODIFIED_TIME);
-    FIELDS.add(GoraWebPage.Field.MODIFIED_TIME);
-    FIELDS.add(GoraWebPage.Field.HEADERS);
+    Collections.addAll(FIELDS, GoraWebPage.Field.values());
+    FIELDS.remove(GoraWebPage.Field.CONTENT);
+    FIELDS.remove(GoraWebPage.Field.PAGE_TEXT);
+    FIELDS.remove(GoraWebPage.Field.CONTENT_TEXT);
   }
 
   public OutGraphUpdateJob() {

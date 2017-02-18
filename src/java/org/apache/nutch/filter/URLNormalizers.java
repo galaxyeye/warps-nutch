@@ -18,19 +18,17 @@
 package org.apache.nutch.filter;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.common.ObjectCache;
 import org.apache.nutch.jobs.generate.GenerateJob;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRepository;
 import org.apache.nutch.plugin.PluginRuntimeException;
-import org.apache.nutch.common.ObjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class uses a "chained filter" pattern to run defined normalizers.
@@ -142,6 +140,8 @@ public final class URLNormalizers {
     }
 
     loopCount = conf.getInt("urlnormalizer.loop.count", 1);
+
+    LOG.info("Active urls normalizers : " + toString());
   }
 
   /**
@@ -303,6 +303,8 @@ public final class URLNormalizers {
 
   @Override
   public String toString() {
-    return Stream.of(normalizers).map(f -> f.getClass().getSimpleName()).collect(Collectors.joining(", "));
+    StringBuilder sb = new StringBuilder();
+    Arrays.stream(this.normalizers).forEach(f -> sb.append(f.getClass().getSimpleName()).append(", "));
+    return sb.toString();
   }
 }

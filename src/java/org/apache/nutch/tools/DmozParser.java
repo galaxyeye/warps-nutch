@@ -17,23 +17,6 @@
 
 package org.apache.nutch.tools;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilterReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.ByteBuffer;
-import java.util.Random;
-import java.util.Vector;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
@@ -47,13 +30,17 @@ import org.apache.nutch.util.TableUtil;
 import org.apache.xerces.util.XMLChar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.Random;
+import java.util.Vector;
+import java.util.regex.Pattern;
 
 /** Utility that converts DMOZ RDF into a flat file of URLs to be injected. */
 public class DmozParser {
@@ -206,7 +193,7 @@ public class DmozParser {
           if (snippet) {
             try {
               String reversedUrl = TableUtil.reverseUrl(curURL);
-              WebPage row = WebPage.wrap(store.get(reversedUrl));
+              WebPage row = WebPage.wrap(curURL, reversedUrl, store.get(reversedUrl));
 
               if (row.get() != null) {
                 if (desc.length() > 0) {

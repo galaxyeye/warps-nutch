@@ -99,7 +99,7 @@ public class TestOOParser {
 
       parseResult = new ParseUtil(conf).parse(urlString, page);
 
-      String text = parseResult.getText().replaceAll("[ \t\r\n]+", " ").trim();
+      String text = parseResult.getPageText().replaceAll("[ \t\r\n]+", " ").trim();
 
       // simply test for the presence of a text - the ordering of the
       // elements

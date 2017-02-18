@@ -56,7 +56,7 @@ public class TestCrawlFilter {
     String[] keyRange = crawlFilters.getMaxReversedKeyRange();
     System.out.println(keyRange[0] + ", " + keyRange[1]);
 
-    assertTrue(Character.valueOf('\uFFFF') - Character.valueOf('a') == 65438);
+    assertTrue('\uFFFF' - 'a' == 65438);
 
     for (String detailUrl : detailUrls) {
       detailUrl = TableUtil.reverseUrl(detailUrl);

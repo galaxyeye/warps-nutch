@@ -151,7 +151,7 @@ public class HTMLLanguageParser implements ParseFilter {
         text.append(title);
       }
 
-      String content = parseResult.getText();
+      String content = parseResult.getPageText();
       if (content != null) {
         text.append(" ").append(content);
       }

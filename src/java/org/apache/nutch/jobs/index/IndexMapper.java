@@ -5,7 +5,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.nutch.common.Params;
 import org.apache.nutch.indexer.IndexDocument;
 import org.apache.nutch.jobs.NutchMapper;
-import org.apache.nutch.jobs.parse.ParserJob;
 import org.apache.nutch.jobs.parse.ParserMapper;
 import org.apache.nutch.metadata.Mark;
 import org.apache.nutch.parse.ParseResult;
@@ -55,7 +54,7 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
     minTextLenght = conf.getInt("indexer.minimal.text.length", 200);
 
     parseUtil = reindex ? new ParseUtil(conf) : null;
-    skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
+    skipTruncated = conf.getBoolean(PARAM_PARSE_SKIP_TRUNCATED, true);
 
     try {
       storage = StorageUtils.createWebStore(conf, String.class, GoraWebPage.class);
@@ -140,7 +139,7 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
         return;
       }
 
-      String textContent = page.getTextContent();
+      String textContent = page.getContentText();
       if (textContent == null || textContent.length() < minTextLenght) {
         getCounter().increase(Counter.shortContent);
         return;
@@ -161,7 +160,7 @@ public class IndexMapper extends NutchMapper<String, GoraWebPage, String, IndexD
         page.putMark(Mark.INDEX, batchId);
       }
 
-      // LOG.debug(TableUtil.toString(page.getText()));
+      // LOG.debug(TableUtil.toString(page.getPageText()));
 
       // Multiple output
       page.putIndexTimeHistory(Instant.now());

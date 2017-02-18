@@ -143,7 +143,7 @@ public class SimpleCrawler {
                     WebPage p2 = edge.getTargetWebPage();
 
                     // Update by out-links
-                    p1.updateRefPublishTime(p2.getPublishTime());
+                    p1.updateRefContentPublishTime(p2.getContentPublishTime());
                     p1.increaseRefChars(1000 * round);
                     p1.increaseRefArticles(1);
                 });

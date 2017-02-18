@@ -76,7 +76,7 @@ public class ParseUtil {
   private final URLNormalizers urlNormalizers;
   private final CrawlFilters crawlFilters;
   private final URLUtil.HostGroupMode hostGroupMode;
-  private final int maxOutLinksPerPage;
+  private final int maxParsedOutlinks;
   private final boolean ignoreExternalLinks;
   private final int minAnchorLength;
   private final ParserFactory parserFactory;
@@ -98,9 +98,9 @@ public class ParseUtil {
     urlNormalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);
     crawlFilters = CrawlFilters.create(conf);
     hostGroupMode = conf.getEnum(PARAM_FETCH_QUEUE_MODE, URLUtil.HostGroupMode.BY_HOST);
-    maxOutLinksPerPage = ConfigUtils.getUintOrMax(conf, PARAM_MAX_OUTLINKS_PER_PAGE, 100);
-    ignoreExternalLinks = conf.getBoolean(PARAM_IGNORE_EXTERNAL_LINKS, true);
-    minAnchorLength = conf.getInt(PARAM_OUTLINKS_MIN_ANCHOR_LENGTH, 8);
+    maxParsedOutlinks = ConfigUtils.getUintOrMax(conf, PARAM_PARSE_MAX_OUTLINKS_PER_PAGE, 200);
+    ignoreExternalLinks = conf.getBoolean(PARAM_PARSE_IGNORE_EXTERNAL_LINKS, true);
+    minAnchorLength = conf.getInt(PARAM_PARSE_MIN_ANCHOR_LENGTH, 8);
     executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("parse-%d").setDaemon(true).build());
   }
 
@@ -208,8 +208,8 @@ public class ParseUtil {
   }
 
   private ParseResult processSuccess(String url, WebPage page, ParseResult parseResult) {
-    page.setText(parseResult.getText());
     page.setPageTitle(parseResult.getPageTitle());
+    page.setPageText(parseResult.getPageText());
 
     ByteBuffer prevSig = page.getSignature();
     if (prevSig != null) {
@@ -219,20 +219,21 @@ public class ParseUtil {
 
     // Collect out-links
     // TODO : use no-follow
-    if (page.isSeed() || page.getPageCategory().isIndex()) {
+    boolean follow = page.isSeed() || page.getPageCategory().isIndex();
+    if (follow) {
       final String sourceHost = ignoreExternalLinks ? null : URLUtil.getHost(url, hostGroupMode);
-      final String oldOutLinks = page.getOldOutLinks();
+      final String oldOutLinks = page.getAllOutLinks();
       Map<CharSequence, CharSequence> outlinks = parseResult.getOutlinks().stream()
           .filter(ol -> validateOutLink(ol, sourceHost, oldOutLinks)) // filter out in-valid urls
           .sorted((l1, l2) -> l2.getAnchor().length() - l1.getAnchor().length()) // longer anchor comes first
-          .limit(maxOutLinksPerPage < 0 ? Integer.MAX_VALUE : maxOutLinksPerPage)
+          .limit(maxParsedOutlinks)
           .collect(Collectors.toMap(Outlink::getToUrl, Outlink::getAnchor, (v1, v2) -> v1.length() > v2.length() ? v1 : v2));
       page.setOutlinks(outlinks);
 
-      if (page.getOldOutLinks().length() > (10 * 1000) * 100) {
+      if (page.getAllOutLinks().length() > (10 * 1000) * 100) {
         LOG.warn("Too long old out links string, url : " + url);
       }
-      page.putOldOutLinks(outlinks.keySet());
+      page.addToAllOutLinks(outlinks.keySet());
     }
 
     // TODO : Marks should be set in mapper or reducer, not util methods

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package org.apache.nutch.persist.gora;
+package org.apache.nutch.persist;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -26,7 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.ParseStatusUtils;
-import org.apache.nutch.persist.WebPage;
+import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.protocol.ProtocolStatusUtils;
 
 import java.nio.ByteBuffer;
@@ -91,57 +91,64 @@ public class WebPageConverter {
   public static Object convertNamedField(WebPage page, String field) {
     if (field.equals(GoraWebPage.Field.BASE_URL.getName())) {
       return page.getBaseUrl();
-    }
-    else if (field.equals(GoraWebPage.Field.METADATA.getName())) {
-      return convertMetadata(page);
-    }
-    else if (field.equals(GoraWebPage.Field.PROTOCOL_STATUS.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PROTOCOL_STATUS.getName())) {
       return ProtocolStatusUtils.toString(page.getProtocolStatus());
-    }
-    else if (field.equals(GoraWebPage.Field.PARSE_STATUS.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PARSE_STATUS.getName())) {
       return ParseStatusUtils.toString(page.getParseStatus());
-    }
-    else if (field.equals(GoraWebPage.Field.PREV_SIGNATURE.getName())) {
-      return page.setPrevSignatureAsString();
-    }
-    else if (field.equals(GoraWebPage.Field.SIGNATURE.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PREV_SIGNATURE.getName())) {
+      return page.getPrevSignatureAsString();
+    } else if (field.equals(GoraWebPage.Field.SIGNATURE.getName())) {
       return page.getSignatureAsString();
-    }
-    else if (field.equals(GoraWebPage.Field.TITLE.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PAGE_TITLE.getName())) {
       return page.getPageTitle();
-    }
-    else if (field.equals(GoraWebPage.Field.TEXT.getName())) {
-      return page.getText();
-    }
-    else if (field.equals(GoraWebPage.Field.CONTENT.getName())) {
+    } else if (field.equals(GoraWebPage.Field.CONTENT_TITLE.getName())) {
+      return page.getContentTitle();
+    } else if (field.equals(GoraWebPage.Field.CONTENT_TEXT.getName())) {
+      return page.getContentText();
+    } else if (field.equals(GoraWebPage.Field.CONTENT.getName())) {
       return page.getContentAsString();
-    }
-    else if (field.equals(GoraWebPage.Field.MARKERS.getName()))  {
-      return convertToStringsMap(page.getMarkers());
-    }
-    else if (field.equals(GoraWebPage.Field.PREV_FETCH_TIME.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PREV_FETCH_TIME.getName())) {
       return page.getPrevFetchTime();
-    }
-    else if (field.equals(GoraWebPage.Field.FETCH_TIME.getName())) {
+    } else if (field.equals(GoraWebPage.Field.FETCH_TIME.getName())) {
       return page.getFetchTime();
-    }
-    else if (field.equals(GoraWebPage.Field.FETCH_INTERVAL.getName())) {
+    } else if (field.equals(GoraWebPage.Field.FETCH_INTERVAL.getName())) {
       return page.getFetchInterval();
-    }
-    else if (field.equals(GoraWebPage.Field.PREV_MODIFIED_TIME.getName())) {
+    } else if (field.equals(GoraWebPage.Field.PREV_MODIFIED_TIME.getName())) {
       return page.getPrevModifiedTime();
-    }
-    else if (field.equals(GoraWebPage.Field.MODIFIED_TIME.getName())) {
+    } else if (field.equals(GoraWebPage.Field.MODIFIED_TIME.getName())) {
       return page.getModifiedTime();
-    }
-    else if (field.equals(GoraWebPage.Field.INLINKS.getName())) {
+    } else if (field.equals(GoraWebPage.Field.CONTENT_PUBLISH_TIME.getName())) {
+      return page.getContentPublishTime();
+    } else if (field.equals(GoraWebPage.Field.PREV_CONTENT_PUBLISH_TIME.getName())) {
+      return page.getPrevContentPublishTime();
+    } else if (field.equals(GoraWebPage.Field.CONTENT_MODIFIED_TIME.getName())) {
+      return page.getContentModifiedTime();
+    } else if (field.equals(GoraWebPage.Field.PREV_CONTENT_MODIFIED_TIME.getName())) {
+      return page.getPrevContentModifiedTime();
+    } else if (field.equals(GoraWebPage.Field.CONTENT_TYPE.getName())) {
+      return page.getContentType();
+    } else if (field.equals(GoraWebPage.Field.PAGE_CATEGORY.getName())) {
+      return page.getPageCategory();
+    } else if (field.equals(GoraWebPage.Field.REFERRER.getName())) {
+      return page.getReferrer();
+    } else if (field.equals(GoraWebPage.Field.REFERRED_ARTICLES.getName())) {
+      return page.getRefArticles();
+    } else if (field.equals(GoraWebPage.Field.REFERRED_CHARS.getName())) {
+      return page.getRefChars();
+    } else if (field.equals(GoraWebPage.Field.REF_CONTENT_PUBLISH_TIME.getName())) {
+      return page.getRefContentPublishTime();
+    } else if (field.equals(GoraWebPage.Field.PREV_REF_CONTENT_PUBLISH_TIME.getName())) {
+      return page.getPrevRefContentPublishTime();
+    } else if (field.equals(GoraWebPage.Field.INLINKS.getName())) {
       return convertToStringsMap(page.getInlinks());
-    }
-    else if (field.equals(GoraWebPage.Field.OUTLINKS.getName())) {
+    } else if (field.equals(GoraWebPage.Field.OUTLINKS.getName())) {
       return convertToStringsMap(page.getOutlinks());
-    }
-    else if (field.equals(GoraWebPage.Field.HEADERS.getName())) {
+    } else if (field.equals(GoraWebPage.Field.HEADERS.getName())) {
       return convertToStringsMap(page.getHeaders());
+    } else if (field.equals(GoraWebPage.Field.MARKERS.getName())) {
+      return convertToStringsMap(page.getMarkers());
+    } else if (field.equals(GoraWebPage.Field.METADATA.getName())) {
+      return convertMetadata(page);
     }
 
     return null;
@@ -181,48 +188,16 @@ public class WebPageConverter {
 
   public static Object convertNamedMetadata(Metadata.Name name, WebPage page) {
     switch (name) {
-      case IS_SEED:
-        return page.isSeed();
-      case IS_DETAIL:
-        return "UNEXPECTED METADATA NAME IS_DETAIL";
       case GENERATE_TIME:
         return page.getGenerateTime();
-      case DISTANCE:
-        return page.getDistance();
       case FETCH_TIME_HISTORY:
         return page.getFetchTimeHistory("");
-      case FETCH_COUNT:
-        return page.getFetchCount();
-      case FETCH_PRIORITY:
-        return page.getFetchPriority(0);
       case TOTAL_OUT_LINKS:
         return page.getTotalOutLinks();
-      case OLD_OUT_LINKS:
-        return page.getOldOutLinks();
       case INDEX_TIME_HISTORY:
         return page.getIndexTimeHistory("");
-      case ARTICLE_SCORE:
-        return page.getArticleScore();
       case CASH_KEY:
         return page.getCash();
-      case PAGE_CATEGORY:
-        return page.getPageCategory();
-      case TEXT_CONTENT_LENGTH:
-        return page.getTextContentLength();
-      case REFERRER:
-        return page.getReferrer();
-      case REFERRED_ARTICLES:
-        return page.getRefArticles();
-      case REFERRED_CHARS:
-        return page.getRefChars();
-      case REFERRED_PUBLISH_TIME:
-        return page.getRefPublishTime();
-      case PREV_REFERRED_PUBLISH_TIME:
-        return page.getPrevRefPublishTime();
-      case PUBLISH_TIME:
-        return page.getPublishTime();
-      case PREV_PUBLISH_TIME:
-        return page.getPrevRefPublishTime();
       case META_KEYWORDS:
         return page.getMetadata(Metadata.Name.META_KEYWORDS);
       case META_DESCRIPTION:
@@ -237,7 +212,8 @@ public class WebPageConverter {
   private static Map<String, String> convertToStringsMap(Map<?, ?> map) {
     Map<String, String> res = Maps.newHashMap();
     for (Entry<?, ?> entry : map.entrySet()) {
-      res.put(entry.getKey().toString(), entry.getValue().toString());
+      String value = entry.getValue() == null ? "null" : entry.getValue().toString();
+      res.put(entry.getKey().toString(), value);
     }
     return res;
   }

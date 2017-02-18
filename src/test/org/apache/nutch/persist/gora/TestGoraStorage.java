@@ -84,14 +84,14 @@ public class TestGoraStorage extends AbstractNutchTest {
       // store a page with title
       String key = "key-" + id + "-" + i;
       String title = "title" + i;
-      page.setTitle(new Utf8(title));
+      page.setPageTitle(new Utf8(title));
       store.put(key, page);
       store.flush();
 
       // retrieve page and check title
       page = store.get(key);
       assertNotNull(page);
-      assertEquals(title, page.getTitle().toString());
+      assertEquals(title, page.getPageTitle().toString());
     }
 
     // scan over the rows
@@ -119,7 +119,7 @@ public class TestGoraStorage extends AbstractNutchTest {
       WebPage page = WebPage.newWebPage();
 
       page.setBaseUrl(url);
-      page.setText("text");
+      page.setPageText("text");
       page.setDistance(0);
       page.putHeader("header1", "header1");
       page.putMark(Mark.FETCH, "mark1");
@@ -131,9 +131,9 @@ public class TestGoraStorage extends AbstractNutchTest {
       store.flush();
 
       // retrieve page and check title
-      page = WebPage.wrap(store.get(url));
+      page = WebPage.wrap(url, store.get(url), false);
       assertNotNull(page.get());
-      assertEquals("text", page.getText());
+      assertEquals("text", page.getPageText());
       assertEquals(0, page.getDistance());
       assertEquals("header1", page.getHeader("header1", ""));
       assertNotEquals("mark1", page.getMark(Mark.FETCH));

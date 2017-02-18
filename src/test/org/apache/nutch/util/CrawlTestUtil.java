@@ -110,8 +110,8 @@ public class CrawlTestUtil {
     Result<String, GoraWebPage> results = store.execute(query);
     while (results.next()) {
       try {
-        WebPage page = WebPage.wrap(results.get());
         String url = results.getKey();
+        WebPage page = WebPage.wrap(url, results.get(), false);
 
         if (page.isEmpty()) {
           continue;

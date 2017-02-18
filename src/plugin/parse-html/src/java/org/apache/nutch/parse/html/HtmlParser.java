@@ -18,7 +18,6 @@
 package org.apache.nutch.parse.html;
 
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.html.dom.HTMLDocumentImpl;
 import org.apache.nutch.common.EncodingDetector;
@@ -30,7 +29,6 @@ import org.apache.nutch.parse.*;
 import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.persist.gora.ParseStatus;
-import org.apache.nutch.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DocumentFragment;
@@ -42,14 +40,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,7 +53,7 @@ import static org.apache.nutch.metadata.Nutch.*;
 
 public class HtmlParser implements Parser {
 
-  public static final Logger LOG = LoggerFactory.getLogger("org.apache.nutch.parse.html");
+  public static final Logger LOG = LoggerFactory.getLogger(HtmlParser.class);
 
   private static Collection<GoraWebPage.Field> FIELDS = new HashSet<>();
 
@@ -126,34 +119,27 @@ public class HtmlParser implements Parser {
     HTMLMetaProcessor.getMetaTags(metaTags, docRoot, baseURL);
     setMetadata(page, metaTags);
 
+    String pageTitle = "";
+    String pageText = "";
     // Check meta directives
     if (!metaTags.getNoIndex()) { // okay to index
-      // Get input source, again. InputSource is not reusable
-      TextDocument doc = extract(page, getContentAsInputSource(page, encoding));
-
-      if (doc != null) {
-        page.setPageTitle(doc.getPageTitle());
-        page.setContentTitle(doc.getContentTitle());
-        page.setText(domContentUtils.getText(docRoot));
-        page.setTextContent(doc.getTextContent());
-        page.setHtmlContent(doc.getHtmlContent());
-        page.setPageCategory(PageCategory.valueOf(doc.getPageCategoryAsString()));
-        page.setTextContentLength(doc.getTextContent().length());
-        page.updatePublishTime(doc.getPublishTime());
-        page.updateContentModifiedTime(doc.getModifiedTime());
-
-        doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
-      }
+      pageTitle = domContentUtils.getTitle(docRoot);
+      pageText = domContentUtils.getText(docRoot);
     }
 
-    // if (page.getTextDensity() > 100)
+    // if (page.getTextDensity() > 100) { getOutlinks(); }
     tryGetValidOutlinks(page, url, baseURL);
 
     ParseStatus status = getStatus(metaTags);
-    ParseResult parseResult = new ParseResult(page.getText(), page.getPageTitle(), outlinks, status);
+    ParseResult parseResult = new ParseResult(pageText, pageTitle, outlinks, status);
     parseResult = htmlParseFilters.filter(url, page, parseResult, metaTags, docRoot);
     if (parseResult == null) {
       LOG.debug("ParseResult filtered to null, url : " + url);
+    }
+
+    // Additional extraction
+    if (!metaTags.getNoIndex()) {
+      extract(page, encoding);
     }
 
     if (metaTags.getNoCache()) {
@@ -164,42 +150,41 @@ public class HtmlParser implements Parser {
     return parseResult;
   }
 
-  private DocumentFragment doParse(InputSource input) {
+  private TextDocument extract(WebPage page, String encoding) {
+    // Get input source, again. InputSource is not reusable
+    TextDocument doc = extract(page, getContentAsInputSource(page, encoding));
+
+    if (doc != null) {
+      page.setContentTitle(doc.getContentTitle());
+      page.setContentText(doc.getTextContent());
+      page.setContentTextLength(doc.getTextContent().length());
+      page.setPageCategory(PageCategory.valueOf(doc.getPageCategoryAsString()));
+      page.updateContentPublishTime(doc.getPublishTime());
+      page.updateContentModifiedTime(doc.getModifiedTime());
+
+      doc.getFields().entrySet().forEach(entry -> page.setTempVar(entry.getKey(), entry.getValue()));
+    }
+
+    return doc;
+  }
+
+  private TextDocument extract(WebPage page, InputSource input) {
+    if (page.getContent() == null) {
+      LOG.warn("Can not extract page with null content, url : " + page.url());
+      return null;
+    }
+
     try {
-      return parse(input);
-    } catch (Throwable e) {
-      LOG.error("Failed to parse, message : {}", e);
+      TextDocument doc = new SAXInput().parse(page.url(), input);
+      ChineseNewsExtractor extractor = new ChineseNewsExtractor();
+      extractor.process(doc);
+
+      return doc;
+    } catch (ProcessingException e) {
+      LOG.warn("Failed to extract text content by textscent, " + e.getMessage());
     }
 
     return null;
-  }
-
-  private InputSource getContentAsInputSource(WebPage page, String encoding) {
-    InputSource input = getContentAsInputSource(page);
-    input.setEncoding(encoding);
-    return input;
-  }
-
-  private InputSource getContentAsInputSource(WebPage page) {
-    ByteBuffer contentInOctets = page.getContent();
-
-    ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
-        contentInOctets.arrayOffset() + contentInOctets.position(),
-        contentInOctets.remaining());
-
-    return new InputSource(stream);
-  }
-
-  private ParseStatus getStatus(HTMLMetaTags metaTags) {
-    ParseStatus status = ParseStatus.newBuilder().build();
-    status.setMajorCode((int) ParseStatusCodes.SUCCESS);
-    if (metaTags.getRefresh()) {
-      status.setMinorCode((int) ParseStatusCodes.SUCCESS_REDIRECT);
-      status.getArgs().add(new Utf8(metaTags.getRefreshHref().toString()));
-      status.getArgs().add(new Utf8(Integer.toString(metaTags.getRefreshTime())));
-    }
-
-    return status;
   }
 
   private void tryGetValidOutlinks(WebPage page, String url, URL base) {
@@ -235,31 +220,42 @@ public class HtmlParser implements Parser {
     }
   }
 
-  private TextDocument extract(WebPage page, InputSource input) {
-    LOG.trace("Try extract by scent");
-
-    if (page.getContent() == null) {
-      LOG.warn("Can not extract content, page content is null");
-      return null;
-    }
-
+  private DocumentFragment doParse(InputSource input) {
     try {
-      TextDocument doc = new SAXInput(input, page.url()).parse();
-
-      ChineseNewsExtractor extractor = new ChineseNewsExtractor();
-      extractor.setRegexFieldRules(regexExtractor.getRegexFieldRules());
-      extractor.setLabeledFieldRules(regexExtractor.getLabeledFieldRules());
-      extractor.setTerminatingBlocksContains(regexExtractor.getTerminatingBlocksContains());
-      extractor.setTerminatingBlocksStartsWith(regexExtractor.getTerminatingBlocksStartsWith());
-
-      extractor.process(doc);
-
-      return doc;
-    } catch (ProcessingException|SAXException e) {
-      LOG.warn("Failed to extract text content by boilerpipe, " + e.getMessage());
+      return parse(input);
+    } catch (Throwable e) {
+      LOG.error("Failed to parse, message : {}", e);
     }
 
     return null;
+  }
+
+  private InputSource getContentAsInputSource(WebPage page, String encoding) {
+    InputSource input = getContentAsInputSource(page);
+    input.setEncoding(encoding);
+    return input;
+  }
+
+  private InputSource getContentAsInputSource(WebPage page) {
+    ByteBuffer contentInOctets = page.getContent();
+
+    ByteArrayInputStream stream = new ByteArrayInputStream(contentInOctets.array(),
+            contentInOctets.arrayOffset() + contentInOctets.position(),
+            contentInOctets.remaining());
+
+    return new InputSource(stream);
+  }
+
+  private ParseStatus getStatus(HTMLMetaTags metaTags) {
+    ParseStatus status = ParseStatus.newBuilder().build();
+    status.setMajorCode((int) ParseStatusCodes.SUCCESS);
+    if (metaTags.getRefresh()) {
+      status.setMinorCode((int) ParseStatusCodes.SUCCESS_REDIRECT);
+      status.getArgs().add(new Utf8(metaTags.getRefreshHref().toString()));
+      status.getArgs().add(new Utf8(Integer.toString(metaTags.getRefreshTime())));
+    }
+
+    return status;
   }
 
   public Configuration getConf() {
@@ -301,8 +297,7 @@ public class HtmlParser implements Parser {
       parser.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
       parser.setFeature("http://cyberneko.org/html/features/balance-tags/document-fragment", true);
       parser.setFeature("http://cyberneko.org/html/features/report-errors", LOG.isTraceEnabled());
-    } catch (SAXException e) {
-    }
+    } catch (SAXException ignored) {}
 
     // convert Document to DocumentFragment
     HTMLDocumentImpl doc = new HTMLDocumentImpl();
@@ -328,37 +323,5 @@ public class HtmlParser implements Parser {
     }
 
     return res;
-  }
-
-  public static void main(String[] args) throws Exception {
-    if (args.length < 2) {
-      System.err.println("Usage : HtmlParser webPageFile crawlFiltersFile");
-      return;
-    }
-
-    // LOG.setLevel(Level.FINE);
-    String name = args[0];
-    String url = "file:" + name;
-    File file = new File(name);
-    byte[] bytes = new byte[(int) file.length()];
-    DataInputStream in = new DataInputStream(new FileInputStream(file));
-    in.readFully(bytes);
-
-    Configuration conf = ConfigUtils.create();
-
-    String rules = new String(Files.readAllBytes(Paths.get(args[1])));
-    conf.set(CrawlFilters.CRAWL_FILTER_RULES, rules);
-
-    HtmlParser parser = new HtmlParser();
-    parser.setConf(conf);
-    WebPage page = WebPage.newWebPage();
-    page.setBaseUrl(url);
-    page.setContent(bytes);
-    page.setContentType("text/html");
-    ParseResult parseResult = parser.getParse(url, page);
-
-    System.out.println("title: " + parseResult.getPageTitle());
-    System.out.println("text: " + parseResult.getText());
-    System.out.println("outlinks: " + StringUtils.join(parseResult.getOutlinks(), ","));
   }
 }

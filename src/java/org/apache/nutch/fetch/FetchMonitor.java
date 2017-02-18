@@ -329,7 +329,7 @@ public class FetchMonitor {
       /*
        * Read local filesystem for control commands
        * */
-      if (RuntimeUtil.checkLocalFileCommand(commandFile, "finish " + jobName)) {
+      if (RuntimeUtil.hasLocalFileCommand(commandFile, "finish " + jobName)) {
         handleFinishJobCommand();
         LOG.info("Find finish-job command in " + commandFile + ", exit the job ...");
         halt();
@@ -360,7 +360,7 @@ public class FetchMonitor {
       }
 
       if (!NetUtil.testHttpNetwork(indexServer, indexServerPort)) {
-        LOG.info("Lost index server, exit the job");
+        LOG.warn("Lost index server, exit the job");
         break;
       }
     } while (taskScheduler.getActiveFetchThreadCount() > 0);

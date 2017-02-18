@@ -63,7 +63,7 @@ public class NewsFetchSchedule extends AdaptiveFetchSchedule {
   }
 
   private Duration adjustSeedFetchInterval(String url, WebPage page, Instant fetchTime, Instant modifiedTime) {
-    Instant publishTime = page.getPublishTime();
+    Instant publishTime = page.getContentPublishTime();
     if (publishTime.isAfter(modifiedTime)) {
       modifiedTime = publishTime;
     }

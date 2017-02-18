@@ -120,7 +120,7 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
       return;
     }
 
-    int priority = page.getFetchPriority(FETCH_PRIORITY_DEFAULT);
+    int priority = page.getFetchPriority();
     // Higher priority, comes first
     int shuffleOrder = random.nextInt(65536) - 65536 * priority;
     context.write(new IntWritable(shuffleOrder), new FetchEntry(conf, page.reversedUrl(), page));
@@ -159,7 +159,5 @@ public class FetchMapper extends NutchMapper<String, GoraWebPage, IntWritable, F
     if (page.hasMark(Mark.INJECT)) {
       getCounter().increase(Counter.rowsInjected);
     }
-
-    getCounter().updateAffectedRows(url);
   }
 }

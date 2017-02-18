@@ -76,7 +76,7 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         String crawlId = conf.get(Nutch.PARAM_CRAWL_ID);
         fetchSchedule = FetchScheduleFactory.getFetchSchedule(conf);
         scoringFilters = new ScoringFilters(conf);
-        maxInLinks = conf.getInt(PARAM_UPDATE_MAX_IN_LINKS, 100);
+        maxInLinks = conf.getInt(PARAM_UPDATE_MAX_INLINKS, 100);
         round = conf.getInt(PARAM_CRAWL_ROUND, -1);
 
         nutchMetrics = NutchMetrics.getInstance(conf);
@@ -144,6 +144,11 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
         WebPage page = graph.getFocus().getWebPage();
 
         if (page == null) {
+            return;
+        }
+
+        if (!page.url().equals(url) || !page.reversedUrl().equals(reversedUrl)) {
+            LOG.error("Inconsistent url : " + url);
             return;
         }
 
@@ -263,14 +268,15 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
             }
 
             WebPage incomingPage = incomingEdge.getSourceWebPage();
-            if (newDepth > 1 && incomingPage.getDepth() + 1 < newDepth) {
+            if (incomingPage.getDepth() + 1 < newDepth) {
                 newDepth = incomingPage.getDepth() + 1;
+                page.setReferrer(incomingPage.url());
             }
         }
 
         /* Update depth */
         if (newDepth < page.getDepth()) {
-            if (page.getDepth() < MAX_DISTANCE) {
+            if (page.getDepth() < DISTANCE_INFINITE) {
                 nutchMetrics.debugDepthUpdated(page.getDepth() + " -> " + newDepth + ", " + focus.getUrl());
             }
             page.setDepth(newDepth);
@@ -282,7 +288,6 @@ class OutGraphUpdateReducer extends NutchReducer<GraphGroupKey, WebGraphWritable
     }
 
     private void updateMarks(WebPage page) {
-        // Clear temporary metadata
         page.putMarkIfNonNull(UPDATEOUTG, page.getMark(PARSE));
     }
 

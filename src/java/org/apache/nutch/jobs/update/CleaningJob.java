@@ -78,13 +78,13 @@ public class CleaningJob extends NutchJob implements Tool {
     }
 
     @Override
-    public void map(String key, GoraWebPage page, Context context) throws IOException, InterruptedException {
+    public void map(String reversedUrl, GoraWebPage page, Context context) throws IOException, InterruptedException {
       try {
-        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(key, WebPage.wrap(page))) {
-          context.write(key, page);
+        if (page.getStatus() == CrawlStatus.STATUS_GONE || filters.remove(reversedUrl, WebPage.wrap(reversedUrl, page, true))) {
+          context.write(reversedUrl, page);
         }
       } catch (IndexingException e) {
-        LOG.warn("Error indexing " + key + ": " + e);
+        LOG.warn("Error indexing " + reversedUrl + ": " + e);
       }
     }
   }

@@ -41,7 +41,7 @@ import java.util.Map;
  * A collection of methods for extracting content from DOM trees.
  * 
  * This class holds a few utility methods for pulling content out of DOM nodes,
- * such as getOutlinks, getText, etc.
+ * such as getOutlinks, getPageText, etc.
  * 
  */
 public class DOMContentUtils {
@@ -121,7 +121,7 @@ public class DOMContentUtils {
 
   /**
    * This is a convinience method, equivalent to
-   * {@link #getText(StringBuilder,Node,boolean) getText(sb, node, false)}.
+   * {@link #getText(StringBuilder,Node,boolean) getPageText(sb, node, false)}.
    * 
    */
   public void getText(StringBuilder sb, Node node) {

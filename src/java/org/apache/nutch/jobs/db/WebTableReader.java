@@ -23,7 +23,6 @@ import org.apache.gora.store.DataStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
@@ -35,23 +34,20 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.nutch.common.Params;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.jobs.NutchJob;
 import org.apache.nutch.metadata.Nutch;
-import org.apache.nutch.parse.ParseStatusUtils;
-import org.apache.nutch.protocol.ProtocolStatusUtils;
 import org.apache.nutch.persist.StorageUtils;
+import org.apache.nutch.persist.WebPage;
 import org.apache.nutch.persist.gora.GoraWebPage;
 import org.apache.nutch.util.ConfigUtils;
-import org.apache.nutch.common.Params;
-import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.TableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -211,13 +207,12 @@ public class WebTableReader extends NutchJob implements Tool {
   }
 
   /** Prints out the entry to the standard out **/
-  private void read(String key, boolean dumpContent, boolean dumpHeaders,
-      boolean dumpLinks, boolean dumpText) throws ClassNotFoundException,
-      IOException, Exception {
+  private void read(String url, boolean dumpContent, boolean dumpHeaders,
+      boolean dumpLinks, boolean dumpText) throws Exception {
     DataStore<String, GoraWebPage> datastore = StorageUtils.createWebStore(getConf(), String.class, GoraWebPage.class);
 
     Query<String, GoraWebPage> query = datastore.newQuery();
-    String reversedUrl = TableUtil.reverseUrl(key);
+    String reversedUrl = TableUtil.reverseUrl(url);
     query.setKey(reversedUrl);
 
     Result<String, GoraWebPage> result = datastore.execute(query);
@@ -225,22 +220,21 @@ public class WebTableReader extends NutchJob implements Tool {
     // should happen only once
     while (result.next()) {
       try {
-        GoraWebPage page = result.get();
+        WebPage page = WebPage.wrap(url, result.get(), false);
         String skey = result.getKey();
         // we should not get to this point but nevermind
-        if (page == null || skey == null)
+        if (page.isEmpty() || skey == null) {
           break;
+        }
         found = true;
-        String url = TableUtil.unreverseUrl(skey);
-        System.out.println(getPageRepresentation(url, page, dumpContent,
-            dumpHeaders, dumpLinks, dumpText));
+        System.out.println(page.getRepresentation(dumpContent, dumpHeaders, dumpLinks, dumpText));
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
 
     if (!found) {
-      System.out.println(key + " not found");
+      System.out.println(url + " not found");
     }
 
     result.close();
@@ -263,14 +257,13 @@ public class WebTableReader extends NutchJob implements Tool {
     private boolean dumpContent, dumpHeaders, dumpLinks, dumpText;
 
     @Override
-    protected void map(String key, GoraWebPage value,
+    protected void map(String key, GoraWebPage row,
         org.apache.hadoop.mapreduce.Mapper<String, GoraWebPage, Text, Text>.Context context)
         throws IOException, InterruptedException {
       // checks whether the Key passes the regex
-      String url = TableUtil.unreverseUrl(key.toString());
-      if (regex.matcher(url).matches()) {
-        context.write(new Text(url),new Text(getPageRepresentation(key, value, dumpContent,
-                dumpHeaders, dumpLinks, dumpText)));
+      WebPage page = WebPage.wrap(key, row, true);
+      if (regex.matcher(page.url()).matches()) {
+        context.write(new Text(page.reversedUrl()),new Text(page.getRepresentation(dumpText, dumpContent, dumpHeaders, dumpLinks)));
       }
     }
 
@@ -307,12 +300,10 @@ public class WebTableReader extends NutchJob implements Tool {
         job.getConfiguration(), String.class, GoraWebPage.class);
     Query<String, GoraWebPage> query = store.newQuery();
     // remove the __g__dirty field since it is not stored
-    String[] fields = Arrays.copyOfRange(GoraWebPage._ALL_FIELDS, 1,
-        GoraWebPage._ALL_FIELDS.length);
+    String[] fields = Arrays.copyOfRange(GoraWebPage._ALL_FIELDS, 1, GoraWebPage._ALL_FIELDS.length);
     query.setFields(fields);
 
-    GoraMapper.initMapperJob(job, query, store, Text.class, Text.class,
-        WebTableRegexMapper.class, null, true);
+    GoraMapper.initMapperJob(job, query, store, Text.class, Text.class, WebTableRegexMapper.class, null, true);
 
     FileOutputFormat.setOutputPath(job, outFolder);
     job.setOutputFormatClass(TextOutputFormat.class);
@@ -320,110 +311,7 @@ public class WebTableReader extends NutchJob implements Tool {
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
 
-    boolean success = job.waitForCompletion(true);
-
-    if (LOG.isInfoEnabled()) {
-      LOG.info("WebTable dump: done");
-    }
-  }
-
-  private static String getPageRepresentation(String key, GoraWebPage page,
-      boolean dumpContent, boolean dumpHeaders, boolean dumpLinks,
-      boolean dumpText) {
-    StringBuffer sb = new StringBuffer();
-    sb.append("key:\t" + key).append("\n");
-    sb.append("baseUrl:\t" + page.getBaseUrl()).append("\n");
-    sb.append("status:\t").append(page.getStatus()).append(" (")
-        .append(CrawlStatus.getName(page.getStatus().byteValue()))
-        .append(")\n");
-    sb.append("fetchTime:\t" + page.getFetchTime()).append("\n");
-    sb.append("prevFetchTime:\t" + page.getPrevFetchTime()).append("\n");
-    sb.append("fetchInterval:\t" + page.getFetchInterval()).append("\n");
-    sb.append("retriesSinceFetch:\t" + page.getRetriesSinceFetch())
-        .append("\n");
-    sb.append("modifiedTime:\t" + page.getModifiedTime()).append("\n");
-    sb.append("prevModifiedTime:\t" + page.getPrevModifiedTime()).append("\n");
-    sb.append(
-        "protocolStatus:\t"
-            + ProtocolStatusUtils.toString(page.getProtocolStatus())).append(
-        "\n");
-    ByteBuffer prevSig = page.getPrevSignature();
-    if (prevSig != null) {
-      sb.append("prevSignature:\t" + StringUtil.toHexString(prevSig)).append(
-          "\n");
-    }
-    ByteBuffer sig = page.getSignature();
-    if (sig != null) {
-      sb.append("signature:\t" + StringUtil.toHexString(sig)).append("\n");
-    }
-    sb.append(
-        "parseStatus:\t" + ParseStatusUtils.toString(page.getParseStatus()))
-        .append("\n");
-    sb.append("title:\t" + page.getTitle()).append("\n");
-    sb.append("score:\t" + page.getScore()).append("\n");
-
-    Map<CharSequence, CharSequence> markers = page.getMarkers();
-    if (markers != null) {
-      Iterator<Entry<CharSequence, CharSequence>> iterator = markers.entrySet()
-          .iterator();
-      while (iterator.hasNext()) {
-        Entry<CharSequence, CharSequence> entry = iterator.next();
-        sb.append("marker " + entry.getKey().toString()).append(" : \t")
-            .append(entry.getValue()).append("\n");
-      }
-    }
-    sb.append("reprUrl:\t" + page.getReprUrl()).append("\n");
-    CharSequence batchId = page.getBatchId();
-    if (batchId != null) {
-      sb.append("batchId:\t" + batchId.toString()).append("\n");
-    }
-    Map<CharSequence, ByteBuffer> metadata = page.getMetadata();
-    if (metadata != null) {
-      Iterator<Entry<CharSequence, ByteBuffer>> iterator = metadata.entrySet()
-          .iterator();
-      while (iterator.hasNext()) {
-        Entry<CharSequence, ByteBuffer> entry = iterator.next();
-        sb.append("metadata " + entry.getKey().toString()).append(" : \t")
-            .append(Bytes.toString(entry.getValue().array())).append("\n");
-      }
-    }
-    if (dumpLinks) {
-      Map<CharSequence, CharSequence> inlinks = page.getInlinks();
-      Map<CharSequence, CharSequence> outlinks = page.getOutlinks();
-      if (outlinks != null) {
-        for (Entry<CharSequence, CharSequence> e : outlinks.entrySet()) {
-          sb.append("outlink:\t" + e.getKey() + "\t" + e.getValue() + "\n");
-        }
-      }
-      if (inlinks != null) {
-        for (Entry<CharSequence, CharSequence> e : inlinks.entrySet()) {
-          sb.append("inlink:\t" + e.getKey() + "\t" + e.getValue() + "\n");
-        }
-      }
-    }
-    if (dumpHeaders) {
-      Map<CharSequence, CharSequence> headers = page.getHeaders();
-      if (headers != null) {
-        for (Entry<CharSequence, CharSequence> e : headers.entrySet()) {
-          sb.append("header:\t" + e.getKey() + "\t" + e.getValue() + "\n");
-        }
-      }
-    }
-    ByteBuffer content = page.getContent();
-    if (content != null && dumpContent) {
-      sb.append("contentType:\t" + page.getContentType()).append("\n");
-      sb.append("content:start:\n");
-      sb.append(Bytes.toString(content.array()));
-      sb.append("\ncontent:end:\n");
-    }
-    CharSequence text = page.getText();
-    if (text != null && dumpText) {
-      sb.append("text:start:\n");
-      sb.append(text.toString());
-      sb.append("\ntext:end:\n");
-    }
-
-    return sb.toString();
+    job.waitForCompletion(true);
   }
 
   public static void main(String[] args) throws Exception {
